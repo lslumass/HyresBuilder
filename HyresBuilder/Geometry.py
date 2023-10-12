@@ -1,9 +1,10 @@
 """This module is part of the PeptideBuilder library,
 written by Matthew Z. Tien, Dariya K. Sydykova,
-Austin G. Meyer, and Claus O. Wilke.
+Austin G. Meyer, and Claus O. Wilke, which was modified by Shanlong Li,
+and named as HyresBuilder.
 
 The Geometry module contains the default geometries of
-all 20 amino acids. The main function to be used is the
+all 20 amino acids for HyRes model. The main function to be used is the
 geometry() function, which returns the default geometry
 for the requested amino acid.
 
@@ -36,6 +37,11 @@ class Geo:
     CA_C_O_angle: float
     N_CA_C_O_diangle: float
 
+    # backbone Hydrogen atom
+    N_H_length: float
+    CA_N_H_angle: float
+    C_CA_N_H_diangle: float
+
     def __repr__(self) -> str:
         repr = ""
         for var in self.__dict__:
@@ -47,13 +53,17 @@ class GlyGeo(Geo):
     """Geometry of Glycine"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 110.8914
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.5117
+        self.CA_C_O_angle = 121.6
         self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -69,13 +79,17 @@ class AlaGeo(Geo):
     """Geometry of Alanin"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 111.068
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.5
-        self.N_CA_C_O_diangle = -60.5
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -95,13 +109,17 @@ class SerGeo(Geo):
     """Geometry of Serine"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 111.2812
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.5
-        self.N_CA_C_O_diangle = -60.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -132,13 +150,17 @@ class CysGeo(Geo):
     """Geometry of Cystine"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 110.8856
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.5
-        self.N_CA_C_O_diangle = -60.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -169,13 +191,17 @@ class ValGeo(Geo):
     """Geometry of Valine"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 109.7698
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.5686
-        self.N_CA_C_O_diangle = -60.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -212,13 +238,17 @@ class IleGeo(Geo):
     """Geometry of Isoleucine"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 109.7202
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.5403
-        self.N_CA_C_O_diangle = -60.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -273,13 +303,17 @@ class LeuGeo(Geo):
     """Geometry of Leucine"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 110.8652
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.4647
-        self.N_CA_C_O_diangle = 120.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -329,13 +363,17 @@ class ThrGeo(Geo):
     """Geometry of Threonine"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 110.7014
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.5359
-        self.N_CA_C_O_diangle = 120.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -372,13 +410,17 @@ class ArgGeo(Geo):
     """Geometry of Arginine"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 110.98
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.54
-        self.N_CA_C_O_diangle = 120.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -446,13 +488,17 @@ class LysGeo(Geo):
     """Geometry of Lysine"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 111.08
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.54
-        self.N_CA_C_O_diangle = 120.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -508,13 +554,17 @@ class AspGeo(Geo):
     """Geometry of Aspartic Acid"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 111.03
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.51
-        self.N_CA_C_O_diangle = 120.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -560,13 +610,17 @@ class AsnGeo(Geo):
     """Geometry of Asparagine"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 111.5
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.4826
-        self.N_CA_C_O_diangle = -60.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -612,13 +666,17 @@ class GluGeo(Geo):
     """Geometry of Glutamic Acid"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 111.1703
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.511
-        self.N_CA_C_O_diangle = 120.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -677,13 +735,17 @@ class GlnGeo(Geo):
     """Geometry of Glutamine"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 111.0849
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.5029
-        self.N_CA_C_O_diangle = 120.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -742,13 +804,17 @@ class MetGeo(Geo):
     """Geometry of Methionine"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 110.9416
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.4816
-        self.N_CA_C_O_diangle = 120.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -798,13 +864,17 @@ class HisGeo(Geo):
     """Geometry of Histidine"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 111.0859
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.4732
-        self.N_CA_C_O_diangle = 120.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -858,13 +928,17 @@ class ProGeo(Geo):
     """Geometry of Proline"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 112.7499
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.2945
-        self.N_CA_C_O_diangle = -45.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -892,13 +966,17 @@ class PheGeo(Geo):
     """Geometry of Phenylalanine"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 110.7528
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.5316
-        self.N_CA_C_O_diangle = 120.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -956,13 +1034,17 @@ class TyrGeo(Geo):
     """Geometry of Tyrosine"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 110.9288
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.5434
-        self.N_CA_C_O_diangle = 120.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -1024,13 +1106,17 @@ class TrpGeo(Geo):
     """Geometry of Tryptophan"""
 
     def __init__(self):
-        self.CA_N_length = 1.46
+        self.CA_N_length = 1.45
         self.CA_C_length = 1.52
-        self.N_CA_C_angle = 110.8914
+        self.N_CA_C_angle = 111.6
 
         self.C_O_length = 1.23
-        self.CA_C_O_angle = 120.5117
-        self.N_CA_C_O_diangle = 120.0
+        self.CA_C_O_angle = 121.6
+        self.N_CA_C_O_diangle = 180.0
+        
+        self.N_H_length = 0.98
+        self.C_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
