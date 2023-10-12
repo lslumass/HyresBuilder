@@ -1,2 +1,1 @@
-# HyResBuilder
-A simple package for building HyRes peptide model.
+# HyResBuilder: A simple Python library to generate HyRes model of peptides.
