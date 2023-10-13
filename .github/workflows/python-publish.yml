@@ -8,7 +8,9 @@
 
 name: Publish package on Pypi and TestPypi
 
-on: push
+on: 
+  release:
+    types: [published, prereleased, released]
 
 permissions:
   contents: read
