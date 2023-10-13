@@ -17,7 +17,7 @@ TEST_REQUIRES = [
 with open("README.md", "r") as f:
     long_description = f.read()
 
-with open("HyResBuilder/__init__.py", "r") as f:
+with open("HyresBuilder/__init__.py", "r") as f:
     init = f.readlines()
 
 for line in init:
@@ -25,17 +25,17 @@ for line in init:
         __version__ = line.split('"')[-2]
 
 setup(
-    name="HyResBuilder",
+    name="HyresBuilder",
     version=__version__,
     author="Shanlong Li",
     author_email="shanlongli@umass.edu",
     description="Create HyRes peptide PDB files with specified geometry",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/wayuer19/HyResBuilder",
-    download_url="https://github.com/wayuer19/HyResBuilder/releases",
+    url="https://github.com/wayuer19/HyresBuilder",
+    download_url="https://github.com/wayuer19/HyresBuilder/releases",
     platforms="Tested on Ubuntu 22.04",
-    packages=["HyResBuilder"],
+    packages=["HyresBuilder"],
     install_requires=INSTALL_REQUIRES,
     extras_require={"test": TEST_REQUIRES + INSTALL_REQUIRES,},
     classifiers=[
