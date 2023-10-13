@@ -490,402 +490,238 @@ def makeHis(segID: int, N, H, CA, C, O, geo: HisGeo) -> Residue:
     CA_CB_CC_angle = geo.CA_CB_CC_angle
     N_CA_CB_CC_diangle = geo.N_CA_CB_CC_diangle
 
-    CB_CD_length = geo.CB_CD_length
-    CB_CG_CD2_angle = geo.CB_CG_CD2_angle
-    CA_CB_CG_CD2_diangle = geo.CA_CB_CG_CD2_diangle
+    CC_CD_length = geo.CC_CD_length
+    CB_CC_CD_angle = geo.CB_CC_CD_angle
+    CA_CB_CC_CD_diangle = geo.CA_CB_CC_CD_diangle
 
     carbon_b = calculateCoordinates(
         N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
     )
     CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
     carbon_g = calculateCoordinates(
-        N, CA, CB, CB_CG_length, CA_CB_CG_angle, N_CA_CB_CG_diangle
+        N, CA, CB, CB_CC_length, CA_CB_CC_angle, N_CA_CB_CC_diangle
     )
-    CG = Atom("CG", carbon_g, 0.0, 1.0, " ", " CG", 0, "C")
-    nitrogen_d1 = calculateCoordinates(
-        CA, CB, CG, CG_ND1_length, CB_CG_ND1_angle, CA_CB_CG_ND1_diangle
-    )
-    ND1 = Atom("ND1", nitrogen_d1, 0.0, 1.0, " ", " ND1", 0, "N")
+    CC = Atom("CC", carbon_g, 0.0, 1.0, " ", " CC", 0, "C")
     carbon_d2 = calculateCoordinates(
-        CA, CB, CG, CG_CD2_length, CB_CG_CD2_angle, CA_CB_CG_CD2_diangle
+        CA, CB, CC, CC_CD_length, CB_CC_CD_angle, CA_CB_CC_CD_diangle
     )
-    CD2 = Atom("CD2", carbon_d2, 0.0, 1.0, " ", " CD2", 0, "C")
-    carbon_e1 = calculateCoordinates(
-        CB, CG, ND1, ND1_CE1_length, CG_ND1_CE1_angle, CB_CG_ND1_CE1_diangle
-    )
-    CE1 = Atom("CE1", carbon_e1, 0.0, 1.0, " ", " CE1", 0, "C")
-    nitrogen_e2 = calculateCoordinates(
-        CB, CG, CD2, CD2_NE2_length, CG_CD2_NE2_angle, CB_CG_CD2_NE2_diangle
-    )
-    NE2 = Atom("NE2", nitrogen_e2, 0.0, 1.0, " ", " NE2", 0, "N")
+    CD = Atom("CD", carbon_d2, 0.0, 1.0, " ", " CD", 0, "C")
 
     res = Residue((" ", segID, " "), "HIS", "    ")
     res.add(N)
+    res.add(H)
     res.add(CA)
+    res.add(CB)
+    res.add(CC)
+    res.add(CD)
     res.add(C)
     res.add(O)
-    res.add(CB)
-    res.add(CG)
-    res.add(ND1)
-    res.add(CD2)
-    res.add(CE1)
-    res.add(NE2)
     return res
 
 
-def makePro(segID: int, N, CA, C, O, geo: ProGeo) -> Residue:
+def makePro(segID: int, N, H, CA, C, O, geo: ProGeo) -> Residue:
     """Creates a Proline residue"""
     ##R-Group
     CA_CB_length = geo.CA_CB_length
     C_CA_CB_angle = geo.C_CA_CB_angle
     N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
 
-    CB_CG_length = geo.CB_CG_length
-    CA_CB_CG_angle = geo.CA_CB_CG_angle
-    N_CA_CB_CG_diangle = geo.N_CA_CB_CG_diangle
-
-    CG_CD_length = geo.CG_CD_length
-    CB_CG_CD_angle = geo.CB_CG_CD_angle
-    CA_CB_CG_CD_diangle = geo.CA_CB_CG_CD_diangle
-
     carbon_b = calculateCoordinates(
         N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
     )
     CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-    carbon_g = calculateCoordinates(
-        N, CA, CB, CB_CG_length, CA_CB_CG_angle, N_CA_CB_CG_diangle
-    )
-    CG = Atom("CG", carbon_g, 0.0, 1.0, " ", " CG", 0, "C")
-    carbon_d = calculateCoordinates(
-        CA, CB, CG, CG_CD_length, CB_CG_CD_angle, CA_CB_CG_CD_diangle
-    )
-    CD = Atom("CD", carbon_d, 0.0, 1.0, " ", " CD", 0, "C")
 
     res = Residue((" ", segID, " "), "PRO", "    ")
-
     res.add(N)
     res.add(CA)
+    res.add(CB)
     res.add(C)
     res.add(O)
-    res.add(CB)
-    res.add(CG)
-    res.add(CD)
-
     return res
 
 
-def makePhe(segID: int, N, CA, C, O, geo: PheGeo) -> Residue:
+def makePhe(segID: int, N, H, CA, C, O, geo: PheGeo) -> Residue:
     """Creates a Phenylalanine residue"""
-    ##R-Group
+    ##R-Group    
     CA_CB_length = geo.CA_CB_length
     C_CA_CB_angle = geo.C_CA_CB_angle
     N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
 
-    CB_CG_length = geo.CB_CG_length
-    CA_CB_CG_angle = geo.CA_CB_CG_angle
-    N_CA_CB_CG_diangle = geo.N_CA_CB_CG_diangle
+    CB_CC_length = geo.CB_CC_length
+    CA_CB_CC_angle = geo.CA_CB_CC_angle
+    N_CA_CB_CC_diangle = geo.N_CA_CB_CC_diangle
 
-    CG_CD1_length = geo.CG_CD1_length
-    CB_CG_CD1_angle = geo.CB_CG_CD1_angle
-    CA_CB_CG_CD1_diangle = geo.CA_CB_CG_CD1_diangle
-
-    CG_CD2_length = geo.CG_CD2_length
-    CB_CG_CD2_angle = geo.CB_CG_CD2_angle
-    CA_CB_CG_CD2_diangle = geo.CA_CB_CG_CD2_diangle
-
-    CD1_CE1_length = geo.CD1_CE1_length
-    CG_CD1_CE1_angle = geo.CG_CD1_CE1_angle
-    CB_CG_CD1_CE1_diangle = geo.CB_CG_CD1_CE1_diangle
-
-    CD2_CE2_length = geo.CD2_CE2_length
-    CG_CD2_CE2_angle = geo.CG_CD2_CE2_angle
-    CB_CG_CD2_CE2_diangle = geo.CB_CG_CD2_CE2_diangle
-
-    CE1_CZ_length = geo.CE1_CZ_length
-    CD1_CE1_CZ_angle = geo.CD1_CE1_CZ_angle
-    CG_CD1_CE1_CZ_diangle = geo.CG_CD1_CE1_CZ_diangle
+    CC_CD_length = geo.CC_CD_length
+    CB_CC_CD_angle = geo.CB_CC_CD_angle
+    CA_CB_CC_CD_diangle = geo.CA_CB_CC_CD_diangle
 
     carbon_b = calculateCoordinates(
         N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
     )
     CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
     carbon_g = calculateCoordinates(
-        N, CA, CB, CB_CG_length, CA_CB_CG_angle, N_CA_CB_CG_diangle
+        N, CA, CB, CB_CC_length, CA_CB_CC_angle, N_CA_CB_CC_diangle
     )
-    CG = Atom("CG", carbon_g, 0.0, 1.0, " ", " CG", 0, "C")
-    carbon_d1 = calculateCoordinates(
-        CA, CB, CG, CG_CD1_length, CB_CG_CD1_angle, CA_CB_CG_CD1_diangle
-    )
-    CD1 = Atom("CD1", carbon_d1, 0.0, 1.0, " ", " CD1", 0, "C")
+    CC = Atom("CC", carbon_g, 0.0, 1.0, " ", " CC", 0, "C")
     carbon_d2 = calculateCoordinates(
-        CA, CB, CG, CG_CD2_length, CB_CG_CD2_angle, CA_CB_CG_CD2_diangle
+        CA, CB, CC, CC_CD_length, CB_CC_CD_angle, CA_CB_CC_CD_diangle
     )
-    CD2 = Atom("CD2", carbon_d2, 0.0, 1.0, " ", " CD2", 0, "C")
-    carbon_e1 = calculateCoordinates(
-        CB, CG, CD1, CD1_CE1_length, CG_CD1_CE1_angle, CB_CG_CD1_CE1_diangle
-    )
-    CE1 = Atom("CE1", carbon_e1, 0.0, 1.0, " ", " CE1", 0, "C")
-    carbon_e2 = calculateCoordinates(
-        CB, CG, CD2, CD2_CE2_length, CG_CD2_CE2_angle, CB_CG_CD2_CE2_diangle
-    )
-    CE2 = Atom("CE2", carbon_e2, 0.0, 1.0, " ", " CE2", 0, "C")
-    carbon_z = calculateCoordinates(
-        CG, CD1, CE1, CE1_CZ_length, CD1_CE1_CZ_angle, CG_CD1_CE1_CZ_diangle
-    )
-    CZ = Atom("CZ", carbon_z, 0.0, 1.0, " ", " CZ", 0, "C")
+    CD = Atom("CD", carbon_d2, 0.0, 1.0, " ", " CD", 0, "C")
 
     res = Residue((" ", segID, " "), "PHE", "    ")
     res.add(N)
+    res.add(H)
     res.add(CA)
+    res.add(CB)
+    res.add(CC)
+    res.add(CD)
     res.add(C)
     res.add(O)
-    res.add(CB)
-    res.add(CG)
-    res.add(CD1)
-    res.add(CE1)
-    res.add(CD2)
-    res.add(CE2)
-    res.add(CZ)
     return res
 
 
-def makeTyr(segID: int, N, CA, C, O, geo: TyrGeo) -> Residue:
+def makeTyr(segID: int, N, H, CA, C, O, geo: TyrGeo) -> Residue:
     """Creates a Tyrosine residue"""
     ##R-Group
     CA_CB_length = geo.CA_CB_length
     C_CA_CB_angle = geo.C_CA_CB_angle
     N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
 
-    CB_CG_length = geo.CB_CG_length
-    CA_CB_CG_angle = geo.CA_CB_CG_angle
-    N_CA_CB_CG_diangle = geo.N_CA_CB_CG_diangle
+    CB_CC_length = geo.CB_CC_length
+    CA_CB_CC_angle = geo.CA_CB_CC_angle
+    N_CA_CB_CC_diangle = geo.N_CA_CB_CC_diangle
 
-    CG_CD1_length = geo.CG_CD1_length
-    CB_CG_CD1_angle = geo.CB_CG_CD1_angle
-    CA_CB_CG_CD1_diangle = geo.CA_CB_CG_CD1_diangle
-
-    CG_CD2_length = geo.CG_CD2_length
-    CB_CG_CD2_angle = geo.CB_CG_CD2_angle
-    CA_CB_CG_CD2_diangle = geo.CA_CB_CG_CD2_diangle
-
-    CD1_CE1_length = geo.CD1_CE1_length
-    CG_CD1_CE1_angle = geo.CG_CD1_CE1_angle
-    CB_CG_CD1_CE1_diangle = geo.CB_CG_CD1_CE1_diangle
-
-    CD2_CE2_length = geo.CD2_CE2_length
-    CG_CD2_CE2_angle = geo.CG_CD2_CE2_angle
-    CB_CG_CD2_CE2_diangle = geo.CB_CG_CD2_CE2_diangle
-
-    CE1_CZ_length = geo.CE1_CZ_length
-    CD1_CE1_CZ_angle = geo.CD1_CE1_CZ_angle
-    CG_CD1_CE1_CZ_diangle = geo.CG_CD1_CE1_CZ_diangle
-
-    CZ_OH_length = geo.CZ_OH_length
-    CE1_CZ_OH_angle = geo.CE1_CZ_OH_angle
-    CD1_CE1_CZ_OH_diangle = geo.CD1_CE1_CZ_OH_diangle
+    CC_CD_length = geo.CC_CD_length
+    CB_CC_CD_angle = geo.CB_CC_CD_angle
+    CA_CB_CC_CD_diangle = geo.CA_CB_CC_CD_diangle
 
     carbon_b = calculateCoordinates(
         N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
     )
     CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
     carbon_g = calculateCoordinates(
-        N, CA, CB, CB_CG_length, CA_CB_CG_angle, N_CA_CB_CG_diangle
+        N, CA, CB, CB_CC_length, CA_CB_CC_angle, N_CA_CB_CC_diangle
     )
-    CG = Atom("CG", carbon_g, 0.0, 1.0, " ", " CG", 0, "C")
-    carbon_d1 = calculateCoordinates(
-        CA, CB, CG, CG_CD1_length, CB_CG_CD1_angle, CA_CB_CG_CD1_diangle
-    )
-    CD1 = Atom("CD1", carbon_d1, 0.0, 1.0, " ", " CD1", 0, "C")
+    CC = Atom("CC", carbon_g, 0.0, 1.0, " ", " CC", 0, "C")
     carbon_d2 = calculateCoordinates(
-        CA, CB, CG, CG_CD2_length, CB_CG_CD2_angle, CA_CB_CG_CD2_diangle
+        CA, CB, CC, CC_CD_length, CB_CC_CD_angle, CA_CB_CC_CD_diangle
     )
-    CD2 = Atom("CD2", carbon_d2, 0.0, 1.0, " ", " CD2", 0, "C")
-    carbon_e1 = calculateCoordinates(
-        CB, CG, CD1, CD1_CE1_length, CG_CD1_CE1_angle, CB_CG_CD1_CE1_diangle
-    )
-    CE1 = Atom("CE1", carbon_e1, 0.0, 1.0, " ", " CE1", 0, "C")
-    carbon_e2 = calculateCoordinates(
-        CB, CG, CD2, CD2_CE2_length, CG_CD2_CE2_angle, CB_CG_CD2_CE2_diangle
-    )
-    CE2 = Atom("CE2", carbon_e2, 0.0, 1.0, " ", " CE2", 0, "C")
-    carbon_z = calculateCoordinates(
-        CG, CD1, CE1, CE1_CZ_length, CD1_CE1_CZ_angle, CG_CD1_CE1_CZ_diangle
-    )
-    CZ = Atom("CZ", carbon_z, 0.0, 1.0, " ", " CZ", 0, "C")
-    oxygen_h = calculateCoordinates(
-        CD1, CE1, CZ, CZ_OH_length, CE1_CZ_OH_angle, CD1_CE1_CZ_OH_diangle
-    )
-    OH = Atom("OH", oxygen_h, 0.0, 1.0, " ", " OH", 0, "O")
+    CD = Atom("CD", carbon_d2, 0.0, 1.0, " ", " CD", 0, "C")
 
-    ##Create Residue Data S
     res = Residue((" ", segID, " "), "TYR", "    ")
     res.add(N)
+    res.add(H)
     res.add(CA)
+    res.add(CB)
+    res.add(CC)
+    res.add(CD)
     res.add(C)
     res.add(O)
-    res.add(CB)
-    res.add(CG)
-    res.add(CD1)
-    res.add(CE1)
-    res.add(CD2)
-    res.add(CE2)
-    res.add(CZ)
-    res.add(OH)
     return res
 
 
-def makeTrp(segID: int, N, CA, C, O, geo: TrpGeo) -> Residue:
+def makeTrp(segID: int, N, H, CA, C, O, geo: TrpGeo) -> Residue:
     """Creates a Tryptophan residue"""
     ##R-Group
     CA_CB_length = geo.CA_CB_length
     C_CA_CB_angle = geo.C_CA_CB_angle
     N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
 
-    CB_CG_length = geo.CB_CG_length
-    CA_CB_CG_angle = geo.CA_CB_CG_angle
-    N_CA_CB_CG_diangle = geo.N_CA_CB_CG_diangle
+    CB_CC_length = geo.CB_CC_length
+    CA_CB_CC_angle = geo.CA_CB_CC_angle
+    N_CA_CB_CC_diangle = geo.N_CA_CB_CC_diangle
 
-    CG_CD1_length = geo.CG_CD1_length
-    CB_CG_CD1_angle = geo.CB_CG_CD1_angle
-    CA_CB_CG_CD1_diangle = geo.CA_CB_CG_CD1_diangle
+    CB_CD_length = geo.CB_CD_length
+    CA_CB_CD_angle = geo.CA_CB_CD_angle
+    N_CA_CB_CD_diangle = geo.N_CA_CB_CD_diangle
 
-    CG_CD2_length = geo.CG_CD2_length
-    CB_CG_CD2_angle = geo.CB_CG_CD2_angle
-    CA_CB_CG_CD2_diangle = geo.CA_CB_CG_CD2_diangle
+    CD_CE_length = geo.CD_CE_length
+    CB_CD_CE_angle = geo.CB_CD_CE_angle
+    CA_CB_CD_CE_diangle = geo.CA_CB_CD_CE_diangle
 
-    CD1_NE1_length = geo.CD1_NE1_length
-    CG_CD1_NE1_angle = geo.CG_CD1_NE1_angle
-    CB_CG_CD1_NE1_diangle = geo.CB_CG_CD1_NE1_diangle
-
-    CD2_CE2_length = geo.CD2_CE2_length
-    CG_CD2_CE2_angle = geo.CG_CD2_CE2_angle
-    CB_CG_CD2_CE2_diangle = geo.CB_CG_CD2_CE2_diangle
-
-    CD2_CE3_length = geo.CD2_CE3_length
-    CG_CD2_CE3_angle = geo.CG_CD2_CE3_angle
-    CB_CG_CD2_CE3_diangle = geo.CB_CG_CD2_CE3_diangle
-
-    CE2_CZ2_length = geo.CE2_CZ2_length
-    CD2_CE2_CZ2_angle = geo.CD2_CE2_CZ2_angle
-    CG_CD2_CE2_CZ2_diangle = geo.CG_CD2_CE2_CZ2_diangle
-
-    CE3_CZ3_length = geo.CE3_CZ3_length
-    CD2_CE3_CZ3_angle = geo.CD2_CE3_CZ3_angle
-    CG_CD2_CE3_CZ3_diangle = geo.CG_CD2_CE3_CZ3_diangle
-
-    CZ2_CH2_length = geo.CZ2_CH2_length
-    CE2_CZ2_CH2_angle = geo.CE2_CZ2_CH2_angle
-    CD2_CE2_CZ2_CH2_diangle = geo.CD2_CE2_CZ2_CH2_diangle
+    CD_CF_length = geo.CD_CF_length
+    CB_CD_CF_angle = geo.CB_CD_CF_angle
+    CA_CB_CD_CF_diangle = geo.CA_CB_CD_CF_diangle
 
     carbon_b = calculateCoordinates(
         N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
     )
     CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
     carbon_g = calculateCoordinates(
-        N, CA, CB, CB_CG_length, CA_CB_CG_angle, N_CA_CB_CG_diangle
+        N, CA, CB, CB_CC_length, CA_CB_CC_angle, N_CA_CB_CC_diangle
     )
-    CG = Atom("CG", carbon_g, 0.0, 1.0, " ", " CG", 0, "C")
+    CC = Atom("CC", carbon_g, 0.0, 1.0, " ", " CC", 0, "C")
     carbon_d1 = calculateCoordinates(
-        CA, CB, CG, CG_CD1_length, CB_CG_CD1_angle, CA_CB_CG_CD1_diangle
+        N, CA, CB, CB_CD_length, CA_CB_CD_angle, N_CA_CB_CD_diangle
     )
-    CD1 = Atom("CD1", carbon_d1, 0.0, 1.0, " ", " CD1", 0, "C")
+    CD = Atom("CD", carbon_d1, 0.0, 1.0, " ", " CD", 0, "C")
     carbon_d2 = calculateCoordinates(
-        CA, CB, CG, CG_CD2_length, CB_CG_CD2_angle, CA_CB_CG_CD2_diangle
+        CA, CB, CD, CD_CE_length, CB_CD_CE_angle, CA_CB_CD_CE_diangle
     )
-    CD2 = Atom("CD2", carbon_d2, 0.0, 1.0, " ", " CD2", 0, "C")
-    nitrogen_e1 = calculateCoordinates(
-        CB, CG, CD1, CD1_NE1_length, CG_CD1_NE1_angle, CB_CG_CD1_NE1_diangle
-    )
-    NE1 = Atom("NE1", nitrogen_e1, 0.0, 1.0, " ", " NE1", 0, "N")
+    CE = Atom("CE", carbon_d2, 0.0, 1.0, " ", " CE", 0, "C")
     carbon_e2 = calculateCoordinates(
-        CB, CG, CD2, CD2_CE2_length, CG_CD2_CE2_angle, CB_CG_CD2_CE2_diangle
+        CA, CB, CD, CD_CF_length, CB_CD_CF_angle, CA_CB_CD_CF_diangle
     )
-    CE2 = Atom("CE2", carbon_e2, 0.0, 1.0, " ", " CE2", 0, "C")
-    carbon_e3 = calculateCoordinates(
-        CB, CG, CD2, CD2_CE3_length, CG_CD2_CE3_angle, CB_CG_CD2_CE3_diangle
-    )
-    CE3 = Atom("CE3", carbon_e3, 0.0, 1.0, " ", " CE3", 0, "C")
-
-    carbon_z2 = calculateCoordinates(
-        CG, CD2, CE2, CE2_CZ2_length, CD2_CE2_CZ2_angle, CG_CD2_CE2_CZ2_diangle
-    )
-    CZ2 = Atom("CZ2", carbon_z2, 0.0, 1.0, " ", " CZ2", 0, "C")
-
-    carbon_z3 = calculateCoordinates(
-        CG, CD2, CE3, CE3_CZ3_length, CD2_CE3_CZ3_angle, CG_CD2_CE3_CZ3_diangle
-    )
-    CZ3 = Atom("CZ3", carbon_z3, 0.0, 1.0, " ", " CZ3", 0, "C")
-
-    carbon_h2 = calculateCoordinates(
-        CD2, CE2, CZ2, CZ2_CH2_length, CE2_CZ2_CH2_angle, CD2_CE2_CZ2_CH2_diangle
-    )
-    CH2 = Atom("CH2", carbon_h2, 0.0, 1.0, " ", " CH2", 0, "C")
+    CF = Atom("CF", carbon_e2, 0.0, 1.0, " ", " CF", 0, "C")
 
     ##Create Residue DS
     res = Residue((" ", segID, " "), "TRP", "    ")
     res.add(N)
+    res.add(H)
     res.add(CA)
+    res.add(CB)
+    res.add(CC)
+    res.add(CD)
+    res.add(CE)
+    res.add(CF)
     res.add(C)
     res.add(O)
-    res.add(CB)
-    res.add(CG)
-    res.add(CD1)
-    res.add(CD2)
-
-    res.add(NE1)
-    res.add(CE2)
-    res.add(CE3)
-
-    res.add(CZ2)
-    res.add(CZ3)
-
-    res.add(CH2)
     return res
 
 
-def make_res_of_type(segID: int, N, CA, C, O, geo: Geo) -> Residue:
+def make_res_of_type(segID: int, N, H, CA, C, O, geo: Geo) -> Residue:
     if isinstance(geo, GlyGeo):
-        res = makeGly(segID, N, CA, C, O, geo)
+        res = makeGly(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, AlaGeo):
-        res = makeAla(segID, N, CA, C, O, geo)
+        res = makeAla(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, SerGeo):
-        res = makeSer(segID, N, CA, C, O, geo)
+        res = makeSer(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, CysGeo):
-        res = makeCys(segID, N, CA, C, O, geo)
+        res = makeCys(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, ValGeo):
-        res = makeVal(segID, N, CA, C, O, geo)
+        res = makeVal(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, IleGeo):
-        res = makeIle(segID, N, CA, C, O, geo)
+        res = makeIle(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, LeuGeo):
-        res = makeLeu(segID, N, CA, C, O, geo)
+        res = makeLeu(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, ThrGeo):
-        res = makeThr(segID, N, CA, C, O, geo)
+        res = makeThr(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, ArgGeo):
-        res = makeArg(segID, N, CA, C, O, geo)
+        res = makeArg(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, LysGeo):
-        res = makeLys(segID, N, CA, C, O, geo)
+        res = makeLys(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, AspGeo):
-        res = makeAsp(segID, N, CA, C, O, geo)
+        res = makeAsp(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, GluGeo):
-        res = makeGlu(segID, N, CA, C, O, geo)
+        res = makeGlu(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, AsnGeo):
-        res = makeAsn(segID, N, CA, C, O, geo)
+        res = makeAsn(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, GlnGeo):
-        res = makeGln(segID, N, CA, C, O, geo)
+        res = makeGln(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, MetGeo):
-        res = makeMet(segID, N, CA, C, O, geo)
+        res = makeMet(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, HisGeo):
-        res = makeHis(segID, N, CA, C, O, geo)
+        res = makeHis(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, ProGeo):
-        res = makePro(segID, N, CA, C, O, geo)
+        res = makePro(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, PheGeo):
-        res = makePhe(segID, N, CA, C, O, geo)
+        res = makePhe(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, TyrGeo):
-        res = makeTyr(segID, N, CA, C, O, geo)
+        res = makeTyr(segID, N, H, CA, C, O, geo)
     elif isinstance(geo, TrpGeo):
-        res = makeTrp(segID, N, CA, C, O, geo)
+        res = makeTrp(segID, N, H, CA, C, O, geo)
     else:
-        res = makeGly(segID, N, CA, C, O, geo)
+        res = makeGly(segID, N, H, CA, C, O, geo)
 
     return res
 
@@ -923,6 +759,13 @@ def initialize_res(residue: Union[Geo, str]) -> Structure:
     CA = Atom("CA", CA_coord, 0.0, 1.0, " ", " CA", 0, "C")
     C = Atom("C", C_coord, 0.0, 1.0, " ", " C", 0, "C")
 
+    ## Create Hydrogen atom
+    N_H_length = geo.N_H_length
+    C_N_H_angle = geo.C_N_H_angle
+    C_CA_N_H_diangle = geo.C_CA_N_H_diangle
+    hydrogen = calculateCoordinates(C, CA, N, N_H_length, C_N_H_angle, C_CA_N_H_diangle)
+    H = Atom("H", hydrogen, 0.0, 1.0, " ", " H", 0, "H")
+    
     ##Create Carbonyl atom (to be moved later)
     C_O_length = geo.C_O_length
     CA_C_O_angle = geo.CA_C_O_angle
@@ -933,7 +776,7 @@ def initialize_res(residue: Union[Geo, str]) -> Structure:
     )
     O = Atom("O", carbonyl, 0.0, 1.0, " ", " O", 0, "O")
 
-    res = make_res_of_type(segID, N, CA, C, O, geo)
+    res = make_res_of_type(segID, N, H, CA, C, O, geo)
 
     cha = Chain("A")
     cha.add(res)
@@ -989,30 +832,32 @@ def add_residue_from_geo(structure: Structure, geo: Geo) -> Structure:
     psi_im1 = geo.psi_im1
     omega = geo.omega
 
-    N_coord = calculateCoordinates(
-        resRef["N"], resRef["CA"], resRef["C"], peptide_bond, CA_C_N_angle, psi_im1
-    )
+    N_coord = calculateCoordinates(resRef["N"], resRef["CA"], resRef["C"], peptide_bond, CA_C_N_angle, psi_im1)
     N = Atom("N", N_coord, 0.0, 1.0, " ", " N", 0, "N")
 
-    CA_coord = calculateCoordinates(
-        resRef["CA"], resRef["C"], N, CA_N_length, C_N_CA_angle, omega
-    )
+    CA_coord = calculateCoordinates(resRef["CA"], resRef["C"], N, CA_N_length, C_N_CA_angle, omega)
     CA = Atom("CA", CA_coord, 0.0, 1.0, " ", " CA", 0, "C")
 
     C_coord = calculateCoordinates(resRef["C"], N, CA, CA_C_length, N_CA_C_angle, phi)
     C = Atom("C", C_coord, 0.0, 1.0, " ", " C", 0, "C")
 
+    ## Create Hydrogen atom
+    N_H_length = geo.N_H_length
+    C_N_H_angle = geo.C_N_H_angle
+    C_CA_N_H_diangle = geo.C_CA_N_H_diangle
+    
+    hydrogen = calculateCoordinates(C, CA, N, N_H_length, C_N_H_angle, C_CA_N_H_diangle)
+    H = Atom("H", hydrogen, 0.0, 1.0, " ", " H", 0, "H")
+    
     ##Create Carbonyl atom (to be moved later)
     C_O_length = geo.C_O_length
     CA_C_O_angle = geo.CA_C_O_angle
     N_CA_C_O_diangle = geo.N_CA_C_O_diangle
 
-    carbonyl = calculateCoordinates(
-        N, CA, C, C_O_length, CA_C_O_angle, N_CA_C_O_diangle
-    )
+    carbonyl = calculateCoordinates(N, CA, C, C_O_length, CA_C_O_angle, N_CA_C_O_diangle)
     O = Atom("O", carbonyl, 0.0, 1.0, " ", " O", 0, "O")
 
-    res = make_res_of_type(segID, N, CA, C, O, geo)
+    res = make_res_of_type(segID, N, H, CA, C, O, geo)
 
     resRef["O"].set_coord(
         calculateCoordinates(
