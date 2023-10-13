@@ -559,14 +559,11 @@ class HisGeo(Geo):
 
         self.CB_CC_length = 2.52
         self.CA_CB_CC_angle = 129.5
-        self.N_CA_CB_CC_diangle = 0.00
-
-        self.CB_CD_length = 2.45
-        self.CA_CB_CD_angle = 127.6
-        self.N_CA_CB_CD_diangle = 0.00
+        self.N_CA_CB_CC_diangle = 0.0
         
-        self.CC_CD_length = 2.52
-        self.CC_CB_CD_angle = 60.0
+        self.CC_CD_length = 1.86
+        self.CB_CC_CD_angle = 66.0
+        self.CA_CB_CC_CD_diangle = 180.0
 
         self.residue_name = "H"
 
@@ -582,10 +579,6 @@ class ProGeo(Geo):
         self.C_O_length = 1.23
         self.CA_C_O_angle = 121.6
         self.N_CA_C_O_diangle = 180.0
-        
-        self.N_H_length = 0.98
-        self.C_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 180.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -632,12 +625,9 @@ class PheGeo(Geo):
         self.CA_CB_CC_angle = 116.0
         self.N_CA_CB_CC_diangle = 0.00
 
-        self.CB_CD_length = 2.87
-        self.CA_CB_CD_angle = 140.2
-        self.N_CA_CB_CD_diangle = 0.00
-        
         self.CC_CD_length = 2.22
-        self.CC_CB_CD_angle = 60.0
+        self.CB_CC_CD_angle = 75.66
+        self.CA_CB_CC_CD_diangle = 180.00
 
         self.residue_name = "F"
 
@@ -673,12 +663,9 @@ class TyrGeo(Geo):
         self.CA_CB_CC_angle = 115.8
         self.N_CA_CB_CC_diangle = 0.00
 
-        self.CB_CD_length = 3.52
-        self.CA_CB_CD_angle = 139.2
-        self.N_CA_CB_CD_diangle = 0.00
-        
         self.CC_CD_length = 2.44
-        self.CC_CB_CD_angle = 60.0
+        self.CB_CC_CD_angle = 92.1
+        self.CA_CB_CC_CD_diangle = 180.00
 
         self.residue_name = "Y"
 
@@ -716,21 +703,15 @@ class TrpGeo(Geo):
 
         self.CB_CD_length = 2.53
         self.CA_CB_CD_angle = 133.7
-        self.N_CA_CB_CD_diangle = 0.00
-        
-        self.CC_CD_length = 1.85
-        self.CC_CB_CD_angle = 60.0
+        self.N_CA_CB_CD_diangle = 180.00
         
         self.CD_CE_length = 2.15
         self.CB_CD_CE_angle = 98.6
-        self.N_CA_CB_CD_diangle = 0.00
+        self.CA_CB_CD_CE_diangle = 180.00
         
         self.CD_CF_length = 2.15
         self.CB_CD_CF_angle = 168.1
-        self.N_CA_CB_CD_diangle = 0.00
-        
-        self.CE_CF_length = 2.25
-        self.CD_CE_CF_angle = 60.0
+        self.CA_CB_CD_CF_diangle = 180.00
 
         self.residue_name = "W"
 
