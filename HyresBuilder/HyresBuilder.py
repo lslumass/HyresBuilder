@@ -761,9 +761,9 @@ def initialize_res(residue: Union[Geo, str]) -> Structure:
 
     ## Create Hydrogen atom
     N_H_length = geo.N_H_length
-    C_N_H_angle = geo.C_N_H_angle
+    CA_N_H_angle = geo.CA_N_H_angle
     C_CA_N_H_diangle = geo.C_CA_N_H_diangle
-    hydrogen = calculateCoordinates(C, CA, N, N_H_length, C_N_H_angle, C_CA_N_H_diangle)
+    hydrogen = calculateCoordinates(C, CA, N, N_H_length, CA_N_H_angle, C_CA_N_H_diangle)
     H = Atom("H", hydrogen, 0.0, 1.0, " ", " H", 0, "H")
     
     ##Create Carbonyl atom (to be moved later)
