@@ -219,7 +219,7 @@ def makeCys(segID: int, N, H, CA, C, O, geo: CysGeo) -> Residue:
     return res
 
 
-def makeVal(segID: int, N, CA, C, O, geo: ValGeo) -> Residue:
+def makeVal(segID: int, N, H, CA, C, O, geo: ValGeo) -> Residue:
     """Creates a Valine residue"""
     ##R-Group
     CA_CB_length = geo.CA_CB_length
