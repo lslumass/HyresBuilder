@@ -859,7 +859,8 @@ def add_residue_from_geo(structure: Structure, geo: Geo) -> Structure:
         H = Atom("H", hydrogen, 0.0, 1.0, " ", " H", 0, "H")
     else:
         H = O
-        res = make_res_of_type(segID, N, H, CA, C, O, geo)
+    
+    res = make_res_of_type(segID, N, H, CA, C, O, geo)
 
     resRef["O"].set_coord(
         calculateCoordinates(
