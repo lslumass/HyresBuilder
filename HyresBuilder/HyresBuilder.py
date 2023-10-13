@@ -840,14 +840,6 @@ def add_residue_from_geo(structure: Structure, geo: Geo) -> Structure:
 
     C_coord = calculateCoordinates(resRef["C"], N, CA, CA_C_length, N_CA_C_angle, phi)
     C = Atom("C", C_coord, 0.0, 1.0, " ", " C", 0, "C")
-
-    ## Create Hydrogen atom
-    N_H_length = geo.N_H_length
-    C_N_H_angle = geo.C_N_H_angle
-    C_CA_N_H_diangle = geo.C_CA_N_H_diangle
-    
-    hydrogen = calculateCoordinates(C, CA, N, N_H_length, C_N_H_angle, C_CA_N_H_diangle)
-    H = Atom("H", hydrogen, 0.0, 1.0, " ", " H", 0, "H")
     
     ##Create Carbonyl atom (to be moved later)
     C_O_length = geo.C_O_length
@@ -857,7 +849,17 @@ def add_residue_from_geo(structure: Structure, geo: Geo) -> Structure:
     carbonyl = calculateCoordinates(N, CA, C, C_O_length, CA_C_O_angle, N_CA_C_O_diangle)
     O = Atom("O", carbonyl, 0.0, 1.0, " ", " O", 0, "O")
 
-    res = make_res_of_type(segID, N, H, CA, C, O, geo)
+    if AA != 'P':
+        ## Create Hydrogen atom
+        N_H_length = geo.N_H_length
+        C_N_H_angle = geo.C_N_H_angle
+        C_CA_N_H_diangle = geo.C_CA_N_H_diangle
+    
+        hydrogen = calculateCoordinates(C, CA, N, N_H_length, C_N_H_angle, C_CA_N_H_diangle)
+        H = Atom("H", hydrogen, 0.0, 1.0, " ", " H", 0, "H")
+    else:
+        H = O
+       res = make_res_of_type(segID, N, H, CA, C, O, geo)
 
     resRef["O"].set_coord(
         calculateCoordinates(
