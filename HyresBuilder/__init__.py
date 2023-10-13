@@ -7,6 +7,6 @@ The package consists of the following Python modules:
 * HyresBuilder
 * Geometry
 """
-__version__ = "1.2.3"
+__version__ = "1.2.4"
 from .HyresBuilder import *
 from .Geometry import *
