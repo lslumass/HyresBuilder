@@ -3,6 +3,8 @@ This package is forked from [PeptideBuilder](https://github.com/clauswilke/Pepti
 Thanks for the contribution of PeptideBuilder.    
 Shanlong Li    
 
+## Installation:   
+pip install HyresBuilder
 ## Basic usage:   
 This package builds HyRes peptide structure from sequence. Please see the examples for details.   
 To obtain psf file and further run simulation on OpenMM, please follow these [instructions](https://github.com/wayuer19/HyRes_GPU).   
