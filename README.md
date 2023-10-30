@@ -8,7 +8,7 @@ pip install HyresBuilder
 
 
 ## Basic usage:   
-This package builds HyRes peptide structure from sequence. Please see the [examples]() for details.   
+This package builds HyRes peptide structure from sequence. Please see the for details.   
 To obtain psf file and further run simulation on OpenMM, please follow these [instructions](https://github.com/wayuer19/HyRes_GPU).   
 >[!NOTE]
 >After obtaining the pdb files, the initial structures need to be relaxed to get more reasonable state.   
