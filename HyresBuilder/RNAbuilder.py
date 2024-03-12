@@ -48,7 +48,7 @@ def build(seqs, out):
                 atom[5] += res
             atoms = transform(ref, atoms)
             ref = [atoms[1][6], atoms[1][7], atoms[1][8] + 3.63]
-            idx += len(atom)
+            idx += len(atoms)
             res += 1
             printcg(atoms, f)
         print('END', file=f)
