@@ -12,11 +12,10 @@ import numpy as np
 
 def createHyresSystem(psf, params, ffs):
     T = ffs['temp']
-    c_ion = ffs['c_ion']
+    kf = ffs['kfn']
     er = ffs['er']
     eps_base = ffs['eps_base']
     eps_gen = ffs['eps_gen']
-    r_cut = ffs['r_cut']
     top = psf.topology
     system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds)
     # 2) constructe the force field
@@ -60,11 +59,10 @@ def createHyresSystem(psf, params, ffs):
     CNBForce.setName("LJ_ElecForce")
     CNBForce.setNonbondedMethod(nbforce.getNonbondedMethod())
     CNBForce.setUseSwitchingFunction(use=True)
-    #CNBForce.setUseLongRangeCorrection(use=True)
-    CNBForce.setCutoffDistance(r_cut)
-    CNBForce.setSwitchingDistance(r_cut-0.2*unit.nanometers)
+    CNBForce.setCutoffDistance(1.8*unit.nanometer)
+    CNBForce.setSwitchingDistance(1.6*unit.nanometer)
     CNBForce.addGlobalParameter('eps', er)
-    CNBForce.addGlobalParameter('kf', np.sqrt(c_ion/9.480)*AngstromsPerNm)
+    CNBForce.addGlobalParameter('kf', kf)
 
     # perparticle variables: sigma, epsilon, charge,
     CNBForce.addPerParticleParameter('charge')
