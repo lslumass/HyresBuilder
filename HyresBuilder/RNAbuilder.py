@@ -34,7 +34,7 @@ def transform(ref, atoms):
         atom[8] -= dz
     return atoms
 
-def build1(seqs, out):
+def build(seqs, out):
     with open(out, 'w') as f:
         print('REMARK  HyRes RNA', file=f)
         print('REMARK  CREATE BY RNABUILDER/SHANLONG LI', file=f)
@@ -52,23 +52,3 @@ def build1(seqs, out):
             res += 1
             printcg(atoms, f)
         print('END', file=f)
-def build2(seqs, out):
-    with open(out, 'w') as f:
-        print('REMARK  HyRes RNA', file=f)
-        print('REMARK  CREATE BY RNABUILDER/SHANLONG LI', file=f)
-        idx = 0
-        res = 0
-        ref = [0.0, 0.0, 0.0]
-        for seq in seqs:
-            atoms = read_map(seq)
-            for atom in atoms:
-                atom[1] += idx
-                atom[5] += res
-            atoms = transform(ref, atoms)
-            ref = [atoms[3][6], atoms[3][7], atoms[3][8]-3.63]
-            idx += len(atom)
-            res += 1
-            printcg(atoms, f)
-        print('END', file=f)
-
-
