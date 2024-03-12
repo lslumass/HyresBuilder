@@ -11,13 +11,8 @@ import numpy as np
 
 
 def createHyresSystem(psf, params, ffs):
-    T = ffs['temp']
-    kf = ffs['kfn']
-    er = ffs['er']
-    eps_base = ffs['eps_base']
-    eps_gen = ffs['eps_gen']
     top = psf.topology
-    system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds)
+    system = psf.createSystem(params, nonbondedMethod=ffs['nbMethod'], constraints=HBonds)
     # 2) constructe the force field
     print('\n################# constructe the HyRes force field ####################')
     # get nonbonded force
@@ -61,15 +56,15 @@ def createHyresSystem(psf, params, ffs):
     CNBForce.setUseSwitchingFunction(use=True)
     CNBForce.setCutoffDistance(1.8*unit.nanometer)
     CNBForce.setSwitchingDistance(1.6*unit.nanometer)
-    CNBForce.addGlobalParameter('eps', er)
-    CNBForce.addGlobalParameter('kf', kf)
+    CNBForce.addGlobalParameter('eps', ffs['er'])
+    CNBForce.addGlobalParameter('kf', ffs['kf'])
 
     # perparticle variables: sigma, epsilon, charge,
     CNBForce.addPerParticleParameter('charge')
     CNBForce.addPerParticleParameter('sigma')
     CNBForce.addPerParticleParameter('epsilon')
     ## scale charge of MG through lmd
-    lmd = 0.55+0.00668*(T-300)
+    lmd = 0.55+0.00668*(ffs['temp']-300)
     print('lambda: ', lmd)
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
@@ -84,6 +79,7 @@ def createHyresSystem(psf, params, ffs):
     print('\n# add base stacking force')
     # base stakcing and paring
     # define relative strength of base pairing and stacking
+    eps_base = ffs['eps_base']
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.0, 'GG':1.0, 'GC':1.0, 'GU':1.0,
               'CA':0.4, 'CG':0.5, 'CC':0.5, 'CU':0.3, 'UA':0.3, 'UG':0.3, 'UC':0.2, 'UU':0.0,
               'A-U':0.32, 'C-G':0.48, 'G-U':0.64}
@@ -139,7 +135,7 @@ def createHyresSystem(psf, params, ffs):
     pairGen = CustomHbondForce(formula)
     pairGen.setName('GeneralPairForce')
     pairGen.setNonbondedMethod(nbforce.getNonbondedMethod())
-    pairGen.addGlobalParameter('eps_gen', eps_gen)
+    pairGen.addGlobalParameter('eps_gen', ffs['eps_gen'])
     pairGen.addGlobalParameter('g0', 0.300*unit.nanometers)
     pairGen.setCutoffDistance(0.65*unit.nanometers)
     for idx in range(len(d1)):
