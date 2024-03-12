@@ -4,7 +4,10 @@ Thanks for the contribution of PeptideBuilder.
 Shanlong Li    
 
 ## Installation:   
-pip install HyresBuilder
+pip install HyresBuilder  
+or  
+git clone xxxxx   
+python setup.py install
 
 
 ## Basic usage:   
