@@ -10,7 +10,115 @@ from openmm import *
 import numpy as np
 
 
-def constructHyresSystem(psf, system, ffs):
+def constructHyresProteinSystem(psf, system, ffs):
+    # 2) constructe the force field
+    print('\n# constructe the HyRes force field')
+    # get nonbonded force
+    for force_index, force in enumerate(system.getForces()):
+        if force.getName() == "NonbondedForce":
+            nbforce = force
+            nbforce_index = force_index
+    print('\n# get the NonBondedForce:', nbforce.getName())
+    
+    print('\n# get bondlist')
+    # get bondlist
+    bondlist = []
+    for bond in top.bonds():
+        bondlist.append([bond[0].index, bond[1].index])
+    
+    print('\n# add custom nonbondedforce')
+    # add custom nonbondedforce: CNBForce
+    formula = '(4.0 * epsilon * six * (six - 1.0) + (138.935456 / eps * charge1 * charge2) / r * exp(-kf * r));'+ \
+              'six = (sigma / r)^6; sigma = 0.5 * (sigma1 + sigma2); epsilon = sqrt(epsilon1 * epsilon2);'
+    CNBForce = CustomNonbondedForce(formula)
+    CNBForce.setNonbondedMethod(nbforce.getNonbondedMethod())
+    CNBForce.setUseSwitchingFunction(use=True)
+    CNBForce.setSwitchingDistance(1.6*unit.nanometer)
+    CNBForce.setCutoffDistance(1.8*unit.nanometer)
+    CNBForce.addGlobalParameter('eps', ffs['er'])
+    CNBForce.addGlobalParameter('kf', ffs['kf'])
+    
+    # perparticle variables: sigma, epsilon, charge,
+    CNBForce.addPerParticleParameter('charge')
+    CNBForce.addPerParticleParameter('sigma')
+    CNBForce.addPerParticleParameter('epsilon')
+    for idx in range(nbforce.getNumParticles()):
+        particle = nbforce.getParticleParameters(idx)
+        perP = [particle[0], particle[1], particle[2]]
+        CNBForce.addParticle(perP)
+    
+    CNBForce.createExclusionsFromBonds(bondlist, 3)
+    system.addForce(CNBForce)
+    
+    print('\n# add 1-4 nonbonded force')
+    # add nonbondedforce of 1-4 interaction through custombondforece
+    formula = '(step(Ron - r) + '+ \
+    '(step(r - Ron) * step(Roff - r) - '+ \
+    'step(r - Ron) * step(Ron - r)) * '+ \
+    '(((Roff2 - r2)^2 * (Roff2 + 2.0 * r2 - 3.0 * Ron2)) / '+ \
+    '(Roff2 - Ron2)^3)) * '+ \
+    '(4.0 * epsilon * six * (six - 1.0) + (138.935456 / eps * charge) / r * exp(-kf * r));'+ \
+    'six = (sigma / r)^6; '+ \
+    'Ron2 = Ron * Ron; Roff2 = Roff * Roff; r2 = r * r; '
+    Force14 = CustomBondForce(formula)
+    Force14.addGlobalParameter('eps', ffs['er'])
+    Force14.addGlobalParameter('Ron', 1.6*unit.nanometer)
+    Force14.addGlobalParameter('Roff', 1.8*unit.nanometer)
+    Force14.addGlobalParameter('kf', ffs['kf'])
+    
+    Force14.addPerBondParameter('charge')
+    Force14.addPerBondParameter('sigma')
+    Force14.addPerBondParameter('epsilon')
+    for idx in range(nbforce.getNumExceptions()):
+        ex = nbforce.getExceptionParameters(idx)
+        Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
+    system.addForce(Force14)
+    
+    print('\n# add custom hydrogen bond force')
+    # Add the Custom hydrogen bond force
+    sigma_hb = ffs['sigma_hb']
+    eps_hb = ffs['eps_hb']
+    formula  = f"""epsilon*(5.0*(sigma/r)^12-6.0*(sigma/r)^10)*swrad*cosd^4*swang;
+            swrad = step(rcuton-r)+step(r-rcuton)*(step(rcutoff-r)-step(rcuton-r))*
+            roff2*roff2*(roff2-3.0*ron2)/roffon2^3;
+            roff2 = rcutoff*rcutoff-r*r;
+            ron2 = rcuton*rcuton-r*r;
+            roffon2 = rcutoff*rcutoff-rcuton*rcuton;
+            rcutoff = CTOFHB; rcuton = CTONHB; r = distance(a1, d2);
+            swang = step(cosdcuton-cosd)+step(cosd-cosdcuton)*(step(cosdcutoff-cosd)-step(cosdcuton-cosd))*
+            cosdoff2*cosdoff2*(cosdoff2-3.0*cosdon2)/cosdoffon2^3;
+            cosdoff2 = cosdcutoff*cosdcutoff-cosd*cosd;
+            cosdon2 = cosdcuton*cosdcuton-cosd*cosd;
+            cosdoffon2 = cosdcutoff*cosdcutoff-cosdcuton*cosdcuton;
+            cosdcutoff = -cos(CTOFHA); cosdcuton = -cos(CTONHA); cosd = cos(angle(a1,d1,d2));
+            CTOFHB = 0.5; CTONHB = 0.4; CTOFHA = {np.deg2rad(91)}; CTONHA = {np.deg2rad(90)};
+            sigma = {sigma_hb.value_in_unit(unit.nanometer)}; epsilon = {eps_hb.value_in_unit(unit.kilojoules_per_mole)}
+    """    
+    Hforce = CustomHbondForce(formula)
+    Hforce.setNonbondedMethod(nbforce.getNonbondedMethod())
+    Hforce.setCutoffDistance(0.6*unit.nanometers)
+    
+    Ns, Hs, Os, Cs = [], [], [], []
+    for atom in psf.topology.atoms():
+        if atom.name == "N" and atom.residue.name != 'PRO':
+            Ns.append(int(atom.index))
+        if atom.name == "H":
+            Hs.append(int(atom.index))
+        if atom.name == "O":
+            Os.append(int(atom.index))
+        if atom.name == "C":
+            Cs.append(int(atom.index))
+    
+    for idx in range(len(Hs)):
+        Hforce.addDonor(Hs[idx], Ns[idx], -1)
+        Hforce.addAcceptor(Os[idx], -1, -1)
+    system.addForce(Hforce)
+    
+    # delete the NonbondedForce
+    system.removeForce(nbforce_index)
+
+
+def constructHyresRNASystem(psf, system, ffs):
     top = psf.topology
     # 2) constructe the force field
     print('\n################# constructe the HyRes force field ####################')
