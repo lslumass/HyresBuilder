@@ -12,7 +12,7 @@ import numpy as np
 
 def createHyresSystem(psf, params, ffs):
     top = psf.topology
-    system = psf.createSystem(params, nonbondedMethod=ffs['nbMethod'], constraints=HBonds)
+    system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds)
     # 2) constructe the force field
     print('\n################# constructe the HyRes force field ####################')
     # get nonbonded force
