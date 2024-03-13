@@ -10,9 +10,8 @@ from openmm import *
 import numpy as np
 
 
-def createHyresSystem(psf, params, ffs):
+def constructHyresSystem(psf, system, ffs):
     top = psf.topology
-    system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds)
     # 2) constructe the force field
     print('\n################# constructe the HyRes force field ####################')
     # get nonbonded force
@@ -82,7 +81,7 @@ def createHyresSystem(psf, params, ffs):
     eps_base = ffs['eps_base']
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.0, 'GG':1.0, 'GC':1.0, 'GU':1.0,
               'CA':0.4, 'CG':0.5, 'CC':0.5, 'CU':0.3, 'UA':0.3, 'UG':0.3, 'UC':0.2, 'UU':0.0,
-              'A-U':0.32, 'C-G':0.48, 'G-U':0.64}
+              'A-U':0.36, 'C-G':0.54, 'G-U':0.72}
 
     # get all the groups of bases
     grps = []
@@ -119,14 +118,20 @@ def createHyresSystem(psf, params, ffs):
     for atom in psf.topology.atoms():
         if atom.name == 'NC' and atom.residue.name in ['G', 'A']:
             d1.append(int(atom.index))
-            d2.append(int(atom.index)-2)
+            d2.append(int(atom.index)-1)
+        elif atom.name == 'NC' and atom.residue.name == 'A':
+            d1.append(int(atom.index))
+            d2.append(int(atom.index)+1)
         elif atom.name == 'ND' and atom.residue.name == 'G':
             d1.append(int(atom.index))
             d2.append(int(atom.index)-3)
+        elif atom.name == 'ND' and atom.residue.name == 'G':
+            d1.append(int(atom.index))
+            d2.append(int(atom.index)-1)
         elif atom.name == 'NB' and atom.residue.name in ['U', 'C']:
             d1.append(int(atom.index))
             d2.append(int(atom.index)-1)
-        elif atom.name in ['NB', 'NC', 'ND']:
+        elif atom.name in ['NB', 'NC', 'ND', 'C2']:
             a.append(int(atom.index))
 
     print('\n# add general hbond between base pairs')
