@@ -117,7 +117,7 @@ def HyresProteinSystem(psf, system, ffs):
     
     # delete the NonbondedForce
     system.removeForce(nbforce_index)
-
+    return system
 
 def HyresRNASystem(psf, system, ffs):
     top = psf.topology
