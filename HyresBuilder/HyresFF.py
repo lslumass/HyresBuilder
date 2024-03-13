@@ -10,7 +10,7 @@ from openmm import *
 import numpy as np
 
 
-def constructHyresProteinSystem(psf, system, ffs):
+def HyresProteinSystem(psf, system, ffs):
     # 2) constructe the force field
     print('\n# constructe the HyRes force field')
     # get nonbonded force
@@ -118,7 +118,7 @@ def constructHyresProteinSystem(psf, system, ffs):
     system.removeForce(nbforce_index)
 
 
-def constructHyresRNASystem(psf, system, ffs):
+def HyresRNASystem(psf, system, ffs):
     top = psf.topology
     # 2) constructe the force field
     print('\n################# constructe the HyRes force field ####################')
