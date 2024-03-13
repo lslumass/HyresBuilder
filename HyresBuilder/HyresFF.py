@@ -11,6 +11,7 @@ import numpy as np
 
 
 def HyresProteinSystem(psf, system, ffs):
+    top = psf.topology
     # 2) constructe the force field
     print('\n# constructe the HyRes force field')
     # get nonbonded force
