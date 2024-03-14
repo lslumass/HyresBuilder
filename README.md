@@ -3,10 +3,8 @@ This package is forked from [PeptideBuilder](https://github.com/clauswilke/Pepti
 Thanks for the contribution of PeptideBuilder.    
 Shanlong Li    
 
-## Installation:   
-pip install HyresBuilder  
-or  
-git clone xxxxx   
+## Installation: 
+git clone https://github.com/wayuer19/HyresBuilder.git   
 python setup.py install
 
 
