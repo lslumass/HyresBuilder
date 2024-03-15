@@ -10,6 +10,7 @@ from openmm import *
 import numpy as np
 
 
+###### for Protein System Only ######
 def HyresProteinSystem(psf, system, ffs):
     top = psf.topology
     # 2) constructe the force field
@@ -119,6 +120,8 @@ def HyresProteinSystem(psf, system, ffs):
     system.removeForce(nbforce_index)
     return system
 
+
+###### for RNA System Only ######
 def HyresRNASystem(psf, system, ffs):
     top = psf.topology
     # 2) constructe the force field
@@ -172,7 +175,7 @@ def HyresRNASystem(psf, system, ffs):
     CNBForce.addPerParticleParameter('sigma')
     CNBForce.addPerParticleParameter('epsilon')
     ## scale charge of MG through lmd
-    lmd = 0.55+0.00668*(ffs['temp']-300)
+    lmd = 0.54+0.00668*(ffs['temp']-300)
     print('lambda: ', lmd)
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
