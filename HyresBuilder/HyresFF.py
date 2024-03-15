@@ -175,7 +175,7 @@ def HyresRNASystem(psf, system, ffs):
     CNBForce.addPerParticleParameter('sigma')
     CNBForce.addPerParticleParameter('epsilon')
     ## scale charge of MG through lmd
-    lmd = 0.54+0.00668*(ffs['temp']-300)
+    lmd = 0.50+0.00668*(ffs['temp']-300)
     print('lambda: ', lmd)
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
