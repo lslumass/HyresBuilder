@@ -180,7 +180,7 @@ def HyresRNASystem(psf, system, ffs):
     CNBForce.addPerParticleParameter('epsilon')
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
-        if atoms[idx] in ['P', 'MG']:
+        if atoms[idx] == 'MG':
             particle[0] = particle[0]*lmd
         perP = [particle[0], particle[1], particle[2]]
         CNBForce.addParticle(perP)
