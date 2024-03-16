@@ -160,7 +160,7 @@ def HyresRNASystem(psf, system, ffs):
     print('\n# add custom nonbondedforce')
     # add custom nonbondedforce: CNBForce
     ## scale P-MG interaction through lmd
-    lmd = 0.7+0.00668*(ffs['temp']-300)
+    lmd = 0.8+0.00668*(ffs['temp']-300)
     print('lambda: ', lmd)
     
     formula = '(4.0*epsilon*((sigma/r)^12-(sigma/r)^6)+ks*(138.935456/eps*charge1*charge2)/r*exp(-kf*r));'+\
