@@ -159,7 +159,11 @@ def HyresRNASystem(psf, system, ffs):
 
     print('\n# add custom nonbondedforce')
     # add custom nonbondedforce: CNBForce
-    formula = '(4.0*epsilon*((sigma/r)^12-(sigma/r)^6)+(138.935456/eps*charge1*charge2)/r*exp(-kf*r));'+\
+    ## scale P-MG interaction through lmd
+    lmd = 0.50+0.00668*(ffs['temp']-300)
+    print('lambda: ', lmd)
+    
+    formula = '(4.0*epsilon*((sigma/r)^12-(sigma/r)^6)+select(fac1*fac2+1,1,lmd)*(138.935456/eps*charge1*charge2*)/r*exp(-kf*r));'+\
               'sigma=0.5*(sigma1+sigma2); epsilon=sqrt(epsilon1*epsilon2);'
     CNBForce = CustomNonbondedForce(formula)
     CNBForce.setName("LJ_ElecForce")
@@ -169,19 +173,22 @@ def HyresRNASystem(psf, system, ffs):
     CNBForce.setSwitchingDistance(1.6*unit.nanometer)
     CNBForce.addGlobalParameter('eps', ffs['er'])
     CNBForce.addGlobalParameter('kf', ffs['kf'])
+    CNBForce.addGlobaParameter('lmd', lmd)
 
     # perparticle variables: sigma, epsilon, charge,
     CNBForce.addPerParticleParameter('charge')
     CNBForce.addPerParticleParameter('sigma')
     CNBForce.addPerParticleParameter('epsilon')
-    ## scale charge of MG through lmd
-    lmd = 0.50+0.00668*(ffs['temp']-300)
-    print('lambda: ', lmd)
+    CNBForce.addPerParticleParameter('fac')
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
         if atoms[idx] == 'MG':
-            particle[0] = particle[0]*lmd
-        perP = [particle[0], particle[1], particle[2]]
+            fac = 1
+        elif atoms[idx] == 'P':
+            fac = -1
+        else:
+            fac = 0
+        perP = [particle[0], particle[1], particle[2], fac]
         CNBForce.addParticle(perP)
 
     CNBForce.createExclusionsFromBonds(bondlist, 2)
