@@ -163,7 +163,7 @@ def HyresRNASystem(psf, system, ffs):
     lmd = 0.50+0.00668*(ffs['temp']-300)
     print('lambda: ', lmd)
     
-    formula = '(4.0*epsilon*((sigma/r)^12-(sigma/r)^6)+select(fac1*fac2+1,1,lmd)*(138.935456/eps*charge1*charge2*)/r*exp(-kf*r));'+\
+    formula = '(4.0*epsilon*((sigma/r)^12-(sigma/r)^6)+select(fac1*fac2+1,1,lmd)*(138.935456/eps*charge1*charge2)/r*exp(-kf*r));'+\
               'sigma=0.5*(sigma1+sigma2); epsilon=sqrt(epsilon1*epsilon2);'
     CNBForce = CustomNonbondedForce(formula)
     CNBForce.setName("LJ_ElecForce")
