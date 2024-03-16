@@ -173,7 +173,7 @@ def HyresRNASystem(psf, system, ffs):
     CNBForce.setSwitchingDistance(1.6*unit.nanometer)
     CNBForce.addGlobalParameter('eps', ffs['er'])
     CNBForce.addGlobalParameter('kf', ffs['kf'])
-    CNBForce.addGlobaParameter('lmd', lmd)
+    CNBForce.addGlobalParameter('lmd', lmd)
 
     # perparticle variables: sigma, epsilon, charge,
     CNBForce.addPerParticleParameter('charge')
