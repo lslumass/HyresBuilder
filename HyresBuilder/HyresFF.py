@@ -234,19 +234,13 @@ def HyresRNASystem(psf, system, ffs):
         if atom.name == 'NC' and atom.residue.name in ['G', 'A']:
             d1.append(int(atom.index))
             d2.append(int(atom.index)-1)
-        elif atom.name == 'NC' and atom.residue.name == 'A':
-            d1.append(int(atom.index))
-            d2.append(int(atom.index)+1)
         elif atom.name == 'ND' and atom.residue.name == 'G':
             d1.append(int(atom.index))
             d2.append(int(atom.index)-3)
-        elif atom.name == 'ND' and atom.residue.name == 'G':
-            d1.append(int(atom.index))
-            d2.append(int(atom.index)-1)
         elif atom.name == 'NB' and atom.residue.name in ['U', 'C']:
             d1.append(int(atom.index))
             d2.append(int(atom.index)-1)
-        elif atom.name in ['NB', 'NC', 'ND', 'C2']:
+        elif atom.name in ['NB', 'NC', 'ND']:
             a.append(int(atom.index))
 
     print('\n# add general hbond between base pairs')
