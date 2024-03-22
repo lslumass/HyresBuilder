@@ -13,10 +13,10 @@ This package builds HyRes peptide structure from sequence. Please see the [examp
 To obtain psf file and further run simulation on OpenMM, please follow these [instructions](https://github.com/wayuer19/HyRes_GPU).   
 >[!NOTE]
 >After obtaining the pdb files, the initial structures need to be relaxed to get more reasonable state.   
-
+  
+## Modules:  
 Module 1: HyresBuilder  
   build Hyres protein model  
-
 
 Module 2: RNAbuilder  
   build RNA CG model
