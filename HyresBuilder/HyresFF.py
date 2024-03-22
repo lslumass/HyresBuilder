@@ -250,7 +250,7 @@ def HyresRNASystem(psf, system, ffs):
     pairGen.setName('GeneralPairForce')
     pairGen.setNonbondedMethod(nbforce.getNonbondedMethod())
     pairGen.addGlobalParameter('eps_gen', ffs['eps_gen'])
-    pairGen.addGlobalParameter('g0', 0.300*unit.nanometers)
+    pairGen.addGlobalParameter('g0', 0.304*unit.nanometers)
     pairGen.setCutoffDistance(0.65*unit.nanometers)
     for idx in range(len(d1)):
         pairGen.addDonor(d1[idx], d2[idx], -1)
@@ -320,7 +320,7 @@ def HyresRNASystem(psf, system, ffs):
         pairAU.setName('AUpairForce')
         pairAU.setNonbondedMethod(nbforce.getNonbondedMethod())
         pairAU.addGlobalParameter('eps_AU', eps_base*scales['A-U'])
-        pairAU.addGlobalParameter('r_au', 0.305*unit.nanometers)
+        pairAU.addGlobalParameter('r_au', 0.304*unit.nanometers)
         pairAU.addGlobalParameter('r_au2', 0.40*unit.nanometers)
         pairAU.setCutoffDistance(0.65*unit.nanometer)
 
@@ -339,7 +339,7 @@ def HyresRNASystem(psf, system, ffs):
         pairCG.setName('CGpairForce')
         pairCG.setNonbondedMethod(nbforce.getNonbondedMethod())
         pairCG.addGlobalParameter('eps_CG', eps_base*scales['C-G'])
-        pairCG.addGlobalParameter('r_cg', 0.305*unit.nanometers)
+        pairCG.addGlobalParameter('r_cg', 0.304*unit.nanometers)
         pairCG.addGlobalParameter('r_cg2', 0.35*unit.nanometers)
         pairCG.setCutoffDistance(0.65*unit.nanometer)
 
@@ -358,7 +358,7 @@ def HyresRNASystem(psf, system, ffs):
         pairGU.setName('GUpairForce')
         pairGU.setNonbondedMethod(nbforce.getNonbondedMethod())
         pairGU.addPerDonorParameter('eps_GU')
-        pairGU.addGlobalParameter('r_gu', 0.300*unit.nanometers)
+        pairGU.addGlobalParameter('r_gu', 0.304*unit.nanometers)
         pairGU.setCutoffDistance(0.65*unit.nanometers)
 
         for idx in range(len(g_c)):
