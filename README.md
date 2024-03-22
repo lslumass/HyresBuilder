@@ -1,4 +1,4 @@
-# HyresBuilder: A simple package for building HyRes peptide model.   
+# HyresBuilder: A simple package for building HyRes model.   
 This package is forked from [PeptideBuilder](https://github.com/clauswilke/PeptideBuilder) and we do some modifications for HyRes.   
 Thanks for the contribution of PeptideBuilder.    
 Shanlong Li    
