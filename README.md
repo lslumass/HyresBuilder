@@ -22,4 +22,4 @@ Module 2: RNAbuilder
   build RNA CG model
 
 Module 3: HyresFF  
-  create hyres system for OpenMM
+  create hyres system in OpenMM
