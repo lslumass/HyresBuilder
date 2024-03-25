@@ -629,3 +629,4 @@ def HyresTestSystem(psf, system, ffs):
     # delete the NonbondedForce and HarmonicAngleForce
     system.removeForce(nbforce_index)
     system.removeForce(hmangle_index)
+    return system
