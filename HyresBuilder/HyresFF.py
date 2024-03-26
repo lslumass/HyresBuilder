@@ -755,7 +755,7 @@ def TestRNASystem(psf, system, ffs):
         stackGen.addAcceptor(NAs[idx], -1, -1)
     for i in range(len(NAs)):
         for j in range(len(NAs)):
-            if NAs[j] < NAs[i] + 2
+            if NAs[j] < NAs[i] + 2:
                 stackGen.addExclusion(i,j)
             else:
                 continue
