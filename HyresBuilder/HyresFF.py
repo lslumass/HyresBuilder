@@ -744,7 +744,7 @@ def TestRNASystem(psf, system, ffs):
     for atom in psf.topology.atoms():
         if atom.name == 'NA' and atom.residue.name in ['G', 'A']:
             NAs.append(int(atom.index))
-    stackGen = CustomHbondForce("eps_aa*(5*(raa/r)^10-6.0*(raa/r)^6); r=distance(a1,d1);")
+    stackGen = CustomHbondForce("0.5*eps_aa*(5*(raa/r)^10-6.0*(raa/r)^6); r=distance(a1,d1);")
     stackGen.setName('AA-AG-stack')
     stackGen.setNonbondedMethod(nbforce.getNonbondedMethod())
     stackGen.addGlobalParameter('eps_aa', eps_base)
@@ -754,11 +754,7 @@ def TestRNASystem(psf, system, ffs):
         stackGen.addDonor(NAs[idx], -1, -1)
         stackGen.addAcceptor(NAs[idx], -1, -1)
     for i in range(len(NAs)):
-        for j in range(len(NAs)):
-            if NAs[j] < NAs[i] + 2:
-                stackGen.addExclusion(i,j)
-            else:
-                continue
+        stackGen.addExclusion(i,i)
     print(stackGen.getNumAcceptors(), stackGen.getNumDonors(), 'General')
     system.addForce(stackGen)
     
