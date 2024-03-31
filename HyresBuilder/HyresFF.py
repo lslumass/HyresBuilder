@@ -374,7 +374,6 @@ def HyresRNASystem(psf, system, ffs):
 
 
 ###### for RNA_TEST System Only ######
-
 def TestRNASystem(psf, system, ffs):
     top = psf.topology
     # 2) constructe the force field
@@ -449,7 +448,7 @@ def TestRNASystem(psf, system, ffs):
     eps_base = ffs['eps_base']
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.0, 'GG':1.0, 'GC':1.0, 'GU':1.0,
               'CA':0.4, 'CG':0.5, 'CC':0.5, 'CU':0.3, 'UA':0.3, 'UG':0.3, 'UC':0.2, 'UU':0.0,
-              'A-U':0.37, 'C-G':0.57, 'G-U':0.72}
+              'A-U':0.4, 'C-G':0.6,}
 
     # get all the groups of bases
     grps = []
@@ -480,41 +479,6 @@ def TestRNASystem(psf, system, ffs):
         fstack.addBond(sp[0], [sp[1]])
     print('    add ', fstack.getNumBonds(), 'stacking pairs')
     system.addForce(fstack)
-
-    # general hbond force
-    d1, d2, a = [], [], []
-    for atom in psf.topology.atoms():
-        if atom.name == 'NC' and atom.residue.name in ['G', 'A']:
-            d1.append(int(atom.index))
-            d2.append(int(atom.index)-1)
-        elif atom.name == 'ND' and atom.residue.name == 'G':
-            d1.append(int(atom.index))
-            d2.append(int(atom.index)-3)
-        elif atom.name == 'NB' and atom.residue.name in ['U', 'C']:
-            d1.append(int(atom.index))
-            d2.append(int(atom.index)-1)
-        elif atom.name in ['NB', 'NC', 'ND']:
-            a.append(int(atom.index))
-
-    print('\n# add general hbond between base pairs')
-    formula = 'eps_gen*(5.0*(g0/r)^10-6.0*(g0/r)^6)*step(cos3)*cos3;'+\
-              'r=distance(a1,d1); cos3=-2*cos(phi)^3; phi=angle(a1,d1,d2);'
-    pairGen = CustomHbondForce(formula)
-    pairGen.setName('GeneralPairForce')
-    pairGen.setNonbondedMethod(nbforce.getNonbondedMethod())
-    pairGen.addGlobalParameter('eps_gen', ffs['eps_gen'])
-    pairGen.addGlobalParameter('g0', 0.304*unit.nanometers)
-    pairGen.setCutoffDistance(0.65*unit.nanometers)
-    for idx in range(len(d1)):
-        pairGen.addDonor(d1[idx], d2[idx], -1)
-    for idx in range(len(a)):
-        pairGen.addAcceptor(a[idx], -1, -1)
-    for i in range(len(d1)):
-        for j in range(len(a)):
-            if d1[i] == a[j]:
-                pairGen.addExclusion(i, j)
-    print(pairGen.getNumAcceptors(), pairGen.getNumDonors(), 'General')
-    system.addForce(pairGen)
 
     # base pairing
     print('\n# add base pair force')
@@ -602,24 +566,6 @@ def TestRNASystem(psf, system, ffs):
             pairCG.addDonor(c_b[idx], c_c[idx], -1)
         system.addForce(pairCG)
         print(pairCG.getNumAcceptors(), pairCG.getNumDonors(), 'CG')
-
-    # add G-U pair through CustomHbondForce
-    if num_U != 0 and num_G != 0:
-        formula = 'eps_GU*(5.0*(r_gu/r)^10-6.0*(r_gu/r)^6)*step(cos3)*cos3;'+\
-                  'r=distance(a1,d1); cos3=-2*cos(phi)^3; phi=angle(d1,a1,a2);'
-        pairGU = CustomHbondForce(formula)
-        pairGU.setName('GUpairForce')
-        pairGU.setNonbondedMethod(nbforce.getNonbondedMethod())
-        pairGU.addPerDonorParameter('eps_GU')
-        pairGU.addGlobalParameter('r_gu', 0.304*unit.nanometers)
-        pairGU.setCutoffDistance(0.65*unit.nanometers)
-
-        for idx in range(len(g_c)):
-            pairGU.addAcceptor(g_c[idx], g_b[idx], -1)
-        for idx in range(len(u_b)):
-            pairGU.addDonor(u_b[idx], -1, -1, [eps_base*scales['G-U']])
-        system.addForce(pairGU)
-        print(pairGU.getNumAcceptors(), pairGU.getNumDonors(), 'GU')
 
     # delete the NonbondedForce and HarmonicAngleForce
     system.removeForce(nbforce_index)
