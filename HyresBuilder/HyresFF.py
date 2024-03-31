@@ -391,7 +391,7 @@ def HyresRNASystem(psf, system, ffs):
         print(pairGU.getNumAcceptors(), pairGU.getNumDonors(), 'GU')
 
     # delete the NonbondedForce and HarmonicAngleForce
-    system.removeForce(nbforce_index)
+   # system.removeForce(nbforce_index)
     system.removeForce(hmangle_index)
 
     return system
