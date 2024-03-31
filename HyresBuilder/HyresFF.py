@@ -187,7 +187,7 @@ def HyresRNASystem(psf, system, ffs):
         CNBForce.addParticle(perP)
 
     CNBForce.createExclusionsFromBonds(bondlist, 2)
-    system.addForce(CNBForce)
+#    system.addForce(CNBForce)
     formula = '(138.935456 / eps * charge1 * charge2) / r * exp(-kf * r));'+ \
               'six = (sigma / r)^6; sigma = 0.5 * (sigma1 + sigma2); epsilon = sqrt(epsilon1 * epsilon2);'
     CNBForce1 = CustomNonbondedForce(formula)
@@ -210,7 +210,7 @@ def HyresRNASystem(psf, system, ffs):
         CNBForce1.addParticle(perP)
     
     CNBForce1.createExclusionsFromBonds(bondlist, 2)
-  #  system.addForce(CNBForce1)
+    system.addForce(CNBForce1)
 
     print('\n# add base stacking force')
     # base stakcing and paring
