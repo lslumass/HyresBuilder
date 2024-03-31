@@ -160,10 +160,7 @@ def HyresRNASystem(psf, system, ffs):
     print('\n# add custom nonbondedforce')
     # add custom nonbondedforce: CNBForce
     ## scale MG to effective charge through lmd
-    lmd = 0.5+0.00668*(ffs['temp']-300)
-    if lmd > 1:
-        lmd = 1
-    print('lambda: ', lmd)
+    lmd = ffs['lmd']
     
     formula = '(4.0*epsilon*((sigma/r)^12-(sigma/r)^6)+(138.935456/eps*charge1*charge2)/r*exp(-kf*r));'+\
               'sigma=0.5*(sigma1+sigma2); epsilon=sqrt(epsilon1*epsilon2);'
