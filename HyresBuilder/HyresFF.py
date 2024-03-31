@@ -188,7 +188,7 @@ def HyresRNASystem(psf, system, ffs):
 
     CNBForce.createExclusionsFromBonds(bondlist, 2)
 #    system.addForce(CNBForce)
-    formula = '(138.935456 / eps * charge1 * charge2) / r * exp(-kf * r);'+ \
+    formula = '(138.935456 / 20.0 * charge1 * charge2) / r * exp(-kf * r);'+ \
               'six = (sigma / r)^6; sigma = 0.5 * (sigma1 + sigma2); epsilon = sqrt(epsilon1 * epsilon2);'
     CNBForce1 = CustomNonbondedForce(formula)
     CNBForce1.setNonbondedMethod(nbforce.getNonbondedMethod())
@@ -391,7 +391,7 @@ def HyresRNASystem(psf, system, ffs):
         print(pairGU.getNumAcceptors(), pairGU.getNumDonors(), 'GU')
 
     # delete the NonbondedForce and HarmonicAngleForce
-   # system.removeForce(nbforce_index)
+    system.removeForce(nbforce_index)
     system.removeForce(hmangle_index)
 
     return system
