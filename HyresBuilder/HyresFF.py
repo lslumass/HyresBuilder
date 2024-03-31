@@ -164,18 +164,21 @@ def HyresRNASystem(psf, system, ffs):
     ke = ffs['ke']
     er = ffs['er']
     dh = ffs['dh']
+    kf = ffs['kf']
     formula = f"""(ke/20.0*charge1*charge2)/r*exp(-r/dh);
                   ke={ke.value_in_unit(unit.kilojoule_per_mole)};
                   dh={dh.value_in_unit(unit.nanometer)}
                """
-    CNBForce = CustomNonbondedForce(formula)
+    formula1 = f"""(ke/20.0*charge1*charge2)/r*exp(-r*kf);
+                    ke={ke.value_in_unit(unit.kilojoule_per_mole)};
+                """
+    CNBForce = CustomNonbondedForce(formula1)
     CNBForce.setName("LJ_ElecForce")
     CNBForce.setNonbondedMethod(nbforce.getNonbondedMethod())
     CNBForce.setUseSwitchingFunction(use=True)
     CNBForce.setCutoffDistance(1.8*unit.nanometer)
     CNBForce.setSwitchingDistance(1.6*unit.nanometer)
-
-    # perparticle variables: sigma, epsilon, charge,
+    CNBForce.setGlobalParameter('kf', kf)
     CNBForce.addPerParticleParameter('charge')
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
