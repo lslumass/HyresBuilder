@@ -177,7 +177,7 @@ def HyresRNASystem(psf, system, ffs):
     CNBForce.setUseSwitchingFunction(use=True)
     CNBForce.setCutoffDistance(1.8*unit.nanometer)
     CNBForce.setSwitchingDistance(1.6*unit.nanometer)
-    CNBForce.addGlobalParameter('kf', kf)
+    CNBForce.addGlobalParameter('kf', kf) 
     CNBForce.addPerParticleParameter('charge')
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
@@ -187,30 +187,7 @@ def HyresRNASystem(psf, system, ffs):
         CNBForce.addParticle(perP)
 
     CNBForce.createExclusionsFromBonds(bondlist, 2)
-#    system.addForce(CNBForce)
-    formula = '(138.935456 / eps * charge1 * charge2) / r * exp(-kf * r);'+ \
-              'six = (sigma / r)^6; sigma = 0.5 * (sigma1 + sigma2); epsilon = sqrt(epsilon1 * epsilon2);'
-    CNBForce1 = CustomNonbondedForce(formula)
-    CNBForce1.setNonbondedMethod(nbforce.getNonbondedMethod())
-    CNBForce1.setUseSwitchingFunction(use=True)
-    CNBForce1.setSwitchingDistance(1.6*unit.nanometer)
-    CNBForce1.setCutoffDistance(1.8*unit.nanometer)
-    CNBForce1.addGlobalParameter('eps', ffs['er'])
-    CNBForce1.addGlobalParameter('kf', ffs['kf'])
-    
-    # perparticle variables: sigma, epsilon, charge,
-    CNBForce1.addPerParticleParameter('charge')
-    CNBForce1.addPerParticleParameter('sigma')
-    CNBForce1.addPerParticleParameter('epsilon')
-    for idx in range(nbforce.getNumParticles()):
-        particle = nbforce.getParticleParameters(idx)
-        if atoms[idx] == 'MG':
-            particle[0] = particle[0]*lmd
-        perP = [particle[0], particle[1], particle[2]]
-        CNBForce1.addParticle(perP)
-    
-    CNBForce1.createExclusionsFromBonds(bondlist, 2)
-    system.addForce(CNBForce1)
+    system.addForce(CNBForce)
 
     print('\n# add base stacking force')
     # base stakcing and paring
