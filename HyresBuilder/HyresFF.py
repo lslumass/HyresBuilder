@@ -178,7 +178,7 @@ def HyresRNASystem(psf, system, ffs):
     CNBForce.setUseSwitchingFunction(use=True)
     CNBForce.setCutoffDistance(1.8*unit.nanometer)
     CNBForce.setSwitchingDistance(1.6*unit.nanometer)
-    CNBForce.setGlobalParameter('kf', kf)
+    CNBForce.addGlobalParameter('kf', kf)
     CNBForce.addPerParticleParameter('charge')
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
