@@ -163,6 +163,7 @@ def HyresRNASystem(psf, system, ffs):
     lmd = ffs['lmd']
     ke = ffs['ke']
     er = ffs['er']
+    dh = ffs['dh']
     formula = f"""(ke/20.0*charge1*charge2)/r*exp(-r/dh));
                   ke{ke.value_in_unit(unit.kilojoule_per_mole)}; df={dh.value_in_unit(unit.angstrom)};
                """
