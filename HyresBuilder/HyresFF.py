@@ -373,7 +373,7 @@ def HyresRNASystem(psf, system, ffs):
 
 
 ###### for RNA_TEST System Only ######
-def TestRNASystem(psf, system, ffs):
+def SimpleRNASystem(psf, system, ffs):
     top = psf.topology
     # 2) constructe the force field
     print('\n################# constructe the HyRes force field ####################')
@@ -415,7 +415,6 @@ def TestRNASystem(psf, system, ffs):
     ke = ffs['ke']
     er = ffs['er']
     dh = ffs['dh']
-
     formula = '(4.0*epsilon*((sigma/r)^12-(sigma/r)^6)+(138.935456/eps*charge1*charge2)/r*exp(-kf*r));'+\
               'sigma=0.5*(sigma1+sigma2); epsilon=sqrt(epsilon1*epsilon2);'
     CNBForce = CustomNonbondedForce(formula)
