@@ -54,7 +54,7 @@ def HyresProteinSystem(psf, system, ffs):
     
     print('\n# add 1-4 nonbonded force')
     # add nonbondedforce of 1-4 interaction through custombondforece
-    formula = f"""(4.0*epsilon*six*(six-1.0)+(138.935456/er*charge1*charge2)/r*exp(-r/dh));
+    formula = f"""(4.0*epsilon*six*(six-1.0)+(138.935456/er*charge)/r*exp(-r/dh));
               six=(sigma/r)^6; er={er}; dh={dh.value_in_unit(unit.angstrom)}
               """
     Force14 = CustomBondForce(formula)
