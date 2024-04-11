@@ -34,7 +34,7 @@ def HyresProteinSystem(psf, system, ffs):
     er = ffs['er']
     formula = f"""(4.0*epsilon*((sigma/r)^12-(sigma/r)^6)+(138.935456/er*charge1*charge2)/r*exp(-r/dh));
               sigma=0.5*(sigma1+sigma2); epsilon=sqrt(epsilon1*epsilon2);
-              er={er}; dh={dh.value_in_unit(unit.angstrom)}
+              er={er}; dh={dh.value_in_unit(unit.nanometer)}
               """
     CNBForce = CustomNonbondedForce(formula)
     CNBForce.setNonbondedMethod(nbforce.getNonbondedMethod())
@@ -64,7 +64,7 @@ def HyresProteinSystem(psf, system, ffs):
     for idx in range(nbforce.getNumExceptions()):
         ex = nbforce.getExceptionParameters(idx)
         Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
-    #system.addForce(Force14)
+    system.addForce(Force14)
     
     print('\n# add custom hydrogen bond force')
     # Add the Custom hydrogen bond force
