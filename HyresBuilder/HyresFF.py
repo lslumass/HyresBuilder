@@ -64,7 +64,7 @@ def HyresProteinSystem(psf, system, ffs):
     for idx in range(nbforce.getNumExceptions()):
         ex = nbforce.getExceptionParameters(idx)
         Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
-    #system.addForce(Force14)
+    system.addForce(Force14)
     
     print('\n# add custom hydrogen bond force')
     # Add the Custom hydrogen bond force
