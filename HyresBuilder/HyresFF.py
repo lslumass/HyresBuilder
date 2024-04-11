@@ -84,7 +84,7 @@ def HyresProteinSystem(psf, system, ffs):
             cosdoffon2 = cosdcutoff*cosdcutoff-cosdcuton*cosdcuton;
             cosdcutoff = -cos(CTOFHA); cosdcuton = -cos(CTONHA); cosd = cos(angle(a1,d1,d2));
             CTOFHB = 0.5; CTONHB = 0.4; CTOFHA = {np.deg2rad(91)}; CTONHA = {np.deg2rad(90)};
-            sigma = {sigma_hb.value_in_unit(unit.nanometer)}; epsilon = {eps_hb.value_in_unit(unit.kilocalorie_per_mole)}
+            sigma = {sigma_hb.value_in_unit(unit.nanometer)}; epsilon = {eps_hb.value_in_unit(unit.kilojole_per_mole)}
     """    
     Hforce = CustomHbondForce(formula)
     Hforce.setNonbondedMethod(nbforce.getNonbondedMethod())
