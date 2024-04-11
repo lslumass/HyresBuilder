@@ -30,16 +30,17 @@ def HyresProteinSystem(psf, system, ffs):
     
     print('\n# add custom nonbondedforce')
     # add custom nonbondedforce: CNBForce
-    formula = '(4.0 * epsilon * six * (six - 1.0) + (138.935456 / eps * charge1 * charge2) / r * exp(-kf * r));'+ \
-              'six = (sigma / r)^6; sigma = 0.5 * (sigma1 + sigma2); epsilon = sqrt(epsilon1 * epsilon2);'
+    dh = ffs['dh']
+    er = ffs['er']
+    formula = f"""(4.0*epsilon*six*(six-1.0)+(138.935456/er*charge1*charge2)/r*exp(-r/dh));
+              six=(sigma/r)^6; sigma=0.5*(sigma1+sigma2); epsilon=sqrt(epsilon1*epsilon2);
+              er={er}; dh={dh.value_in_unit(unit.angstrom)}
+              """
     CNBForce = CustomNonbondedForce(formula)
     CNBForce.setNonbondedMethod(nbforce.getNonbondedMethod())
     CNBForce.setUseSwitchingFunction(use=True)
     CNBForce.setSwitchingDistance(1.6*unit.nanometer)
     CNBForce.setCutoffDistance(1.8*unit.nanometer)
-    CNBForce.addGlobalParameter('eps', ffs['er'])
-    CNBForce.addGlobalParameter('kf', ffs['kf'])
-    
     # perparticle variables: sigma, epsilon, charge,
     CNBForce.addPerParticleParameter('charge')
     CNBForce.addPerParticleParameter('sigma')
@@ -59,7 +60,7 @@ def HyresProteinSystem(psf, system, ffs):
     'step(r - Ron) * step(Ron - r)) * '+ \
     '(((Roff2 - r2)^2 * (Roff2 + 2.0 * r2 - 3.0 * Ron2)) / '+ \
     '(Roff2 - Ron2)^3)) * '+ \
-    '(4.0 * epsilon * six * (six - 1.0) + (138.935456 / eps * charge) / r * exp(-kf * r));'+ \
+    '(4.0 * epsilon * six * (six - 1.0) + (138.935456 / eps * charge) / r * exp(-r/dh));'+ \
     'six = (sigma / r)^6; '+ \
     'Ron2 = Ron * Ron; Roff2 = Roff * Roff; r2 = r * r; '
     Force14 = CustomBondForce(formula)
