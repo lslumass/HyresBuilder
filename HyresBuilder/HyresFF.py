@@ -49,26 +49,15 @@ def HyresProteinSystem(psf, system, ffs):
         particle = nbforce.getParticleParameters(idx)
         perP = [particle[0], particle[1], particle[2]]
         CNBForce.addParticle(perP)
-    
     CNBForce.createExclusionsFromBonds(bondlist, 3)
     system.addForce(CNBForce)
     
     print('\n# add 1-4 nonbonded force')
     # add nonbondedforce of 1-4 interaction through custombondforece
-    formula = '(step(Ron - r) + '+ \
-    '(step(r - Ron) * step(Roff - r) - '+ \
-    'step(r - Ron) * step(Ron - r)) * '+ \
-    '(((Roff2 - r2)^2 * (Roff2 + 2.0 * r2 - 3.0 * Ron2)) / '+ \
-    '(Roff2 - Ron2)^3)) * '+ \
-    '(4.0 * epsilon * six * (six - 1.0) + (138.935456 / eps * charge) / r * exp(-r/dh));'+ \
-    'six = (sigma / r)^6; '+ \
-    'Ron2 = Ron * Ron; Roff2 = Roff * Roff; r2 = r * r; '
+    formula = f"""(4.0*epsilon*six*(six-1.0)+(138.935456/er*charge1*charge2)/r*exp(-r/dh));
+              six=(sigma/r)^6; er={er}; dh={dh.value_in_unit(unit.angstrom)}
+              """
     Force14 = CustomBondForce(formula)
-    Force14.addGlobalParameter('eps', ffs['er'])
-    Force14.addGlobalParameter('Ron', 1.6*unit.nanometer)
-    Force14.addGlobalParameter('Roff', 1.8*unit.nanometer)
-    Force14.addGlobalParameter('kf', ffs['kf'])
-    
     Force14.addPerBondParameter('charge')
     Force14.addPerBondParameter('sigma')
     Force14.addPerBondParameter('epsilon')
@@ -111,7 +100,6 @@ def HyresProteinSystem(psf, system, ffs):
             Os.append(int(atom.index))
         if atom.name == "C":
             Cs.append(int(atom.index))
-    
     for idx in range(len(Hs)):
         Hforce.addDonor(Hs[idx], Ns[idx], -1)
         Hforce.addAcceptor(Os[idx], -1, -1)
