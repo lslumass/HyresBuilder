@@ -12,9 +12,7 @@ python setup.py install
 This package builds HyRes peptide structure from sequence.    
 ### for a single sequence:   
 Take tdp_43 as an example, to create HyRes tdp_43, one can just run:   
-'''
-python simple_example.py tdp_43.seq tdp_43_hyres.pdb   
-'''
+`python simple_example.py tdp-43-lcd.seq tdp-43_hyres.pdb`   
 Please see the [examples](examples) for details.   
 To obtain psf file and further run simulation on OpenMM, please follow these [instructions](https://github.com/wayuer19/HyRes_GPU).   
 >[!NOTE]
