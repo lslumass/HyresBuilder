@@ -151,7 +151,7 @@ def HyresRNASystem(psf, system, ffs):
     er = ffs['er']
     dh = ffs['dh']
     formula = f"""(138.935456/er*charge1*charge2)/r*exp(-r/dh);
-                  er={'er'}; dh={dh.value_in_unit(unit.nanometer)}
+                  er={er}; dh={dh.value_in_unit(unit.nanometer)}
                """ 
     CNBForce = CustomNonbondedForce(formula)
     CNBForce.setName("LJ_ElecForce")
