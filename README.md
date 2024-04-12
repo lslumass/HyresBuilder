@@ -10,10 +10,11 @@ python setup.py install
 
 ## Basic usage:   
 This package builds HyRes peptide structure from sequence.    
+Please follow the [examples](examples) for details of the script and sequence files.   
+
 ### for a single sequence:   
 Take tdp_43 as an example, to create HyRes tdp_43, one can just run:   
-`python simple_example.py tdp-43-lcd.seq tdp-43_hyres.pdb`   
-Please see the [examples](examples) for details.   
+`python simple_example.py tdp-43-lcd.seq tdp-43_hyres.pdb`     
 
 ### for a set of sequence:   
 To quickly build a series of peptides, one can run:   
