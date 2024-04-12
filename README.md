@@ -21,7 +21,7 @@ To quickly build a series of peptides, one can run:
 `python bactch_example.py idps.seq`   
 the first line in idps.seq gives the peptide names (also used as the pdb file name), and then the sequence in one line.   
 
-
+### then:
 To obtain psf file and further run simulation on OpenMM, please follow these [instructions](https://github.com/wayuer19/HyRes_GPU).   
 >[!NOTE]
 >After obtaining the pdb files, the initial structures need to be relaxed to get more reasonable state.   
