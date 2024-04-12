@@ -4,7 +4,7 @@ import HyresBuilder
 import Bio.PDB
 
 """
-Usage: python peptide_build.py seq_file output_file_name
+Usage: python peptide_build.py seq_file
 """
 
 # read each line for each protein
