@@ -148,14 +148,10 @@ def HyresRNASystem(psf, system, ffs):
 
     print('\n# add custom nonbondedforce')
     # add custom nonbondedforce: CNBForce
-    ## scale MG to effective charge through lmd
-    lmd = ffs['lmd']
-    ke = ffs['ke']
     er = ffs['er']
     dh = ffs['dh']
-    formula = f"""(ke/er*charge1*charge2)/r*exp(-r/dh);
-                  ke={ke.value_in_unit(unit.kilojoule_per_mole)};
-                  dh={dh.value_in_unit(unit.nanometer)}
+    formula = f"""(138.935456/er*charge1*charge2)/r*exp(-r/dh);
+                  er={'er'}; dh={dh.value_in_unit(unit.nanometer)}
                """ 
     CNBForce = CustomNonbondedForce(formula)
     CNBForce.setName("LJ_ElecForce")
@@ -163,15 +159,11 @@ def HyresRNASystem(psf, system, ffs):
     CNBForce.setUseSwitchingFunction(use=True)
     CNBForce.setCutoffDistance(1.8*unit.nanometer)
     CNBForce.setSwitchingDistance(1.6*unit.nanometer)
-    CNBForce.addGlobalParameter('er', er) 
     CNBForce.addPerParticleParameter('charge')
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
-        if atoms[idx] == 'MG':
-            particle[0] = particle[0]*lmd
         perP = [particle[0]]
         CNBForce.addParticle(perP)
-
     CNBForce.createExclusionsFromBonds(bondlist, 2)
     system.addForce(CNBForce)
 
@@ -181,7 +173,7 @@ def HyresRNASystem(psf, system, ffs):
     eps_base = ffs['eps_base']
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.0, 'GG':1.0, 'GC':1.0, 'GU':1.0,
               'CA':0.4, 'CG':0.5, 'CC':0.5, 'CU':0.3, 'UA':0.3, 'UG':0.3, 'UC':0.2, 'UU':0.0,
-              'A-U':0.37, 'C-G':0.57, 'G-U':0.72}
+              'A-U':0.46, 'C-G':0.69}
 
     # get all the groups of bases
     grps = []
@@ -212,41 +204,6 @@ def HyresRNASystem(psf, system, ffs):
         fstack.addBond(sp[0], [sp[1]])
     print('    add ', fstack.getNumBonds(), 'stacking pairs')
     system.addForce(fstack)
-
-    # general hbond force
-    d1, d2, a = [], [], []
-    for atom in psf.topology.atoms():
-        if atom.name == 'NC' and atom.residue.name in ['G', 'A']:
-            d1.append(int(atom.index))
-            d2.append(int(atom.index)-1)
-        elif atom.name == 'ND' and atom.residue.name == 'G':
-            d1.append(int(atom.index))
-            d2.append(int(atom.index)-3)
-        elif atom.name == 'NB' and atom.residue.name in ['U', 'C']:
-            d1.append(int(atom.index))
-            d2.append(int(atom.index)-1)
-        elif atom.name in ['NB', 'NC', 'ND']:
-            a.append(int(atom.index))
-
-    print('\n# add general hbond between base pairs')
-    formula = 'eps_gen*(5.0*(g0/r)^10-6.0*(g0/r)^6)*step(cos3)*cos3;'+\
-              'r=distance(a1,d1); cos3=-2*cos(phi)^3; phi=angle(a1,d1,d2);'
-    pairGen = CustomHbondForce(formula)
-    pairGen.setName('GeneralPairForce')
-    pairGen.setNonbondedMethod(nbforce.getNonbondedMethod())
-    pairGen.addGlobalParameter('eps_gen', ffs['eps_gen'])
-    pairGen.addGlobalParameter('g0', 0.304*unit.nanometers)
-    pairGen.setCutoffDistance(0.65*unit.nanometers)
-    for idx in range(len(d1)):
-        pairGen.addDonor(d1[idx], d2[idx], -1)
-    for idx in range(len(a)):
-        pairGen.addAcceptor(a[idx], -1, -1)
-    for i in range(len(d1)):
-        for j in range(len(a)):
-            if d1[i] == a[j]:
-                pairGen.addExclusion(i, j)
-    print(pairGen.getNumAcceptors(), pairGen.getNumDonors(), 'General')
-    system.addForce(pairGen)
 
     # base pairing
     print('\n# add base pair force')
@@ -298,36 +255,42 @@ def HyresRNASystem(psf, system, ffs):
                 c_p.append(int(atom.index))
 
     # add A-U pair through CustomHbondForce
+    eps_AU = eps_base*scales['A-U']
+    r_au = 0.304*unit.nanometer
+    r_au2 = 0.37*unit.nanometer
+    
     if num_A != 0 and num_U != 0:
-        formula = 'eps_AU*(5.0*(r_au/r)^10-6.0*(r_au/r)^6 + 5*(r_au2/r2)^10-6.0*(r_au2/r2)^6)*step(cos3)*cos3;'+\
-                  'r=distance(a1,d1); r2=distance(a3,d2); cos3=-2*cos(phi)^3; phi=angle(d1,a1,a2);'
+        formula = f"""eps_AU*(5.0*(r_au/r)^10-6.0*(r_au/r)^6 + 5*(r_au2/r2)^10-6.0*(r_au2/r2)^6)*step(cos3)*cos3;
+                  r=distance(a1,d1); r2=distance(a3,d2); cos3=-2*cos(phi)^3; phi=angle(d1,a1,a2);
+                  eps_AU={eps_AU.value_in_unit(unit.kilojoule_per_mole)};
+                  r_au={r_au.value_in_unit(unit.nanometer)}; r_au2={r_au2.value_in_unit(unit.nanometer)}
+                  """
         pairAU = CustomHbondForce(formula)
         pairAU.setName('AUpairForce')
         pairAU.setNonbondedMethod(nbforce.getNonbondedMethod())
-        pairAU.addGlobalParameter('eps_AU', eps_base*scales['A-U'])
-        pairAU.addGlobalParameter('r_au', 0.304*unit.nanometers)
-        pairAU.addGlobalParameter('r_au2', 0.40*unit.nanometers)
         pairAU.setCutoffDistance(0.65*unit.nanometer)
-
         for idx in range(len(a_c)):
             pairAU.addAcceptor(a_c[idx], a_b[idx], a_d[idx])
         for idx in range(len(u_b)):
             pairAU.addDonor(u_b[idx], u_c[idx], -1)
         system.addForce(pairAU)
         print(pairAU.getNumAcceptors(), pairAU.getNumDonors(), 'AU')
-
+        
     # add C-G pair through CustomHbondForce
+    eps_CG = eps_base*scales['C-G']
+    r_cg = 0.304*unit.nanometer
+    r_cg2 = 0.35*unit.nanometer
+    
     if num_C != 0 and num_G != 0:
-        formula = 'eps_CG*(5.0*(r_cg/r)^10-6.0*(r_cg/r)^6 + 5*(r_cg2/r2)^10-6.0*(r_cg2/r2)^6)*step(cos3)*cos3;'+\
-                  'r=distance(a1,d1); r2=distance(a3,d2); cos3=-2*cos(phi)^3; phi=angle(d1,a1,a2);'
+        formula = f"""eps_CG*(5.0*(r_cg/r)^10-6.0*(r_cg/r)^6 + 5*(r_cg2/r2)^10-6.0*(r_cg2/r2)^6)*step(cos3)*cos3;
+                  r=distance(a1,d1); r2=distance(a3,d2); cos3=-2*cos(phi)^3; phi=angle(d1,a1,a2);
+                  eps_CG={eps_CG.value_in_unit(unit.kilojoule_per_mole)};
+                  r_cg={r_cg.value_in_unit(unit.nanometer)}; r_cg2={r_cg2.value_in_unit(unit.nanometer)}
+                  """
         pairCG = CustomHbondForce(formula)
         pairCG.setName('CGpairForce')
         pairCG.setNonbondedMethod(nbforce.getNonbondedMethod())
-        pairCG.addGlobalParameter('eps_CG', eps_base*scales['C-G'])
-        pairCG.addGlobalParameter('r_cg', 0.304*unit.nanometers)
-        pairCG.addGlobalParameter('r_cg2', 0.35*unit.nanometers)
         pairCG.setCutoffDistance(0.65*unit.nanometer)
-
         for idx in range(len(g_c)):
             pairCG.addAcceptor(g_c[idx], g_b[idx], g_d[idx])
         for idx in range(len(c_b)):
@@ -335,28 +298,9 @@ def HyresRNASystem(psf, system, ffs):
         system.addForce(pairCG)
         print(pairCG.getNumAcceptors(), pairCG.getNumDonors(), 'CG')
 
-    # add G-U pair through CustomHbondForce
-    if num_U != 0 and num_G != 0:
-        formula = 'eps_GU*(5.0*(r_gu/r)^10-6.0*(r_gu/r)^6)*step(cos3)*cos3;'+\
-                  'r=distance(a1,d1); cos3=-2*cos(phi)^3; phi=angle(d1,a1,a2);'
-        pairGU = CustomHbondForce(formula)
-        pairGU.setName('GUpairForce')
-        pairGU.setNonbondedMethod(nbforce.getNonbondedMethod())
-        pairGU.addPerDonorParameter('eps_GU')
-        pairGU.addGlobalParameter('r_gu', 0.304*unit.nanometers)
-        pairGU.setCutoffDistance(0.65*unit.nanometers)
-
-        for idx in range(len(g_c)):
-            pairGU.addAcceptor(g_c[idx], g_b[idx], -1)
-        for idx in range(len(u_b)):
-            pairGU.addDonor(u_b[idx], -1, -1, [eps_base*scales['G-U']])
-        system.addForce(pairGU)
-        print(pairGU.getNumAcceptors(), pairGU.getNumDonors(), 'GU')
-
     # delete the NonbondedForce and HarmonicAngleForce
     system.removeForce(nbforce_index)
     system.removeForce(hmangle_index)
-
     return system
 
 
