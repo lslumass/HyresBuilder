@@ -4,7 +4,7 @@ Thanks for the contribution of PeptideBuilder.
 Shanlong Li    
 
 ## Installation: 
-git clone https://github.com/wayuer19/HyresBuilder.git   
+git clone https://github.com/lslumass/HyresBuilder.git   
 python setup.py install
 
 
