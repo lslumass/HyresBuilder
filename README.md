@@ -1,10 +1,10 @@
 # HyresBuilder: A simple package for building HyRes model.   
-This package is forked from [PeptideBuilder] (https://github.com/lslumass/HyresBuilder.git) and we do some modifications for HyRes.   
+This package is forked from [PeptideBuilder](https://github.com/clauswilke/PeptideBuilder) and we do some modifications for HyRes.   
 Thanks for the contribution of PeptideBuilder.    
 Shanlong Li    
 
 ## Installation: 
-git clone [https://github.com/wayuer19/HyresBuilder.git](https://github.com/lslumass/HyresBuilder.git)   
+git clone https://github.com/wayuer19/HyresBuilder.git   
 python setup.py install
 
 
