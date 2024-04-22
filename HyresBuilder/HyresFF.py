@@ -173,7 +173,7 @@ def HyresRNASystem(psf, system, ffs):
     eps_base = ffs['eps_base']
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.0, 'GG':1.0, 'GC':1.0, 'GU':1.0,
               'CA':0.4, 'CG':0.5, 'CC':0.5, 'CU':0.3, 'UA':0.3, 'UG':0.3, 'UC':0.2, 'UU':0.0,
-              'A-U':0.5, 'C-G':0.75}
+              'A-U':0.4, 'C-G':0.6}
 
     # get all the groups of bases
     grps = []
