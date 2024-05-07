@@ -8,7 +8,7 @@ The package consists of the following Python modules:
 * Geometry
 """
 __version__ = "2.3.3"
-#from .HyresBuilder import *
+from .HyresBuilder import *
 #from .Geometry import *
 #from .RNAbuilder import *
 #from .HyresFF import *
