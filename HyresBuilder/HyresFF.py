@@ -33,7 +33,7 @@ def HyresProteinSystem(psf, system, ffs):
     # add custom nonbondedforce: CNBForce
     dh = ffs['dh']
     er = ffs['er']
-    formula = f"""(4.0*epsilon*(epsilon*six*(six-1.0))+(138.935456/er*charge1*charge2)/r*exp(-r/dh));
+    formula = f"""(4.0*epsilon*six*(six-1.0)+(138.935456/er*charge1*charge2)/r*exp(-r/dh));
               six=(sigma/r)^6; sigma=0.5*(sigma1+sigma2); epsilon=sqrt(epsilon1*epsilon2);
               er={er}; dh={dh.value_in_unit(unit.nanometer)}
               """
