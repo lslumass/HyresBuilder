@@ -1,6 +1,6 @@
 """
 This package is used to constructe Hyres Force Field
-Athour: Shanlong Li
+Athours: Shanlong Li, Xiping Gong, Yumeng Zhang
 Date: Mar 9, 2024
 Modified: Apr 24, 2024
 """
