@@ -125,7 +125,7 @@ def SimpleRNASystem(psf, system, ffs):
             hmangle = force
             hmangle_index = force_index
     print('\n# get the NonBondedForce and HarmonicAngleForce:', nbforce.getName(), hmangle.getName())
-
+    
     print('\n# get bondlist')
     # get bondlist
     bondlist = []
@@ -135,7 +135,7 @@ def SimpleRNASystem(psf, system, ffs):
     atoms = []
     for atom in psf.topology.atoms():
         atoms.append(atom.name)
-
+    
     print('\n# replace HarmonicAngle with Restricted Bending (ReB) potential')
     # Custom Angle Force
     ReB = CustomAngleForce("kt*(theta-theta0)^2/(sin(theta)^2);")
@@ -146,28 +146,40 @@ def SimpleRNASystem(psf, system, ffs):
         ang = hmangle.getAngleParameters(angle_idx)
         ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4]])
     system.addForce(ReB)
-
+    
     print('\n# add custom nonbondedforce')
-    # add custom nonbondedforce: CNBForce
-    er = ffs['er']
     dh = ffs['dh']
-    formula = f"""(138.935456/er*charge1*charge2)/r*exp(-r/dh);
-                  er={er}; dh={dh.value_in_unit(unit.nanometer)}
-               """ 
+    lmd = ffs['lmd']
+    er = ffs['er']
+    # add custom nonbondedforce: CNBForce, here only charge-charge interactions
+    formula = f"""138.935456/er*charge1*charge2/r*exp(-r/dh)*kpmg;
+                dh={dh.value_in_unit(unit.nanometer)}; er={er}; kpmg=select(lb1+lb2,1,lmd); lmd={lmd}
+              """
     CNBForce = CustomNonbondedForce(formula)
     CNBForce.setName("LJ_ElecForce")
     CNBForce.setNonbondedMethod(nbforce.getNonbondedMethod())
     CNBForce.setUseSwitchingFunction(use=True)
-    CNBForce.setCutoffDistance(1.8*unit.nanometer)
-    CNBForce.setSwitchingDistance(1.6*unit.nanometer)
+    #CNBForce.setUseLongRangeCorrection(use=True)
+    CNBForce.setCutoffDistance(1.8*unit.nanometers)
+    CNBForce.setSwitchingDistance(1.6*unit.nanometers)
     CNBForce.addPerParticleParameter('charge')
+    CNBForce.addPerParticleParameter('lb')
+    
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
-        perP = [particle[0]]
+        if atoms[idx] == 'P':
+            lb = 1
+        elif atoms[idx] == 'MG':
+            lb = -1
+        else:
+            lb = 2
+        perP = [particle[0], lb]
         CNBForce.addParticle(perP)
+    
     CNBForce.createExclusionsFromBonds(bondlist, 2)
     system.addForce(CNBForce)
-
+    
+    
     print('\n# add base stacking force')
     # base stakcing and paring
     # define relative strength of base pairing and stacking
@@ -175,7 +187,6 @@ def SimpleRNASystem(psf, system, ffs):
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.0, 'GG':1.0, 'GC':1.0, 'GU':1.0,
               'CA':0.4, 'CG':0.5, 'CC':0.5, 'CU':0.3, 'UA':0.3, 'UG':0.3, 'UC':0.2, 'UU':0.0,
               'A-U':0.42, 'C-G':0.58}
-
     # get all the groups of bases
     grps = []
     for atom in psf.topology.atoms():
@@ -186,7 +197,6 @@ def SimpleRNASystem(psf, system, ffs):
             elif atom.residue.name in ['C', 'U']:
                 grps.append([atom.residue.name, [atom.index, atom.index+1]])
                 grps.append([atom.residue.name, [atom.index+1, atom.index+2]])
-
     # base stacking
     fstack = CustomCentroidBondForce(2, "eps_stack*(5*(r0/r)^10-6.0*(r0/r)^6); r=distance(g1,g2);")
     fstack.setName('StackingForce')
@@ -205,7 +215,7 @@ def SimpleRNASystem(psf, system, ffs):
         fstack.addBond(sp[0], [sp[1]])
     print('    add ', fstack.getNumBonds(), 'stacking pairs')
     system.addForce(fstack)
-
+    
     # base pairing
     print('\n# add base pair force')
     a_b, a_c, a_d = [], [], []
@@ -254,7 +264,6 @@ def SimpleRNASystem(psf, system, ffs):
                 c_c.append(int(atom.index))
             elif atom.name == 'P':
                 c_p.append(int(atom.index))
-
     # add A-U pair through CustomHbondForce
     eps_AU = eps_base*scales['A-U']
     r_au = 0.304*unit.nanometer
@@ -284,7 +293,7 @@ def SimpleRNASystem(psf, system, ffs):
     
     if num_C != 0 and num_G != 0:
         formula = f"""eps_CG*(5.0*(r_cg/r)^10-6.0*(r_cg/r)^6 + 5*(r_cg2/r2)^10-6.0*(r_cg2/r2)^6)*step(cos3)*cos3;
-                  r=distance(a1,d1); r2=distance(a3,d2); cos3=-2*cos(phi)^3; phi=angle(d1,a1,a2);
+                  r=distance(a1,d1); r2=distance(a3,d2); cos3=-2*cos(phi)^3; phi=angle(d1,a1,a2); psi=dihedral(a3,a1,d1,d2);
                   eps_CG={eps_CG.value_in_unit(unit.kilojoule_per_mole)};
                   r_cg={r_cg.value_in_unit(unit.nanometer)}; r_cg2={r_cg2.value_in_unit(unit.nanometer)}
                   """
@@ -298,7 +307,7 @@ def SimpleRNASystem(psf, system, ffs):
             pairCG.addDonor(c_b[idx], c_c[idx], -1)
         system.addForce(pairCG)
         print(pairCG.getNumAcceptors(), pairCG.getNumDonors(), 'CG')
-
+    
     # delete the NonbondedForce and HarmonicAngleForce
     system.removeForce(nbforce_index)
     system.removeForce(hmangle_index)

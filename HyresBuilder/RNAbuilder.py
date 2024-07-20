@@ -1,5 +1,5 @@
 """
-this package is used to generate HyRes_RNA model
+this package is used to generate CG_RNA model
 Athour: Shanlong Li
 Date: Nov 13, 2023
 """
