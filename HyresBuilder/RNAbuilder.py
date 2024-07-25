@@ -29,8 +29,8 @@ def transform(ref, atoms):
     Px, Py, Pz = atoms[0][6], atoms[0][7], atoms[0][8]
     dx, dy, dz = Px-refx, Py-refy, Pz-refz
     for atom in atoms:
-        atom[6] -= dx
-        atom[7] -= dy
+        atom[6] -= (dx+9999)
+        atom[7] -= (dy+9999)
         atom[8] -= dz
     return atoms
 
