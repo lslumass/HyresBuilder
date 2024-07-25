@@ -40,7 +40,7 @@ def build(seqs, out):
         print('REMARK  CREATE BY RNABUILDER/SHANLONG LI', file=f)
         idx = 0
         res = 0
-        ref = [0.0, 0.0, 0.0]
+        ref = [9999.0, 9999.0, 9999.0]
         for seq in seqs:
             atoms = read_map(seq)
             for atom in atoms:
