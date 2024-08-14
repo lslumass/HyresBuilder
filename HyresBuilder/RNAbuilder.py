@@ -34,11 +34,11 @@ def transform(ref, atoms, theta):
         atom[8] -= dz
 
     axis = np.array([refx, refy, refz]) - np.array([atoms[0][6], atoms[0][7], atoms[0][8]])
-    axis = axis / np.linalg.norm(axis)
+    v_normal = axis / np.linalg.norm(axis)
     cos_theta, sin_theta = np.cos(theta), np.sin(theta)
-    cross, dot = np.cross(axis, atoms), np.dot(atoms, axis)
+    cross, dot = np.cross(v_normal, atoms), np.dot(atoms, v_normal)
 
-    new_atoms = (atoms * cos_theta + cross*sin_theta + axis*dot[:, np.newaxis]*(1-cos_theta))
+    new_atoms = (atoms * cos_theta + cross*sin_theta + v_normal*dot[:, np.newaxis]*(1-cos_theta))
     return new_atoms
 
 def build(seqs, out):
