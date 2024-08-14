@@ -24,7 +24,7 @@ def read_map(seq):
         atoms.append(atom)
     return atoms
 
-def transform(ref, atoms):
+def transform(ref, atoms, theta):
     refx, refy, refz = ref[0], ref[1], ref[2]
     Px, Py, Pz = atoms[0][6], atoms[0][7], atoms[0][8]
     dx, dy, dz = Px-refx, Py-refy, Pz-refz
@@ -32,7 +32,14 @@ def transform(ref, atoms):
         atom[6] -= dx
         atom[7] -= dy
         atom[8] -= dz
-    return atoms
+
+    axis = np.array([refx, refy, refz]) - np.array([atoms[0][6], atoms[0][7], atoms[0][8]])
+    axis = axis / np.linalg.norm(axis)
+    cos_theta, sin_theta = np.cos(theta), np.sin(theta)
+    cross, dot = np.cross(axis, atoms), np.dot(atoms, axis)
+
+    new_atoms = (atoms * cos_theta + cross*sin_theta + axis*dot[:, np.newaxis]*(1-cos_theta))
+    return new_atoms
 
 def build(seqs, out):
     with open(out, 'w') as f:
@@ -40,13 +47,13 @@ def build(seqs, out):
         print('REMARK  CREATE BY RNABUILDER/SHANLONG LI', file=f)
         idx = 0
         res = 0
-        ref = [9999.0, 9999.0, 9999.0]
+        ref = [9000.0, 9000.0, 9000.0]
         for seq in seqs:
             atoms = read_map(seq)
             for atom in atoms:
                 atom[1] += idx
                 atom[5] += res
-            atoms = transform(ref, atoms)
+            atoms = transform(ref, atoms, np.pi/4)
             ref = [atoms[1][6], atoms[1][7], atoms[1][8] + 3.63]
             idx += len(atoms)
             res += 1
