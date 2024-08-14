@@ -33,7 +33,7 @@ def transform(ref, atoms, theta):
         atom[7] -= dy
         atom[8] -= dz
 
-    axis = np.array([refx, refy, refz]) - np.array([atoms[0][6], atoms[0][7], atoms[0][8]])
+    axis = np.array([dx, dy, dz])
     v_normal = axis / np.linalg.norm(axis)
     cos_theta, sin_theta = np.cos(theta), np.sin(theta)
     cross, dot = np.cross(v_normal, atoms), np.dot(atoms, v_normal)
