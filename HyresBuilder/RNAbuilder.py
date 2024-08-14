@@ -36,12 +36,12 @@ def transform(ref, atoms, theta):
     axis = np.array([dx, dy, dz])
     v_normal = axis / np.linalg.norm(axis)
     cos_theta, sin_theta = np.cos(theta), np.sin(theta)
-    new_atoms = []
     for atom in atoms:
-        cross, dot = np.cross(v_normal, atom), np.dot(v_normal, atom)
-        new_atom = (atom * cos_theta + cross*sin_theta + v_normal*dot[:, np.newaxis]*(1-cos_theta))
-        new_atoms.append(new_atom)
-    return new_atoms
+        crds = np.array(atom[6], atom[7], atom[8])
+        cross, dot = np.cross(v_normal, crds), np.dot(v_normal, crds)
+        new_crds = (crds * cos_theta + cross*sin_theta + v_normal*dot[:, np.newaxis]*(1-cos_theta))
+        atom[6], atom[7], atom[8] = new_crds[0], new_crds[1], new_crds[2]
+    return atoms
 
 def build(seqs, out):
     with open(out, 'w') as f:
