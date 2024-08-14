@@ -43,7 +43,7 @@ def transform(ref, atoms, theta):
         atom[6], atom[7], atom[8] = new_crds[0], new_crds[1], new_crds[2]
     return atoms
 
-def build(seqs, out):
+def build(seqs, out, theta):
     with open(out, 'w') as f:
         print('REMARK  HyRes RNA', file=f)
         print('REMARK  CREATE BY RNABUILDER/SHANLONG LI', file=f)
@@ -55,7 +55,7 @@ def build(seqs, out):
             for atom in atoms:
                 atom[1] += idx
                 atom[5] += res
-            atoms = transform(ref, atoms, np.pi/4)
+            atoms = transform(ref, atoms, theta)
             ref = [atoms[1][6], atoms[1][7], atoms[1][8] + 3.63]
             idx += len(atoms)
             res += 1
