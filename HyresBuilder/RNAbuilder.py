@@ -37,7 +37,7 @@ def transform(ref, atoms, theta):
     v_normal = axis / np.linalg.norm(axis)
     cos_theta, sin_theta = np.cos(theta), np.sin(theta)
     for atom in atoms:
-        crds = np.array(atom[6], atom[7], atom[8])
+        crds = np.array([atom[6], atom[7], atom[8]])
         cross, dot = np.cross(v_normal, crds), np.dot(v_normal, crds)
         new_crds = (crds * cos_theta + cross*sin_theta + v_normal*dot[:, np.newaxis]*(1-cos_theta))
         atom[6], atom[7], atom[8] = new_crds[0], new_crds[1], new_crds[2]
