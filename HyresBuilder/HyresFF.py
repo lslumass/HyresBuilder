@@ -198,7 +198,12 @@ def SimpleRNASystem(psf, system, ffs):
                 grps.append([atom.residue.name, [atom.index, atom.index+1]])
                 grps.append([atom.residue.name, [atom.index+1, atom.index+2]])
     # base stacking
-    fstack = CustomCentroidBondForce(2, "eps_stack*(5*(r0/r)^10-6.0*(r0/r)^6); r=distance(g1,g2);")
+    formula = f"""eps_stack*(5*(r0/r)^10-6.0*(r0/r)^6)*sw;
+        sw = step(rcuton-r)+step(r-rcuton)*(step(rcutoff-r)-step(rcuton-r))*roff2*roff2*(roff2-3.0*ron2)/roffon2^3;
+        roff2 = rcutoff*rcutoff-r*r; ron2 = rcuton*rcuton-r*r; roffon2 = rcutoff*rcutoff-rcuton*rcuton;
+        rcutoff = 0.8; rcuton = 0.7; r=distance(g1, g2);
+"""
+    fstack = CustomCentroidBondForce(2, formula)
     fstack.setName('StackingForce')
     fstack.addPerBondParameter('eps_stack')
     fstack.addGlobalParameter('r0', 0.34*unit.nanometers)
