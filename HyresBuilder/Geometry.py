@@ -588,6 +588,9 @@ class ProGeo(Geo):
         self.C_N_CA_angle = 121.382215820277
 
         self.N_H_length = 0.98
+        self.CA_N_H_angle = 120.0
+        self.C_CA_N_H_diangle = 180.0
+
         self.CA_CB_length = 1.94
         self.C_CA_CB_angle = 121.7
         self.N_C_CA_CB_diangle = 120.0
