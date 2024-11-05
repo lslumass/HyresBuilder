@@ -1,15 +1,15 @@
-import importlib.resources as pkg_res
+import pkg_resources as pkg_res
 
 def load_ff(model='protein'):
     if model == 'protein':
-        path1 = pkg_res.path("HyresBuilder", "top_hyres_GPU.inp")
-        path2 = pkg_res.path("HyresBuilder", "param_hyres_GPU.inp")
+        path1 = pkg_res.resource_filename("HyresBuilder", "top_hyres_GPU.inp")
+        path2 = pkg_res.resource_filename("HyresBuilder", "param_hyres_GPU.inp")
     elif model == 'RNA':
-        path1 = pkg_res.path("HyresBuilder", "top_RNA.inp")
-        path2 = pkg_res.path("HyresBuilder", "param_RNA.inp")
+        path1 = pkg_res.resource_filename("HyresBuilder", "top_RNA.inp")
+        path2 = pkg_res.resource_filename("HyresBuilder", "param_RNA.inp")
     elif model == 'ATP':
-        path1 = pkg_res.path("HyresBuilder", "top_ATP.inp")
-        path2 = pkg_res.path("HyresBuilder", "param_ATP.inp")
+        path1 = pkg_res.resource_filename("HyresBuilder", "top_ATP.inp")
+        path2 = pkg_res.resource_filename("HyresBuilder", "param_ATP.inp")
     else:
         print("Error: The model type {} is not supported, choose from protein, RNA, ATP.".format(model))
         exit(1)
