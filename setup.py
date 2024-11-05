@@ -37,7 +37,7 @@ setup(
     platforms="Tested on Ubuntu 22.04",
     packages=["HyresBuilder"],
     package_dir={'HyresBuilder':'HyresBuilder'},
-    package_data={"HyresBuilder":["map/*.map"], "HyresBuilder.forcefield":["*.inp"]},
+    package_data={"HyresBuilder":["map/*.map", "forcefield/*.inp"]},
     install_requires=INSTALL_REQUIRES,
     extras_require={"test": TEST_REQUIRES + INSTALL_REQUIRES,},
     classifiers=[
