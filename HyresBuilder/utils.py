@@ -2,8 +2,8 @@ import importlib.resources as pkg_res
 
 def load_ff(model='protein'):
     if model == 'protein':
-        path1 = pkg_res.path("HyresBuilder.forcefield", "top_hyres_GPU.inp")
-        path2 = pkg_res.path("HyresBuilder.forcefield", "param_hyres_GPU.inp")
+        path1 = pkg_res.path("HyresBuilder", "top_hyres_GPU.inp")
+        path2 = pkg_res.path("HyresBuilder", "param_hyres_GPU.inp")
     elif model == 'RNA':
         path1 = pkg_res.path("HyresBuilder", "top_RNA.inp")
         path2 = pkg_res.path("HyresBuilder", "param_RNA.inp")
