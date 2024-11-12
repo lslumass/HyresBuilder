@@ -1,7 +1,6 @@
 import pkg_resources as pkg_res
 
-def load_ff(model=['protein',]):
-    top_inp, param_inp = [], []
+def load_ff(model='protein'):
     for m in model:
         if m == 'protein':
             path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_hyres_GPU.inp")
@@ -15,7 +14,7 @@ def load_ff(model=['protein',]):
         else:
             print("Error: The model type {} is not supported, choose from protein, RNA, ATP.".format(model))
             exit(1)
-        top_inp.append(str(path1))
-        param_inp.append(str(path2))
+    top_inp = str(path1)
+    param_inp = str(path2)
 
     return top_inp, param_inp
