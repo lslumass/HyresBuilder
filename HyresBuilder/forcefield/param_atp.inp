@@ -1,0 +1,67 @@
+
+* parameter file for coarse grained RNA
+* based on Tetramer
+*  
+* date: Jan 8, 15:12 by Shanlong Li
+* Latest: Feb 14, 2024
+
+BOND
+!
+!V(bond) = Kb(b - b0)**2
+!
+!Kb: kcal/mole/A**2
+!b0: A
+!
+!atom type Kb          b0
+!
+! force constant / 418.4 --> kcal / mol / A^2
+AP    AP    35.85       3.00 ! 1-2 bond: length: 0.3 nm; force constant: 30000 kj / mol / nm^2  (in itp)
+AP    AO1   100.0       2.25 ! 3-4 bond: length: 0.225 nm; constraint  (in itp)   
+AO1   AO2   45.85       2.90 ! 4-5 bond: length: 0.29 nm; force constant: 15000 kj / mol / nm^2  (in itp)
+AO2   AO3   100.0       2.25 ! 5-6 bond: length: 0.225 nm; constraint  (in itp)
+AO2   AN1   59.75       2.28 ! 5-7 bond: length: 0.288 nm; force constant: 50000 kj / mol / nm^2  (in itp)
+AN1   AN2   100.0       1.60 ! 7-8 bond: length: 0.160 nm; constraint
+AN1   AN3   100.0       2.81 ! 7-9 bond: length: 0.281 nm; constraint
+AN2   AN4   100.0       2.45 ! 8-10 bond: length: 0.245 nm; constraint
+AN3   AN4   100.0       2.62 ! 9-10 bond: length: 0.262 nm; constraint
+AN2   AN3   100.0       3.08 ! 8-9 diagonal distance; constraint
+
+THETAS
+! angles in ATP
+AP  AP  AP  6.0     127.5
+AP  AP  AO1 4.0    87.7
+AO1 AO2 AO3 10.0    83.0
+AP  AO1 AO2 15.0   138.1
+AN1 AO2 AO3 25.0   96.0
+AO1 AO2 AN1 4.5    145.7
+AO2 AN1 AN2 42.5   162.0
+AO2 AN1 AN3 5.75    114.0
+      
+
+IMPHI
+! 70/4.184 = 16.73 *2
+AN1 AN2 AN3 AN4 33.46   0   180.0
+AN2 AN1 AN3 AN4 21.51   0   0.0
+AN3 AN1 AN2 AN4 43.02   0   0.4
+AN1 AN2 AN4 AN3 43.02   0   -0.4
+AN1 AN3 AN4 AN2 43.02   0   0.4
+
+
+NONBONDED  NBXMOD 3  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
+     CUTNB 16.0  CTOFNB 15.0  CTONNB 11.  EPS 1.0  E14FAC 0.4  WMIN 1.5 
+
+! ATP
+AP       0.00     -0.15042      2.214    0.00     -0.15042      2.214
+AO1      0.00     -0.12033      2.000    0.00     -0.12033      2.000
+AO2      0.00     -0.12033      2.274    0.00     -0.12033      2.274
+AO3      0.00     -0.13538      2.417    0.00     -0.13538      2.417
+AN1      0.00     -0.10153      2.261    0.00     -0.10153      2.261
+AN2      0.00     -0.09025      2.000    0.00     -0.09025      2.000
+AN3      0.00     -0.09025      2.000    0.00     -0.09025      2.000
+AN4      0.00     -0.10153      2.239    0.00     -0.10153      2.239  
+
+HBOND AEXP 10 REXP 12 HAEX 4 AAEX 2   NOACCEPTORS  HBNOEXCLUSIONS  ALL  -
+   CUTHB 6.0 CTOFHB 5.0 CTONHB 4.0  CUTHA 100.0  CTOFHA 90.0  CTONHA 90.0
+
+
+END

@@ -1,0 +1,38 @@
+*topology file for coarse grained RNA
+*
+   20    1              
+MASS   400 AP    78.971     ! 1-3; mapping scheme
+MASS   401 AO1   30.026     ! 4
+MASS   402 AO2   42.037     ! 5
+MASS   403 AO3   153.012    ! 6
+MASS   404 AN1   39.037     ! 7
+MASS   405 AN2   26.018     ! 8
+MASS   406 AN3   27.026     ! 9
+MASS   407 AN4   42.041     ! 10
+
+
+RESI ATP         -4.00  !                               
+GROUP                   !                                     
+ATOM P3   AP     -2.00  !                                                               
+ATOM P2   AP     -1.00  !                   (8)  NB-ND  (10)                                             
+ATOM P1   AP     -1.00  !                        |  |                                              
+GROUP                   !                   (7)  NA-NC  (9)                    
+ATOM C1   AO1     0.00  !      (1) (2) (3)  (4)  |                            
+ATOM C2   AO2     0.00  !      P3--P2--P1---C1---C2 (5)            
+ATOM C3   AO3     0.00  !                        | 
+GROUP                   !                        C3 (6)       
+ATOM NA   AN1     0.00  !                        
+ATOM NB   AN2     0.00  !      
+ATOM NC   AN3     0.00  !
+ATOM ND   AN4     0.00  !
+BOND P3   P2        P2   P1        P1   C1        C1   C2
+BOND C2   C3        C2   NA        NA   NB        NA   NC
+BOND NB   ND        ND   NC        NB   NC
+ANGL P3   P2   P1        P2   P1   C1        P1   C1   C2
+ANGL C1   C2   C3        C1   C2   NA        C3   C2   NA
+ANGL C2   NA   NB        C2   NA   NC
+IMPR ND   NC   NB   NA        ND   NC   NA   NB        
+IMPR ND   NB   NA   NC        NC   ND   NB   NA        NB   ND   NC   NA  
+
+
+END
