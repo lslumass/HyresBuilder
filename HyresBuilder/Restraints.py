@@ -92,7 +92,7 @@ def positional_restraint(system, indx_pos_Kcons_list):
 
     return system
 
-def bb_positional_restraint(system, pdb_ref, Kcons=400*unit.kilojoule_per_mole/unit.nanometers**2):
+def bb_positional_restraint(system, pdb_ref, Kcons=400):
     """
     add backbone restraints, given a reference PDB
     arguments:
