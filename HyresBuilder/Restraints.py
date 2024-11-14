@@ -11,6 +11,62 @@ import numpy as np
 import mdtraj as md
 from itertools import combinations
 
+# helper function to get atom indices for a give pdb
+def get_atom_indices_coordinates(pdb, selection):
+    """
+    pdb: pdb file
+    selection: mdtraj selection syntax (ref: https://mdtraj.org/1.9.4/atom_selection.html)
+        of note, if your 'selection' has chainid, you need to use the chainid from PDB file.
+            chainid in mdtraj is forced to be numbered as 0, 1, 2, ...
+            here, instead of using those sequential integers for chainid, we override it with the 
+            original chain id from PDB file.
+    """
+    pdb_md = md.load_pdb(pdb)
+
+    if 'chainid' in selection:
+        chainid_dict = {chain.chain_id: chain.index for chain in pdb_md.topology.chains}
+
+        new_str = []
+        for substring in selection.split('and'):
+            if 'chainid' in substring:
+                chainid_list = substring.strip().split('chainid')[-1].strip().split()
+                new_chainid_str = ' '.join([str(chainid_dict[i]) for i in chainid_list])
+                final_str = 'chainid ' + new_chainid_str
+                new_str.append(final_str)
+            else:
+                new_str.append(substring.strip())
+        new_selection = ' and '.join(new_str)
+    else:
+        new_selection = selection
+    
+    indices = pdb_md.topology.select(new_selection)
+    coordinates = pdb_md.xyz[0, indices, :]
+    return indices, coordinates 
+
+# Get the center of mass of a selection
+def get_COM(pdb, selection):
+    pdb_md = md.load_pdb(pdb)
+
+    if 'chainid' in selection:
+        chainid_dict = {chain.chain_id: chain.index for chain in pdb_md.topology.chains}
+        # print(chainid_dict)
+
+        new_str = []
+        for substring in selection.split('and'):
+            if 'chainid' in substring:
+                chainid_list = substring.strip().split('chainid')[-1].strip().split()
+                new_chainid_str = ' '.join([str(chainid_dict[i]) for i in chainid_list])
+                final_str = 'chainid ' + new_chainid_str
+                new_str.append(final_str)
+            else:
+                new_str.append(substring.strip())
+        new_selection = ' and '.join(new_str)
+    else:
+        new_selection = selection
+    # print(new_selection)
+    com = md.compute_center_of_mass(pdb_md, new_selection)[0]
+    return com
+
 # Positional restraints
 def positional_restraint(system, indx_pos_Kcons_list):
     """
@@ -83,16 +139,16 @@ def COM_positional_restraint(system, group_indices_pos_kcons):
     com_pos_restraint.addPerBondParameter('y0')
     com_pos_restraint.addPerBondParameter('z0')
 
-    for idx, (group_idx, ref_pos, Kcons) in enumerate(group_indices_pos):
+    for idx, (group_idx, ref_pos, Kcons) in enumerate(group_indices_pos_kcons):
         Kcons_wU = Kcons * unit.kilojoule_per_mole/unit.nanometers**2
         com_pos_restraint.addGroup(group_idx)
-        com_pos_restraint.addBond(idx, [Kcons_wU, *ref_pos])
+        com_pos_restraint.addBond([idx, ], [Kcons_wU, *ref_pos])
     system.addForce(com_pos_restraint)
     return system
 
 # Center of mass distance restraints
 def COM_relative_restraint(system, groups_dist_Kcons_list):
-    """ Apply distance restraint on two atom groups
+    """ Apply distance restraint between two atom groups
     system: omm system
     groups_dist_Kcons_list: (list of tuples)
         example: [((1,2,3), (4,5,6), 10.0, 400), ...]
@@ -101,8 +157,7 @@ def COM_relative_restraint(system, groups_dist_Kcons_list):
             1.0: reference distance, unit of nanometer
             400: K constant, kj/mol/nm**2
 
-            restrain distance between atom group 1 defined by atom indices 1,2,3 with atom group 2 defined by atom indices 4,5,6
-            to 10 Angstrome using Kcons=400 kj/mol/nm**2
+            restrain distance between atom group 1 and atom group 2 to be 10 Angstrome using Kcons=400 kj/mol/nm**2
 
     return omm system     
     """
@@ -111,16 +166,13 @@ def COM_relative_restraint(system, groups_dist_Kcons_list):
     COM_force.addPerBondParameter('d0')  # restrain distance
 
     i = 0
-    j = 1
     for group1,group2,dist,Kcons in groups_dist_Kcons_list:
         Kcons_wU = Kcons * unit.kilojoule_per_mole/unit.nanometers**2
         target_dist = dist * unit.nanometers
         COM_force.addGroup(group1)  # Group 1
-        i += 1
         COM_force.addGroup(group2)  # Group 2
-        j += 1
-        
-        COM_force.addBond([i,  j], [Kcons_wU, target_dist])
+        COM_force.addBond([i,  i+1], [Kcons_wU, target_dist])
+        i += 2
     system.addForce(COM_force)
     return system
 
@@ -130,7 +182,7 @@ def identify_folded_CA_idx(pdb, domain):
     pdb: mdtraj object
     domain: 
         example: ('A', (1, 50))
-    return: 
+    return: CA atom indices for the folded region
     """
     # get chainid dict
     chainid_dict = {chain.chain_id: chain.index for chain in pdb.topology.chains}
@@ -147,12 +199,13 @@ def identify_folded_CA_idx(pdb, domain):
     dssp = md.compute_dssp(selected_domain, simplified=True)
     folded = np.where(dssp!='C', 1, 0)[0]
     resid = [selected_domain.topology.residue(idx).resSeq for idx, i in enumerate(folded) if i==1 ]
-    folded_CA_idx = [pdb.topology.select("chainid %s and residue %s and name CA " % (chainid_dict[chainid], str(i) ) )[0] for i in resid]
+    folded_CA_idx = [pdb.topology.select("chainid %s and residue %s and name CA " % \
+                                         (chainid_dict[chainid], str(i) ) )[0] for i in resid]
 
     return folded_CA_idx
 
 # Domain restraints
-def domain_3D_restraint(system, pdb_ref, domain_ranges, Kcons=400):
+def domain_3D_restraint(system, pdb_ref, domain_ranges, Kcons=400, cutoff=1.2):
     """
     system: omm system
     domain_ranges: a list of tuples, and each tuple defines one domain range:
@@ -160,6 +213,8 @@ def domain_3D_restraint(system, pdb_ref, domain_ranges, Kcons=400):
         example: [('A', (1,50)), ('B', (75, 200)), ...] 
             # two domains: resid 1-50 of chain A and resid 75-200 of chain B
     Kcons_internal: (float) K constant for harmonic restraint. default unit: kj/mol/nm**2
+    cutoff: cutoff distance, unit: nanometer
+    return omm system
     """
     internal_force = HarmonicBondForce()
     Kcons_internal = Kcons * unit.kilojoule_per_mole/unit.nanometers**2
@@ -171,20 +226,20 @@ def domain_3D_restraint(system, pdb_ref, domain_ranges, Kcons=400):
     pairs = []
     for domain in domain_ranges:
         # get C-alpha atom indices of folder region
-        folded_CA_idx = identify_folded_CA_idx(pdb=pdb_md, domain=domain)_
-        pairs.extend(list(combinations(folded_CA_idx, 2)))
-    pairs = np.arrary(pairs)
-
-    pairs_num = 0
-    for index in pairs:
-        r1=np.squeeze(pdb_md.xyz[:,int(index[0]),:])
-        r2=np.squeeze(pdb_md.xyz[:,int(index[1]),:])
-        dist0=np.sqrt((r1[0]-r2[0])**2+(r1[1]-r2[1])**2+(r1[2]-r2[2])**2)
-        if dist0 < 1.2:
-            pairs_num += 1
-            internal_force.addBond(int(index[0]),int(index[1]), dist0*unit.nanometers, Kcons_internal)
+        folded_CA_idx = identify_folded_CA_idx(pdb=pdb_md, domain=domain)
+        pairs = list(combinations(folded_CA_idx, 2))
+    
+        pairs_num = 0
+        for index in pairs:
+            r1=np.squeeze(pdb_md.xyz[:,int(index[0]),:])
+            r2=np.squeeze(pdb_md.xyz[:,int(index[1]),:])
+            # dist0=np.sqrt((r1[0]-r2[0])**2+(r1[1]-r2[1])**2+(r1[2]-r2[2])**2)
+            dist0 = np.linalg.norm(r1-r2)
+            if dist0 < 1.2:
+                pairs_num += 1
+                internal_force.addBond(int(index[0]),int(index[1]), dist0*unit.nanometers, Kcons_internal)
+        print(f"Number of internal pairs of domain {str(domain)}: {pairs_num}")
     system.addForce(internal_force)
-    print(f"Number of internal pairs of resid {str(domain)}: {pairs_num}")
     return system
 
 
