@@ -1,5 +1,5 @@
 """
-This package is used to constructe Hyres Force Field
+This package is used to constructe Hyres Force Field, iConRNA force field
 Athours: Shanlong Li, Xiping Gong, Yumeng Zhang
 Date: Mar 9, 2024
 Modified: Apr 24, 2024
@@ -12,7 +12,7 @@ import numpy as np
 
 
 ###### for Protein System Only ######
-def HyresProteinSystem(psf, system, ffs):
+def HyresSystem(psf, system, ffs):
     top = psf.topology
     # 2) constructe the force field
     print('\n# constructe the HyRes force field')
@@ -112,7 +112,7 @@ def HyresProteinSystem(psf, system, ffs):
 
 
 ###### for RNA System with A-U/G-C pairs ######
-def SimpleRNASystem(psf, system, ffs):
+def iConRNASystem(psf, system, ffs):
     top = psf.topology
     # 2) constructe the force field
     print('\n################# constructe the HyRes force field ####################')
