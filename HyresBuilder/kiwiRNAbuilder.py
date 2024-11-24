@@ -55,7 +55,6 @@ def build(seqs, out):
             idx += len(atoms)
             res += 1
             if res == len(seqs):
-                print(atom[3])
-                atom[3] == t3s[seq]
+                atom[3] = t3s[seq]
             printcg(atoms, f)
         print('END', file=f)
