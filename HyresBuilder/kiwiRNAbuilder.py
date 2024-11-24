@@ -24,7 +24,7 @@ def read_map(seq):
     f_map = Path(__file__).parent / filename
     data = np.genfromtxt(f_map, dtype=None, names=('index', 'name', 'rx', 'ry', 'rz'), encoding='utf-8')
     for l in data:
-        atom = ['ATOM', l[0], l[1], nos[seq], 'X', 1, l[2], l[3], l[4], 1.00, 0.00, 'RNA']
+        atom = ['ATOM', l[0], l[1], nos[seq], 'X', 0, l[2], l[3], l[4], 1.00, 0.00, 'RNA']
         atoms.append(atom)
     return atoms
 
@@ -43,18 +43,18 @@ def build(seqs, out):
         print('REMARK  HyRes RNA', file=f)
         print('REMARK  CREATE BY RNABUILDER/SHANLONG LI', file=f)
         idx = 0
-        res = 0
+        res = 1
         ref = [9999.0, 9999.0, 9999.0]
         for seq in seqs:
             atoms = read_map(seq)
             for atom in atoms:
                 atom[1] += idx
                 atom[5] += res
+                if res == len(seqs):
+                    atom[3] = t3s[seq]
             atoms = transform(ref, atoms)
             ref = [atoms[1][6], atoms[1][7], atoms[1][8] + 3.63]
             idx += len(atoms)
             res += 1
-            if res == len(seqs):
-                atom[3] = t3s[seq]
             printcg(atoms, f)
         print('END', file=f)
