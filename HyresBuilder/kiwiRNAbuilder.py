@@ -9,8 +9,8 @@ import argparse
 import numpy as np
 from pathlib import Path
 
-# standard residue name
-nos = {'A': 'ADE', 'G': 'GUA', 'C': 'CYT', 'U': 'URA'}
+# standard residue name and 5' terminal residue
+nos = {'A': 'ADE', 'G': 'GUA', 'C': 'CYT', 'U': 'URA', 'A5': "A5'", 'G5': "G5'", 'C5': "C5'", 'U5': "U5'"}
 # 3' ternimal residue name
 t3s = {"A": "A3'", "G": "G3'", "C": "C3'", "U": "U3'"}
 
