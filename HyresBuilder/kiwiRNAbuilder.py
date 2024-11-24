@@ -46,6 +46,8 @@ def build(seqs, out):
         res = 1
         ref = [9999.0, 9999.0, 9999.0]
         for seq in seqs:
+            if res == 1:
+                seq += '5'
             atoms = read_map(seq)
             for atom in atoms:
                 atom[1] += idx
