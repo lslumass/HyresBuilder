@@ -12,7 +12,7 @@ from pathlib import Path
 # standard residue name
 nos = {'A': 'ADE', 'G': 'GUA', 'C': 'CYT', 'U': 'URA'}
 # 3' ternimal residue name
-t3s = {"ADE": "A3'", "GUA": "G3'", "CYT": "C3'", "URA": "U3'"}
+t3s = {"A": "A3'", "G": "G3'", "C": "C3'", "U": "U3'"}
 
 def printcg(atoms, file):
     for atom in atoms:
@@ -55,6 +55,6 @@ def build(seqs, out):
             idx += len(atoms)
             res += 1
             if res == len(seqs):
-                atom[3] == t3s[atom[3]]
+                atom[3] == t3s[seq]
             printcg(atoms, f)
         print('END', file=f)
