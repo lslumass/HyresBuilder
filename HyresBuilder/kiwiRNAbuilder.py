@@ -44,7 +44,7 @@ def build(seqs, out):
         print('REMARK  CREATE BY RNABUILDER/SHANLONG LI', file=f)
         idx = 0
         res = 1
-        ref = [9999.0, 9999.0, 9999.0]
+        ref = [999.0, 999.0, 999.0]
         for seq in seqs:
             if res == 1:
                 seq += '5'
