@@ -33,9 +33,9 @@ def transform(ref, atoms):
     Px, Py, Pz = atoms[0][6], atoms[0][7], atoms[0][8]
     dx, dy, dz = Px-refx, Py-refy, Pz-refz
     for atom in atoms:
-        atom[6] -= dx
-        atom[7] -= dy
-        atom[8] -= dz
+        atom[6] = round(atom[6] - dx, 3)
+        atom[7] = round(atom[7] - dy, 3)
+        atom[8] = round(atom[8] - dz, 3)
     return atoms
 
 def build(seqs, out):
