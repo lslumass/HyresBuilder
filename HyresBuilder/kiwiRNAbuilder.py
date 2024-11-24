@@ -9,7 +9,11 @@ import argparse
 import numpy as np
 from pathlib import Path
 
+# standard residue name
 nos = {'A': 'ADE', 'G': 'GUA', 'C': 'CYT', 'U': 'URA'}
+# 3' ternimal residue name
+t3s = {"ADE": "A3'", "GUA": "G3'", "CYT": "C3'", "URA": "U3'"}
+
 def printcg(atoms, file):
     for atom in atoms:
         file.write('{}  {:5d} {:>2}   {} {}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}      {}\n'.format(atom[0],int(atom[1]),atom[2],atom[3],atom[4],int(atom[5]),atom[6],atom[7],atom[8],atom[9],atom[10], atom[11]))
@@ -50,5 +54,7 @@ def build(seqs, out):
             ref = [atoms[1][6], atoms[1][7], atoms[1][8] + 3.63]
             idx += len(atoms)
             res += 1
+            if res == len(seqs):
+                atom[3] == t3s[atom[3]]
             printcg(atoms, f)
         print('END', file=f)
