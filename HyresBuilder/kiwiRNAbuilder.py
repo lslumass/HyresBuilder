@@ -16,7 +16,7 @@ def printcg(atoms, file):
 
 def read_map(seq):
     atoms = []
-    filename = "map/"+seq+"_S.map"
+    filename = "map/"+seq+"_V.map"
     f_map = Path(__file__).parent / filename
     data = np.genfromtxt(f_map, dtype=None, names=('index', 'name', 'rx', 'ry', 'rz'), encoding='utf-8')
     for l in data:
