@@ -129,10 +129,12 @@ def CA_positional_restraint(system, pdb_file, domain):
     CA_pos_restraint.addPerParticleParameter('y0')
     CA_pos_restraint.addPerParticleParameter('z0')
 
-    CA_list = identify_folded_CA_idx(md.load_pdb(pdb_file), domain)
+    md_pdb = md.load_pdb(pdb_file)
+    CA_list = identify_folded_CA_idx(md_pdb, domain)
     for ca in CA_list:
         CA_pos_restraint.addParticle(ca, pdb_tmp.positions[ca])
     system.addForce(CA_pos_restraint)
+    return system
 
 # Center of mass positional restraints
 def COM_positional_restraint(system, group_indices_pos_kcons):
