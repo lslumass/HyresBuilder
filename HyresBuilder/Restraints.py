@@ -123,7 +123,7 @@ def bb_positional_restraint(system, pdb_ref, Kcons=400):
 
 def CA_positional_restraint(system, pdb, domain):
     CA_pos_restraint = CustomExternalForce('k*((x-x0)^2+(y-y0)^2+(z-z0)^2)')
-    CA_pos_restraint.addGlobalParameter('k', 400.0*kilojoule_per_mole/nanometers/nanometers)
+    CA_pos_restraint.addGlobalParameter('k', 400.0*unit.kilojoule_per_mole/unit.nanometers/unit.nanometers)
     CA_pos_restraint.addPerParticleParameter('x0')
     CA_pos_restraint.addPerParticleParameter('y0')
     CA_pos_restraint.addPerParticleParameter('z0')
