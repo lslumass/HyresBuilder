@@ -4,14 +4,20 @@ def load_ff(model='protein'):
     if model == 'protein':
         path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_hyres_GPU.inp")
         path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_hyres_GPU.inp")
+    if model == 'protein_m':
+        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_hyres_mix.inp")
+        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_hyres_mix.inp")
     elif model == 'RNA':
         path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_RNA.inp")
         path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_RNA.inp")
+    elif model == 'RNA_m':
+        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_RNA_mix.inp")
+        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_RNA_mix.inp")
     elif model == 'ATP':
         path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_ATP.inp")
         path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_ATP.inp")
     else:
-        print("Error: The model type {} is not supported, choose from protein, RNA, ATP.".format(model))
+        print("Error: The model type {} is not supported, choose from protein, protein_m, RNA, RNA_m, ATP.".format(model))
         exit(1)
     top_inp = str(path1)
     param_inp = str(path2)
