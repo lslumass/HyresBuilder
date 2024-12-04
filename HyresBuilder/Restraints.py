@@ -121,16 +121,17 @@ def bb_positional_restraint(system, pdb_ref, Kcons=400):
     system.addForce(pos_restraint)
     return system
 
-def CA_positional_restraint(system, pdb, domain):
+def CA_positional_restraint(system, pdb_file, domain):
+    pdb_tmp = PDBFile(pdb_file)
     CA_pos_restraint = CustomExternalForce('k*((x-x0)^2+(y-y0)^2+(z-z0)^2)')
     CA_pos_restraint.addGlobalParameter('k', 400.0*unit.kilojoule_per_mole/unit.nanometers/unit.nanometers)
     CA_pos_restraint.addPerParticleParameter('x0')
     CA_pos_restraint.addPerParticleParameter('y0')
     CA_pos_restraint.addPerParticleParameter('z0')
 
-    CA_list = identify_folded_CA_idx(pdb, domain)
+    CA_list = identify_folded_CA_idx(md.load_pdb(pdb_file), domain)
     for ca in CA_list:
-        CA_pos_restraint.addParticle(ca, pdb.positions[ca])
+        CA_pos_restraint.addParticle(ca, pdb_tmp.positions[ca])
     system.addForce(CA_pos_restraint)
 
 # Center of mass positional restraints
