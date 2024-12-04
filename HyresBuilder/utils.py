@@ -4,7 +4,7 @@ def load_ff(model='protein'):
     if model == 'protein':
         path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_hyres_GPU.inp")
         path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_hyres_GPU.inp")
-    if model == 'protein_m':
+    elif model == 'protein_m':
         path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_hyres_mix.inp")
         path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_hyres_mix.inp")
     elif model == 'RNA':
