@@ -186,7 +186,7 @@ def iConRNASystem(psf, system, ffs):
     eps_base = ffs['eps_base']
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.0, 'GG':1.0, 'GC':0.8, 'GU':0.8,
               'CA':0.4, 'CG':0.4, 'CC':0.2, 'CU':0.4, 'UA':0.4, 'UG':0.4, 'UC':0.2, 'UU':0.2,
-              'A-U':0.8, 'C-G':1.05}
+              'A-U':0.8, 'C-G':1.10}
     # get all the groups of bases
     grps = []
     for atom in psf.topology.atoms():
@@ -270,8 +270,8 @@ def iConRNASystem(psf, system, ffs):
     r_au2 = 0.37*unit.nanometer
     
     if num_A != 0 and num_U != 0:
-        formula = f"""eps_AU*(5.0*(r_au/r)^10-6.0*(r_au/r)^6 + 5*(r_au2/r2)^10-6.0*(r_au2/r2)^6)*step(cos3)*cos3;
-                  r=distance(a1,d1); r2=distance(a3,d2); cos3=-cos(phi)^3; phi=angle(d1,a1,a2);
+        formula = f"""eps_AU*(5.0*(r_au/r)^10-6.0*(r_au/r)^6 + 5*(r_au2/r2)^10-6.0*(r_au2/r2)^6)*step(cos5)*cos5;
+                  r=distance(a1,d1); r2=distance(a3,d2); cos5=-cos(phi)^5; phi=angle(d1,a1,a2);
                   eps_AU={eps_AU.value_in_unit(unit.kilojoule_per_mole)};
                   r_au={r_au.value_in_unit(unit.nanometer)}; r_au2={r_au2.value_in_unit(unit.nanometer)}
                   """
@@ -292,8 +292,8 @@ def iConRNASystem(psf, system, ffs):
     r_cg2 = 0.35*unit.nanometer
     
     if num_C != 0 and num_G != 0:
-        formula = f"""eps_CG*(5.0*(r_cg/r)^10-6.0*(r_cg/r)^6 + 5*(r_cg2/r2)^10-6.0*(r_cg2/r2)^6)*step(cos3)*cos3;
-                  r=distance(a1,d1); r2=distance(a3,d2); cos3=-cos(phi)^3; phi=angle(d1,a1,a2); psi=dihedral(a3,a1,d1,d2);
+        formula = f"""eps_CG*(5.0*(r_cg/r)^10-6.0*(r_cg/r)^6 + 5*(r_cg2/r2)^10-6.0*(r_cg2/r2)^6)*step(cos5)*cos5;
+                  r=distance(a1,d1); r2=distance(a3,d2); cos5=-cos(phi)^5; phi=angle(d1,a1,a2);
                   eps_CG={eps_CG.value_in_unit(unit.kilojoule_per_mole)};
                   r_cg={r_cg.value_in_unit(unit.nanometer)}; r_cg2={r_cg2.value_in_unit(unit.nanometer)}
                   """
