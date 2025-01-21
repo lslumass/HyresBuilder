@@ -266,8 +266,8 @@ def iConRNASystem(psf, system, ffs):
                 c_p.append(int(atom.index))
     # add A-U pair through CustomHbondForce
     eps_AU = eps_base*scales['A-U']
-    r_au = 0.30*unit.nanometer
-    r_au2 = 0.37*unit.nanometer
+    r_au = 0.32*unit.nanometer
+    r_au2 = 0.40*unit.nanometer
     
     if num_A != 0 and num_U != 0:
         formula = f"""eps_AU*(5.0*(r_au/r)^10-6.0*(r_au/r)^6 + 5*(r_au2/r2)^10-6.0*(r_au2/r2)^6)*step(cos5)*cos5;
@@ -288,8 +288,8 @@ def iConRNASystem(psf, system, ffs):
         
     # add C-G pair through CustomHbondForce
     eps_CG = eps_base*scales['C-G']
-    r_cg = 0.30*unit.nanometer
-    r_cg2 = 0.35*unit.nanometer
+    r_cg = 0.32*unit.nanometer
+    r_cg2 = 0.38*unit.nanometer
     
     if num_C != 0 and num_G != 0:
         formula = f"""eps_CG*(5.0*(r_cg/r)^10-6.0*(r_cg/r)^6 + 5*(r_cg2/r2)^10-6.0*(r_cg2/r2)^6)*step(cos5)*cos5;
