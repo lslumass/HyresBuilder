@@ -316,7 +316,7 @@ def iConRNASystem(psf, system, ffs):
 
 
 ###### for RNA2 system with A-U/C-G pairs ######
-def iConRNAS2ystem(psf, system, ffs):
+def iConRNA2System(psf, system, ffs):
     top = psf.topology
     # 2) constructe the force field
     print('\n################# constructe the HyRes force field ####################')
@@ -405,7 +405,7 @@ def iConRNAS2ystem(psf, system, ffs):
     fstack = CustomCentroidBondForce(2, 'eps_stack*(5*(r0/r)^10-6.0*(r0/r)^6); r=distance(g1, g2);')
     fstack.setName('StackingForce')
     fstack.addPerBondParameter('eps_stack')
-    fstack.addGlobalParameter('r0', 0.34*unit.nanometers)
+    fstack.addGlobalParameter('r0', 0.36*unit.nanometers)
     # add all group
     for grp in grps:
         fstack.addGroup(grp[1])
