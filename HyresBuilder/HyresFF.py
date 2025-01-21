@@ -266,8 +266,8 @@ def iConRNASystem(psf, system, ffs):
                 c_p.append(int(atom.index))
     # add A-U pair through CustomHbondForce
     eps_AU = eps_base*scales['A-U']
-    r_au = 0.32*unit.nanometer
-    r_au2 = 0.40*unit.nanometer
+    r_au = 0.30*unit.nanometer
+    r_au2 = 0.38*unit.nanometer
     
     if num_A != 0 and num_U != 0:
         formula = f"""eps_AU*(5.0*(r_au/r)^10-6.0*(r_au/r)^6 + 5*(r_au2/r2)^10-6.0*(r_au2/r2)^6)*step(cos5)*cos5;
@@ -288,8 +288,8 @@ def iConRNASystem(psf, system, ffs):
         
     # add C-G pair through CustomHbondForce
     eps_CG = eps_base*scales['C-G']
-    r_cg = 0.32*unit.nanometer
-    r_cg2 = 0.38*unit.nanometer
+    r_cg = 0.30*unit.nanometer
+    r_cg2 = 0.37*unit.nanometer
     
     if num_C != 0 and num_G != 0:
         formula = f"""eps_CG*(5.0*(r_cg/r)^10-6.0*(r_cg/r)^6 + 5*(r_cg2/r2)^10-6.0*(r_cg2/r2)^6)*step(cos5)*cos5;
@@ -316,7 +316,7 @@ def iConRNASystem(psf, system, ffs):
 
 
 ###### for RNA2 system with A-U/C-G pairs ######
-def iConRNA2System(psf, system, ffs):
+def iConRNAS2ystem(psf, system, ffs):
     top = psf.topology
     # 2) constructe the force field
     print('\n################# constructe the HyRes force field ####################')
@@ -390,7 +390,7 @@ def iConRNA2System(psf, system, ffs):
     eps_base = ffs['eps_base']
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.0, 'GG':1.0, 'GC':0.8, 'GU':0.8,
               'CA':0.4, 'CG':0.4, 'CC':0.2, 'CU':0.4, 'UA':0.4, 'UG':0.4, 'UC':0.2, 'UU':0.2,
-              'A-U':0.8, 'C-G':3.0}
+              'A-U':0.83, 'C-G':1.11, 'G-U': 1.5}
     # get all the groups of bases
     grps = []
     for atom in psf.topology.atoms():
@@ -470,13 +470,12 @@ def iConRNA2System(psf, system, ffs):
                 c_p.append(int(atom.index))
     # add A-U pair through CustomHbondForce
     eps_AU = eps_base*scales['A-U']
-    r_au = 0.29*unit.nanometer
-    r_au2 = 0.37*unit.nanometer
+    r_au = 0.30*unit.nanometer
+    r_au2 = 0.38*unit.nanometer
     
     if num_A != 0 and num_U != 0:
-        formula = f"""eps_AU*(5.0*(r_au/r)^10-6.0*(r_au/r)^6 + 5*(r_au2/r2)^10-6.0*(r_au2/r2)^6)*fac;
-                  r=distance(a1,d1); r2=distance(a3,d2); fac=step(phi3)*phi3*step(psi3)*psi3;
-                  phi3=-cos(phi)^3; phi=angle(d1,a1,a2); psi3=-cos(psi)^3; psi=dihedral(a3,a1,d1,d2);
+        formula = f"""eps_AU*(5.0*(r_au/r)^10-6.0*(r_au/r)^6 + 5*(r_au2/r2)^10-6.0*(r_au2/r2)^6)*step(cos5)*cos5;
+                  r=distance(a1,d1); r2=distance(a3,d2); cos5=-cos(phi)^5; phi=angle(d1,a1,a2);
                   eps_AU={eps_AU.value_in_unit(unit.kilojoule_per_mole)};
                   r_au={r_au.value_in_unit(unit.nanometer)}; r_au2={r_au2.value_in_unit(unit.nanometer)}
                   """
@@ -493,13 +492,12 @@ def iConRNA2System(psf, system, ffs):
         
     # add C-G pair through CustomHbondForce
     eps_CG = eps_base*scales['C-G']
-    r_cg = 0.29*unit.nanometer
-    r_cg2 = 0.35*unit.nanometer
+    r_cg = 0.30*unit.nanometer
+    r_cg2 = 0.37*unit.nanometer
     
     if num_C != 0 and num_G != 0:
-        formula = f"""eps_CG*(5.0*(r_cg/r)^10-6.0*(r_cg/r)^6 + 5*(r_cg2/r2)^10-6.0*(r_cg2/r2)^6)*fac;
-                  r=distance(a1,d1); r2=distance(a3,d2);  fac=step(phi3)*phi3*step(psi3)*psi3;
-                  phi3=-cos(phi)^3; phi=angle(d1,a1,a2); psi3=-cos(psi)^3; psi=dihedral(a3,a1,d1,d2);
+        formula = f"""eps_CG*(5.0*(r_cg/r)^10-6.0*(r_cg/r)^6 + 5*(r_cg2/r2)^10-6.0*(r_cg2/r2)^6)*step(cos5)*cos5;
+                  r=distance(a1,d1); r2=distance(a3,d2); cos5=-cos(phi)^5; phi=angle(d1,a1,a2);
                   eps_CG={eps_CG.value_in_unit(unit.kilojoule_per_mole)};
                   r_cg={r_cg.value_in_unit(unit.nanometer)}; r_cg2={r_cg2.value_in_unit(unit.nanometer)}
                   """
@@ -514,6 +512,27 @@ def iConRNA2System(psf, system, ffs):
         system.addForce(pairCG)
         print(pairCG.getNumAcceptors(), pairCG.getNumDonors(), 'CG')
     
+    # add G-U pair through CustomHbondForce
+    eps_GU = eps_base*scales['G-U']
+    r_gu = 0.30*unit.nanometer
+
+    if num_U != 0 and num_G != 0:
+        formula = f"""eps_GU*(5.0*(r_gu/r)^10-6.0*(r_gu/r)^6)*step(cos5)*cos5;
+                    r=distance(a1,d1); cos5=-cos(phi)^5; phi=angle(d1,a1,a2);
+                    eps_GU={eps_GU.value_in_unit(unit.kilojoule_per_mole)}; r_gu={r_gu.value_in_unit(unit.nanometer)};
+                    """
+        pairGU = CustomHbondForce(formula)
+        pairGU.setName('GUpairForce')
+        pairGU.setNonbondedMethod(nbforce.getNonbondedMethod())
+        pairGU.setCutoffDistance(0.65*unit.nanometers)
+
+        for idx in range(len(g_c)):
+            pairGU.addAcceptor(g_c[idx], g_b[idx], -1)
+        for idx in range(len(u_b)):
+            pairGU.addDonor(u_b[idx], -1, -1)
+        system.addForce(pairGU)
+        print(pairGU.getNumAcceptors(), pairGU.getNumDonors(), 'GU')
+
     # delete the NonbondedForce and HarmonicAngleForce
     system.removeForce(nbforce_index)
     system.removeForce(hmangle_index)

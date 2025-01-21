@@ -65,7 +65,7 @@ BP    BC1   BC2   NCC     55.0    1   180.0    ! P-C1-C2-NA for C/U    increase 
 BC1   BC2   N1C   CNC     55.0    1   165.0    ! C1-C2-NA-NB for A/G   increase from 5.0 to 55.0 due to the stacking and pairing
 BC1   BC2   NCC   CO      55.0    1     0.0    !                       increase from 5.0 to 55.0 due to the stacking and pairing 
 
-BC1   BP    BC1   BP      23.5    1   -25.0
+BC1   BP    BC1   BP       3.5    1   -20.0
 !phi in A/G
 N1C   CNC   N2C   NCN     80.0    1     0.0
 N1C   CNC   NCN   N2C     50.0    1   180.0
