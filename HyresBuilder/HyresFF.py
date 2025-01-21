@@ -514,11 +514,11 @@ def iConRNA2System(psf, system, ffs):
     
     # add G-U pair through CustomHbondForce
     eps_GU = eps_base*scales['G-U']
-    r_gu = 0.30*unit.nanometer
+    r_gu = 0.31*unit.nanometer
 
     if num_U != 0 and num_G != 0:
         formula = f"""eps_GU*(5.0*(r_gu/r)^10-6.0*(r_gu/r)^6)*step(cos5)*cos5;
-                    r=distance(a1,d1); cos5=-cos(phi)^5; phi=angle(d1,a1,a2);
+                    r=distance(a1,d1); cos5=-cos(phi)^3; phi=angle(d1,a1,a2);
                     eps_GU={eps_GU.value_in_unit(unit.kilojoule_per_mole)}; r_gu={r_gu.value_in_unit(unit.nanometer)};
                     """
         pairGU = CustomHbondForce(formula)
