@@ -266,12 +266,12 @@ def iConRNASystem(psf, system, ffs):
                 c_p.append(int(atom.index))
     # add A-U pair through CustomHbondForce
     eps_AU = eps_base*scales['A-U']
-    r_au = 0.29*unit.nanometer
+    r_au = 0.30*unit.nanometer
     r_au2 = 0.37*unit.nanometer
     
     if num_A != 0 and num_U != 0:
         formula = f"""eps_AU*(5.0*(r_au/r)^10-6.0*(r_au/r)^6 + 5*(r_au2/r2)^10-6.0*(r_au2/r2)^6)*step(cos5)*cos5;
-                  r=distance(a1,d1); r2=distance(a3,d2); cos5=-cos(phi)^3; phi=angle(d1,a1,a2);
+                  r=distance(a1,d1); r2=distance(a3,d2); cos5=-cos(phi)^5; phi=angle(d1,a1,a2);
                   eps_AU={eps_AU.value_in_unit(unit.kilojoule_per_mole)};
                   r_au={r_au.value_in_unit(unit.nanometer)}; r_au2={r_au2.value_in_unit(unit.nanometer)}
                   """
@@ -288,12 +288,12 @@ def iConRNASystem(psf, system, ffs):
         
     # add C-G pair through CustomHbondForce
     eps_CG = eps_base*scales['C-G']
-    r_cg = 0.29*unit.nanometer
+    r_cg = 0.30*unit.nanometer
     r_cg2 = 0.35*unit.nanometer
     
     if num_C != 0 and num_G != 0:
         formula = f"""eps_CG*(5.0*(r_cg/r)^10-6.0*(r_cg/r)^6 + 5*(r_cg2/r2)^10-6.0*(r_cg2/r2)^6)*step(cos5)*cos5;
-                  r=distance(a1,d1); r2=distance(a3,d2); cos5=-cos(phi)^3; phi=angle(d1,a1,a2);
+                  r=distance(a1,d1); r2=distance(a3,d2); cos5=-cos(phi)^5; phi=angle(d1,a1,a2);
                   eps_CG={eps_CG.value_in_unit(unit.kilojoule_per_mole)};
                   r_cg={r_cg.value_in_unit(unit.nanometer)}; r_cg2={r_cg2.value_in_unit(unit.nanometer)}
                   """
