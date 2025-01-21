@@ -390,7 +390,7 @@ def iConRNA2System(psf, system, ffs):
     eps_base = ffs['eps_base']
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.0, 'GG':1.0, 'GC':0.8, 'GU':0.8,
               'CA':0.4, 'CG':0.4, 'CC':0.2, 'CU':0.4, 'UA':0.4, 'UG':0.4, 'UC':0.2, 'UU':0.2,
-              'A-U':0.83, 'C-G':1.11, 'G-U': 1.5}
+              'A-U':1.0, 'C-G':1.5, 'G-U': 2.0}
     # get all the groups of bases
     grps = []
     for atom in psf.topology.atoms():
@@ -405,7 +405,7 @@ def iConRNA2System(psf, system, ffs):
     fstack = CustomCentroidBondForce(2, 'eps_stack*(5*(r0/r)^10-6.0*(r0/r)^6); r=distance(g1, g2);')
     fstack.setName('StackingForce')
     fstack.addPerBondParameter('eps_stack')
-    fstack.addGlobalParameter('r0', 0.36*unit.nanometers)
+    fstack.addGlobalParameter('r0', 0.35*unit.nanometers)
     # add all group
     for grp in grps:
         fstack.addGroup(grp[1])
