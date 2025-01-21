@@ -529,7 +529,7 @@ def iConRNA2System(psf, system, ffs):
         for idx in range(len(g_c)):
             pairGU.addAcceptor(g_c[idx], g_b[idx], -1)
         for idx in range(len(u_b)):
-            pairGU.addDonor(u_b[idx], -1, -1)
+            pairGU.addDonor(u_c[idx], -1, -1)
         system.addForce(pairGU)
         print(pairGU.getNumAcceptors(), pairGU.getNumDonors(), 'GU')
 
