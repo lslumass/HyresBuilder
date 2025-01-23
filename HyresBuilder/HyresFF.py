@@ -188,8 +188,8 @@ def iConRNASystem(psf, system, ffs):
               'CA':0.4, 'CG':0.4, 'CC':0.2, 'CU':0.4, 'UA':0.4, 'UG':0.4, 'UC':0.2, 'UU':0.2,
               'A-U':1.0, 'C-G':1.35}
     # get all the groups of bases
-    grps = []
-    for atom in psf.topology.atoms():
+#    grps = []
+#    for atom in psf.topology.atoms():
         if atom.name == "NA":
             if atom.residue.name in ['A', 'G']:
                 grps.append([atom.residue.name, [atom.index, atom.index+1]])
@@ -197,25 +197,51 @@ def iConRNASystem(psf, system, ffs):
             elif atom.residue.name in ['C', 'U']:
                 grps.append([atom.residue.name, [atom.index, atom.index+1]])
                 grps.append([atom.residue.name, [atom.index+1, atom.index+2]])
-    # base stacking
-    fstack = CustomCentroidBondForce(2, 'eps_stack*(5*(r0/r)^10-6.0*(r0/r)^6); r=distance(g1, g2);')
-    fstack.setName('StackingForce')
-    fstack.addPerBondParameter('eps_stack')
-    fstack.addGlobalParameter('r0', 0.35*unit.nanometers)
-    # add all group
-    for grp in grps:
+#    # base stacking
+#    fstack = CustomCentroidBondForce(2, 'eps_stack*(5*(r0/r)^10-6.0*(r0/r)^6); r=distance(g1, g2);')
+#    fstack.setName('StackingForce')
+#    fstack.addPerBondParameter('eps_stack')
+#    fstack.addGlobalParameter('r0', 0.35*unit.nanometers)
+#    # add all group
+#    for grp in grps:
         fstack.addGroup(grp[1])
-    # get the stacking pairs
-    sps = []
-    for i in range(0,len(grps)-2,2):
+#    # get the stacking pairs
+#    sps = []
+#    for i in range(0,len(grps)-2,2):
         grp = grps[i]
         pij = grps[i][0] + grps[i+2][0]
         sps.append([[i+1, i+2], scales[pij]*eps_base])
-    for sp in sps:
+#    for sp in sps:
         fstack.addBond(sp[0], [sp[1]])
-    print('    add ', fstack.getNumBonds(), 'stacking pairs')
-    system.addForce(fstack)
-    
+#    print('    add ', fstack.getNumBonds(), 'stacking pairs')
+#    system.addForce(fstack)
+
+    # get all the groups of bases
+    grps = []
+    for atom in psf.topology.atoms():
+        if atom.name == "NA":
+            if atom.residue.name in ['A', 'G']:
+                grps.append([atom.residue.name, [atom.index, atom.index+1, atom.index+2, atom.index+3]])
+            elif atom.residue.name in ['C', 'U']:
+                grps.append([atom.residue.name, [atom.index, atom.index+1, atom.index+2]])
+    # base stacking
+    Aform = CustomCentroidBondForce(2, 'eps_stack*(5*(ra/r)^10-6.0*(ra/r)^6); r=distance(g1, g2);')
+    Aform.setName('AformStackingForce')
+    Aform.addPerBondParameter('eps_stack')
+    Aform.addGlobalParameter('ra', 0.37*unit.nanometers)
+
+    for grp in grps:
+        Aform.addGroup(grp[1])
+    # get the stacking pairs
+    sps = []
+    for i in range(len(grps)-1):
+        pij = grps[i][0] + grps[i+1][0]
+        sps.append([[i, i+1], scales[pij]*eps_base])
+    for sp in sps:
+        Aform.addBond(sp[0], [sp[1]])
+    print('    add ', Aform.getNumBonds(), 'Aform stacking pairs')
+    system.addForce(Aform)
+   
     # base pairing
     print('\n# add base pair force')
     a_b, a_c, a_d = [], [], []
