@@ -1,7 +1,7 @@
-* Hyres-2 force field
-* parameter file for coarse grained proteins
+* HyRes4 force field
+* parameter file for coarse grained proteins with heavy backbones
 * arg, lys, asp, glu is NEUTRAL
-*
+* 
 
 BOND
 !bonds in amino acid backbone
