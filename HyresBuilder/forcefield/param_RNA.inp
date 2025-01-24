@@ -91,7 +91,7 @@ NCC   BC2   OCN   CO      20.0    0  -180.0
 
 
 NONBONDED  NBXMOD 3  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
-     CUTNB 16.0  CTOFNB 15.0  CTONNB 11.  EPS 1.0  E14FAC 0.4  WMI27946979N 1.5 
+     CUTNB 16.0  CTOFNB 15.0  CTONNB 11.  EPS 1.0  E14FAC 0.4  WMIN 1.5 
 
 !                 Emin         Rmin/2
 !                 (kcal/mol)   (A)
