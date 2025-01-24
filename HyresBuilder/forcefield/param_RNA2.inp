@@ -62,10 +62,12 @@ PHI
 !phi in backbone
 BP    BC1   BC2   N1C     58.0    1  -165.0    ! P-C1-C2-NA for A/G    increase from 8.0 to 58.0 due to the stacking and pairing
 BP    BC1   BC2   NCC     55.0    1   180.0    ! P-C1-C2-NA for C/U    increase from 5.0 to 55.0 due to the stacking and pairing
-BC1   BC2   N1C   CNC     55.0    1   165.0    ! C1-C2-NA-NB for A/G   increase from 5.0 to 55.0 due to the stacking and pairing
-BC1   BC2   NCC   CO      55.0    1     0.0    !                       increase from 5.0 to 55.0 due to the stacking and pairing 
+!BC1   BC2   N1C   CNC     55.0    1   165.0    ! C1-C2-NA-NB for A/G   increase from 5.0 to 55.0 due to the stacking and pairing
+BC1   BC2   N1C   CNC      8.0    1   105.0
+BC1   BC2   N1C   CNC      8.0    2  -150.0
+BC1   BC2   NCC   CO      25.0    1     0.0    !                       increase from 5.0 to 55.0 due to the stacking and pairing 
 
-BC1   BP    BC1   BP       3.5    1   -20.0
+BC1   BP    BC1   BP      25.0    1   -20.0
 !phi in A/G
 N1C   CNC   N2C   NCN     80.0    1     0.0
 N1C   CNC   NCN   N2C     50.0    1   180.0
@@ -96,13 +98,13 @@ NONBONDED  NBXMOD 3  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
 BP       0.00     -0.11583      2.4340   0.00     -0.11583     2.4340 !!                         2.4340 !
 BC1      0.00     -0.09922      2.2826   0.00     -0.09922     2.2826 !!                         2.2826 !
 BC2      0.00     -0.13244      2.2826   0.00     -0.13244     2.2826 !!                         2.2826 !
-N1C      0.00     -0.11583      1.6954   0.00     -0.11583     1.6954 !!                         1.9949 !
-CNC      0.00     -0.13244      1.7309   0.00     -0.13244     1.7309 !!                         2.2566 !
-NCN      0.00     -0.14905      2.0089   0.00     -0.14905     2.0089 !!                         2.2321 !
-N2C      0.00     -0.11583      1.8215   0.00     -0.11583     1.8215 !!                         2.0239 !
-OCN      0.00     -0.14905      1.9241   0.00     -0.14905     1.9241 !!                         2.1379 !
-NCC      0.00     -0.11583      2.0452   0.00     -0.11583     2.0452 !!                         2.2724 !
-CO       0.00     -0.09922      1.7170   0.00     -0.09922     1.7170 !!                         1.9078 !
+N1C      0.00     -0.11583      1.9949   0.00     -0.11583     1.9949 !!                         1.9949 !
+CNC      0.00     -0.13244      2.2566   0.00     -0.13244     2.2566 !!                         2.2566 !
+NCN      0.00     -0.14905      2.2321   0.00     -0.14905     2.2321 !!                         2.2321 !
+N2C      0.00     -0.11583      2.0239   0.00     -0.11583     2.0239 !!                         2.0239 !
+OCN      0.00     -0.14905      2.1379   0.00     -0.14905     2.1379 !!                         2.1379 !
+NCC      0.00     -0.11583      2.2724   0.00     -0.11583     2.2724 !!                         2.2724 !
+CO       0.00     -0.09922      1.9078   0.00     -0.09922     1.9078 !!                         1.9078 !
 MG       0.00     -0.10000      3.0000   0.00     -0.10000     3.0000 !!
 
 NBFIX
@@ -112,9 +114,9 @@ BP     MG        -0.50000      5.0000
 BC1    BC1       -0.09922      4.5652           !necessary, do not delete
 
 ! for pairing 
-NCN    OCN       -0.14905      3.2000
-NCN    CO        -0.12414      3.8000
-N2C    CO        -0.10753      4.0000
+NCN    OCN       -0.14905      3.6000
+!NCN    CO        -0.12414      3.8000
+!N2C    CO        -0.10753      4.0000
 
 HBOND AEXP 10 REXP 12 HAEX 4 AAEX 2   NOACCEPTORS  HBNOEXCLUSIONS  ALL  -
    CUTHB 6.0 CTOFHB 5.0 CTONHB 4.0  CUTHA 100.0  CTOFHA 90.0  CTONHA 90.0
