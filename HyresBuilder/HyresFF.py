@@ -545,6 +545,7 @@ def MixSystem(psf, system, ffs):
     print('\n################# constructe the protein-RNA mixed force field ####################')
     # get nonbonded force
     for force_index, force in enumerate(system.getForces()):
+        print(force)
         if force.getName() == "NonbondedForce":
             nbforce = force
             nbforce_index = force_index
@@ -565,15 +566,19 @@ def MixSystem(psf, system, ffs):
     
     print('\n# replace HarmonicAngle with Restricted Bending (ReB) potential')
     # Custom Angle Force
-    ReB = CustomAngleForce("kt*(theta-theta0)^2/(sin(theta)^2);")
+    ReB = CustomAngleForce("0.5*kt*(theta-theta0)^2/(sin(theta)^kReB);")
     ReB.setName('ReBAngleForce')
     ReB.addPerAngleParameter("theta0")
     ReB.addPerAngleParameter("kt")
+    ReB.addPerAngleParameter("kReB")
     for angle_idx in range(hmangle.getNumAngles()):
         ang = hmangle.getAngleParameters(angle_idx)
-        ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4]])
+        if atoms[ang[0]] in ['P', 'C1', 'C2', 'NA', 'NB', 'NC', 'ND']:
+            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], 2*ang[4], 2])
+        else:
+            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])
     system.addForce(ReB)
-    
+
     print('\n# add custom nonbondedforce for DH-electrostatic interaction')
     dh = ffs['dh']
     lmd = ffs['lmd']
