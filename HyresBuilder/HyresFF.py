@@ -170,7 +170,7 @@ def Hyres4System(psf, system, ffs):
     sigma_hb = ffs['sigma_hb']
     eps_hb = ffs['eps_hb']
     formula = f"""epsilon*((sigma/r)^6-2*(sigma/r)^3)*step(cos3)*cos3;
-            r=distance(a1,d1); cos3=-cos(phi)^3; phi=angle(a1,d2,d1));
+            r=distance(a1,d1); cos3=-cos(phi)^3; phi=angle(a1,d2,d1);
             sigma = {sigma_hb.value_in_unit(unit.nanometer)}; epsilon = {eps_hb.value_in_unit(unit.kilojoule_per_mole)};
     """
     Hforce = CustomHbondForce(formula)
