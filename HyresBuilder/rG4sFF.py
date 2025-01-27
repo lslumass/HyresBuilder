@@ -10,7 +10,7 @@ from openmm import *
 import numpy as np
 
 ###### for RNA System with A-U/G-C/G-G pairs ######
-def iConRNASystem(psf, system, ffs):
+def rG4sSystem(psf, system, ffs):
     top = psf.topology
     # 2) constructe the force field
     print('\n################# constructe the HyRes force field ####################')
@@ -84,7 +84,7 @@ def iConRNASystem(psf, system, ffs):
     eps_base = ffs['eps_base']
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.0, 'GG':1.0, 'GC':0.8, 'GU':0.8,
               'CA':0.4, 'CG':0.4, 'CC':0.2, 'CU':0.4, 'UA':0.4, 'UG':0.4, 'UC':0.2, 'UU':0.2,
-              'A-U':0.8, 'C-G':1.11}
+              'A-U':0.8, 'C-G':1.11, 'G-G': 1.3}
     # get all the groups of bases
     grps = []
     for atom in psf.topology.atoms():
@@ -208,25 +208,45 @@ def iConRNASystem(psf, system, ffs):
 
     # add G-G pair through CustomHbondForce
     eps_GG = eps_base*scales['G-G']
-    r_gg = 0.40*unit.nanometer     # for NB-ND
-    r_gg2 = 0.37*unit.nanometer     # for NC-NC
+    r_gg1 = 0.37*unit.nanometer     # for NB-ND
+    r_gg2 = 0.39*unit.nanometer     # for NC-NC
     
+    # 5.0*(r_gg1/r1)^10-6.0*(r_gg1/r1)^6 + 5*(r_gg2/r2)^10-6.0*(r_gg2/r2)^6
     if num_G != 0:
-        formula = f"""eps_GG*(5.0*(r_gg/r1)^10-6.0*(r_gg/r1)^6 + 5.0*(r_gg2/r2)^10-6.0*(r_gg2/r2)^6)*step(cos5)*cos5;
-                  r1=distance(d2,a3); r2=distance(d3,a2); cos5=-cos(phi)^5; phi=angle(d1,d2,a3);
+        formula = f"""eps_GG*(5.0*(r_gg1/r1)^10-6.0*(r_gg1/r1)^6)*step1*step2;
+                  r1=distance(d1,a1); step1=step(psi3)*psi3; psi3=cos(psi)^5; psi=dihedral(a2,a1,d1,d2);
+                  step2=step(phi3)*phi3; phi3=-cos(phi)^5; phi=angle(a3,a1,d1);
                   eps_GG={eps_GG.value_in_unit(unit.kilojoule_per_mole)};
-                  r_gg={r_gg.value_in_unit(unit.nanometer)}; r_gg2={r_gg2.value_in_unit(unit.nanometer)};
+                  r_gg1={r_gg1.value_in_unit(unit.nanometer)};
                   """
         pairGG = CustomHbondForce(formula)
         pairGG.setName('GGpairForce')
         pairGG.setNonbondedMethod(nbforce.getNonbondedMethod())
         pairGG.setCutoffDistance(0.65*unit.nanometer)
         for idx in range(len(g_a)):
-            pairGG.addDonor(g_a[idx], g_b[idx], g_c[idx])
-            pairGG.addAcceptor(g_b[idx], g_c[idx], g_d[idx])
+            pairGG.addDonor(g_c[idx], g_b[idx], -1)
+            pairGG.addAcceptor(g_c[idx], g_d[idx], g_b[idx])
             pairGG.addExclusion(idx, idx)
-        
+
         system.addForce(pairGG)
+
+        formula = f"""eps_GG*(5.0*(r_gg2/r2)^10-6.0*(r_gg2/r2)^6)*step1*step2;
+                  r2=distance(d1,a1); step1=step(psi3)*psi3; psi3=cos(psi)^3; psi=dihedral(a1,a2,d2,d1);
+                  step2=step(phi3)*phi3; phi3=-cos(phi)^3; phi=angle(d3,d1,a1);
+                  eps_GG={eps_GG.value_in_unit(unit.kilojoule_per_mole)};
+                  r_gg1={r_gg1.value_in_unit(unit.nanometer)}; r_gg2={r_gg2.value_in_unit(unit.nanometer)};
+                  """
+        pairGG2 = CustomHbondForce(formula)
+        pairGG2.setName('GGpairForce')
+        pairGG2.setNonbondedMethod(nbforce.getNonbondedMethod())
+        pairGG2.setCutoffDistance(0.65*unit.nanometer)
+        for idx in range(len(g_a)):
+            pairGG2.addDonor(g_b[idx], g_c[idx], g_a[idx])
+            pairGG2.addAcceptor(g_d[idx], g_c[idx], -1)
+            pairGG2.addExclusion(idx, idx)
+
+        system.addForce(pairGG2)
+
         print(pairGG.getNumAcceptors(), pairGG.getNumDonors(), 'GG')
 
     # delete the NonbondedForce and HarmonicAngleForce
