@@ -2,15 +2,15 @@
 * Arg, Lys, Asp, Glu are CHARGED
 *
    20    1              
-MASS     1 H     25.008   ! amide H in backbone
-MASS    31 N     24.007   ! backbone N (Pro)
-MASS    38 NH1   24.007   ! backbone N (non-Pro)
-MASS    11 C     22.011   ! carbonyl C in backbone
-MASS    51 O     25.999   ! carbonyl O in backbone
-MASS    12 C1E   23.019   ! CA in backbone (non-Gly)
-MASS    13 C2E   24.027   ! CA in backbone (Gly)
-MASS    14 C3E   25.035   ! CH3 in Ala, and capping group
-MASS    10 CT    22.01100 ! aliphatic carbon
+MASS     1 H     15.008   ! amide H in backbone
+MASS    31 N     14.007   ! backbone N (Pro)
+MASS    38 NH1   14.007   ! backbone N (non-Pro)
+MASS    11 C     12.011   ! carbonyl C in backbone
+MASS    51 O     15.999   ! carbonyl O in backbone
+MASS    12 C1E   13.019   ! CA in backbone (non-Gly)
+MASS    13 C2E   14.027   ! CA in backbone (Gly)
+MASS    14 C3E   15.035   ! CH3 in Ala, and capping group
+MASS    10 CT    12.01100 ! aliphatic carbon
 MASS   209 A2V   43.089   ! Val side chain
 MASS   210 A1L   57.116   ! Leu side chain
 MASS   211 A1I   57.116   ! Ile side chain
