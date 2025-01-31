@@ -4,10 +4,10 @@
 MASS   301 BP    94.970   ! phosphate
 MASS   302 BC1   48.065   ! C1 for ribose ring
 MASS   303 BC2   51.045   ! C2 for ribose ring
-MASS   304 N1C   26.018   ! base -C-N-
+MASS   304 N1C   36.018   ! base -C-N-
 MASS   305 CNC   39.037   ! base -C=N-C- for A, G
 MASS   306 NCN   42.041   ! base -C(NH2)=N- for A, G, C
-MASS   307 N2C   27.026   ! base -C=N- for A
+MASS   307 N2C   37.026   ! base -C=N- for A
 MASS   308 OCN   43.025   ! base -C(=O)-NH- for G, U
 MASS   309 NCC   42.041   ! base -N-C=C- for C, U
 MASS   310 CO    28.010   ! base -C(=O)- for C, U
