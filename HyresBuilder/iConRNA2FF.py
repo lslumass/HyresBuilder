@@ -85,7 +85,7 @@ def iConRNASystem(psf, system, ffs):
     eps_base = ffs['eps_base']
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.0, 'GG':1.0, 'GC':0.8, 'GU':0.8,
               'CA':0.4, 'CG':0.4, 'CC':0.2, 'CU':0.4, 'UA':0.4, 'UG':0.4, 'UC':0.2, 'UU':0.2,
-              'A-U':1.0, 'C-G':1.25, 'G-U':1.8}
+              'A-U':1.2, 'C-G':1.5, 'G-U':2.0}
 
     # get all the groups of bases
     grps = []
