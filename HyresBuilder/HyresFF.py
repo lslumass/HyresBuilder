@@ -169,8 +169,8 @@ def Hyres4System(psf, system, ffs):
     # Add the Custom hydrogen bond force
     sigma_hb = ffs['sigma_hb']
     eps_hb = ffs['eps_hb']
-    formula = f"""epsilon*((sigma/r)^10-2*(sigma/r)^5)*step(cos3)*cos3;
-            r=distance(a1,d1); cos3=-cos(phi)^3; phi=angle(a1,d2,d1);
+    formula = f"""epsilon*(5*(sigma/r)^12-6*(sigma/r)^10)*step(cos5)*cos5;
+            r=distance(a1,d1); cos5=-cos(phi+0.4)^5; phi=angle(a1,d2,d1);
             sigma = {sigma_hb.value_in_unit(unit.nanometer)}; epsilon = {eps_hb.value_in_unit(unit.kilojoule_per_mole)};
     """
     Hforce = CustomHbondForce(formula)
