@@ -36,6 +36,9 @@ C1E   A1F    200.0      2.35  ! phe
 C1E   A1Y    200.0      2.35  ! tyr
 C1E   A1W    591.4      1.99  ! trp
 C1E   A2P    600.0      1.94  ! pro
+!## CA-CB bonds for pSer and pThr
+C1E   P2S    262.9      1.61  ! pSer
+C1E   P2T    200.0      2.03  ! pThr
 !bonds in amino acid sidechain-sidechain
 A3K   QdK    200.0      3.02  ! lys
 A3R   QdR    200.0      3.51  ! arg
@@ -54,6 +57,9 @@ P1W   A2W    600.0      1.85  ! trp CC-CD
 A2W   A3W    600.0      2.15  ! trp CD-CE
 A2W   A4W    600.0      2.15  ! trp CD-CF
 A3W   A4W    600.0      2.25  ! trp CE-CF
+!## CB-CC bonds for pSer and pThr
+P2S   P3S    200.0      2.53  ! pSer CB-CC
+P2T   P3T    200.0      3.20  ! pThr CB-CC
 ! special bond in pro
 N     A2P    600.0      1.86  ! pro
 
@@ -101,6 +107,10 @@ C     C1E   A1F   20.0     123.2  ! phe
 C     C1E   A1Y   20.0     123.6  ! tyr
 C     C1E   A1W   20.0     116.0  ! trp
 C     C1E   A2P   20.0     121.7  ! pro
+!## bond of C-CA-CB for pSer and pThr
+C     C1E   P2S   20.0     112.3  ! pSer
+C     C1E   P2T   20.0     101.2  ! pThr
+
 !N-CA-CB angle in amino acid
 C3E   C1E   NH1   90.0     109.5  ! ala
 A2V   C1E   NH1   20.0     111.3  ! val
@@ -120,6 +130,10 @@ A4H   C1E   NH1   20.0     112.8  ! his
 A1F   C1E   NH1   20.0     108.2  ! phe
 A1Y   C1E   NH1   20.0     108.7  ! tyr
 A1W   C1E   NH1   20.0     110.8  ! trp
+!## for pSer and pThr
+P2S   C1E   NH1   20.0     110.3  ! pSer
+P2T   C1E   NH1   20.0      98.4  ! pThr
+
 !CA-CB-CC (and/or CA-CB-CD) angle in amino acid
 C1E   A3K   QdK   20.0     144.9  ! lys
 C1E   A3R   QdR   20.0     137.9  ! arg
@@ -131,6 +145,10 @@ C1E   A1Y   A2Y   20.0     115.8  ! tyr CA-CB-CC
 C1E   A1Y   P1Y   20.0     139.2  ! tyr CA-CB-CD
 C1E   A1W   P1W   20.0     125.6  ! trp CA-CB-CC
 C1E   A1W   A2W   20.0     133.7  ! trp CA-CB-CD
+!## for pSer and pThr
+C1E   P2S   P3S   20.0     132.8  ! pSer CA-CB-CC (PO4)
+C1E   P2T   P3T   20.0      72.6  ! pThr CA-CB-CC (PO4)
+
 !CC-CD-CE, CC-CD-CF, CB-CD-CE, CB-CD-CF in trp
 A1W   A2W   A3W   90.0     161.0  ! trp
 P1W   A2W   A3W   90.0     127.9  ! trp
@@ -204,6 +222,13 @@ NH1   C1E   A1Y   A2Y     0.30    1     90.0   ! tyr
 !NH1   C1E   A1Y   A2Y     0.10    1     50.0   ! tyr
 NH1   C1E   A1W   P1W     0.80    3     0.0    ! trp
 NH1   C1E   A1W   P1W     0.80    1     85.0   ! trp
+!## for pSer
+NH1   C1E   P2S   P3S     0.30    3     0.0    ! pSer
+NH1   C1E   P2S   P3S     0.50    1     75.0   ! pSer
+!## for pThr
+NH1   C1E   P2T   P3T     0.30    3     0.0    ! pThr
+NH1   C1E   P2T   P3T     0.50    1     75.0   ! pThr
+
 !N-CA-CB-CD
 NH1   C1E   A4H   P2H     0.00    2     180.0  ! his N-CA-CB-CD
 NH1   C1E   A1F   A3F     0.00    2     180.0  ! phe N-CA-CB-CD
@@ -220,6 +245,11 @@ C     C1E   A1Y   A2Y     0.00    2     180.0  ! tyr C-CA-CB-CC
 C     C1E   A1Y   P1Y     0.00    2     180.0  ! tyr C-CA-CB-CD
 C     C1E   A1W   P1W     0.00    2     180.0  ! trp C-CA-CB-CC
 C     C1E   A1W   A2W     0.00    2     180.0  ! trp C-CA-CB-CD
+!## for pSer
+C     C1E   P2S   P3S     0.00    2     180.0  ! pSer
+!## for pThr
+C     C1E   P2T   P3T     0.00    2     180.0  ! pThr
+
 !CA-CB-CC-CD (or CA-CB-CD-CC) for his, phe, tyr
 C1E   A4H   P1H   P2H     0.00    2     180.0  ! his CA-CB-CC-CD
 C1E   A4H   P2H   P1H     0.00    2     180.0  ! his CA-CB-CD-CC
@@ -269,6 +299,11 @@ C1E   X     X     A1F    55.00    0     35.3   ! phe
 C1E   X     X     A1Y    55.00    0     35.3   ! tyr
 C1E   X     X     A1W    55.00    0     35.3   ! trp
 C1E   X     X     A2P    55.00    0     35.3   ! pro
+!## for pSer
+C1E   X     X     P2S    55.00    0     35.3   ! pSer
+!## for pThr
+C1E   X     X     P2T    55.00    0     35.3   ! pThr
+
 !CD-CE-CF-CB CD-CE-CF-CC improper in trp
 A2W   A3W   A4W   A1W    47.78    0     0.0    ! trp
 A2W   A3W   A4W   P1W    47.78    0     0.0    ! trp
@@ -672,6 +707,12 @@ P1W      0.00     -0.0420      2.2364   0.00     -0.0840       2.5364 ! trp 15 s
 A2W      0.00     -0.0840      2.0870   0.00     -0.1680       2.3870 ! trp 15 size: vol + 0.00 14 size: vol + 0.30
 A3W      0.00     -0.0840      2.3293   0.00     -0.1680       2.6293 ! trp 15 size: vol + 0.00 14 size: vol + 0.30
 A4W      0.00     -0.0840      2.3292   0.00     -0.1680       2.6292 ! trp 15 size: vol + 0.00 14 size: vol + 0.30
+!## for pSer
+P2S      0.00     -0.1540      2.1158   0.00     -0.1540       2.1158 ! CB for serp b/c only 1 carb, no oxy
+P3S      0.00     -0.0700      2.2500   0.00     -0.0700       2.2500 ! ser 15 size: vol + 0.00 14 size:vol + 0.40
+!## for pThr
+P2T      0.00     -0.2200      2.4350   0.00     -0.2200       2.4350 ! pthr 15 size: vol + 0.00 14 size: vol + 0.00
+P3T      0.00     -0.0700      2.2500   0.00     -0.0700       2.2500 ! pthr 15 size: vol + 0.00 14 size: vol + 0.00
 
 NBFIX
 
