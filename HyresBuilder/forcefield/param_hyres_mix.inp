@@ -100,7 +100,7 @@ C     C1E   A4H   20.0     112.5  ! his
 C     C1E   A1F   20.0     123.2  ! phe
 C     C1E   A1Y   20.0     123.6  ! tyr
 C     C1E   A1W   20.0     116.0  ! trp
-C     C1E   A2P    0.0     121.7  ! pro
+C     C1E   A2P   20.0     121.7  ! pro
 !N-CA-CB angle in amino acid
 C3E   C1E   NH1   90.0     109.5  ! ala
 A2V   C1E   NH1   20.0     111.3  ! val
@@ -268,7 +268,7 @@ C1E   X     X     A4H    25.00    0     35.3   ! his
 C1E   X     X     A1F    25.00    0     35.3   ! phe
 C1E   X     X     A1Y    25.00    0     35.3   ! tyr
 C1E   X     X     A1W    25.00    0     35.3   ! trp
-C1E   X     X     A2P    25.00    0     35.3   ! pro
+C1E   X     X     A2P    0.00    0     35.3   ! pro
 !CD-CE-CF-CB CD-CE-CF-CC improper in trp
 A2W   A3W   A4W   A1W    27.78    0     0.0    ! trp
 A2W   A3W   A4W   P1W    27.78    0     0.0    ! trp
