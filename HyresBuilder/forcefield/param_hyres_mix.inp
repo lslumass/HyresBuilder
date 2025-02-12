@@ -35,7 +35,7 @@ C1E   A4H    271.9      1.97  ! his
 C1E   A1F    200.0      2.35  ! phe
 C1E   A1Y    200.0      2.35  ! tyr
 C1E   A1W    291.4      1.99  ! trp
-C1E   A2P    300.0      1.94  ! pro
+C1E   A2P    150.0      1.94  ! pro
 !bonds in amino acid sidechain-sidechain
 A3K   QdK    200.0      3.02  ! lys
 A3R   QdR    200.0      3.51  ! arg
@@ -55,7 +55,7 @@ A2W   A3W    300.0      2.15  ! trp CD-CE
 A2W   A4W    300.0      2.15  ! trp CD-CF
 A3W   A4W    300.0      2.25  ! trp CE-CF
 ! special bond in pro
-N     A2P    300.0      1.86  ! pro
+N     A2P    150.0      1.86  ! pro
 
 THETAS
 !angles in amino acid backbone
