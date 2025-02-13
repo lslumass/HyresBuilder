@@ -41,6 +41,13 @@ MASS   235 P1W   28.034   ! Trp side chain 2 CC
 MASS   236 A2W   24.022   ! Trp side chain 3 CD
 MASS   237 A3W   26.038   ! Trp side chain 4 CE
 MASS   238 A4W   26.038   ! Trp side chain 5 CF
+!## new type for phosphorylated SER and THR
+!## pSER
+MASS   239 P2S   14.027   ! pSer side chain 1 CB
+MASS   240 P3S   94.970   ! pSer side chain 2 CC (PO4)
+!## pTHR
+MASS   241 P2T   27.046   ! pThr side chain 1 CB
+MASS   242 P3T   94.970   ! pThr side chain 1 CC
 
 DECL -C
 DECL -O
@@ -304,6 +311,31 @@ IC   +N   CA   *C   O      0.0000    0.00  180.00    0.00   0.0000
 IC   CA   C    +N   +CA    0.0000    0.00  180.00    0.00   0.0000
 IC   N    C    *CA  CB     0.0000    0.00  120.00    0.00   0.0000
 
+RESI SEP     -2.00000
+GROU
+ATOM N    NH1     0.00
+ATOM H    H       0.00
+ATOM CA   C1E     0.00
+GROU
+ATOM CB   P2S     0.00
+ATOM CC   P3S    -2.00
+GROU
+ATOM C    C       0.00
+ATOM O    O       0.00
+BOND N    CA        CA   C         C    +N        C    O         N    H
+BOND CA   CB     CB    CC
+IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
+CMAP -C   N    CA   C         N    CA   C    +N
+DONO  H  N
+ACCE O  C
+IC   -C   CA   *N   H      0.0000    0.00  180.00    0.00   0.0000
+IC   -C   N    CA   C      0.0000    0.00  180.00    0.00   0.0000
+IC   N    CA   C    +N     0.0000    0.00  180.00    0.00   0.0000
+IC   +N   CA   *C   O      0.0000    0.00  180.00    0.00   0.0000
+IC   CA   C    +N   +CA    0.0000    0.00  180.00    0.00   0.0000
+IC   N    C    *CA  CB     0.0000    0.00  120.00    0.00   0.0000
+IC   C    CA    CB  CC     0.0000    0.00  180.00    0.00   0.0000
+
 RESI THR     0.00000
 GROU
 ATOM N    NH1     0.00
@@ -326,6 +358,31 @@ IC   N    CA   C    +N     0.0000    0.00  180.00    0.00   0.0000
 IC   +N   CA   *C   O      0.0000    0.00  180.00    0.00   0.0000
 IC   CA   C    +N   +CA    0.0000    0.00  180.00    0.00   0.0000
 IC   N    C    *CA  CB     0.0000    0.00  120.00    0.00   0.0000
+
+RESI THP     -2.00000
+GROU
+ATOM N    NH1     0.00
+ATOM H    H       0.00
+ATOM CA   C1E     0.00
+GROU
+ATOM CB   P2T     0.00
+ATOM CC   P3T    -2.00
+GROU
+ATOM C    C       0.00
+ATOM O    O       0.00
+BOND N    CA        CA   C         C    +N        C    O         N    H
+BOND CA   CB     CB    CC
+IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
+CMAP -C   N    CA   C         N    CA   C    +N
+DONO  H  N
+ACCE O  C
+IC   -C   CA   *N   H      0.0000    0.00  180.00    0.00   0.0000
+IC   -C   N    CA   C      0.0000    0.00  180.00    0.00   0.0000
+IC   N    CA   C    +N     0.0000    0.00  180.00    0.00   0.0000
+IC   +N   CA   *C   O      0.0000    0.00  180.00    0.00   0.0000
+IC   CA   C    +N   +CA    0.0000    0.00  180.00    0.00   0.0000
+IC   N    C    *CA  CB     0.0000    0.00  120.00    0.00   0.0000
+IC   C    CA    CB  CC     0.0000    0.00  180.00    0.00   0.0000
 
 RESI LYS     1.00000
 GROU
