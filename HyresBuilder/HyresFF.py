@@ -2,7 +2,7 @@
 This package is used to constructe Hyres Force Field, iConRNA force field
 Athours: Shanlong Li, Xiping Gong, Yumeng Zhang
 Date: Mar 9, 2024
-Modified: Apr 24, 2024
+Modified: Feb 13, 2025
 """
 
 from openmm.unit import *
@@ -714,26 +714,14 @@ def MixSystem(psf, system, ffs):
     # Add the Custom hydrogen bond force
     sigma_hb = ffs['sigma_hb']
     eps_hb = ffs['eps_hb']
-    formula  = f"""epsilon*(5.0*(sigma/r)^12-6.0*(sigma/r)^10)*swrad*cosd^4*swang;
-            swrad = step(rcuton-r)+step(r-rcuton)*(step(rcutoff-r)-step(rcuton-r))*
-            roff2*roff2*(roff2-3.0*ron2)/roffon2^3;
-            roff2 = rcutoff*rcutoff-r*r;
-            ron2 = rcuton*rcuton-r*r;
-            roffon2 = rcutoff*rcutoff-rcuton*rcuton;
-            rcutoff = CTOFHB; rcuton = CTONHB; r = distance(a1, d2);
-            swang = step(cosdcuton-cosd)+step(cosd-cosdcuton)*(step(cosdcutoff-cosd)-step(cosdcuton-cosd))*
-            cosdoff2*cosdoff2*(cosdoff2-3.0*cosdon2)/cosdoffon2^3;
-            cosdoff2 = cosdcutoff*cosdcutoff-cosd*cosd;
-            cosdon2 = cosdcuton*cosdcuton-cosd*cosd;
-            cosdoffon2 = cosdcutoff*cosdcutoff-cosdcuton*cosdcuton;
-            cosdcutoff = -cos(CTOFHA); cosdcuton = -cos(CTONHA); cosd = cos(angle(a1,d1,d2));
-            CTOFHB = 0.5; CTONHB = 0.4; CTOFHA = {np.deg2rad(91)}; CTONHA = {np.deg2rad(90)};
-            sigma = {sigma_hb.value_in_unit(unit.nanometer)}; epsilon = {eps_hb.value_in_unit(unit.kilojoule_per_mole)}
-    """    
+    formula = f"""epsilon*(5*(sigma/r)^12-6*(sigma/r)^10)*step(cos3)*cos3;
+            r=distance(a1,d1); cos3=-cos(phi)^3; phi=angle(a1,d2,d1);
+            sigma = {sigma_hb.value_in_unit(unit.nanometer)}; epsilon = {eps_hb.value_in_unit(unit.kilojoule_per_mole)};
+    """
     Hforce = CustomHbondForce(formula)
     Hforce.setNonbondedMethod(nbforce.getNonbondedMethod())
-    Hforce.setCutoffDistance(0.6*unit.nanometers)
-    
+    Hforce.setCutoffDistance(0.45*unit.nanometers)
+        
     Ns, Hs, Os, Cs = [], [], [], []
     for atom in psf.topology.atoms():
         if atom.name == "N" and atom.residue.name != 'PRO':
@@ -745,7 +733,7 @@ def MixSystem(psf, system, ffs):
         if atom.name == "C":
             Cs.append(int(atom.index))
     for idx in range(len(Hs)):
-        Hforce.addDonor(Hs[idx], Ns[idx], -1)
+        Hforce.addDonor(Ns[idx], Hs[idx], -1)
         Hforce.addAcceptor(Os[idx], -1, -1)
     system.addForce(Hforce)
 
