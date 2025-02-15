@@ -20,8 +20,8 @@ C     N      260.0      1.33  ! C-N (pro)                       ! gbsw N    C   
 C     C3E    250.0      1.52  ! C-CH3 in N-ter capping group    ! gbsw CT3  C     250.000     1.4900
 C3E   NH1    320.0      1.49  ! N-CH3 in C-ter capping group    ! gbsw NH1  CT3   320.000     1.4300
 !bonds in amino acid backbone-sidechain
-C1E   C3E    400.0      1.63  ! ala
-C1E   A2V    400.0      2.01  ! val
+C1E   C3E    300.0      1.63  ! ala
+C1E   A2V    300.0      2.01  ! val
 C1E   A1L    200.0      2.71  ! leu
 C1E   A1I    100.0      2.33  ! ile
 C1E   A5M    100.0      3.26  ! met
@@ -30,15 +30,15 @@ C1E   QaD    200.0      2.54  ! asp
 C1E   P4Q    300.0      3.45  ! gln
 C1E   QaE    100.0      3.14  ! glu
 C1E   P1C    300.0      2.40  ! cys
-C1E   P1S    400.0      2.03  ! ser
-C1E   P1T    400.0      2.01  ! thr
+C1E   P1S    300.0      2.03  ! ser
+C1E   P1T    300.0      2.01  ! thr
 C1E   A3K    200.0      2.65  ! lys
 C1E   A3R    200.0      2.65  ! arg
-C1E   A4H    500.0      1.95  ! his
+C1E   A4H    400.0      1.95  ! his
 C1E   A1F    150.0      2.30  ! phe
 C1E   A1Y    150.0      2.30  ! tyr
-C1E   A1W    400.0      1.99  ! trp
-C1E   A2P    400.0      1.92  ! pro
+C1E   A1W    300.0      1.99  ! trp
+C1E   A2P    300.0      1.92  ! pro
 !## CA-CB bonds for pSer and pThr   
 C1E   P2S    250.0      1.61  ! pSer
 C1E   P2T    200.0      2.03  ! pThr
@@ -46,20 +46,20 @@ C1E   P2T    200.0      2.03  ! pThr
 A3K   QdK    100.0      2.95  ! lys
 A3R   QdR    100.0      3.60  ! arg
 A4H   P1H    200.0      2.52  ! his CB-CC
-A4H   P2H    200.0      2.45  ! his CB-CD
-P1H   P2H    200.0      1.86  ! his CC-CD
-A1F   A2F    200.0      2.45  ! phe CB-CC
-A1F   A3F    200.0      2.87  ! phe CB-CD
-A2F   A3F    200.0      2.22  ! phe CC-CD
-A1Y   A2Y    200.0      2.45  ! tyr CB-CC
-A1Y   P1Y    200.0      3.52  ! tyr CB-CD
-A2Y   P1Y    200.0      2.44  ! tyr CC-CD
-A1W   P1W    200.0      2.58  ! trp CB-CC
-A1W   A2W    200.0      2.53  ! trp CB-CD
-P1W   A2W    200.0      1.85  ! trp CC-CD
-A2W   A3W    200.0      2.15  ! trp CD-CE
-A2W   A4W    200.0      2.15  ! trp CD-CF
-A3W   A4W    200.0      2.25  ! trp CE-CF
+A4H   P2H    300.0      2.45  ! his CB-CD
+P1H   P2H    300.0      1.86  ! his CC-CD
+A1F   A2F    300.0      2.45  ! phe CB-CC
+A1F   A3F    300.0      2.87  ! phe CB-CD
+A2F   A3F    300.0      2.22  ! phe CC-CD
+A1Y   A2Y    300.0      2.45  ! tyr CB-CC
+A1Y   P1Y    300.0      3.52  ! tyr CB-CD
+A2Y   P1Y    300.0      2.44  ! tyr CC-CD
+A1W   P1W    300.0      2.58  ! trp CB-CC
+A1W   A2W    300.0      2.53  ! trp CB-CD
+P1W   A2W    300.0      1.85  ! trp CC-CD
+A2W   A3W    300.0      2.15  ! trp CD-CE
+A2W   A4W    300.0      2.15  ! trp CD-CF
+A3W   A4W    300.0      2.25  ! trp CE-CF
 !## CB-CC bonds for pSer and pThr           
 P2S   P3S    200.0      2.53  ! pSer CB-CC  
 P2T   P3T    200.0      3.20  ! pThr CB-CC  
