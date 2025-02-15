@@ -128,7 +128,9 @@ def setup(params, gpu_id, pressure, friction, dt):
     integrator = LangevinMiddleIntegrator(temperture, friction, dt)
     plat = Platform.getPlatformByName('CUDA')
     prop = {'Precision': 'mixed', 'DeviceIndex': gpu_id}
-    simulation = Simulation(top, system, integrator, plat, prop)
-    simulation.context.setPositions(pdb.positions)
-    simulation.context.setVelocitiesToTemperature(temperture)
+    sim = Simulation(top, system, integrator, plat, prop)
+    sim.context.setPositions(pdb.positions)
+    sim.context.setVelocitiesToTemperature(temperture)
     print(f'Langevin, CUDA, {temperture}')
+
+    return psf, system, ffs, sim
