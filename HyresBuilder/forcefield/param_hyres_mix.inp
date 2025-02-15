@@ -93,46 +93,46 @@ C     NH1   C3E   77.5     120.0  ! C-N-CH3 (C-ter)                 ! gbsw CT3  
 !C-CA-CB angle in amino acid
 C     C1E   C3E   90.0     111.2  ! ala
 C     C1E   A2V   20.0     116.3  ! val
-C     C1E   A1L   10.0     120.6  ! leu  Decrease from 20.0 to 5.0
-C     C1E   A1I   10.0     117.8  ! ile  Decrease from 20.0 to 5.0
-C     C1E   A5M   10.0     119.8  ! met  Decrease from 20.0 to 5.0
-C     C1E   P5N   10.0     127.0  ! asn  Decrease from 20.0 to 5.0
-C     C1E   QaD   10.0     121.1  ! asp  Decrease from 20.0 to 5.0
-C     C1E   P4Q   10.0     119.1  ! gln  Decrease from 20.0 to 5.0
-C     C1E   QaE   10.0     116.2  ! glu  Decrease from 20.0 to 5.0
-C     C1E   P1C   10.0     118.3  ! cys  Decrease from 20.0 to 5.0
-C     C1E   P1S   10.0     109.4  ! ser  Decrease from 20.0 to 5.0
-C     C1E   P1T   10.0     116.2  ! thr  Decrease from 20.0 to 5.0
-C     C1E   A3K   10.0     117.0  ! lys  Decrease from 20.0 to 5.0
-C     C1E   A3R   10.0     118.5  ! arg  Decrease from 20.0 to 5.0
-C     C1E   A4H   10.0     112.5  ! his  Decrease from 20.0 to 5.0
-C     C1E   A1F   10.0     123.2  ! phe  Decrease from 20.0 to 5.0
-C     C1E   A1Y   10.0     123.6  ! tyr  Decrease from 20.0 to 5.0
-C     C1E   A1W   10.0     116.0  ! trp  Decrease from 20.0 to 5.0
-C     C1E   A2P   10.0     115.0  ! pro  Decrease from 20.0 to 5.0, change from 121.7 to 115
+C     C1E   A1L   10.0     120.6  ! leu  Decrease from 20.0 to 10.0
+C     C1E   A1I   10.0     117.8  ! ile  Decrease from 20.0 to 10.0
+C     C1E   A5M   10.0     119.8  ! met  Decrease from 20.0 to 10.0
+C     C1E   P5N   10.0     127.0  ! asn  Decrease from 20.0 to 10.0
+C     C1E   QaD   10.0     121.1  ! asp  Decrease from 20.0 to 10.0
+C     C1E   P4Q   10.0     119.1  ! gln  Decrease from 20.0 to 10.0
+C     C1E   QaE   10.0     116.2  ! glu  Decrease from 20.0 to 10.0
+C     C1E   P1C   10.0     118.3  ! cys  Decrease from 20.0 to 10.0
+C     C1E   P1S   10.0     109.4  ! ser  Decrease from 20.0 to 10.0
+C     C1E   P1T   10.0     116.2  ! thr  Decrease from 20.0 to 10.0
+C     C1E   A3K   10.0     117.0  ! lys  Decrease from 20.0 to 10.0
+C     C1E   A3R   10.0     118.5  ! arg  Decrease from 20.0 to 10.0
+C     C1E   A4H   10.0     112.5  ! his  Decrease from 20.0 to 10.0
+C     C1E   A1F   10.0     123.2  ! phe  Decrease from 20.0 to 10.0
+C     C1E   A1Y   10.0     123.6  ! tyr  Decrease from 20.0 to 10.0
+C     C1E   A1W   10.0     116.0  ! trp  Decrease from 20.0 to 10.0
+C     C1E   A2P   10.0     115.0  ! pro  Decrease from 20.0 to 10.0, change from 121.7 to 115
 !## bond of C-CA-CB for pSer and pThr    
 C     C1E   P2S   20.0     112.3  ! pSer 
 C     C1E   P2T   20.0     101.2  ! pThr 
 
 !N-CA-CB angle in amino acid
 C3E   C1E   NH1   90.0     109.5  ! ala
-A2V   C1E   NH1   10.0     111.3  ! val  decrease from 20.0 to 5.0 for hyres_iCon
-A1L   C1E   NH1   10.0     114.3  ! leu  decrease from 20.0 to 5.0 for hyres_iCon
-A1I   C1E   NH1   10.0     110.4  ! ile  decrease from 20.0 to 5.0 for hyres_iCon
-A5M   C1E   NH1   10.0     112.7  ! met  decrease from 20.0 to 5.0 for hyres_iCon
-P5N   C1E   NH1   10.0     104.6  ! asn  decrease from 20.0 to 5.0 for hyres_iCon
-QaD   C1E   NH1   10.0     106.4  ! asp  decrease from 20.0 to 5.0 for hyres_iCon
-P4Q   C1E   NH1   10.0     111.0  ! gln  decrease from 20.0 to 5.0 for hyres_iCon
-QaE   C1E   NH1   10.0     113.7  ! glu  decrease from 20.0 to 5.0 for hyres_iCon
-P1C   C1E   NH1   10.0     107.0  ! cys  decrease from 20.0 to 5.0 for hyres_iCon
-P1S   C1E   NH1   10.0     114.2  ! ser  decrease from 20.0 to 5.0 for hyres_iCon
-P1T   C1E   NH1   10.0     106.9  ! thr  decrease from 20.0 to 5.0 for hyres_iCon
-A3K   C1E   NH1   10.0     112.3  ! lys  decrease from 20.0 to 5.0 for hyres_iCon
-A3R   C1E   NH1   10.0     112.2  ! arg  decrease from 20.0 to 5.0 for hyres_iCon
-A4H   C1E   NH1   10.0     112.8  ! his  decrease from 20.0 to 5.0 for hyres_iCon
-A1F   C1E   NH1   10.0     108.2  ! phe  decrease from 20.0 to 5.0 for hyres_iCon
-A1Y   C1E   NH1   10.0     108.7  ! tyr  decrease from 20.0 to 5.0 for hyres_iCon
-A1W   C1E   NH1   10.0     110.8  ! trp  decrease from 20.0 to 5.0 for hyres_iCon
+A2V   C1E   NH1   10.0     111.3  ! val  decrease from 20.0 to 10.0 for hyres_iCon
+A1L   C1E   NH1   10.0     114.3  ! leu  decrease from 20.0 to 10.0 for hyres_iCon
+A1I   C1E   NH1   10.0     110.4  ! ile  decrease from 20.0 to 10.0 for hyres_iCon
+A5M   C1E   NH1   10.0     112.7  ! met  decrease from 20.0 to 10.0 for hyres_iCon
+P5N   C1E   NH1   10.0     104.6  ! asn  decrease from 20.0 to 10.0 for hyres_iCon
+QaD   C1E   NH1   10.0     106.4  ! asp  decrease from 20.0 to 10.0 for hyres_iCon
+P4Q   C1E   NH1   10.0     111.0  ! gln  decrease from 20.0 to 10.0 for hyres_iCon
+QaE   C1E   NH1   10.0     113.7  ! glu  decrease from 20.0 to 10.0 for hyres_iCon
+P1C   C1E   NH1   10.0     107.0  ! cys  decrease from 20.0 to 10.0 for hyres_iCon
+P1S   C1E   NH1   10.0     114.2  ! ser  decrease from 20.0 to 10.0 for hyres_iCon
+P1T   C1E   NH1   10.0     106.9  ! thr  decrease from 20.0 to 10.0 for hyres_iCon
+A3K   C1E   NH1   10.0     112.3  ! lys  decrease from 20.0 to 10.0 for hyres_iCon
+A3R   C1E   NH1   10.0     112.2  ! arg  decrease from 20.0 to 10.0 for hyres_iCon
+A4H   C1E   NH1   10.0     112.8  ! his  decrease from 20.0 to 10.0 for hyres_iCon
+A1F   C1E   NH1   10.0     108.2  ! phe  decrease from 20.0 to 10.0 for hyres_iCon
+A1Y   C1E   NH1   10.0     108.7  ! tyr  decrease from 20.0 to 10.0 for hyres_iCon
+A1W   C1E   NH1   10.0     110.8  ! trp  decrease from 20.0 to 10.0 for hyres_iCon
 !## for pSer and pThr                     
 P2S   C1E   NH1   20.0     110.3  ! pSer  
 P2T   C1E   NH1   20.0      98.4  ! pThr  
@@ -151,10 +151,10 @@ C1E   A1W   A2W   20.0     133.7  ! trp CA-CB-CD
 C1E   P2S   P3S   20.0     132.8  ! pSer CA-CB-CC (PO4) 
 C1E   P2T   P3T   20.0      72.6  ! pThr CA-CB-CC (PO4) 
 !CC-CD-CE, CC-CD-CF, CB-CD-CE, CB-CD-CF in trp
-A1W   A2W   A3W   90.0     161.0  ! trp
-P1W   A2W   A3W   90.0     127.9  ! trp
-A1W   A2W   A4W   90.0     98.6   ! trp
-P1W   A2W   A4W   90.0     168.1  ! trp
+A1W   A2W   A3W   50.0     161.0  ! trp
+P1W   A2W   A3W   50.0     127.9  ! trp
+A1W   A2W   A4W   50.0     98.6   ! trp
+P1W   A2W   A4W   50.0     168.1  ! trp
 !C-N-CB for pro
 C     N     A2P   90.0     161.9  ! pro
 !angles within the ring of amino acid side chain
