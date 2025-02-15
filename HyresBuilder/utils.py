@@ -117,7 +117,7 @@ def setup(params, gpu_id, pressure, friction, dt):
         system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds)
         system.setDefaultPeriodicBoxVectors(a, b, c)
 
-    system = MixSystem(psf, system, ffs)
+    #system = MixSystem(psf, system, ffs)
     # set simulation
     print('\n################### prepare simulation system####################')
     if ensemble == 'NPT':
