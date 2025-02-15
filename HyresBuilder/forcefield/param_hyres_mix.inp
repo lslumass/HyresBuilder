@@ -8,17 +8,17 @@
 
 BOND
 !bonds in amino acid backbone
-H     NH1    405.0      0.98  ! H-N (non-pro)                   ! gbsw NH1  H     440.000     0.9970
-C1E   NH1    422.0      1.45  ! CA-N (non-pro, non-gly)         ! gbsw NH1  CT1   320.000     1.4300 
-C2E   NH1    422.0      1.45  ! CA-N (gly)                      ! gbsw NH1  CT2   320.000     1.4300
-C1E   N      422.0      1.45  ! CA-N (pro)                      ! gbsw N    CP1   320.000     1.4340
-C     C1E    405.0      1.52  ! C-CA (non-gly)                  ! gbsw CT1  C     250.000     1.4900
-C     C2E    405.0      1.52  ! C-CA (gly)                      ! gbsw CT2  C     250.000     1.4900
-C     O      580.0      1.23  ! C=O                             ! gbsw O    C     620.000     1.2300
-C     NH1    471.0      1.33  ! C-N (non-pro)                   ! gbsw NH1  C     370.000     1.3450
-C     N      471.0      1.33  ! C-N (pro)                       ! gbsw N    C     260.000     1.3000
-C     C3E    405.0      1.52  ! C-CH3 in N-ter capping group    ! gbsw CT3  C     250.000     1.4900
-C3E   NH1    422.0      1.49  ! N-CH3 in C-ter capping group    ! gbsw NH1  CT3   320.000     1.4300
+H     NH1    300.0      0.98  ! H-N (non-pro)                   ! gbsw NH1  H     440.000     0.9970
+C1E   NH1    320.0      1.45  ! CA-N (non-pro, non-gly)         ! gbsw NH1  CT1   320.000     1.4300 
+C2E   NH1    320.0      1.45  ! CA-N (gly)                      ! gbsw NH1  CT2   320.000     1.4300
+C1E   N      320.0      1.45  ! CA-N (pro)                      ! gbsw N    CP1   320.000     1.4340
+C     C1E    250.0      1.52  ! C-CA (non-gly)                  ! gbsw CT1  C     250.000     1.4900
+C     C2E    250.0      1.52  ! C-CA (gly)                      ! gbsw CT2  C     250.000     1.4900
+C     O      380.0      1.23  ! C=O                             ! gbsw O    C     620.000     1.2300
+C     NH1    370.0      1.33  ! C-N (non-pro)                   ! gbsw NH1  C     370.000     1.3450
+C     N      260.0      1.33  ! C-N (pro)                       ! gbsw N    C     260.000     1.3000
+C     C3E    250.0      1.52  ! C-CH3 in N-ter capping group    ! gbsw CT3  C     250.000     1.4900
+C3E   NH1    320.0      1.49  ! N-CH3 in C-ter capping group    ! gbsw NH1  CT3   320.000     1.4300
 !bonds in amino acid backbone-sidechain
 C1E   C3E    400.0      1.63  ! ala
 C1E   A2V    400.0      2.01  ! val
