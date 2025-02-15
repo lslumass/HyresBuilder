@@ -637,6 +637,9 @@ def MixSystem(psf, system, ffs):
         elif force.getName() == "HarmonicAngleForce":
             hmangle = force
             hmangle_index = force_index
+        elif force.getName() == "CustomNonbondedForce":
+            force.setName('LJ Force w/ NBFIX')
+
     print('\n# get the NonBondedForce and HarmonicAngleForce:', nbforce.getName(), hmangle.getName())
     
     print('\n# get bondlist')
@@ -702,6 +705,7 @@ def MixSystem(psf, system, ffs):
               six=(sigma/r)^6; er={er}; dh={dh.value_in_unit(unit.nanometer)}
               """
     Force14 = CustomBondForce(formula)
+    Force14.setName('1-4 interaction')
     Force14.addPerBondParameter('charge')
     Force14.addPerBondParameter('sigma')
     Force14.addPerBondParameter('epsilon')
@@ -718,9 +722,10 @@ def MixSystem(psf, system, ffs):
             r=distance(a1,d1); cos3=-cos(phi)^3; phi=angle(a1,d2,d1);
             sigma = {sigma_hb.value_in_unit(unit.nanometer)}; epsilon = {eps_hb.value_in_unit(unit.kilojoule_per_mole)};
     """
-    Hforce = CustomHbondForce(formula)
-    Hforce.setNonbondedMethod(nbforce.getNonbondedMethod())
-    Hforce.setCutoffDistance(0.45*unit.nanometers)
+    HBforce = CustomHbondForce(formula)
+    HBforce.setName('N-H--O HBForce')
+    HBforce.setNonbondedMethod(nbforce.getNonbondedMethod())
+    HBforce.setCutoffDistance(0.45*unit.nanometers)
         
     Ns, Hs, Os, Cs = [], [], [], []
     for atom in psf.topology.atoms():
@@ -733,9 +738,9 @@ def MixSystem(psf, system, ffs):
         if atom.name == "C":
             Cs.append(int(atom.index))
     for idx in range(len(Hs)):
-        Hforce.addDonor(Ns[idx], Hs[idx], -1)
-        Hforce.addAcceptor(Os[idx], -1, -1)
-    system.addForce(Hforce)
+        HBforce.addDonor(Ns[idx], Hs[idx], -1)
+        HBforce.addAcceptor(Os[idx], -1, -1)
+    system.addForce(HBforce)
 
     print('\n# add RNA base stacking force')
     # base stakcing and paring
