@@ -1,4 +1,10 @@
 import pkg_resources as pkg_res
+import argparse
+from openmm.unit import *
+from openmm.app import *
+from openmm import *
+import numpy as np
+
 
 def load_ff(model='protein'):
     if model == 'protein':
@@ -29,3 +35,68 @@ def load_ff(model='protein'):
     param_inp = str(path2)
 
     return top_inp, param_inp
+
+def setup():
+    # input parameters
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', "--pdb", default='conf.pdb', help="pdb file, default is conf.pdb")
+    parser.add_argument('-p', "--psf", default='conf.psf', help="psf file, default is conf.psf")
+    parser.add_argument('-t', "--temp", default=303, type=float, help="system temperature, default is 303 K")
+    parser.add_argument('-b', "--box", nargs='+', type=float, help="box dimensions in nanometer, e.g., '50 50 50' ")
+    parser.add_argument('-s', "--salt", default=150.0, type=float, help="salt concentration in mM, default is 0.0 mM")
+    parser.add_argument('-e', "--ens", default='NVT', type=str, help="simulation ensemble, NPT, NVT, or non, non is for non-periodic system")
+    parser.add_argument('-m', "--Mg", default=0.0, type=float, help="Mg2+ concentration in mM")
+    args = parser.parse_args()
+
+    pdb_file = args.pdb
+    psf_file = args.psf
+    T = args.temp
+    c_ion = args.salt/1000.0                                   # concentration of ions in M
+    c_Mg = args.Mg                                           # concentration of Mg in mM
+    ensemble = args.ens
+
+    ## set pbc and box vector
+    if ensemble == 'non' and c_Mg != 0.0:
+        print("Error: Mg ion cannot be usde in non-periodic system.")
+        exit(1)
+    if ensemble in ['NPT', 'NVT']:
+        # pbc box length
+        if len(args.box) == 1:
+            lx, ly, lz = args.box[0], args.box[0], args.box[0]
+        elif len(args.box) == 3:
+            lx = args.box[0]
+            ly = args.box[1]
+            lz = args.box[2]
+        else:
+            print("Error: You must provide either one or three values for box.")
+            exit(1)
+        a = Vec3(lx, 0.0, 0.0)
+        b = Vec3(0.0, ly, 0.0)
+        c = Vec3(0.0, 0.0, lz)
+    elif ensemble not in ['NPT', 'NVT', 'non']:
+        print("Error: The ensemble must be NPT, NVT or non. The input value is {}.".format(ensemble))
+        exit(1)
+
+    # force field parameters
+    Td = T-273
+    er_t = 87.74-0.4008*Td+9.398*10**(-4)*Td**2-1.41*10**(-6)*Td**3
+    print('relative electric constant: ', er_t*20.3/77.6)                        
+    dh = 0.304/(np.sqrt(c_ion))
+    print('Debye-Huckel screening length: ', dh)
+    if c_Mg == 0:
+        nMg = 0
+    else:
+        nMg = 0.526*(c_Mg/0.680)**(0.283)/(1+(c_Mg/0.680)**(0.283)) + 0.0012*(Td-30)                                                       
+        lmd0 = 1.265*(nMg/0.172)**0.625/(1+(nMg/0.172)**0.625)
+        print('lmd: ', lmd0)
+    ffs = {
+        'temp': T,                                                  # Temperature
+        'lmd': lmd0,                                                # Charge scaling factor of P-
+        'dh': dh*unit.nanometer,                                  # Debye Huckel screening length
+        'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
+        'er': er_t*20.3/77.6,                                         # relative dielectric constant
+        'eps_hb': 1.8*unit.kilocalorie_per_mole,                    # hydrogen bond strength
+        'sigma_hb': 0.29*unit.nanometer,                            # sigma of hydrogen bond
+        'eps_base': 2.05*unit.kilocalorie_per_mole,                 # base stacking strength
+    }
+
