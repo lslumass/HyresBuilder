@@ -36,7 +36,7 @@ def load_ff(model='protein'):
 
     return top_inp, param_inp
 
-def setup():
+def setup(params, gpu_id, pressure, friction, dt):
     # input parameters
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', "--pdb", default='conf.pdb', help="pdb file, default is conf.pdb")
@@ -79,6 +79,7 @@ def setup():
 
     # force field parameters
     Td = T-273
+    temperture = T*unit.kelvin 
     er_t = 87.74-0.4008*Td+9.398*10**(-4)*Td**2-1.41*10**(-6)*Td**3
     print('relative electric constant: ', er_t*20.3/77.6)                        
     dh = 0.304/(np.sqrt(c_ion))
@@ -100,3 +101,33 @@ def setup():
         'eps_base': 2.05*unit.kilocalorie_per_mole,                 # base stacking strength
     }
 
+    # 1) import coordinates and topology form charmm pdb and psf
+    print('\n################## load coordinates, topology and parameters ###################')
+    pdb = PDBFile(pdb_file)
+    psf = CharmmPsfFile(psf_file)
+    top = psf.topology
+    if ensemble == 'non':
+        system = psf.createSystem(params, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds)
+    else:
+        psf.setBox(lx, ly, lz)
+        top.setPeriodicBoxVectors((a, b, c))
+        top.setUnitCellDimensions((lx, ly,lz))
+        system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds)
+        system.setDefaultPeriodicBoxVectors(a, b, c)
+
+    # set simulation
+    print('\n################### prepare simulation system####################')
+    if ensemble == 'NPT':
+        print('This is a NPT system')
+        system.addForce(MonteCarloBarostat(pressure, temperture, 25))
+    elif ensemble == 'NVT':
+        print('This is a NVT system')
+    elif ensemble == 'non':
+        print('This is a non-periodic system')
+    integrator = LangevinMiddleIntegrator(temperture, friction, dt)
+    plat = Platform.getPlatformByName('CUDA')
+    prop = {'Precision': 'mixed', 'DeviceIndex': gpu_id}
+    simulation = Simulation(top, system, integrator, plat, prop)
+    simulation.context.setPositions(pdb.positions)
+    simulation.context.setVelocitiesToTemperature(temperture)
+    print(f'Langevin, CUDA, {temperture}')
