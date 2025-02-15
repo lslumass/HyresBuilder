@@ -86,6 +86,7 @@ def setup(params, gpu_id, pressure, friction, dt):
     print('Debye-Huckel screening length: ', dh)
     if c_Mg == 0:
         nMg = 0
+        lmd0 = 0
     else:
         nMg = 0.526*(c_Mg/0.680)**(0.283)/(1+(c_Mg/0.680)**(0.283)) + 0.0012*(Td-30)                                                       
         lmd0 = 1.265*(nMg/0.172)**0.625/(1+(nMg/0.172)**0.625)
