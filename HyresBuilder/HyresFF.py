@@ -223,7 +223,7 @@ def iConRNASystem(psf, system, ffs):
     
     print('\n# replace HarmonicAngle with Restricted Bending (ReB) potential')
     # Custom Angle Force
-    ReB = CustomAngleForce("kt*(theta-theta0)^2/(sin(theta)^2);")
+    ReB = CustomAngleForce("0.5*kt*(theta-theta0)^2/(sin(theta)^2);")
     ReB.setName('ReBAngleForce')
     ReB.addPerAngleParameter("theta0")
     ReB.addPerAngleParameter("kt")
@@ -427,7 +427,7 @@ def iConRNA2System(psf, system, ffs):
     
     print('\n# replace HarmonicAngle with Restricted Bending (ReB) potential')
     # Custom Angle Force
-    ReB = CustomAngleForce("kt*(theta-theta0)^2/(sin(theta)^2);")
+    ReB = CustomAngleForce("0.5*kt*(theta-theta0)^2/(sin(theta)^2);")
     ReB.setName('ReBAngleForce')
     ReB.addPerAngleParameter("theta0")
     ReB.addPerAngleParameter("kt")
