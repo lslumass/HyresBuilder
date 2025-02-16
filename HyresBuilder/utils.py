@@ -37,17 +37,9 @@ def load_ff(model='protein'):
 
     return top_inp, param_inp
 
-def setup(model, params, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
+def setup(model, parser, params, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
     # model = 'protein', 'RNA', 'mix'
     # input parameters
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-c', "--pdb", default='conf.pdb', help="pdb file, default is conf.pdb")
-    parser.add_argument('-p', "--psf", default='conf.psf', help="psf file, default is conf.psf")
-    parser.add_argument('-t', "--temp", default=303, type=float, help="system temperature, default is 303 K")
-    parser.add_argument('-b', "--box", nargs='+', type=float, help="box dimensions in nanometer, e.g., '50 50 50' ")
-    parser.add_argument('-s', "--salt", default=150.0, type=float, help="salt concentration in mM, default is 0.0 mM")
-    parser.add_argument('-e', "--ens", default='NVT', type=str, help="simulation ensemble, NPT, NVT, or non, non is for non-periodic system")
-    parser.add_argument('-m', "--Mg", default=0.0, type=float, help="Mg2+ concentration in mM")
     args = parser.parse_args()
 
     pdb_file = args.pdb
