@@ -4,7 +4,7 @@ from openmm.unit import *
 from openmm.app import *
 from openmm import *
 import numpy as np
-import .HyresFF
+from .HyresFF import *
 
 
 def load_ff(model='protein'):
@@ -120,11 +120,11 @@ def setup(model, params, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picos
 
     # construct force field
     if model == 'protein':
-        system = HyresFF.MixSystem(psf, system, ffs)
+        system = HyresSystem(psf, system, ffs)
     elif model == 'RNA':
-        system = HyresFF.iConRNASystem(psf, system, ffs)
+        system = iConRNASystem(psf, system, ffs)
     elif model == 'mix':
-        system = HyresFF.MixSystem(psf, system, ffs)
+        system = MixSystem(psf, system, ffs)
     else:
         print("Error: Only 'protein', 'RNA', and 'mix' models are supported.")
         exit(1)
