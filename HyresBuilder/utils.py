@@ -4,7 +4,7 @@ from openmm.unit import *
 from openmm.app import *
 from openmm import *
 import numpy as np
-from .HyresFF import MixSystem
+import HyresFF
 
 
 def load_ff(model='protein'):
@@ -37,7 +37,8 @@ def load_ff(model='protein'):
 
     return top_inp, param_inp
 
-def setup(params, gpu_id, pressure, friction, dt):
+def setup(model, params, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
+    # model = 'protein', 'RNA', 'mix'
     # input parameters
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', "--pdb", default='conf.pdb', help="pdb file, default is conf.pdb")
@@ -117,7 +118,17 @@ def setup(params, gpu_id, pressure, friction, dt):
         system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds)
         system.setDefaultPeriodicBoxVectors(a, b, c)
 
-    #system = MixSystem(psf, system, ffs)
+    # construct force field
+    if model == 'protein':
+        system = HyresFF.MixSystem(psf, system, ffs)
+    elif model == 'RNA':
+        system = HyresFF.iConRNASystem(psf, system, ffs)
+    elif model == 'mix':
+        system = HyresFF.MixSystem(psf, system, ffs)
+    else:
+        print("Error: Only 'protein', 'RNA', and 'mix' models are supported.")
+        exit(1)
+
     # set simulation
     print('\n################### prepare simulation system####################')
     if ensemble == 'NPT':
@@ -135,4 +146,4 @@ def setup(params, gpu_id, pressure, friction, dt):
     sim.context.setVelocitiesToTemperature(temperture)
     print(f'Langevin, CUDA, {temperture}')
 
-    return psf, system, ffs, sim
+    return system, sim
