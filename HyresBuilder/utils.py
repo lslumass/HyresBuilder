@@ -4,7 +4,7 @@ from openmm.unit import *
 from openmm.app import *
 from openmm import *
 import numpy as np
-import HyresFF
+import .HyresFF
 
 
 def load_ff(model='protein'):
