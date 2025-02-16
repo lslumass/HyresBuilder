@@ -59,6 +59,7 @@ def HyresSystem(psf, system, ffs):
               six=(sigma/r)^6; er={er}; dh={dh.value_in_unit(unit.nanometer)}
               """
     Force14 = CustomBondForce(formula)
+    Force14.setName('1-4 interaction')
     Force14.addPerBondParameter('charge')
     Force14.addPerBondParameter('sigma')
     Force14.addPerBondParameter('epsilon')
@@ -87,9 +88,10 @@ def HyresSystem(psf, system, ffs):
             CTOFHB = 0.5; CTONHB = 0.4; CTOFHA = {np.deg2rad(91)}; CTONHA = {np.deg2rad(90)};
             sigma = {sigma_hb.value_in_unit(unit.nanometer)}; epsilon = {eps_hb.value_in_unit(unit.kilojoule_per_mole)}
     """    
-    Hforce = CustomHbondForce(formula)
-    Hforce.setNonbondedMethod(nbforce.getNonbondedMethod())
-    Hforce.setCutoffDistance(0.6*unit.nanometers)
+    HBforce = CustomHbondForce(formula)
+    HBforce.setName('N-H--O HBForce')
+    HBforce.setNonbondedMethod(nbforce.getNonbondedMethod())
+    HBforce.setCutoffDistance(0.6*unit.nanometers)
     
     Ns, Hs, Os, Cs = [], [], [], []
     for atom in psf.topology.atoms():
@@ -102,9 +104,9 @@ def HyresSystem(psf, system, ffs):
         if atom.name == "C":
             Cs.append(int(atom.index))
     for idx in range(len(Hs)):
-        Hforce.addDonor(Hs[idx], Ns[idx], -1)
-        Hforce.addAcceptor(Os[idx], -1, -1)
-    system.addForce(Hforce)
+        HBforce.addDonor(Hs[idx], Ns[idx], -1)
+        HBforce.addAcceptor(Os[idx], -1, -1)
+    system.addForce(HBforce)
     
     # delete the NonbondedForce
     system.removeForce(nbforce_index)
@@ -630,7 +632,6 @@ def MixSystem(psf, system, ffs):
     print('\n################# constructe the protein-RNA mixed force field ####################')
     # get nonbonded force
     for force_index, force in enumerate(system.getForces()):
-        print(force)
         if force.getName() == "NonbondedForce":
             nbforce = force
             nbforce_index = force_index
@@ -639,8 +640,6 @@ def MixSystem(psf, system, ffs):
             hmangle_index = force_index
         elif force.getName() == "CustomNonbondedForce":
             force.setName('LJ Force w/ NBFIX')
-
-    print('\n# get the NonBondedForce and HarmonicAngleForce:', nbforce.getName(), hmangle.getName())
     
     print('\n# get bondlist')
     # get bondlist
