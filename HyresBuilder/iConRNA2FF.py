@@ -96,7 +96,7 @@ def iConRNA2System(psf, system, ffs):
             elif atom.residue.name in ['C', 'U']:
                 grps.append([atom.residue.name, [atom.index, atom.index+1, atom.index+2]])
     # base stacking
-    Aform = CustomCentroidBondForce(2, 'eps_stack*(5*(ra/r)^12-6.0*(ra/r)^10); r=distance(g1, g2);')
+    Aform = CustomCentroidBondForce(2, 'eps_stack*((ra/r)^10-2*(ra/r)^5); r=distance(g1, g2);')
     Aform.setName('AformStackingForce')
     Aform.addPerBondParameter('eps_stack')
     Aform.addGlobalParameter('ra', 0.37*unit.nanometers)
@@ -167,7 +167,7 @@ def iConRNA2System(psf, system, ffs):
     r_au2 = 0.41*unit.nanometer
     
     if num_A != 0 and num_U != 0:
-        formula = f"""eps_AU*(5.0*(r_au/r)^12-6.0*(r_au/r)^10 + 5*(r_au2/r2)^12-6.0*(r_au2/r2)^10)*step(cos1)*cos1;
+        formula = f"""eps_AU*((r_au/r)^10-2*(r_au/r)^5 + (r_au2/r2)^10-2*(r_au2/r2)^5)*step(cos1)*cos1;
                   r=distance(a1,d1); r2=distance(a3,d2); cos1=-cos(phi)^3; phi=angle(d1,a1,a2);
                   eps_AU={eps_AU.value_in_unit(unit.kilojoule_per_mole)};
                   r_au={r_au.value_in_unit(unit.nanometer)}; r_au2={r_au2.value_in_unit(unit.nanometer)}
@@ -189,7 +189,7 @@ def iConRNA2System(psf, system, ffs):
     r_cg2 = 0.38*unit.nanometer
     
     if num_C != 0 and num_G != 0:
-        formula = f"""eps_CG*(5.0*(r_cg/r)^12-6.0*(r_cg/r)^10 + 5*(r_cg2/r2)^12-6.0*(r_cg2/r2)^10)*step(cos1)*cos1;
+        formula = f"""eps_CG*((r_cg/r)^10-2*(r_cg/r)^5 + (r_cg2/r2)^10-2*(r_cg2/r2)^5)*step(cos1)*cos1;
                   r=distance(a1,d1); r2=distance(a3,d2); cos1=-cos(phi)^3; phi=angle(d1,a1,a2);
                   eps_CG={eps_CG.value_in_unit(unit.kilojoule_per_mole)};
                   r_cg={r_cg.value_in_unit(unit.nanometer)}; r_cg2={r_cg2.value_in_unit(unit.nanometer)}
@@ -210,7 +210,7 @@ def iConRNA2System(psf, system, ffs):
     r_gu = 0.35*unit.nanometer
 
     if num_U != 0 and num_G != 0:
-        formula = f"""eps_GU*(5.0*(r_gu/r)^12-6.0*(r_gu/r)^10)*step(cos1)*cos1;
+        formula = f"""eps_GU*((r_gu/r)^10-2*(r_gu/r)^5)*step(cos1)*cos1;
                     r=distance(a1,d1); cos1=-cos(phi)^3; phi=angle(d1,a1,a2);
                     eps_GU={eps_GU.value_in_unit(unit.kilojoule_per_mole)}; r_gu={r_gu.value_in_unit(unit.nanometer)};
                     """
