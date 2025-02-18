@@ -99,7 +99,7 @@ def iConRNA2System(psf, system, ffs):
     Aform = CustomCentroidBondForce(2, 'eps_stack*((ra/r)^10-2*(ra/r)^5); r=distance(g1, g2);')
     Aform.setName('IntraStackingForce')
     Aform.addPerBondParameter('eps_stack')
-    Aform.addGlobalParameter('ra', 0.42*unit.nanometers)
+    Aform.addGlobalParameter('ra', 0.45*unit.nanometers)
 
     for grp in grps:
         Aform.addGroup(grp[1])
