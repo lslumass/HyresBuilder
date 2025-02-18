@@ -30,11 +30,11 @@ CNC   OCN   130.0      3.05   ! G: NB-NC
 OCN   NCN   150.0      2.90   ! G: NC-ND
 !bonds in base C
 NCC   NCN   200.0      2.48   ! C: NA-NB
-NCC   CO    180.0      2.70   ! C: NA-ND
-NCN   CO    120.0      2.95   ! C/U: NB-ND
+NCN   CO    120.0      2.95   ! C: NB-NC
+NCC   CO    180.0      2.70   ! C/U: NB-NC
 !bonds in base U
 NCC   OCN   250.0      2.49   ! U: NA-NB
-OCN   CO    150.0      2.99   ! U: NA-ND
+OCN   CO    150.0      2.99   ! U: NB-NC
 
 
 THETAS
