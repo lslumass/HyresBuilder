@@ -60,7 +60,7 @@ OCN   NCN   N1C   25.0      72.0  !  NC-ND-NA
 
 PHI
 !phi in backbone
-BC1   BP    BC1   BP      15.0    1   -20.0
+BC1   BP    BC1   BP       5.0    1   -20.0
 
 BP    BC1   BC2   N1C     15.0    1  -165.0    ! P-C1-C2-NA for A/G    
 BP    BC1   BC2   NCC     15.0    1   180.0    ! P-C1-C2-NA for C/U    
