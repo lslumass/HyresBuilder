@@ -96,7 +96,7 @@ def iConRNA2System(psf, system, ffs):
             elif atom.residue.name in ['C', 'U']:
                 grps.append([atom.residue.name, [atom.index, atom.index+1, atom.index+2]])
     # base stacking
-    Aform = CustomCentroidBondForce(2, 'eps_stack*((ra/r)^10-2*(ra/r)^5)*sr; sr=1/(1+exp(20*(r-rs))); r=distance(g1, g2)')
+    Aform = CustomCentroidBondForce(2, '0.6*eps_stack*((ra/r)^10-2*(ra/r)^5)*sr; sr=1/(1+exp(50*(r-rs))); r=distance(g1, g2)')
     Aform.setName('IntraStackingForce')
     Aform.addPerBondParameter('eps_stack')
     Aform.addGlobalParameter('ra', 0.40*unit.nanometers)
@@ -125,10 +125,11 @@ def iConRNA2System(psf, system, ffs):
                 grps.append([atom.residue.name, [atom.index, atom.index+1]])
                 grps.append([atom.residue.name, [atom.index+1, atom.index+2]])
     # base stacking
-    fstack = CustomCentroidBondForce(2, 'eps_stack*((r1/r)^10-2*(r1/r)^5); r=distance(g1, g2);')
+    fstack = CustomCentroidBondForce(2, '0.4*eps_stack*((r1/r)^10-2*(r1/r)^5)*sr; sr=1/(1+exp(50*(r-rs))); r=distance(g1, g2)')
     fstack.setName('StackingForce')
     fstack.addPerBondParameter('eps_stack')
     fstack.addGlobalParameter('r1', 0.37*unit.nanometers)
+    fstack.addGlobalParameter('rs', 0.50*unit.nanometers)
     # add all group
     for grp in grps:
         fstack.addGroup(grp[1])
