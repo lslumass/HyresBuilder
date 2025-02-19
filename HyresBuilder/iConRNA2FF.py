@@ -96,7 +96,7 @@ def iConRNA2System(psf, system, ffs):
             elif atom.residue.name in ['C', 'U']:
                 grps.append([atom.residue.name, [atom.index, atom.index+1, atom.index+2]])
     # base stacking
-    Aform = CustomCentroidBondForce(2, 'eps_stack*((ra/r)^10-2*(ra/r)^5)*sr; sr=1/(1+exp(-20*(r-rs))); r=distance(g1, g2)')
+    Aform = CustomCentroidBondForce(2, 'eps_stack*((ra/r)^10-2*(ra/r)^5)*sr; sr=1/(1+exp(20*(r-rs))); r=distance(g1, g2)')
     Aform.setName('IntraStackingForce')
     Aform.addPerBondParameter('eps_stack')
     Aform.addGlobalParameter('ra', 0.40*unit.nanometers)
