@@ -100,7 +100,7 @@ def iConRNA2System(psf, system, ffs):
     Aform.setName('IntraStackingForce')
     Aform.addPerBondParameter('eps_stack')
     Aform.addGlobalParameter('ra', 0.40*unit.nanometers)
-    Aform.addGlobalParameter('rs', 0.7*unit.nanometers)    # for cutoff and switch
+    Aform.addGlobalParameter('rs', 0.55*unit.nanometers)    # for cutoff and switch
 
     for grp in grps:
         Aform.addGroup(grp[1])
