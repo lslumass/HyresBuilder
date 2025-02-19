@@ -52,7 +52,7 @@ print('\n# Now, the system has:')
 for force in system.getForces():
     print('      ', force.getName())
 
-print('\n################### Minimization, Equilibriation, Production simulation ####################')
+################### Minimization, Equilibriation, Production simulation ####################'
 print('# minimizeEnergy:')
 print('before: ', sim.context.getState(getEnergy=True).getPotentialEnergy())
 sim.minimizeEnergy(maxIterations=500000, tolerance=0.01)

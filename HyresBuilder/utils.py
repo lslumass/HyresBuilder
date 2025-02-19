@@ -1,5 +1,4 @@
 import pkg_resources as pkg_res
-import argparse
 from openmm.unit import *
 from openmm.app import *
 from openmm import *
@@ -75,7 +74,7 @@ def setup(model, parser, params, dt, pressure=1*unit.atmosphere, friction=0.1/un
     Td = T-273
     temperture = T*unit.kelvin 
     er_t = 87.74-0.4008*Td+9.398*10**(-4)*Td**2-1.41*10**(-6)*Td**3
-    print('relative electric constant: ', er_t*20.3/77.6)                        
+    print('relative electric constant: ', er_t*61.0/77.6)                        
     dh = 0.304/(np.sqrt(c_ion))
     print('Debye-Huckel screening length: ', dh)
     if c_Mg == 0:
@@ -84,16 +83,16 @@ def setup(model, parser, params, dt, pressure=1*unit.atmosphere, friction=0.1/un
     else:
         nMg = 0.526*(c_Mg/0.680)**(0.283)/(1+(c_Mg/0.680)**(0.283)) + 0.0012*(Td-30)                                                       
         lmd0 = 1.265*(nMg/0.172)**0.625/(1+(nMg/0.172)**0.625)
-        print('lmd: ', lmd0)
+    print('lmd: ', lmd0)
     ffs = {
         'temp': T,                                                  # Temperature
         'lmd': lmd0,                                                # Charge scaling factor of P-
         'dh': dh*unit.nanometer,                                  # Debye Huckel screening length
         'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
-        'er': er_t*20.3/77.6,                                         # relative dielectric constant
-        'eps_hb': 1.8*unit.kilocalorie_per_mole,                    # hydrogen bond strength
+        'er': er_t*61.0/77.6,                                         # relative dielectric constant
+        'eps_hb': 1.80*unit.kilocalorie_per_mole,                    # hydrogen bond strength
         'sigma_hb': 0.29*unit.nanometer,                            # sigma of hydrogen bond
-        'eps_base': 2.05*unit.kilocalorie_per_mole,                 # base stacking strength
+        'eps_base': 2.20*unit.kilocalorie_per_mole,                 # base stacking strength
     }
 
     # 1) import coordinates and topology form charmm pdb and psf
