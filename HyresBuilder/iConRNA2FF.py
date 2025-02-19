@@ -114,6 +114,34 @@ def iConRNA2System(psf, system, ffs):
     print('    add ', Aform.getNumBonds(), 'Aform stacking pairs')
     system.addForce(Aform)
     
+        # get all the groups of bases
+    grps = []
+    for atom in psf.topology.atoms():
+        if atom.name == "NA":
+            if atom.residue.name in ['A', 'G']:
+                grps.append([atom.residue.name, [atom.index, atom.index+1]])
+                grps.append([atom.residue.name, [atom.index+2, atom.index+3]])
+            elif atom.residue.name in ['C', 'U']:
+                grps.append([atom.residue.name, [atom.index, atom.index+1]])
+                grps.append([atom.residue.name, [atom.index+1, atom.index+2]])
+    # base stacking
+    fstack = CustomCentroidBondForce(2, 'eps_stack*((r1/r)^10-2*(r1/r)^5); r=distance(g1, g2);')
+    fstack.setName('StackingForce')
+    fstack.addPerBondParameter('eps_stack')
+    fstack.addGlobalParameter('r1', 0.37*unit.nanometers)
+    # add all group
+    for grp in grps:
+        fstack.addGroup(grp[1])
+    # get the stacking pairs
+    sps = []
+    for i in range(0,len(grps)-2,2):
+        grp = grps[i]
+        pij = grps[i][0] + grps[i+2][0]
+        sps.append([[i+1, i+2], scales[pij]*eps_base])
+    for sp in sps:
+        fstack.addBond(sp[0], [sp[1]])
+    print('    add ', fstack.getNumBonds(), 'stacking pairs')
+    system.addForce(fstack)
 
     # base pairing
     print('\n# add base pair force')
