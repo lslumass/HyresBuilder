@@ -48,23 +48,21 @@ BC1   BC2   NCC    5.0     115.0  ! C1-C2-NA for C/U
 BC2   N1C   CNC   25.0     127.0  ! C2-NA-NB for A/G
 BC2   N1C   N2C   25.0     117.0  ! C2-NA-ND for A
 BC2   N1C   NCN   20.0     116.0  ! C2-NA-ND for G
-BC2   NCC   CO    50.0      59.0  ! C2-NA-NC for C/U
+BC2   NCC   CO    25.0      59.0  ! C2-NA-NC for C/U
 ! internal angle for A:
-N1C   CNC   NCN   80.0      90.0  !  NA-NB-NC
-CNC   NCN   N2C   50.0      73.0  !  NB-NC-ND
-NCN   N2C   N1C   50.0      86.0  !  NC-ND-NA
+N1C   CNC   NCN   25.0      90.0  !  NA-NB-NC
+CNC   NCN   N2C   25.0      73.0  !  NB-NC-ND
+NCN   N2C   N1C   25.0      86.0  !  NC-ND-NA
 ! internal angle for G:
-N1C   CNC   OCN   80.0      90.0  !  NA-NB-NC
-CNC   OCN   NCN   50.0      84.0  !  NB-NC-ND
-OCN   NCN   N1C   50.0      72.0  !  NC-ND-NA
+N1C   CNC   OCN   25.0      90.0  !  NA-NB-NC
+CNC   OCN   NCN   25.0      84.0  !  NB-NC-ND
+OCN   NCN   N1C   25.0      72.0  !  NC-ND-NA
 
 PHI
 !phi in backbone
 BP    BC1   BC2   N1C     58.0    1  -165.0    ! P-C1-C2-NA for A/G    increase from 8.0 to 58.0 due to the stacking and pairing
 BP    BC1   BC2   NCC     55.0    1   180.0    ! P-C1-C2-NA for C/U    increase from 5.0 to 55.0 due to the stacking and pairing
-!BC1   BC2   N1C   CNC     55.0    1   165.0    ! C1-C2-NA-NB for A/G   increase from 5.0 to 55.0 due to the stacking and pairing
-BC1   BC2   N1C   CNC     15.0    1   105.0
-BC1   BC2   N1C   CNC     15.0    2  -150.0
+BC1   BC2   N1C   CNC     55.0    1   165.0    ! C1-C2-NA-NB for A/G   increase from 5.0 to 55.0 due to the stacking and pairing
 BC1   BC2   NCC   CO      55.0    1     0.0    !                       increase from 5.0 to 55.0 due to the stacking and pairing 
 
 BC1   BP    BC1   BP       0.0    1   -20.0
