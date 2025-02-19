@@ -112,7 +112,36 @@ def iConRNA2System(psf, system, ffs):
         Aform.addBond(sp[0], [sp[1]])
     print('    add ', Aform.getNumBonds(), 'Aform stacking pairs')
     system.addForce(Aform)
-    
+
+    # 4.2 set non-consecutive base stacking through virtual sites
+    print('# add stacking for for non-consecutive bases')
+    # set Virtual Site'
+    num = system.getNumParticles()
+    vss = []
+    for atom in psf.topology.atoms():
+        if atom.name == 'NA':
+            idx = atom.index
+            if atom.residue.name == 'A':
+                particles = [idx, idx+1, idx+2, idx+3]
+                system.addParticle(0)
+                system.setVirtualSite(num, LocalCoordinatesSite(particles, (0.25, 0.25, 0.25, 0.25), (0,0,0,0), (0,0,0,0), (0,0,0)))
+    for atom in psf.topology.atoms():
+        if atom.name in ["VA", "VG"]:
+            idx = atom.index
+            particles = [idx-1, idx-2, idx-3, idx-4]
+            system.setVirtualSite(idx, LocalCoordinatesSite(particles, (0.25, 0.25, 0.25, 0.25), (0,0,0,0), (0,0,0,0), (0,0,0)))
+            if atom.residue.name not in ["A3'", "G3'"]:
+                vss.append(idx)
+        elif atom.name in ["VC", "VU"]:
+            idx = atom.index
+            system.setVirtualSite(idx, ThreeParticleAverageSite(idx-1, idx-2, idx-3, 0.35, 0.35, 0.3))
+            if atom.residue.name not in ["C3'", "U3'"]:
+                vss.append(idx)
+    #add exclusions for consecutive virtual site into P-MgForce and CustomNonbondedForce
+    #for i in range(len(vss)-1):
+    #    customNBF.addExclusion(vss[i], vss[i+1])
+    #    CNBForce.addExclusion(vss[i], vss[i+1])
+
     # base pairing
     print('\n# add base pair force')
     a_b, a_c, a_d = [], [], []
