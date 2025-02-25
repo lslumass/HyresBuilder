@@ -653,7 +653,7 @@ def MixSystem(psf, system, ffs):
     
     print('\n# replace HarmonicAngle with Restricted Bending (ReB) potential')
     # Custom Angle Force
-    ReB = CustomAngleForce("0.5*kt*(cos(theta)-cos(theta0))^2/(sin(theta)^kReB);")
+    ReB = CustomAngleForce("0.5*kt*(theta-theta0)^2/(sin(theta)^kReB);")
     ReB.setName('ReBAngleForce')
     ReB.addPerAngleParameter("theta0")
     ReB.addPerAngleParameter("kt")
