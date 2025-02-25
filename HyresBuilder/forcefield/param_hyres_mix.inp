@@ -156,7 +156,7 @@ P1W   A2W   A3W   50.0     127.9  ! trp
 A1W   A2W   A4W   50.0     98.6   ! trp
 P1W   A2W   A4W   50.0     168.1  ! trp
 !C-N-CB for pro
-C     N     A2P   90.0     161.9  ! pro
+C     N     A2P    0.0     161.9  ! pro
 !angles within the ring of amino acid side chain
 P1H   A4H   P2H   0.00     60.0   ! his
 A4H   P2H   P1H   0.00     60.0   ! his
