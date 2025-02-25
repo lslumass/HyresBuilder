@@ -653,7 +653,7 @@ def MixSystem(psf, system, ffs):
     
     print('\n# replace HarmonicAngle with Restricted Bending (ReB) potential')
     # Custom Angle Force
-    ReB = CustomAngleForce("0.5*kt*(theta-theta0)^2/(sin(theta)^kReB);")
+    ReB = CustomAngleForce("0.5*kt*(cos(theta)-cos(theta0))^2/(sin(theta)^kReB);")
     ReB.setName('ReBAngleForce')
     ReB.addPerAngleParameter("theta0")
     ReB.addPerAngleParameter("kt")
@@ -661,6 +661,8 @@ def MixSystem(psf, system, ffs):
     for angle_idx in range(hmangle.getNumAngles()):
         ang = hmangle.getAngleParameters(angle_idx)
         if atoms[ang[0]] in ['P', 'C1', 'C2', 'NA', 'NB', 'NC', 'ND']:
+            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], 2*ang[4], 2])
+        elif f'{atoms[ang[0]]}-{atoms[ang[1]]-{atoms[ang[2]]}}' in ['C-N-CB', 'CB-N-C']:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], 2*ang[4], 2])
         else:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])

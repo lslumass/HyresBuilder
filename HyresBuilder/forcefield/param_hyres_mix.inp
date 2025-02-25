@@ -1,7 +1,7 @@
 * HyRes force field for hyres_iCon mix
 * mass of backbone atoms and H was increased to 25
 * strength of bonds and angles was halfed
-* C-N-CB bond of proline is not stable, so the strength was increased to 90.0
+* C-N-CB bond of proline is not stable
 * parameter file for coarse grained proteins with heavy backbones
 * arg, lys, asp, glu is NEUTRAL
 * 
