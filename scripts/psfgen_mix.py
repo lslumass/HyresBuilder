@@ -38,7 +38,7 @@ def main():
         if mol_type == 'P':
             for i in range(num):
                 segid = f"{chr(65+idx)}{i}" 
-                gen.add_segment(segid=segid, pdbfile=pdb)
+                gen.add_segment(segid=segid, pdbfile=pdb, auto_angles=False)
         elif mol_type == 'R':
             for i in range(num):
                 segid = f"{chr(65+idx)}{i}" 
