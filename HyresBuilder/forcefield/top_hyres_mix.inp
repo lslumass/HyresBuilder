@@ -628,9 +628,8 @@ ATOM C    C       0.00
 ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    CB
 BOND CA   CB
-ANGL -C   N    CA        -C   N    CB         N    CA   C
-ANGL CB   CA   C         CA   C    O          CA   C    +N
-ANGL O    C    +N
+ANGL -C   N    CA        N    CA   C          CB   CA   C
+ANGL CA   C    O         CA   C    +N         O    C    +N
 IMPH C    CA   +N   O         CA   N    C    CB
 ACCE O  C
 IC   -C   CA   *N   CB     0.0000    0.00  180.00    0.00   0.0000
