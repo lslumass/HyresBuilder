@@ -5,8 +5,8 @@ import argparse
 import os
 
 # Global varibale
-RNA_topology, _ = utils.load_ff('RNA_m')
-protein_topology, _ = utils.load_ff('protein_m')
+RNA_topology, _ = utils.load_ff('RNA_mix')
+protein_topology, _ = utils.load_ff('protein_mix')
 
 def main():
     parser = argparse.ArgumentParser(description="generate PSF for Hyres systems",
