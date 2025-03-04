@@ -38,11 +38,9 @@ def load_ff(model='protein'):
 
     return top_inp, param_inp
 
-def setup(model, parser, params, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
+def setup(model, args, params, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
     # model = 'protein', 'RNA', 'mix'
     # input parameters
-    args = parser.parse_args()
-
     pdb_file = args.pdb
     psf_file = args.psf
     T = args.temp
