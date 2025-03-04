@@ -14,6 +14,7 @@ from openmm import *
 
 # input parameters
 parser = argparse.ArgumentParser()
+parser.add_argument('-d', "--model", default='mix', help="simulated system: protein, RNA, or mix")
 parser.add_argument('-c', "--pdb", default='conf.pdb', help="pdb file, default is conf.pdb")
 parser.add_argument('-p', "--psf", default='conf.psf', help="psf file, default is conf.psf")
 parser.add_argument('-o', "--out", default='system', type=str, help="the prefix name for the output files, including xtc, pdb, log, chk")
@@ -23,12 +24,6 @@ parser.add_argument('-s', "--salt", default=150.0, type=float, help="salt concen
 parser.add_argument('-e', "--ens", default='NVT', type=str, help="simulation ensemble, NPT, NVT, or non, non is for non-periodic system")
 parser.add_argument('-m', "--Mg", default=0.0, type=float, help="Mg2+ concentration in mM")
 args = parser.parse_args()
-
-# 0) set variables in the simulation
-gpu_id = "0"
-top_RNA, param_RNA = utils.load_ff('RNA_mix')
-top_pro, param_pro = utils.load_ff('protein_mix')
-params = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro)
 
 # simulation parameters
 dt_equil = 0.0001*unit.picoseconds		                        # time step for equilibration
@@ -45,7 +40,7 @@ friction = 0.1/unit.picosecond                                  # friction coeff
 # utils.setup(model, parser, params, dt, pressure, friction, gpu_id)
 # model: select from 'protein', 'RNA', 'mix'
 # default set: pressure = 1*unit.atmosphere, friction = 0.1/unit.picosecond, gpu_id = "0"
-system, sim = utils.setup(model='mix', args=args, params=params, dt=dt_equil)
+system, sim = utils.setup(model=args.model, args=args, dt=dt_equil)
 
 """
 after further modify the system, add the line below:

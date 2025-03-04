@@ -38,8 +38,9 @@ def load_ff(model='protein'):
 
     return top_inp, param_inp
 
-def setup(model, args, params, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
+def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
     # model = 'protein', 'RNA', 'mix'
+
     # input parameters
     pdb_file = args.pdb
     psf_file = args.psf
@@ -94,6 +95,19 @@ def setup(model, args, params, dt, pressure=1*unit.atmosphere, friction=0.1/unit
         'sigma_hb': 0.29*unit.nanometer,                            # sigma of hydrogen bond
         'eps_base': 2.20*unit.kilocalorie_per_mole,                 # base stacking strength
     }
+
+    # 0) load force field files
+    if model == 'protein':
+        top_pro, param_pro = load_ff('protein')
+    elif model == 'RNA':
+        top_RNA, param_RNA = load_ff('RNA')
+    elif model == 'mix':
+        top_RNA, param_RNA = load_ff('RNA_mix')
+        top_pro, param_pro = load_ff('protein_mix')
+    else:
+        print("Error: Only 'protein', 'RNA', and 'mix' models are supported.")
+        exit(1)
+    params = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro)
 
     # 1) import coordinates and topology form charmm pdb and psf
     print('\n################## load coordinates, topology and parameters ###################')
