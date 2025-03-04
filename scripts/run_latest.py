@@ -45,6 +45,11 @@ friction = 0.1/unit.picosecond                                  # friction coeff
 # default set: pressure = 1*unit.atmosphere, friction = 0.1/unit.picosecond, gpu_id = "0"
 system, sim = utils.setup(model='mix', parser=parser, params=params, dt=dt_equil)
 
+"""
+after further modify the system, add the line below:
+sim.context.reinitialize(preserveState=True)
+"""
+
 with open('system.xml', 'w') as output:
     output.write(XmlSerializer.serialize(system))
 

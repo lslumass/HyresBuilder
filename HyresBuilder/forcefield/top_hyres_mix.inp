@@ -49,6 +49,7 @@ MASS   240 P3S   94.970   ! pSer side chain 2 CC (PO4)
 MASS   241 P2T   27.046   ! pThr side chain 1 CB
 MASS   242 P3T   94.970   ! pThr side chain 1 CC
 
+
 DECL -C
 DECL -O
 DECL +N

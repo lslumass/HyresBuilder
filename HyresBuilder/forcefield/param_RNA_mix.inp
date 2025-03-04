@@ -20,7 +20,7 @@ BC1   BC2   100.0      2.32
 BC2   N1C   150.0      1.93   ! C2-NA for A/G
 BC2   NCC   150.0      2.53   ! C2-NA for C/U
 !bonds in base A
-N1C   CNC   500.0      1.63   ! A/G: NA-NB
+N1C   CNC   300.0      1.63   ! A/G: NA-NB
 N1C   N2C   200.0      2.40   ! A: NA-ND
 CNC   NCN   120.0      3.06   ! A: NB-NC
 NCN   N2C   200.0      2.72   ! A: NC-ND
