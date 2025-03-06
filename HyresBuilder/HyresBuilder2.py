@@ -420,16 +420,25 @@ def makeGlu(segID: int, N, H, CA, C, O, geo: GluGeo) -> Residue:
     C_CA_CB_angle = geo.C_CA_CB_angle
     N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
 
+    CB_CC_length = geo.CB_CC_length
+    CA_CB_CC_angle = geo.CA_CB_CC_angle
+    N_CA_CB_CC_diangle = geo.N_CA_CB_CC_diangle
+    
     carbon_b = calculateCoordinates(
         N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
     )
     CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
+    carbon_g = calculateCoordinates(
+        N, CA, CB, CB_CC_length, CA_CB_CC_angle, N_CA_CB_CC_diangle
+    )
+    CC = Atom("CC", carbon_g, 0.0, 1.0, " ", " CC", 0, "C")
 
     res = Residue((" ", segID, " "), "GLU", "    ")
     res.add(N)
     res.add(H)
     res.add(CA)
     res.add(CB)
+    res.add(CC)
     res.add(C)
     res.add(O)
     return res
@@ -442,16 +451,25 @@ def makeGln(segID: int, N, H, CA, C, O, geo: GlnGeo) -> Residue:
     C_CA_CB_angle = geo.C_CA_CB_angle
     N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
 
+    CB_CC_length = geo.CB_CC_length
+    CA_CB_CC_angle = geo.CA_CB_CC_angle
+    N_CA_CB_CC_diangle = geo.N_CA_CB_CC_diangle
+
     carbon_b = calculateCoordinates(
         N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
     )
     CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
+    carbon_g = calculateCoordinates(
+        N, CA, CB, CB_CC_length, CA_CB_CC_angle, N_CA_CB_CC_diangle
+    )
+    CC = Atom("CC", carbon_g, 0.0, 1.0, " ", " CC", 0, "C")
 
     res = Residue((" ", segID, " "), "GLN", "    ")
     res.add(N)
     res.add(H)
     res.add(CA)
     res.add(CB)
+    res.add(CC)
     res.add(C)
     res.add(O)
     return res

@@ -467,6 +467,10 @@ class GluGeo(Geo):
         self.C_CA_CB_angle = 116.2
         self.N_C_CA_CB_diangle = 120.0
 
+        self.CB_CC_length = 2.0
+        self.CA_CB_CC_angle = 144.9
+        self.N_CA_CB_CC_diangle = 75.0
+
         self.residue_name = "E"
 
 
@@ -493,9 +497,13 @@ class GlnGeo(Geo):
         self.CA_C_N_angle = 116.642992978143
         self.C_N_CA_angle = 121.382215820277
 
-        self.CA_CB_length = 3.23
+        self.CA_CB_length = 2.0
         self.C_CA_CB_angle = 119.1
         self.N_C_CA_CB_diangle = 120.0
+
+        self.CB_CC_length = 2.0
+        self.CA_CB_CC_angle = 144.9
+        self.N_CA_CB_CC_diangle = 75.0
 
         self.residue_name = "Q"
 
