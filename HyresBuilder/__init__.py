@@ -9,6 +9,7 @@ The package consists of the following Python modules:
 """
 __version__ = "3.0.0"
 from .HyresBuilder import *
+from .HyresBuilder2 import *
 #from .Geometry import *
 #from .RNAbuilder import *
 #from .HyresFF import *
