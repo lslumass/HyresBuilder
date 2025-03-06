@@ -595,9 +595,9 @@ def makeTyr(segID: int, N, H, CA, C, O, geo: TyrGeo) -> Residue:
     CA_CB_CD_angle = geo.CA_CB_CD_angle
     N_CA_CB_CD_diangle = geo.N_CA_CB_CD_diangle
 
-    CD_CE_length = geo.CD_CE_length
-    CB_CD_CE_angle = geo.CB_CD_CE_angle
-    CA_CB_CD_CE_diangle = geo.CA_CB_CD_CE_diangle
+    CC_CE_length = geo.CC_CE_length
+    CB_CC_CE_angle = geo.CB_CC_CE_angle
+    CA_CB_CC_CE_diangle = geo.CA_CB_CC_CE_diangle
 
     carbon_b = calculateCoordinates(
         N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
@@ -612,7 +612,7 @@ def makeTyr(segID: int, N, H, CA, C, O, geo: TyrGeo) -> Residue:
     )
     CD = Atom("CD", carbon_d2, 0.0, 1.0, " ", " CD", 0, "C")
     carbon_e = calculateCoordinates(
-        CA, CB, CC, CD_CE_length, CB_CD_CE_angle, CA_CB_CD_CE_diangle
+        CA, CB, CC, CC_CE_length, CB_CC_CE_angle, CA_CB_CC_CE_diangle
     )
     CE = Atom("CE", carbon_e, 0.0, 1.0, " ", " CE", 0, "C")
 
