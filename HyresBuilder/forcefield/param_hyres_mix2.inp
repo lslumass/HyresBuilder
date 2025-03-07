@@ -52,12 +52,11 @@ P1H   P2H    300.0      2.18  ! his CC-CD
 A1F   A2F    300.0      2.45  ! phe CB-CC
 A1F   A3F    300.0      2.87  ! phe CB-CD
 A2F   A3F    300.0      2.22  ! phe CC-CD
-A1Y   A2Y    300.0      2.72  ! tyr CB-CC
-A1Y   A3Y    300.0      2.72  ! tyr CB-CD
-A2Y   A3Y      0.0      3.30  ! tyr CC-CD
-A1Y   P1Y      0.0      4.23  ! tyr CB-CE
-A2Y   P1Y    300.0      2.64  ! tyr CC-CE
-A3Y   P1Y    300.0      2.64  ! tyr CD-CE
+A1Y   A2Y    300.0      3.00  ! tyr CB-CC
+A1Y   A3Y    300.0      3.00  ! tyr CB-CD
+A2Y   A3Y    300.0      3.00  ! tyr CC-CD
+A2Y   P1Y    300.0      2.85  ! tyr CC-CE
+A3Y   P1Y    300.0      2.85  ! tyr CD-CE
 A1W   P1W    300.0      2.58  ! trp CB-CC
 A1W   A2W    300.0      2.53  ! trp CB-CD
 P1W   A2W    300.0      1.85  ! trp CC-CD
@@ -268,6 +267,7 @@ C1E   A1Y   A2Y   P1Y     0.00    2     180.0  ! tyr CA-CB-CC-CD
 C1E   A1Y   A3Y   P1Y     0.00    2     180.0  ! tyr CA-CB-CD-CC
 C1E   A1Y   A2Y   A3Y     0.00    2     180.0  ! tyr CA-CB-CD-CC
 C1E   A1Y   A3Y   A2Y     0.00    2     180.0  ! tyr CA-CB-CD-CC
+A1Y   A2Y   A3Y   P1Y    50.00    1     180.0
 !for trp
 C1E   A1W   P1W   A2W     0.00    2     180.0  ! trp CA-CB-CC-CD
 C1E   A1W   A2W   P1W     0.00    2     180.0  ! trp CA-CB-CD-CC

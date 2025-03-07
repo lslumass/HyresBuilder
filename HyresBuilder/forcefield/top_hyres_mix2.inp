@@ -571,7 +571,7 @@ ATOM C    C       0.00
 ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB        CB   CC        CB   CD        CC   CE        CD   CE
-BOND CB   CE        CC   CD
+BOND CC   CD
 ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   CB        N    CA   C          CB   CA   C
 ANGL CA   C    O         CA   C    +N         O    C    +N
