@@ -240,6 +240,8 @@ NH1   C1E   A1F   A3F     0.00    2     180.0  ! phe N-CA-CB-CD
 NH1   C1E   A1Y   P1Y     0.00    2     180.0  ! tyr N-CA-CB-CD
 NH1   C1E   A1W   A2W     0.00    2     180.0  ! trp N-CA-CB-CD
 !C-CA-CB-CC (or C-CA-CB-CD)
+C     C1E   A4Q   P4Q     0.00    1     0.0    ! gln
+C     C1E   AaE   QaE     0.00    1     0.0    ! glu
 C     C1E   A3K   QDK     0.00    2     180.0  ! lys
 C     C1E   A3R   QDR     0.00    2     180.0  ! arg
 C     C1E   A4H   P1H     0.00    2     180.0  ! his C-CA-CB-CC
