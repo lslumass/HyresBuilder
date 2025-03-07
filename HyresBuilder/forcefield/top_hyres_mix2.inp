@@ -575,7 +575,7 @@ BOND CC   CD
 ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   CB        N    CA   C          CB   CA   C
 ANGL CA   C    O         CA   C    +N         O    C    +N
-ANGL CA   CB   CE        
+ANGL CA   CB   CC        
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 IMPH CB   CC   CE   CD
 CMAP -C   N    CA   C         N    CA   C    +N
