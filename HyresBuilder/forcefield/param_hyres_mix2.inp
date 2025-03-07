@@ -149,6 +149,7 @@ C1E   A4H   P2H   20.0     127.6  ! his CA-CB-CD
 C1E   A1F   A2F   10.0     130.0  ! phe CA-CB-CC
 C1E   A1F   A3F   20.0     130.0  ! phe CA-CB-CD
 C1E   A1Y   A2Y   10.0     129.0  ! tyr CA-CB-CC
+C1E   A1Y   P1Y   10.0     134.5
 C1E   A1W   P1W   20.0     125.6  ! trp CA-CB-CC
 C1E   A1W   A2W   20.0     133.7  ! trp CA-CB-CD
 !## for pSer and pThr                                   
