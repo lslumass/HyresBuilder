@@ -34,9 +34,9 @@ C1E   P1T    300.0      2.01  ! thr
 C1E   A3K    200.0      2.65  ! lys
 C1E   A3R    200.0      2.65  ! arg
 C1E   A4H    400.0      1.94  ! his
-C1E   A1F    150.0      2.30  ! phe
+C1E   A1F    150.0      1.95  ! phe
 C1E   A1Y    300.0      1.95  ! tyr
-C1E   A1W    300.0      1.99  ! trp
+C1E   A1W    300.0      1.95  ! trp
 C1E   A2P    300.0      1.92  ! pro
 !## CA-CB bonds for pSer and pThr   
 C1E   P2S    250.0      1.61  ! pSer
@@ -49,20 +49,20 @@ A3R   QdR    100.0      3.60  ! arg
 A4H   P1H    200.0      2.38  ! his CB-CC
 A4H   P2H    300.0      2.65  ! his CB-CD
 P1H   P2H    300.0      2.18  ! his CC-CD
-A1F   A2F    300.0      2.45  ! phe CB-CC
-A1F   A3F    300.0      2.87  ! phe CB-CD
-A2F   A3F    300.0      2.22  ! phe CC-CD
-A1Y   A2Y    300.0      3.00  ! tyr CB-CC
-A1Y   A3Y    300.0      3.00  ! tyr CB-CD
-A2Y   A3Y    300.0      3.00  ! tyr CC-CD
-A2Y   P1Y    300.0      2.85  ! tyr CC-CE
-A3Y   P1Y    300.0      2.85  ! tyr CD-CE
-A1W   P1W    300.0      2.58  ! trp CB-CC
-A1W   A2W    300.0      2.53  ! trp CB-CD
-P1W   A2W    300.0      1.85  ! trp CC-CD
-A2W   A3W    300.0      2.15  ! trp CD-CE
-A2W   A4W    300.0      2.15  ! trp CD-CF
-A3W   A4W    300.0      2.25  ! trp CE-CF
+A1F   A2F    300.0      3.08  ! phe CB-CC
+A1F   A3F    300.0      3.08  ! phe CB-CD
+A2F   A3F    300.0      2.41  ! phe CC-CD
+A1Y   A2Y    300.0      2.46  ! tyr CB-CC
+A1Y   A3Y    300.0      2.46  ! tyr CB-CD
+A2Y   A3Y    300.0      2.36  ! tyr CC-CD
+A2Y   P1Y    300.0      2.38  ! tyr CC-CE
+A3Y   P1Y    300.0      2.38  ! tyr CD-CE
+A1W   P1W    300.0      2.67  ! trp CB-CC
+A1W   A2W    300.0      2.45  ! trp CB-CD
+P1W   A2W    300.0      2.21  ! trp CC-CD
+A2W   A3W    300.0      2.52  ! trp CD-CE
+A2W   A4W    300.0      2.50  ! trp CD-CF
+A3W   A4W    300.0      2.83  ! trp CE-CF
 !## CB-CC bonds for pSer and pThr           
 P2S   P3S    200.0      2.53  ! pSer CB-CC  
 P2T   P3T    200.0      3.20  ! pThr CB-CC  
@@ -109,9 +109,9 @@ C     C1E   P1T   10.0     116.2  ! thr  Decrease from 20.0 to 10.0
 C     C1E   A3K   10.0     117.0  ! lys  Decrease from 20.0 to 10.0
 C     C1E   A3R   10.0     118.5  ! arg  Decrease from 20.0 to 10.0
 C     C1E   A4H   10.0     129.9  ! his  Decrease from 20.0 to 10.0
-C     C1E   A1F   10.0     123.2  ! phe  Decrease from 20.0 to 10.0
-C     C1E   A1Y   10.0     123.6  ! tyr  Decrease from 20.0 to 10.0
-C     C1E   A1W   10.0     116.0  ! trp  Decrease from 20.0 to 10.0
+C     C1E   A1F   10.0     130.0  ! phe  Decrease from 20.0 to 10.0
+C     C1E   A1Y   10.0     130.0  ! tyr  Decrease from 20.0 to 10.0
+C     C1E   A1W   10.0     130.0  ! trp  Decrease from 20.0 to 10.0
 C     C1E   A2P   10.0     115.0  ! pro  Decrease from 20.0 to 10.0, change from 121.7 to 115
 !## bond of C-CA-CB for pSer and pThr    
 C     C1E   P2S   20.0     112.3  ! pSer 
@@ -133,32 +133,32 @@ P1T   C1E   NH1   10.0     106.9  ! thr  decrease from 20.0 to 10.0 for hyres_iC
 A3K   C1E   NH1   10.0     112.3  ! lys  decrease from 20.0 to 10.0 for hyres_iCon
 A3R   C1E   NH1   10.0     112.2  ! arg  decrease from 20.0 to 10.0 for hyres_iCon
 A4H   C1E   NH1   10.0     100.6  ! his  decrease from 20.0 to 10.0 for hyres_iCon
-A1F   C1E   NH1   10.0     108.2  ! phe  decrease from 20.0 to 10.0 for hyres_iCon
-A1Y   C1E   NH1   10.0     108.7  ! tyr  decrease from 20.0 to 10.0 for hyres_iCon
-A1W   C1E   NH1   10.0     110.8  ! trp  decrease from 20.0 to 10.0 for hyres_iCon
+A1F   C1E   NH1   10.0     101.2  ! phe  decrease from 20.0 to 10.0 for hyres_iCon
+A1Y   C1E   NH1   10.0     100.9  ! tyr  decrease from 20.0 to 10.0 for hyres_iCon
+A1W   C1E   NH1   10.0     101.6  ! trp  decrease from 20.0 to 10.0 for hyres_iCon
 !## for pSer and pThr                     
 P2S   C1E   NH1   20.0     110.3  ! pSer  
 P2T   C1E   NH1   20.0      98.4  ! pThr  
 !CA-CB-CC (and/or CA-CB-CD) angle in amino acid
-C1E   AaE   QaE   20.0     176.2  ! glu
-C1E   A4Q   P4Q   10.0     137.9  ! gln
+C1E   AaE   QaE   20.0     156.2  ! glu
+C1E   A4Q   P4Q   20.0     137.9  ! gln
 C1E   A3K   QdK   20.0     144.9  ! lys
 C1E   A3R   QdR   20.0     137.9  ! arg
 C1E   A4H   P1H   20.0     129.5  ! his CA-CB-CC
 C1E   A4H   P2H   20.0     127.6  ! his CA-CB-CD
-C1E   A1F   A2F   10.0     116.0  ! phe CA-CB-CC
-C1E   A1F   A3F   20.0     140.2  ! phe CA-CB-CD
-C1E   A1Y   A2Y   10.0     116.0  ! tyr CA-CB-CC
+C1E   A1F   A2F   10.0     130.0  ! phe CA-CB-CC
+C1E   A1F   A3F   20.0     130.0  ! phe CA-CB-CD
+C1E   A1Y   A2Y   10.0     129.0  ! tyr CA-CB-CC
 C1E   A1W   P1W   20.0     125.6  ! trp CA-CB-CC
 C1E   A1W   A2W   20.0     133.7  ! trp CA-CB-CD
 !## for pSer and pThr                                   
 C1E   P2S   P3S   20.0     132.8  ! pSer CA-CB-CC (PO4) 
 C1E   P2T   P3T   20.0      72.6  ! pThr CA-CB-CC (PO4) 
 !CC-CD-CE, CC-CD-CF, CB-CD-CE, CB-CD-CF in trp
-A1W   A2W   A3W   50.0     161.0  ! trp
-P1W   A2W   A3W   50.0     127.9  ! trp
-A1W   A2W   A4W   50.0     98.6   ! trp
-P1W   A2W   A4W   50.0     168.1  ! trp
+A1W   A2W   A3W   50.0     165.7  ! trp
+P1W   A2W   A3W   50.0     124.6  ! trp
+A1W   A2W   A4W   50.0      97.0  ! trp
+P1W   A2W   A4W   50.0     166.7  ! trp
 !C-N-CB for pro
 C     N     A2P   0.00     161.9  ! pro
 !angles within the ring of amino acid side chain
@@ -267,7 +267,6 @@ C1E   A1Y   A2Y   P1Y     0.00    2     180.0  ! tyr CA-CB-CC-CD
 C1E   A1Y   A3Y   P1Y     0.00    2     180.0  ! tyr CA-CB-CD-CC
 C1E   A1Y   A2Y   A3Y     0.00    2     180.0  ! tyr CA-CB-CD-CC
 C1E   A1Y   A3Y   A2Y     0.00    2     180.0  ! tyr CA-CB-CD-CC
-A1Y   A2Y   A3Y   P1Y    50.00    1     180.0
 !for trp
 C1E   A1W   P1W   A2W     0.00    2     180.0  ! trp CA-CB-CC-CD
 C1E   A1W   A2W   P1W     0.00    2     180.0  ! trp CA-CB-CD-CC
@@ -319,7 +318,6 @@ A2W   A3W   A4W   A1W    47.78    0     0.0    ! trp
 A2W   A3W   A4W   P1W    47.78    0     0.0    ! trp
 !# for Tyr
 A1Y   A2Y   P1Y   A3Y    50.00    0     0.0
-!A1Y   A3Y   P1Y   A2Y    50.00    0     0.0
  
 CMAP
 
@@ -708,16 +706,16 @@ A3K      0.00     -0.0250      2.2000   0.00     -0.0500       3.4769 ! lys 15 s
 QdK      0.00     -0.0250      2.1500   0.00     -0.0500       3.0589 ! lys 15 size: vol + 0.00 14 size: vol + 0.70
 A3R      0.00     -0.0675      2.2000   0.00     -0.1350       3.1776 ! arg 15 size: vol + 0.00 14 size: vol + 0.40
 QdR      0.00     -0.0675      2.5500   0.00     -0.1350       2.9363 ! arg 15 size: vol + 0.00 14 size: vol + 0.40
-A4H      0.00     -0.0540      1.9000   0.00     -0.1080       2.6444 ! his 15 size: vol + 0.00 14 size: vol + 0.30
+A4H      0.00     -0.0540      2.2000   0.00     -0.1080       2.6444 ! his 15 size: vol + 0.00 14 size: vol + 0.30
 P1H      0.00     -0.0405      2.0000   0.00     -0.0810       2.4806 ! his 15 size: vol + 0.00 14 size: vol + 0.30
 P2H      0.00     -0.0405      1.9000   0.00     -0.0810       2.4073 ! his 15 size: vol + 0.00 14 size: vol + 0.30
 A1F      0.00     -0.1100      2.2000   0.00     -0.2200       2.9414 ! phe 15 size: vol + 0.00 14 size: vol + 0.30
-A2F      0.00     -0.1100      1.8500   0.00     -0.2200       2.6289 ! phe 15 size: vol + 0.00 14 size: vol + 0.30
-A3F      0.00     -0.1100      1.8500   0.00     -0.2200       2.6288 ! phe 15 size: vol + 0.00 14 size: vol + 0.30
-A1Y      0.00     -0.0840      1.9000   0.00     -0.1968       2.9414 ! tyr 15 size: vol + 0.00 14 size: vol + 0.30
-A2Y      0.00     -0.0840      1.8500   0.00     -0.1968       2.6291 ! tyr 15 size: vol + 0.00 14 size: vol + 0.30
-A3Y      0.00     -0.0840      1.8500   0.00     -0.1968       2.6291 ! tyr 15 size: vol + 0.00 14 size: vol + 0.30
-P1Y      0.00     -0.0492      1.9500   0.00     -0.0984       2.7524 ! tyr 15 size: vol + 0.00 14 size: vol + 0.30
+A2F      0.00     -0.1100      1.9500   0.00     -0.2200       2.6289 ! phe 15 size: vol + 0.00 14 size: vol + 0.30
+A3F      0.00     -0.1100      1.9500   0.00     -0.2200       2.6288 ! phe 15 size: vol + 0.00 14 size: vol + 0.30
+A1Y      0.00     -0.0840      2.2000   0.00     -0.1968       2.9414 ! tyr 15 size: vol + 0.00 14 size: vol + 0.30
+A2Y      0.00     -0.0840      1.9500   0.00     -0.1968       2.6291 ! tyr 15 size: vol + 0.00 14 size: vol + 0.30
+A3Y      0.00     -0.0840      1.9500   0.00     -0.1968       2.6291 ! tyr 15 size: vol + 0.00 14 size: vol + 0.30
+P1Y      0.00     -0.0492      2.2000   0.00     -0.0984       2.7524 ! tyr 15 size: vol + 0.00 14 size: vol + 0.30
 A1W      0.00     -0.0840      1.9000   0.00     -0.1680       2.7205 ! trp 15 size: vol + 0.00 14 size: vol + 0.30
 P1W      0.00     -0.0420      1.8000   0.00     -0.0840       2.5364 ! trp 15 size: vol + 0.00 14 size: vol + 0.30
 A2W      0.00     -0.0840      1.8000   0.00     -0.1680       2.3870 ! trp 15 size: vol + 0.00 14 size: vol + 0.30
