@@ -277,7 +277,7 @@ ATOM H    H       0.00
 ATOM CA   C1E     0.00
 GROU
 ATOM CB   A4Q     0.00
-ATOM CB   P4Q     0.00
+ATOM CC   P4Q     0.00
 GROU
 ATOM C    C       0.00
 ATOM O    O       0.00
@@ -305,7 +305,7 @@ ATOM H    H       0.00
 ATOM CA   C1E     0.00
 GROU
 ATOM CB   AaE     0.00
-ATOM CB   QaE    -1.00
+ATOM CC   QaE    -1.00
 GROU
 ATOM C    C       0.00
 ATOM O    O       0.00
