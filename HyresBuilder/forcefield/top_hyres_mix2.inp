@@ -286,7 +286,7 @@ BOND CA   CB        CB   CC
 ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   CB        N    CA   C          CB   CA   C
 ANGL CA   C    O         CA   C    +N         O    C    +N
-ANGL CA   CB   CC
+!ANGL CA   CB   CC
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
 DONO  H  N
@@ -314,7 +314,7 @@ BOND CA   CB        CB   CC
 ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   CB        N    CA   C          CB   CA   C
 ANGL CA   C    O         CA   C    +N         O    C    +N    
-ANGL CA   CB   CC
+!ANGL CA   CB   CC
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
 DONO  H  N
