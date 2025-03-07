@@ -141,6 +141,8 @@ A1W   C1E   NH1   10.0     110.8  ! trp  decrease from 20.0 to 10.0 for hyres_iC
 P2S   C1E   NH1   20.0     110.3  ! pSer  
 P2T   C1E   NH1   20.0      98.4  ! pThr  
 !CA-CB-CC (and/or CA-CB-CD) angle in amino acid
+C1E   AaE   QaE   20.0     176.2  ! glu
+C1E   A4Q   P4Q   10.0     137.9  ! gln
 C1E   A3K   QdK   20.0     144.9  ! lys
 C1E   A3R   QdR   20.0     137.9  ! arg
 C1E   A4H   P1H   20.0     129.5  ! his CA-CB-CC
