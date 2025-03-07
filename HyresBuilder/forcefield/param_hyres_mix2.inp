@@ -35,7 +35,7 @@ C1E   P1S    300.0      2.03  ! ser
 C1E   P1T    300.0      2.01  ! thr
 C1E   A3K    200.0      2.65  ! lys
 C1E   A3R    200.0      2.65  ! arg
-C1E   A4H    400.0      1.94  ! his
+C1E   A4H    200.0      1.94  ! his
 C1E   A1F    150.0      1.95  ! phe
 C1E   A1Y    300.0      1.95  ! tyr
 C1E   A1W    300.0      1.95  ! trp
@@ -44,7 +44,7 @@ C1E   A2P    300.0      1.92  ! pro
 C1E   P2S    250.0      1.61  ! pSer
 C1E   P2T    200.0      2.03  ! pThr
 !bonds in amino acid sidechain-sidechain
-A4Q   P4Q    300.0      2.53  ! gln
+A4Q   P4Q    200.0      2.53  ! gln
 AaE   QaE    200.0      2.32  ! glu
 A3K   QdK    100.0      2.95  ! lys
 A3R   QdR    100.0      3.60  ! arg
