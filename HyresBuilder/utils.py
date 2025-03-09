@@ -212,7 +212,7 @@ def setup2(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picose
         'dh': dh*unit.nanometer,                                  # Debye Huckel screening length
         'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
         'er': er_t*61.0/77.6,                                         # relative dielectric constant
-        'eps_hb': 2.0*unit.kilocalorie_per_mole,                    # hydrogen bond strength
+        'eps_hb': 2.5*unit.kilocalorie_per_mole,                    # hydrogen bond strength
         'sigma_hb': 0.29*unit.nanometer,                            # sigma of hydrogen bond
         'eps_base': 2.20*unit.kilocalorie_per_mole,                 # base stacking strength
     }
