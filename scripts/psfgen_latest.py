@@ -31,7 +31,7 @@ def main():
     parser.add_argument("-n", "--num_of_chains", type=int, default=[1,], nargs="+", 
                         help="Number of copies for each pdb; it should have the same length as the given pdb list specified in the '-i' argument")
     parser.add_argument("-m", "--molecule_type", type=str, default=['P'], nargs="+",
-                        help="select from 'P', 'R', 'D', 'PP', 'PR' for protein, RNA, DNA, protein complex, and protein-RNA complex, respectively")
+                        help="select from 'P', 'R', 'D', 'C' for protein, RNA, DNA, complex, respectively")
     parser.add_argument("-t", "--ter", choices=['neutral', 'charged'], help="Terminal charged status (choose from ['neutral', 'charged'])", default='neutral')
     args = parser.parse_args()
    
@@ -71,7 +71,7 @@ def main():
             for i in range(num):
                 segid = f"R{chr(65+idx)}{i}" 
                 gen.add_segment(segid=segid, pdbfile=pdb, auto_angles=False, auto_dihedrals=False)
-        elif mol_type in ['PP', 'PR']:
+        elif mol_type == 'C':
             for i in range(num):
                 decompose_complex(pdb, idx, i, gen)
         else:
