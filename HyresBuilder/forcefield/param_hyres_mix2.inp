@@ -98,22 +98,22 @@ C     NH1   C3E   77.5     120.0  ! C-N-CH3 (C-ter)                 ! gbsw CT3  
 !C-CA-CB angle in amino acid
 C     C1E   C3E   90.0     111.2  ! ala
 C     C1E   A2V   20.0     116.3  ! val
-C     C1E   A1L   10.0     140.6  ! leu  Decrease from 20.0 to 10.0
-C     C1E   A1I   10.0     117.8  ! ile  Decrease from 20.0 to 10.0
-C     C1E   A5M   10.0     119.8  ! met  Decrease from 20.0 to 10.0
-C     C1E   P5N   10.0     127.0  ! asn  Decrease from 20.0 to 10.0
-C     C1E   QaD   10.0     121.1  ! asp  Decrease from 20.0 to 10.0
-C     C1E   A4Q   10.0     119.1  ! gln  Decrease from 20.0 to 10.0
-C     C1E   AaE   10.0     116.2  ! glu  Decrease from 20.0 to 10.0
-C     C1E   P1C   10.0     118.3  ! cys  Decrease from 20.0 to 10.0
-C     C1E   P1S   10.0     109.4  ! ser  Decrease from 20.0 to 10.0
-C     C1E   P1T   10.0     116.2  ! thr  Decrease from 20.0 to 10.0
-C     C1E   A3K   10.0     117.0  ! lys  Decrease from 20.0 to 10.0
-C     C1E   A3R   10.0     118.5  ! arg  Decrease from 20.0 to 10.0
-C     C1E   A4H   10.0     129.9  ! his  Decrease from 20.0 to 10.0
-C     C1E   A1F   10.0     130.0  ! phe  Decrease from 20.0 to 10.0
-C     C1E   A1Y   10.0     130.0  ! tyr  Decrease from 20.0 to 10.0
-C     C1E   A1W   10.0     130.0  ! trp  Decrease from 20.0 to 10.0
+C     C1E   A1L   20.0     140.6  ! leu  Decrease from 20.0 to 10.0
+C     C1E   A1I   20.0     117.8  ! ile  Decrease from 20.0 to 10.0
+C     C1E   A5M   20.0     119.8  ! met  Decrease from 20.0 to 10.0
+C     C1E   P5N   20.0     127.0  ! asn  Decrease from 20.0 to 10.0
+C     C1E   QaD   20.0     121.1  ! asp  Decrease from 20.0 to 10.0
+C     C1E   A4Q   20.0     119.1  ! gln  Decrease from 20.0 to 10.0
+C     C1E   AaE   20.0     116.2  ! glu  Decrease from 20.0 to 10.0
+C     C1E   P1C   20.0     118.3  ! cys  Decrease from 20.0 to 10.0
+C     C1E   P1S   20.0     109.4  ! ser  Decrease from 20.0 to 10.0
+C     C1E   P1T   20.0     116.2  ! thr  Decrease from 20.0 to 10.0
+C     C1E   A3K   20.0     117.0  ! lys  Decrease from 20.0 to 10.0
+C     C1E   A3R   20.0     118.5  ! arg  Decrease from 20.0 to 10.0
+C     C1E   A4H   20.0     129.9  ! his  Decrease from 20.0 to 10.0
+C     C1E   A1F   20.0     130.0  ! phe  Decrease from 20.0 to 10.0
+C     C1E   A1Y   20.0     130.0  ! tyr  Decrease from 20.0 to 10.0
+C     C1E   A1W   20.0     130.0  ! trp  Decrease from 20.0 to 10.0
 C     C1E   A2P   20.0     115.0  ! pro  Decrease from 20.0 to 10.0, change from 121.7 to 115
 !## bond of C-CA-CB for pSer and pThr    
 C     C1E   P2S   20.0     112.3  ! pSer 
@@ -121,23 +121,23 @@ C     C1E   P2T   20.0     101.2  ! pThr
 
 !N-CA-CB angle in amino acid
 C3E   C1E   NH1   90.0     109.5  ! ala
-A2V   C1E   NH1   10.0     111.3  ! val  decrease from 20.0 to 10.0 for hyres_iCon
-A1L   C1E   NH1   10.0      85.0  ! leu  decrease from 20.0 to 10.0 for hyres_iCon
-A1I   C1E   NH1   10.0     110.4  ! ile  decrease from 20.0 to 10.0 for hyres_iCon
-A5M   C1E   NH1   10.0     112.7  ! met  decrease from 20.0 to 10.0 for hyres_iCon
-P5N   C1E   NH1   10.0     104.6  ! asn  decrease from 20.0 to 10.0 for hyres_iCon
-QaD   C1E   NH1   10.0     106.4  ! asp  decrease from 20.0 to 10.0 for hyres_iCon
-A4Q   C1E   NH1   10.0     111.0  ! gln  decrease from 20.0 to 10.0 for hyres_iCon
-AaE   C1E   NH1   10.0     113.7  ! glu  decrease from 20.0 to 10.0 for hyres_iCon
-P1C   C1E   NH1   10.0     107.0  ! cys  decrease from 20.0 to 10.0 for hyres_iCon
-P1S   C1E   NH1   10.0     114.2  ! ser  decrease from 20.0 to 10.0 for hyres_iCon
-P1T   C1E   NH1   10.0     106.9  ! thr  decrease from 20.0 to 10.0 for hyres_iCon
-A3K   C1E   NH1   10.0     112.3  ! lys  decrease from 20.0 to 10.0 for hyres_iCon
-A3R   C1E   NH1   10.0     112.2  ! arg  decrease from 20.0 to 10.0 for hyres_iCon
-A4H   C1E   NH1   10.0     100.6  ! his  decrease from 20.0 to 10.0 for hyres_iCon
-A1F   C1E   NH1   10.0     101.2  ! phe  decrease from 20.0 to 10.0 for hyres_iCon
-A1Y   C1E   NH1   10.0     100.9  ! tyr  decrease from 20.0 to 10.0 for hyres_iCon
-A1W   C1E   NH1   10.0     101.6  ! trp  decrease from 20.0 to 10.0 for hyres_iCon
+A2V   C1E   NH1   20.0     111.3  ! val  decrease from 20.0 to 10.0 for hyres_iCon
+A1L   C1E   NH1   20.0      85.0  ! leu  decrease from 20.0 to 10.0 for hyres_iCon
+A1I   C1E   NH1   20.0     110.4  ! ile  decrease from 20.0 to 10.0 for hyres_iCon
+A5M   C1E   NH1   20.0     112.7  ! met  decrease from 20.0 to 10.0 for hyres_iCon
+P5N   C1E   NH1   20.0     104.6  ! asn  decrease from 20.0 to 10.0 for hyres_iCon
+QaD   C1E   NH1   20.0     106.4  ! asp  decrease from 20.0 to 10.0 for hyres_iCon
+A4Q   C1E   NH1   20.0     111.0  ! gln  decrease from 20.0 to 10.0 for hyres_iCon
+AaE   C1E   NH1   20.0     113.7  ! glu  decrease from 20.0 to 10.0 for hyres_iCon
+P1C   C1E   NH1   20.0     107.0  ! cys  decrease from 20.0 to 10.0 for hyres_iCon
+P1S   C1E   NH1   20.0     114.2  ! ser  decrease from 20.0 to 10.0 for hyres_iCon
+P1T   C1E   NH1   20.0     106.9  ! thr  decrease from 20.0 to 10.0 for hyres_iCon
+A3K   C1E   NH1   20.0     112.3  ! lys  decrease from 20.0 to 10.0 for hyres_iCon
+A3R   C1E   NH1   20.0     112.2  ! arg  decrease from 20.0 to 10.0 for hyres_iCon
+A4H   C1E   NH1   20.0     100.6  ! his  decrease from 20.0 to 10.0 for hyres_iCon
+A1F   C1E   NH1   20.0     101.2  ! phe  decrease from 20.0 to 10.0 for hyres_iCon
+A1Y   C1E   NH1   20.0     100.9  ! tyr  decrease from 20.0 to 10.0 for hyres_iCon
+A1W   C1E   NH1   20.0     101.6  ! trp  decrease from 20.0 to 10.0 for hyres_iCon
 !## for pSer and pThr                     
 P2S   C1E   NH1   20.0     110.3  ! pSer  
 P2T   C1E   NH1   20.0      98.4  ! pThr  
@@ -690,7 +690,7 @@ N        0.00     -0.0356      1.6000   0.00     -0.0356      1.6000  ! N and NH
 NH1      0.00     -0.0356      1.6000   0.00     -0.0356      1.6000  ! N and NH1                ! gbsw NH1    0.000000  -0.200000     1.850000 ...
 O        0.00     -0.0239      1.6000   0.00     -0.0239      1.6000  ! carbonyl O in backbone   ! gbsw O      0.000000  -0.120000     1.700000 ...
 
-C3E      0.00     -0.1540      2.0500   0.00     -0.1540      1.9158  ! ala 15 size: vol + 0.00 14 size: vol + 0.00 2.1158
+C3E      0.00     -0.1540      2.0500   0.00     -0.1540      2.0500  ! ala 15 size: vol + 0.00 14 size: vol + 0.00 2.1158
 A2V      0.00     -0.3100      2.5500   0.00     -0.3100      2.5541  ! val 15 size: vol + 0.00 14 size: vol + 0.00 2.7541
 A1L      0.00     -0.4500      2.5500   0.00     -0.4500      3.9555  ! leu 15 size: vol + 0.00 14 size: vol + 0.00 2.9555 (too low helix)
 A1I      0.00     -0.3860      2.9500   0.00     -0.3860      2.9700  ! ile 15 size: vol + 0.00 14 size: vol + 0.00 2.9700
