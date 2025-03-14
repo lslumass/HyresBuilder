@@ -41,7 +41,7 @@ def load_ff(model='protein'):
 
     return top_inp, param_inp
 
-def setup(self, model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
+def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
     # model = 'protein', 'RNA', 'mix'
     # input parameters
     pdb_file = args.pdb
@@ -150,7 +150,7 @@ def setup(self, model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.p
     print(f'Langevin, CUDA, {temperture}')
     return system, sim
 
-def setup2(self, model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
+def setup2(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
     # model = 'protein', 'RNA', 'mix'
     # input parameters
     pdb_file = args.pdb
