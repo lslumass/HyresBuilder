@@ -745,7 +745,7 @@ def MixSystem(psf, system, ffs):
     # base stakcing and paring
     # define relative strength of base pairing and stacking
     eps_base = ffs['eps_base']
-    scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.1, 'GG':1.1, 'GC':0.7, 'GU':0.8,
+    scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.1, 'GG':1.1, 'GC':0.8, 'GU':0.8,
               'CA':0.4, 'CG':0.4, 'CC':0.3, 'CU':0.2, 'UA':0.4, 'UG':0.4, 'UC':0.2, 'UU':0.2,
               'A-U':0.9, 'C-G':1.2, 'G-G': 1.00}
     # get all the groups of bases
