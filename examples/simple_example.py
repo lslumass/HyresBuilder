@@ -1,6 +1,5 @@
 import sys
-from HyresBuilder import Geometry
-import HyresBuilder
+from HyresBuilder import Geometry, HyresBuilder
 import Bio.PDB
 
 """

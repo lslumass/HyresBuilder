@@ -22,6 +22,19 @@ def decompose_complex(pdb, idx, i, gen):
             print("Error: Only protein-protein or protein-RNA complex is supported.")
             exit(1)
 
+def set_terminus(gen, segid, charge_status):
+    nter, cter = gen.get_resids(segid)[0], gen.get_resids(segid)[-1]
+    if charge_status == 'charged':
+        gen.set_charge(segid, nter, "N", 1.00)
+        gen.set_charge(segid, cter, "O", -1.00)
+    elif charge_status == 'NT':
+        gen.set_charge(segid, nter, "N", 1.00)
+    elif charge_status == 'CT':
+        gen.set_charge(segid, cter, "O", -1.00)
+    else:
+        print("Error: Only 'neutral', 'charged', 'NT', and 'CT' charge status are supported.")
+        exit(1)
+
 
 def main():
     parser = argparse.ArgumentParser(description="generate PSF for Hyres systems", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -32,7 +45,8 @@ def main():
                         help="Number of copies for each pdb; it should have the same length as the given pdb list specified in the '-i' argument")
     parser.add_argument("-m", "--molecule_type", type=str, default=['P'], nargs="+",
                         help="select from 'P', 'R', 'D', 'C' for protein, RNA, DNA, complex, respectively")
-    parser.add_argument("-t", "--ter", choices=['neutral', 'charged'], help="Terminal charged status (choose from ['neutral', 'charged'])", default='neutral')
+    parser.add_argument("-t", "--ter", choices=['neutral', 'charged', 'NT', 'CT'], 
+                        help="Terminal charged status (choose from ['neutral', 'charged', 'NT', 'CT'])", default='neutral')
     args = parser.parse_args()
    
     model = args.model
@@ -78,6 +92,11 @@ def main():
             print("Error: Only type of 'P', 'R', 'D', 'PP' and 'PR' are supported.")
             exit(1)
 
+    # re-set the charge status of terminus
+    for segid in gen.get_segids():
+        if ter != "neutral":
+            set_terminus(gen, segid, ter)       
+            
     gen.write_psf(filename=outpsf)
     os.system("rm -rf tmp_*.pdb")
 
