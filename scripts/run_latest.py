@@ -24,6 +24,7 @@ parser.add_argument('-s', "--salt", default=150.0, type=float, help="salt concen
 parser.add_argument('-e', "--ens", default='NVT', type=str, help="simulation ensemble, NPT, NVT, or non, non is for non-periodic system")
 parser.add_argument('-m', "--Mg", default=0.0, type=float, help="Mg2+ concentration in mM")
 args = parser.parse_args()
+out = args.out
 
 # simulation parameters
 dt_equil = 0.0001*unit.picoseconds		                        # time step for equilibration
@@ -47,7 +48,7 @@ after further modify the system, add the line below:
 sim.context.reinitialize(preserveState=True)
 """
 
-with open('system.xml', 'w') as output:
+with open(f'{out}.xml', 'w') as output:
     output.write(XmlSerializer.serialize(system))
 
 print('\n# Now, the system has:')
@@ -64,7 +65,6 @@ print('\n# Equilibriation running:')
 sim.step(equil_step)
 
 ## save a pdb traj using large step, traj using small step, and log file
-out = args.out
 sim.reporters.append(PDBReporter(f'{out}.pdb', pdb_freq))
 sim.reporters.append(XTCReporter(f'{out}.xtc', traj_freq))
 sim.reporters.append(StateDataReporter(f'{out}.log', log_freq, progress=True, totalSteps=prod_step, temperature=True, potentialEnergy=True, kineticEnergy=True, totalEnergy=True))
