@@ -39,7 +39,7 @@ ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
 ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
 ANGL C1   C2   +P
 DIHE NA   NB   ND   NC        P    C1   C2   NA        C1   C2   NA   NB
-DIHE NA   NB   NC   ND        -C1  P    C1   +P
+DIHE NA   NB   NC   ND        -C1  P    C1   +P        -C1  P    C1   C2
 IMPR NA   C2   NB   ND        C1   P    +P   C2
 
 
@@ -61,7 +61,7 @@ ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
 ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
 ANGL C1   C2   +P
 DIHE NA   NB   ND   NC        P    C1   C2   NA        C1   C2   NA   NB
-DIHE NA   NB   NC   ND        -C1  P    C1   +P
+DIHE NA   NB   NC   ND        -C1  P    C1   +P        -C1  P    C1   C2
 IMPR NA   C2   NB   ND        C1   P    +P   C2
  
 
@@ -80,6 +80,7 @@ BOND C2   NA        NA   NB        NA   NC        NB   NC
 ANGL P    C1   C2        P    C1   +P        -C1  P    C1
 ANGL C1   C2   NA        C2   NA   NC        C1   C2   +P
 DIHE P    C1   C2   NA        C1   C2   NA   NC        -C1  P    C1   +P
+DIHE -C1  P    C1   C2
 IMPR NA   C2   NB   NC        C1   P    +P   C2
  
  
@@ -98,6 +99,7 @@ BOND C2   NA        NA   NB        NA   NC        NB   NC
 ANGL P    C1   C2        P    C1   +P        -C1  P    C1
 ANGL C1   C2   NA        C2   NA   NC        C1   C2   +P
 DIHE P    C1   C2   NA        C1   C2   NA   NC        -C1  P    C1   +P
+DIHE -C1  P    C1   C2
 IMPR NA   C2   NB   NC        C1   P    +P   C2
 
 
