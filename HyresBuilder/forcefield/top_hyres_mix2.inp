@@ -663,6 +663,7 @@ ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   C         CA   C    O          CA   C    +N
 ANGL O    C    +N
 IMPH N    -C   CA   H         C    CA   +N   O
+CMAP -C   N    CA   C         N    CA   C    +N
 DONO  H     N
 ACCE O  C
 IC   -C   CA   *N   H      0.0000    0.00  180.00    0.00   0.0000
