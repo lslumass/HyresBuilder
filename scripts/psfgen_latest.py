@@ -13,27 +13,28 @@ def decompose_complex(pdb, idx, i, gen):
         tmp_pdb = f'tmp_{segid}.pdb'
         sel.atoms.write(tmp_pdb)
         if segid.startswith("P"):
-            segid = f"C{chr(65+idx)}{j+i*segnum}"
+            segid = f"PC{chr(65+idx)}{j+i*segnum}"
             gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False)
         elif segid.startswith("R"):
-            segid = f"C{chr(65+idx)}{j+i*segnum}"
+            segid = f"RC{chr(65+idx)}{j+i*segnum}"
             gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False, auto_dihedrals=False)
         else:
             print("Error: Only protein-protein or protein-RNA complex is supported.")
             exit(1)
 
 def set_terminus(gen, segid, charge_status):
-    nter, cter = gen.get_resids(segid)[0], gen.get_resids(segid)[-1]
-    if charge_status == 'charged':
-        gen.set_charge(segid, nter, "N", 1.00)
-        gen.set_charge(segid, cter, "O", -1.00)
-    elif charge_status == 'NT':
-        gen.set_charge(segid, nter, "N", 1.00)
-    elif charge_status == 'CT':
-        gen.set_charge(segid, cter, "O", -1.00)
-    else:
-        print("Error: Only 'neutral', 'charged', 'NT', and 'CT' charge status are supported.")
-        exit(1)
+    if segid.startswith("P"):
+        nter, cter = gen.get_resids(segid)[0], gen.get_resids(segid)[-1]
+        if charge_status == 'charged':
+            gen.set_charge(segid, nter, "N", 1.00)
+            gen.set_charge(segid, cter, "O", -1.00)
+        elif charge_status == 'NT':
+            gen.set_charge(segid, nter, "N", 1.00)
+        elif charge_status == 'CT':
+            gen.set_charge(segid, cter, "O", -1.00)
+        else:
+            print("Error: Only 'neutral', 'charged', 'NT', and 'CT' charge status are supported.")
+            exit(1)
 
 
 def main():
