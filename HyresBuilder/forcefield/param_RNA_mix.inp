@@ -119,12 +119,12 @@ NCN    OCN       -0.14905      3.2000
 NCN    CO        -0.12414      3.8000
 N2C    CO        -0.10753      4.0000
 
-N1C    QdR       -0.80000      4.5000
-N1C    A1F       -0.80000      4.5000
-N1C    A1Y       -0.80000      4.5000
-NCC    QdR       -0.60000      4.5000
-NCC    A1F       -0.60000      4.5000
-NCC    A1Y       -0.60000      4.5000
+!N1C    QdR       -0.80000      4.5000
+!N1C    A1F       -0.80000      4.5000
+!N1C    A1Y       -0.80000      4.5000
+!NCC    QdR       -0.60000      4.5000
+!NCC    A1F       -0.60000      4.5000
+!NCC    A1Y       -0.60000      4.5000
 
 HBOND AEXP 10 REXP 12 HAEX 4 AAEX 2   NOACCEPTORS  HBNOEXCLUSIONS  ALL  -
    CUTHB 6.0 CTOFHB 5.0 CTONHB 4.0  CUTHA 100.0  CTOFHA 90.0  CTONHA 90.0
