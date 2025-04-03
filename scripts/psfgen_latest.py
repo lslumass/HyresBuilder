@@ -90,7 +90,7 @@ def main():
             for i in range(num):
                 decompose_complex(pdb, idx, i, gen)
         else:
-            print("Error: Only type of 'P', 'R', 'D', 'PP' and 'PR' are supported.")
+            print("Error: Only type of 'P', 'R', 'D', and 'C' are supported.")
             exit(1)
 
     # re-set the charge status of terminus
