@@ -31,9 +31,10 @@ dt_equil = 0.0001*unit.picoseconds		                        # time step for equi
 dt_prod = 0.008*unit.picoseconds                                # time step for production simulation
 prod_step = 250000000                                           # production steps
 equil_step = 10000                                              # equilibration steps
-log_freq = 1000                                                 # frequency of log file
-traj_freq = 5000                                                # frequency of trajectory file
-pdb_freq = 12500000                                             # frequence of dpd_traj file
+log_freq = 1250                                                 # 10 ps: frequency of log file
+traj_freq = 5000                                                # 40 ps: frequency of trajectory file
+pdb_freq = 12500000                                             # 100 ns: frequence of dpd_traj file
+chk_freq = 125000                                              # 1 ns: frequence of checkpoint file
 pressure = 1*unit.atmosphere                                    # pressure in NPT
 friction = 0.1/unit.picosecond                                  # friction coefficient in Langevin
 
@@ -64,11 +65,11 @@ print('after: ', sim.context.getState(getEnergy=True).getPotentialEnergy())
 print('\n# Equilibriation running:')
 sim.step(equil_step)
 
-## save a pdb traj using large step, traj using small step, and log file
+## save a pdb traj using large step, xtc traj using small step, and log file
 sim.reporters.append(PDBReporter(f'{out}.pdb', pdb_freq))
 sim.reporters.append(XTCReporter(f'{out}.xtc', traj_freq))
 sim.reporters.append(StateDataReporter(f'{out}.log', log_freq, progress=True, totalSteps=prod_step, temperature=True, potentialEnergy=True, kineticEnergy=True, totalEnergy=True))
-#simulation.reporters.append(CheckpointReporter('system.chk', dcd_freq*10))
+sim.reporters.append(CheckpointReporter(f'{out}.chk', chk_freq))
 
 print('\n# Production simulation running:')
 sim.integrator.setStepSize(dt_prod)
