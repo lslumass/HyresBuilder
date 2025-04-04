@@ -2,7 +2,7 @@
 This package is used to constructe Hyres Force Field, iConRNA force field
 Athours: Shanlong Li, Xiping Gong, Yumeng Zhang
 Date: Mar 9, 2024
-Modified: Feb 13, 2025
+Modified: Apr 3, 2025 
 """
 
 from openmm.unit import *

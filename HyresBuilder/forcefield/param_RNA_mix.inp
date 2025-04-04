@@ -60,12 +60,12 @@ OCN   NCN   N1C   25.0      72.0  !  NC-ND-NA
 
 PHI
 !phi in backbone
-BP    BC1   BC2   N1C     28.0    1  -165.0    ! P-C1-C2-NA for A/G    increase from 8.0 to 58.0 due to the stacking and pairing
-BP    BC1   BC2   NCC     25.0    1   180.0    ! P-C1-C2-NA for C/U    increase from 5.0 to 55.0 due to the stacking and pairing
-!BC1   BC2   N1C   CNC     55.0    1   165.0    ! C1-C2-NA-NB for A/G   increase from 5.0 to 55.0 due to the stacking and pairing
-BC1   BC2   N1C   CNC      8.0    1   105.0
-BC1   BC2   N1C   CNC      8.0    2  -150.0
-BC1   BC2   NCC   CO       5.0    1     0.0    !                       increase from 5.0 to 55.0 due to the stacking and pairing 
+BP    BC1   BC2   N1C     58.0    1  -165.0    ! P-C1-C2-NA for A/G    
+BP    BC1   BC2   NCC     55.0    1   180.0    ! P-C1-C2-NA for C/U    
+BC1   BC2   N1C   CNC     55.0    1   165.0    ! C1-C2-NA-NB for A/G  
+!BC1   BC2   N1C   CNC     28.0    1   105.0
+!BC1   BC2   N1C   CNC     28.0    2  -150.0
+BC1   BC2   NCC   CO      55.0    1     0.0    !                       
 
 BC1   BP    BC1   BP       0.2    1   -20.0
 BC1   BP    BC1   BC2      0.0    1  -120.0
