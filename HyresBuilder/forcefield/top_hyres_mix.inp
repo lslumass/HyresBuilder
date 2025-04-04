@@ -631,7 +631,7 @@ BOND N    CA        CA   C         C    +N        C    O         N    CB
 BOND CA   CB
 ANGL -C   N    CA        N    CA   C          CB   CA   C
 ANGL CA   C    O         CA   C    +N         O    C    +N
-IMPH C    CA   +N   O         CA   N    C    CB
+IMPH C    CA   +N   O         CA   N    C    CB         N    -C   CA   CB
 ACCE O  C
 IC   -C   CA   *N   CB     0.0000    0.00  180.00    0.00   0.0000
 IC   -C   N    CA   C      0.0000    0.00  -60.00    0.00   0.0000

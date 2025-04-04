@@ -307,6 +307,9 @@ C1E   X     X     P2T    55.00    0     35.3   ! pThr
 !CD-CE-CF-CB CD-CE-CF-CC improper in trp
 A2W   A3W   A4W   A1W    47.78    0     0.0    ! trp
 A2W   A3W   A4W   P1W    47.78    0     0.0    ! trp
+
+!# for Proline peptide bond
+N     C     C1E   A2P    55.00    0     0.0    ! PRO
  
 CMAP
 
