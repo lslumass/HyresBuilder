@@ -82,13 +82,13 @@ BC1   BP    BP    BC2     15.0    0    29.0
 N1C   BC2   CNC   N2C     40.0    0     0.0
 
 !NA-C2-NB-ND for G
-N1C   BC2   CNC   NCN     20.0    0     0.0
+N1C   BC2   CNC   NCN     40.0    0     0.0
 
 !NA-C2-NB-NC for C
-NCC   BC2   NCN   CO      20.0    0  -180.0
+NCC   BC2   NCN   CO      40.0    0  -180.0
 
 !NA-C2-NB-NC for U
-NCC   BC2   OCN   CO      20.0    0  -180.0
+NCC   BC2   OCN   CO      40.0    0  -180.0
 
 
 NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
