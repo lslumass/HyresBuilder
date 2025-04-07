@@ -151,10 +151,10 @@ C1E   A1W   A2W   20.0     133.7  ! trp CA-CB-CD
 C1E   P2S   P3S   20.0     132.8  ! pSer CA-CB-CC (PO4) 
 C1E   P2T   P3T   20.0      72.6  ! pThr CA-CB-CC (PO4) 
 !CC-CD-CE, CC-CD-CF, CB-CD-CE, CB-CD-CF in trp
-A1W   A2W   A3W   50.0     161.0  ! trp
+!#A1W   A2W   A3W   50.0     161.0  ! trp
 P1W   A2W   A3W   50.0     127.9  ! trp
 A1W   A2W   A4W   50.0     98.6   ! trp
-P1W   A2W   A4W   50.0     168.1  ! trp
+!#P1W   A2W   A4W   50.0     168.1  ! trp
 !C-N-CB for pro
 C     N     A2P   0.00     161.9  ! pro
 !angles within the ring of amino acid side chain

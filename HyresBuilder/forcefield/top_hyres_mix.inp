@@ -601,7 +601,7 @@ ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   CB        N    CA   C          CB   CA   C
 ANGL CA   C    O         CA   C    +N         O    C    +N
 ANGL CA   CB   CC        CA   CB   CD         CC   CD   CE
-ANGL CC   CD   CF        CB   CD   CE         CB   CD   CF
+ANGL CB   CD   CF
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 IMPH CD   CE   CF   CB        CD   CE   CF   CC
 CMAP -C   N    CA   C         N    CA   C    +N
