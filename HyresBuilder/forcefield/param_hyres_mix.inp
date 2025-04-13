@@ -1067,8 +1067,8 @@ C        C        -0.0180      4.2000        ! setting for the same framework of
 
 QdR      A1F      -0.5000      5.0000
 QdR      A1Y      -0.7000      5.0000
-A1F      A1F      -0.5000      5.2000
-A1Y      A1Y      -0.7000      5.2000
+A1F      A1F      -0.6000      5.2000
+A1Y      A1Y      -0.8000      5.2000
 A2W      A2W      -0.9000      5.0000
 
 HBOND AEXP 10 REXP 12 HAEX 4 AAEX 2   NOACCEPTORS  HBNOEXCLUSIONS  ALL  -

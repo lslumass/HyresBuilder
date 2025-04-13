@@ -428,7 +428,10 @@ def MixSystem(psf, system, ffs):
     for idx in range(len(Hs)):
         HBforce.addDonor(Ns[idx], Hs[idx], -1)
         HBforce.addAcceptor(Os[idx], -1, -1)
-    system.addForce(HBforce)
+
+    if HBforce.getNumAcceptors() != 0 and HBforce.getNumDonors() != 0:
+        system.addForce(HBforce)
+
 
     print('\n# add RNA base stacking force')
     # base stakcing and paring
@@ -452,19 +455,22 @@ def MixSystem(psf, system, ffs):
     fstack.setName('StackingForce')
     fstack.addPerBondParameter('eps_stack')
     fstack.addGlobalParameter('r0', 0.34*unit.nanometers)
-    # add all group
-    for grp in grps:
-        fstack.addGroup(grp[1])
-    # get the stacking pairs
-    sps = []
-    for i in range(0,len(grps)-2,2):
-        grp = grps[i]
-        pij = grps[i][0] + grps[i+2][0]
-        sps.append([[i+1, i+2], scales[pij]*eps_base])
-    for sp in sps:
-        fstack.addBond(sp[0], [sp[1]])
-    print('    add ', fstack.getNumBonds(), 'stacking pairs')
-    system.addForce(fstack)
+
+    if len(grps) > 1:
+        # add all group
+        for grp in grps:
+            fstack.addGroup(grp[1])
+        # get the stacking pairs
+        sps = []
+        for i in range(0,len(grps)-2,2):
+            grp = grps[i]
+            pij = grps[i][0] + grps[i+2][0]
+            sps.append([[i+1, i+2], scales[pij]*eps_base])
+        for sp in sps:
+            fstack.addBond(sp[0], [sp[1]])
+
+        print('    add ', fstack.getNumBonds(), 'stacking pairs')
+        system.addForce(fstack)
 
     # base pairing
     print('\n# add RNA base pair force')
@@ -520,8 +526,8 @@ def MixSystem(psf, system, ffs):
     r_au2 = 0.37*unit.nanometer
     
     if num_A != 0 and num_U != 0:
-        formula = f"""eps_AU*(5.0*(r_au/r)^10-6.0*(r_au/r)^6 + 5*(r_au2/r2)^10-6.0*(r_au2/r2)^6)*step(cos5)*cos5;
-                  r=distance(a1,d1); r2=distance(a3,d2); cos5=-cos(phi)^3; phi=angle(d1,a1,a2);
+        formula = f"""eps_AU*(5.0*(r_au/r)^10-6.0*(r_au/r)^6 + 5*(r_au2/r2)^10-6.0*(r_au2/r2)^6)*step(cosT)*cosT;
+                  r=distance(a1,d1); r2=distance(a3,d2); cosT=-cos(phi)^5; phi=angle(d1,a1,a2);
                   eps_AU={eps_AU.value_in_unit(unit.kilojoule_per_mole)};
                   r_au={r_au.value_in_unit(unit.nanometer)}; r_au2={r_au2.value_in_unit(unit.nanometer)}
                   """
@@ -542,8 +548,8 @@ def MixSystem(psf, system, ffs):
     r_cg2 = 0.35*unit.nanometer
     
     if num_C != 0 and num_G != 0:
-        formula = f"""eps_CG*(5.0*(r_cg/r)^10-6.0*(r_cg/r)^6 + 5*(r_cg2/r2)^10-6.0*(r_cg2/r2)^6)*step(cos5)*cos5;
-                  r=distance(a1,d1); r2=distance(a3,d2); cos5=-cos(phi)^3; phi=angle(d1,a1,a2); psi=dihedral(a3,a1,d1,d2);
+        formula = f"""eps_CG*(5.0*(r_cg/r)^10-6.0*(r_cg/r)^6 + 5*(r_cg2/r2)^10-6.0*(r_cg2/r2)^6)*step(cosT)*cosT;
+                  r=distance(a1,d1); r2=distance(a3,d2); cosT=-cos(phi)^5; phi=angle(d1,a1,a2); psi=dihedral(a3,a1,d1,d2);
                   eps_CG={eps_CG.value_in_unit(unit.kilojoule_per_mole)};
                   r_cg={r_cg.value_in_unit(unit.nanometer)}; r_cg2={r_cg2.value_in_unit(unit.nanometer)}
                   """
