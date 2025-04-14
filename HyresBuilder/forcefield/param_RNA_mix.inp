@@ -68,7 +68,7 @@ BC1   BC2   N1C   CNC     55.0    1   165.0    ! C1-C2-NA-NB for A/G
 BC1   BC2   NCC   CO      55.0    1     0.0    !                       
 
 BC1   BP    BC1   BP       0.2    1   -20.0
-BC1   BP    BC1   BC2      5.0    1  -120.0
+BC1   BP    BC1   BC2      0.0    1  -120.0
 !phi in A/G
 N1C   CNC   N2C   NCN     80.0    1     0.0
 N1C   CNC   NCN   N2C     50.0    1   180.0
@@ -121,11 +121,11 @@ N2C    CO        -0.10753      4.0000
 
 N1C    QdR       -0.60000      4.5000
 N1C    QdK       -0.40000      4.5000
-N1C    A1F       -0.50000      4.5000
-N1C    A1Y       -0.60000      4.5000
+N1C    A1F       -0.70000      4.5000
+N1C    A1Y       -0.80000      4.5000
 NCC    QdR       -0.40000      4.5000
-NCC    A1F       -0.40000      4.5000
-NCC    A1Y       -0.50000      4.5000
+NCC    A1F       -0.60000      4.5000
+NCC    A1Y       -0.70000      4.5000
 
 HBOND AEXP 10 REXP 12 HAEX 4 AAEX 2   NOACCEPTORS  HBNOEXCLUSIONS  ALL  -
    CUTHB 6.0 CTOFHB 5.0 CTONHB 4.0  CUTHA 100.0  CTOFHA 90.0  CTONHA 90.0
