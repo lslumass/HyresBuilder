@@ -29,6 +29,31 @@ def load_ff(model='protein'):
 
     return top_inp, param_inp
 
+def nMg2lmd(cMg, T, F=0.0, M=0.0, n=0.0, RNA='rA'):
+    if RNA == 'rA':
+        F, M, n = 0.54, 0.94, 0.59
+    elif RNA == 'rU':
+        F, M, n = 0.48, 1.31, 0.85
+    elif RNA == 'CAG':
+        F, M, n = 0.53, 0.68, 0.28
+    elif RNA == 'custom':
+        if M == 0.0:
+            print("Error: Please give F_Mg, M_1/2, and n if the RNA is custom type")
+            exit(1)
+    else:
+        print("Error: Only rA, rU, CAG, and custom are supported RNA")
+        exit(1)
+    
+    if cMg == 0.0:
+        lmd = 0.0
+    else:
+        nMg = F*(cMg/M)**n/(1+(cMg/M)**n)
+        nMg_T = nMg + 0.0012*(T-273-30)
+        lmd = 1.265*(nMg_T/0.172)**0.625/(1+(nMg_T/0.172)**0.625)
+    
+    return lmd
+
+
 def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
     # model = 'protein', 'RNA', 'mix'
     # input parameters
