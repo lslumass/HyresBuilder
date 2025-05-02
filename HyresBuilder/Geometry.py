@@ -89,7 +89,7 @@ class AlaGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -119,7 +119,7 @@ class SerGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -149,7 +149,7 @@ class CysGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -179,7 +179,7 @@ class ValGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -209,7 +209,7 @@ class IleGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -251,7 +251,7 @@ class LeuGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -281,7 +281,7 @@ class ThrGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -311,7 +311,7 @@ class ArgGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -352,7 +352,7 @@ class LysGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -394,7 +394,7 @@ class AspGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -424,7 +424,7 @@ class AsnGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -454,7 +454,7 @@ class GluGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -484,7 +484,7 @@ class GlnGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -514,7 +514,7 @@ class MetGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -544,7 +544,7 @@ class HisGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -612,7 +612,7 @@ class PheGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -650,7 +650,7 @@ class TyrGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
@@ -688,7 +688,7 @@ class TrpGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 0.0
+        self.C_CA_N_H_diangle = 60.0
 
         self.phi = -120
         self.psi_im1 = 140
