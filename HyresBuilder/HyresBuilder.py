@@ -133,8 +133,7 @@ def calculateCoordinates(
         warnings.simplefilter("ignore")
         temp = calc_dihedral(AV, BV, CV, D) * (180.0 / math.pi)
 
-    #di = di - temp
-    
+    di = di - temp
     rot = rotaxis(math.pi * (di / 180.0), CV - BV)
     D = (D - BV).left_multiply(rot) + BV
 
