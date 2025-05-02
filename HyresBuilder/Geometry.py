@@ -63,7 +63,7 @@ class GlyGeo(Geo):
         
         self.N_H_length = 0.98
         self.CA_N_H_angle = 120.0
-        self.C_CA_N_H_diangle = 180.0
+        self.C_CA_N_H_diangle = 0.0
 
         self.phi = -120
         self.psi_im1 = 140
