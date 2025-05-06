@@ -454,7 +454,7 @@ def MixSystem(psf, system, ffs):
     fstack = CustomCentroidBondForce(2, 'eps_stack*(5*(r0/r)^10-6.0*(r0/r)^6); r=distance(g1, g2);')
     fstack.setName('StackingForce')
     fstack.addPerBondParameter('eps_stack')
-    fstack.addGlobalParameter('r0', 0.34*unit.nanometers)
+    fstack.addGlobalParameter('r0', 0.35*unit.nanometers)
 
     if len(grps) > 1:
         # add all group
@@ -522,7 +522,7 @@ def MixSystem(psf, system, ffs):
                 c_p.append(int(atom.index))
     # add A-U pair through CustomHbondForce
     eps_AU = eps_base*scales['A-U']
-    r_au = 0.29*unit.nanometer
+    r_au = 0.31*unit.nanometer
     r_au2 = 0.37*unit.nanometer
     
     if num_A != 0 and num_U != 0:
@@ -544,7 +544,7 @@ def MixSystem(psf, system, ffs):
         
     # add C-G pair through CustomHbondForce
     eps_CG = eps_base*scales['C-G']
-    r_cg = 0.29*unit.nanometer
+    r_cg = 0.31*unit.nanometer
     r_cg2 = 0.35*unit.nanometer
     
     if num_C != 0 and num_G != 0:
