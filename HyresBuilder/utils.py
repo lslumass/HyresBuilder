@@ -107,7 +107,7 @@ def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosec
         'er': er_t,                                                  # relative dielectric constant
         'eps_hb': 2.0*unit.kilocalorie_per_mole,                    # hydrogen bond strength
         'sigma_hb': 0.29*unit.nanometer,                            # sigma of hydrogen bond
-        'eps_base': 3.2*unit.kilocalorie_per_mole,                 # base stacking strength
+        'eps_base': 3.3*unit.kilocalorie_per_mole,                 # base stacking strength
     }
     # 0) load force field files
     if model == 'protein':

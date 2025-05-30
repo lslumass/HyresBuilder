@@ -327,6 +327,9 @@ def MixSystem(psf, system, ffs):
         elif force.getName() == "HarmonicAngleForce":
             hmangle = force
             hmangle_index = force_index
+        elif force.getName() == "PeriodicTorsionForce":
+            dihedral = force
+            dihedral_index = force_index
         elif force.getName() == "CustomNonbondedForce":
             force.setName('LJ Force w/ NBFIX')
     
@@ -438,39 +441,40 @@ def MixSystem(psf, system, ffs):
     # define relative strength of base pairing and stacking
     eps_base = ffs['eps_base']
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.1, 'GG':1.1, 'GC':0.8, 'GU':0.8,
-              'CA':0.4, 'CG':0.3, 'CC':0.3, 'CU':0.3, 'UA':0.4, 'UG':0.4, 'UC':0.2, 'UU':0.2,
-              'A-U':0.9, 'C-G':1.15, 'G-G': 1.00}
+              'CA':0.6, 'CG':0.6, 'CC':0.5, 'CU':0.4, 'UA':0.5, 'UG':0.5, 'UC':0.4, 'UU':0.4,
+              'A-U':0.89, 'C-G':1.14}
+    
+    r0s = {'AA':0.35, 'AG':0.35, 'GA':0.35, 'GG':0.35, 'AC':0.38, 'AU':0.38, 'GC':0.38, 'GU':0.38,
+           'CA':0.40, 'CG':0.40, 'UA':0.40, 'UG':0.40, 'CC':0.43, 'CU':0.43, 'UC':0.43, 'UU':0.43}
+
     # get all the groups of bases
     grps = []
     for atom in psf.topology.atoms():
         if atom.name == "NA":
             if atom.residue.name in ['A', 'G']:
-                grps.append([atom.residue.name, [atom.index, atom.index+1]])
-                grps.append([atom.residue.name, [atom.index+2, atom.index+3]])
+                grps.append([atom.residue.name, atom.residue.chain.id, [atom.index, atom.index+1]])
+                grps.append([atom.residue.name, atom.residue.chain.id, [atom.index+2, atom.index+3]])
             elif atom.residue.name in ['C', 'U']:
-                grps.append([atom.residue.name, [atom.index, atom.index+1]])
-                grps.append([atom.residue.name, [atom.index+1, atom.index+2]])
+                grps.append([atom.residue.name, atom.residue.chain.id, [atom.index, atom.index+1, atom.index+2]])
+                grps.append([atom.residue.name, atom.residue.chain.id, [atom.index, atom.index+1, atom.index+2]])
     # base stacking
-    fstack = CustomCentroidBondForce(2, 'eps_stack*(5*(r0/r)^10-6.0*(r0/r)^6); r=distance(g1, g2);')
+    fstack = CustomCentroidBondForce(2, 'eps_stack*(5*(r0/r)^12-6.0*(r0/r)^10); r=distance(g1, g2);')
     fstack.setName('StackingForce')
     fstack.addPerBondParameter('eps_stack')
-    fstack.addGlobalParameter('r0', 0.35*unit.nanometers)
+    fstack.addPerBondParameter('r0')
 
-    if len(grps) > 1:
-        # add all group
-        for grp in grps:
-            fstack.addGroup(grp[1])
-        # get the stacking pairs
-        sps = []
-        for i in range(0,len(grps)-2,2):
-            grp = grps[i]
+    # add all group
+    for grp in grps:
+        fstack.addGroup(grp[2])
+    # get the stacking pairs
+    sps = []
+    for i in range(0,len(grps)-2,2):
+        if grps[i][1] == grps[i+2][1]:
             pij = grps[i][0] + grps[i+2][0]
-            sps.append([[i+1, i+2], scales[pij]*eps_base])
-        for sp in sps:
-            fstack.addBond(sp[0], [sp[1]])
+            fstack.addBond([i+1, i+2], [scales[pij]*eps_base, r0s[pij]*unit.nanometers]) 
 
-        print('    add ', fstack.getNumBonds(), 'stacking pairs')
-        system.addForce(fstack)
+    print('    add ', fstack.getNumBonds(), 'stacking pairs')
+    system.addForce(fstack)
 
     # base pairing
     print('\n# add RNA base pair force')
@@ -520,14 +524,15 @@ def MixSystem(psf, system, ffs):
                 c_c.append(int(atom.index))
             elif atom.name == 'P':
                 c_p.append(int(atom.index))
+
     # add A-U pair through CustomHbondForce
     eps_AU = eps_base*scales['A-U']
-    r_au = 0.31*unit.nanometer
-    r_au2 = 0.37*unit.nanometer
+    r_au = 0.35*unit.nanometer
+    r_au2 = 0.40*unit.nanometer
     
     if num_A != 0 and num_U != 0:
-        formula = f"""eps_AU*(5.0*(r_au/r)^10-6.0*(r_au/r)^6 + 5*(r_au2/r2)^10-6.0*(r_au2/r2)^6)*step(cosT)*cosT;
-                  r=distance(a1,d1); r2=distance(a3,d2); cosT=-cos(phi)^5; phi=angle(d1,a1,a2);
+        formula = f"""eps_AU*(5.0*(r_au/r)^12-6.0*(r_au/r)^10 + 5.0*(r_au2/r2)^12-6.0*(r_au2/r2)^10)*step_phi;
+                  r=distance(a1,d1); r2=distance(a3,d2); step_phi=step(cos_phi)*cos_phi; cos_phi=-cos(phi)^5; phi=angle(d1,a1,a2);
                   eps_AU={eps_AU.value_in_unit(unit.kilojoule_per_mole)};
                   r_au={r_au.value_in_unit(unit.nanometer)}; r_au2={r_au2.value_in_unit(unit.nanometer)}
                   """
@@ -538,18 +543,18 @@ def MixSystem(psf, system, ffs):
         for idx in range(len(a_c)):
             pairAU.addAcceptor(a_c[idx], a_b[idx], a_d[idx])
         for idx in range(len(u_b)):
-            pairAU.addDonor(u_b[idx], u_c[idx], -1)
+            pairAU.addDonor(u_b[idx], u_c[idx], u_a[idx])
         system.addForce(pairAU)
         print(pairAU.getNumAcceptors(), pairAU.getNumDonors(), 'AU')
         
     # add C-G pair through CustomHbondForce
     eps_CG = eps_base*scales['C-G']
-    r_cg = 0.31*unit.nanometer
-    r_cg2 = 0.35*unit.nanometer
-    
+    r_cg = 0.35*unit.nanometer
+    r_cg2 = 0.38*unit.nanometer
+     
     if num_C != 0 and num_G != 0:
-        formula = f"""eps_CG*(5.0*(r_cg/r)^10-6.0*(r_cg/r)^6 + 5*(r_cg2/r2)^10-6.0*(r_cg2/r2)^6)*step(cosT)*cosT;
-                  r=distance(a1,d1); r2=distance(a3,d2); cosT=-cos(phi)^5; phi=angle(d1,a1,a2); psi=dihedral(a3,a1,d1,d2);
+        formula = f"""eps_CG*(5.0*(r_cg/r)^12-6.0*(r_cg/r)^10 + 5.0*(r_cg2/r2)^12-6.0*(r_cg2/r2)^10)*step_phi;
+                  r=distance(a1,d1); r2=distance(a3,d2); step_phi=step(cos_phi)*cos_phi; cos_phi=-cos(phi)^5; phi=angle(d1,a1,a2);
                   eps_CG={eps_CG.value_in_unit(unit.kilojoule_per_mole)};
                   r_cg={r_cg.value_in_unit(unit.nanometer)}; r_cg2={r_cg2.value_in_unit(unit.nanometer)}
                   """
@@ -560,7 +565,7 @@ def MixSystem(psf, system, ffs):
         for idx in range(len(g_c)):
             pairCG.addAcceptor(g_c[idx], g_b[idx], g_d[idx])
         for idx in range(len(c_b)):
-            pairCG.addDonor(c_b[idx], c_c[idx], -1)
+            pairCG.addDonor(c_b[idx], c_c[idx], c_a[idx])
         system.addForce(pairCG)
         print(pairCG.getNumAcceptors(), pairCG.getNumDonors(), 'CG')
    
@@ -569,4 +574,5 @@ def MixSystem(psf, system, ffs):
     system.removeForce(hmangle_index)
 
     return system
+
 
