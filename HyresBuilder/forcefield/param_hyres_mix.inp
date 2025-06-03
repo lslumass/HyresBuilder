@@ -3,7 +3,6 @@
 * strength of bonds and angles was halfed
 * C-N-CB bond of proline is not stable
 * parameter file for coarse grained proteins with heavy backbones
-* arg, lys, asp, glu is NEUTRAL
 * 
 
 BOND

@@ -1,4 +1,4 @@
-*topology file for coarse grained RNA
+* topology file for HyRes_iConRNA mix
 *
    20    1              
 MASS   301 RP    94.970   ! BP    phosphate

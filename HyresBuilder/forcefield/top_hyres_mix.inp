@@ -1,5 +1,5 @@
-* topology file for coarse grained proteins
-* Arg, Lys, Asp, Glu are CHARGED
+* topology file for HyRes_iCon mix model
+* 
 *
    20    1              
 MASS     1 H     25.008   ! amide H in backbone

@@ -1,4 +1,4 @@
-* topology file for coarse grained proteins
+* topology file for HyRes_GPU protein model
 * Arg, Lys, Asp, Glu are CHARGED
 *
    20    1              

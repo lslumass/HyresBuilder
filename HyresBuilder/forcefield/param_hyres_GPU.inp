@@ -1,6 +1,5 @@
-* Hyres-2 force field
-* parameter file for coarse grained proteins
-* arg, lys, asp, glu is NEUTRAL
+* HyRes_GPU force field
+* parameter file for HyRes_GPU protein model
 *
 
 BOND
