@@ -36,6 +36,9 @@ NCC   CO    180.0      2.70   ! C/U: NB-NC
 NCC   OCN   250.0      2.49   ! U: NA-NB
 OCN   CO    150.0      2.99   ! U: NB-NC
 
+!## for polyphosphate
+BP    BP     40.6      2.70   ! P-P
+
 
 THETAS
 !angles in backbone
@@ -58,6 +61,10 @@ N1C   CNC   OCN   25.0      90.0  !  NA-NB-NC
 CNC   OCN   NCN   25.0      84.0  !  NB-NC-ND
 OCN   NCN   N1C   25.0      72.0  !  NC-ND-NA
 
+!## for polyphosphate
+BP    BP     BP    50.0    99.0   ! P-P-P
+
+
 PHI
 !phi in backbone
 BP    BC1   BC2   N1C     58.0    1  -165.0    ! P-C1-C2-NA for A/G    increase from 8.0 to 58.0 due to the stacking and pairing
@@ -71,6 +78,9 @@ N1C   CNC   N2C   NCN     80.0    1     0.0
 N1C   CNC   NCN   N2C     50.0    1   180.0
 N1C   CNC   NCN   OCN     50.0    1     0.0
 N1C   CNC   OCN   NCN     80.0    1   180.0
+
+!## for polyphosphate
+BP    BP    BP    BP       0.5    1     0.0   ! P-P-P-P
 
 
 IMPHI

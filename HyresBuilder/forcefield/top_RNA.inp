@@ -113,6 +113,12 @@ ANGL C1   C2   +P
 IMPR C1   P    +P   C2
 
 
+RESI PHO         -1.00  !
+GROUP                   !
+ATOM P    BP     -1.00  !
+BOND P    +P
+
+
 RESI MG+          2.00  !                    
 GROUP                   !                       
 ATOM MG   MG      2.00  !                                                                  
