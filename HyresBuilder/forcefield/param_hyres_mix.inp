@@ -108,7 +108,7 @@ C     C1E   A4H   10.0     112.5  ! his  Decrease from 20.0 to 10.0
 C     C1E   A1F   10.0     123.2  ! phe  Decrease from 20.0 to 10.0
 C     C1E   A1Y   10.0     123.6  ! tyr  Decrease from 20.0 to 10.0
 C     C1E   A1W   10.0     116.0  ! trp  Decrease from 20.0 to 10.0
-C     C1E   A2P   10.0     115.0  ! pro  Decrease from 20.0 to 10.0, change from 121.7 to 115
+C     C1E   A2P   20.0     115.0  ! pro  Decrease from 20.0 to 10.0, change from 121.7 to 115
 !## bond of C-CA-CB for pSer and pThr    
 C     C1E   P2S   20.0     112.3  ! pSer 
 C     C1E   P2T   20.0     101.2  ! pThr 
