@@ -165,8 +165,8 @@ RU1    A1F       -0.40000      4.5000
 RU1    A1Y       -0.50000      4.5000
 
 ! for protein backbone and RNA backbone
-RP       H       -0.50000      3.5000
-RS2      H       -0.50000      3.5000
+RP       H       -0.25000      3.5000
+RS2      H       -0.25000      3.5000
 
 HBOND AEXP 10 REXP 12 HAEX 4 AAEX 2   NOACCEPTORS  HBNOEXCLUSIONS  ALL  -
    CUTHB 6.0 CTOFHB 5.0 CTONHB 4.0  CUTHA 100.0  CTOFHA 90.0  CTONHA 90.0
