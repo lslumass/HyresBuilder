@@ -2,22 +2,22 @@
 * mass of backbone atoms and H was increased to 25
 * strength of bonds and angles was halfed
 * parameter file for coarse grained proteins with heavy backbones
-* 1/20 to crash in condensate simulation
+* 1/20 crash in condensate simulation
 * 
 
 BOND
 !bonds in amino acid backbone
-H     NH1    300.0      0.98  ! H-N (non-pro)                   ! gbsw NH1  H     440.000     0.9970
-C1E   NH1    320.0      1.45  ! CA-N (non-pro, non-gly)         ! gbsw NH1  CT1   320.000     1.4300 
-C2E   NH1    320.0      1.45  ! CA-N (gly)                      ! gbsw NH1  CT2   320.000     1.4300
-C1E   N      320.0      1.45  ! CA-N (pro)                      ! gbsw N    CP1   320.000     1.4340
-C     C1E    250.0      1.52  ! C-CA (non-gly)                  ! gbsw CT1  C     250.000     1.4900
-C     C2E    250.0      1.52  ! C-CA (gly)                      ! gbsw CT2  C     250.000     1.4900
-C     O      380.0      1.23  ! C=O                             ! gbsw O    C     620.000     1.2300
-C     NH1    370.0      1.33  ! C-N (non-pro)                   ! gbsw NH1  C     370.000     1.3450
-C     N      260.0      1.33  ! C-N (pro)                       ! gbsw N    C     260.000     1.3000
-C     C3E    250.0      1.52  ! C-CH3 in N-ter capping group    ! gbsw CT3  C     250.000     1.4900
-C3E   NH1    320.0      1.49  ! N-CH3 in C-ter capping group    ! gbsw NH1  CT3   320.000     1.4300
+H     NH1    300.0      0.98  ! H-N (non-pro)               
+C1E   NH1    320.0      1.45  ! CA-N (non-pro, non-gly)     
+C2E   NH1    320.0      1.45  ! CA-N (gly)                  
+C1E   N      320.0      1.45  ! CA-N (pro)                  
+C     C1E    250.0      1.52  ! C-CA (non-gly)              
+C     C2E    250.0      1.52  ! C-CA (gly)                  
+C     O      380.0      1.23  ! C=O                         
+C     NH1    370.0      1.33  ! C-N (non-pro)               
+C     N      260.0      1.33  ! C-N (pro)                   
+C     C3E    250.0      1.52  ! C-CH3 in N-ter capping group
+C3E   NH1    320.0      1.49  ! N-CH3 in C-ter capping group
 !bonds in amino acid backbone-sidechain
 C1E   C3E    300.0      1.63  ! ala
 C1E   A2V    300.0      2.01  ! val
@@ -67,28 +67,28 @@ N     A2P    400.0      1.86  ! pro
 
 THETAS
 !angles in amino acid backbone
-C     NH1   H     30.0     120.0  ! H-N-C                           ! gbsw H    NH1  C      34.000   123.0000
-C1E   NH1   H     35.0     120.0  ! H-N-CA (non-gly)                ! gbsw H    NH1  CT1    35.000   117.0000
-C2E   NH1   H     35.0     120.0  ! H-N-CA (gly)                    ! gbsw H    NH1  CT2    35.000   117.0000
-C     NH1   C1E   77.5     120.0  ! C-N-CA (non-pro, non-gly)       ! gbsw CT1  NH1  C      50.000   120.0000
-C     NH1   C2E   77.5     120.0  ! C-N-CA (ala-gly)                ! gbsw CT2  NH1  C      50.000   120.0000
-C     N     C1E   80.0     120.0  ! C-N-CA (ala-pro)                ! gbsw CP1  N    C      60.000   117.0000
-C     C1E   NH1   45.0     111.6  ! N-CA-C (non-pro, non-gly)       ! gbsw NH1  CT1  C      50.000   107.0000 
-C     C1E   N     45.0     111.6  ! N-CA-C (pro)                    ! gbsw N    CP1  C      50.000   108.2000 
-C     C2E   NH1   70.0     111.6  ! N-CA-C (gly)                    ! gbsw NH1  CT2  C      50.000   107.0000
-C1E   C     NH1   20.0     117.5  ! CA-C-N (non-pro, non-gly)       ! gbsw NH1  C    CT1    80.000   116.5000
-C1E   C     N     20.0     117.5  ! CA-C-N (ala-pro)                ! gbsw N    C    CT1    20.000   112.5000
-C2E   C     N     20.0     117.5  ! CA-C-N (gly-pro)                ! gbsw N    C    CT2    20.000   112.5000 
-C2E   C     NH1   20.0     117.5  ! CA-C-N (gly-ala)                ! gbsw NH1  C    CT2    80.000   116.5000
-C1E   C     O     85.0     121.5  ! CA-C-O (non-gly)                ! gbsw O    C    CT1    80.000   121.0000
-C2E   C     O     85.0     121.6  ! CA-C-O (gly)                    ! gbsw O    C    CT2    80.000   121.0000
-NH1   C     O     65.0     121.0  ! O-C-N (non-pro)                 ! gbsw O    C    NH1    80.000   122.5000
-N     C     O     85.0     121.0  ! O-C-N (pro)                     ! gbsw O    C    N      80.000   122.5000
-C3E   C     O     85.0     121.5  ! CH3-C-O (N-ter)                 ! gbsw O    C    CT3    80.000   121.0000
-C3E   C     NH1   20.0     117.5  ! CH3-C-N (N-ter of non-pro)      ! gbsw NH1  C    CT3    80.000   116.5000
-C3E   C     N     20.0     117.5  ! CH3-C-N (N-ter of pro)          ! gbsw N    C    CT3    20.000   112.5000
-C3E   NH1   H     35.0     120.0  ! H-N-CH3 (C-ter)                 ! gbsw H    NH1  CT3    35.000   117.0000
-C     NH1   C3E   77.5     120.0  ! C-N-CH3 (C-ter)                 ! gbsw CT3  NH1  C      50.000   120.0000
+C     NH1   H     30.0     120.0  ! H-N-C                       
+C1E   NH1   H     35.0     120.0  ! H-N-CA (non-gly)            
+C2E   NH1   H     35.0     120.0  ! H-N-CA (gly)                
+C     NH1   C1E   77.5     120.0  ! C-N-CA (non-pro, non-gly)   
+C     NH1   C2E   77.5     120.0  ! C-N-CA (ala-gly)            
+C     N     C1E   80.0     120.0  ! C-N-CA (ala-pro)            
+C     C1E   NH1   45.0     111.6  ! N-CA-C (non-pro, non-gly)    
+C     C1E   N     45.0     111.6  ! N-CA-C (pro)                 
+C     C2E   NH1   70.0     111.6  ! N-CA-C (gly)                
+C1E   C     NH1   20.0     117.5  ! CA-C-N (non-pro, non-gly)   
+C1E   C     N     20.0     117.5  ! CA-C-N (ala-pro)            
+C2E   C     N     20.0     117.5  ! CA-C-N (gly-pro)             
+C2E   C     NH1   20.0     117.5  ! CA-C-N (gly-ala)            
+C1E   C     O     85.0     121.5  ! CA-C-O (non-gly)            
+C2E   C     O     85.0     121.6  ! CA-C-O (gly)                
+NH1   C     O     65.0     121.0  ! O-C-N (non-pro)             
+N     C     O     85.0     121.0  ! O-C-N (pro)                 
+C3E   C     O     85.0     121.5  ! CH3-C-O (N-ter)             
+C3E   C     NH1   20.0     117.5  ! CH3-C-N (N-ter of non-pro)  
+C3E   C     N     20.0     117.5  ! CH3-C-N (N-ter of pro)      
+C3E   NH1   H     35.0     120.0  ! H-N-CH3 (C-ter)             
+C     NH1   C3E   77.5     120.0  ! C-N-CH3 (C-ter)             
 !C-CA-CB angle in amino acid
 C     C1E   C3E   90.0     111.2  ! ala
 C     C1E   A2V   20.0     116.3  ! val
@@ -1001,7 +1001,7 @@ C     NH1   C2E   C     NH1   C2E   C     N   24
 
 
 NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
-     CUTNB 16.0  CTOFNB 15.0  CTONNB 11.  EPS 1.0  E14FAC 0.4  WMIN 1.5
+     CUTNB 16.0  CTOFNB 18.0  CTONNB 16.
 
 !charmm19 origin     Emin      
 !                 (kcal/mol)
@@ -1066,9 +1066,5 @@ C        C        -0.0180      4.2000        ! setting for the same framework of
 
 C        O        -0.0500      3.7000
 QdR      O        -0.1800      4.1363
-
-HBOND AEXP 10 REXP 12 HAEX 4 AAEX 2   NOACCEPTORS  HBNOEXCLUSIONS  ALL  -
-   CUTHB 6.0 CTOFHB 5.0 CTONHB 4.0  CUTHA 100.0  CTOFHA 90.0  CTONHA 90.0
-
 
 END
