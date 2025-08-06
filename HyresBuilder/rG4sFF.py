@@ -219,16 +219,16 @@ def rG4sSystem(psf, system, ffs):
                   eps_GG={eps_GG.value_in_unit(unit.kilojoule_per_mole)};
                   r_gg1={r_gg1.value_in_unit(unit.nanometer)};
                   """
-        pairGG = CustomHbondForce(formula)
-        pairGG.setName('GGpairForce')
-        pairGG.setNonbondedMethod(nbforce.getNonbondedMethod())
-        pairGG.setCutoffDistance(0.65*unit.nanometer)
+        pairGG1 = CustomHbondForce(formula)
+        pairGG1.setName('GGpairForce')
+        pairGG1.setNonbondedMethod(nbforce.getNonbondedMethod())
+        pairGG1.setCutoffDistance(0.65*unit.nanometer)
         for idx in range(len(g_a)):
-            pairGG.addDonor(g_c[idx], g_b[idx], -1)
-            pairGG.addAcceptor(g_c[idx], g_d[idx], g_b[idx])
-            pairGG.addExclusion(idx, idx)
+            pairGG1.addDonor(g_c[idx], g_b[idx], -1)
+            pairGG1.addAcceptor(g_c[idx], g_d[idx], g_b[idx])
+            pairGG1.addExclusion(idx, idx)
 
-        system.addForce(pairGG)
+        system.addForce(pairGG1)
 
         formula = f"""eps_GG*(5.0*(r_gg2/r2)^10-6.0*(r_gg2/r2)^6)*step1*step2;
                   r2=distance(d1,a1); step1=step(psi3)*psi3; psi3=cos(psi)^3; psi=dihedral(a1,a2,d2,d1);
@@ -247,7 +247,7 @@ def rG4sSystem(psf, system, ffs):
 
         system.addForce(pairGG2)
 
-        print(pairGG.getNumAcceptors(), pairGG.getNumDonors(), 'GG')
+        print(pairGG1.getNumAcceptors(), pairGG1.getNumDonors(), 'GG')
 
     # delete the NonbondedForce and HarmonicAngleForce
     system.removeForce(nbforce_index)
