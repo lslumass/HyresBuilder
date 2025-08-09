@@ -164,8 +164,8 @@ RU1    A1F       -0.60000      4.5000
 RU1    A1Y       -0.70000      4.5000
 
 ! for protein backbone and RNA backbone
-RP       H       -0.35000      2.5000
-RS2      H       -0.35000      2.3000
+RP       H       -0.30000      2.8000
+RS2      H       -0.30000      2.5000
 
 
 END
