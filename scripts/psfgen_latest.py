@@ -81,7 +81,10 @@ def main():
         if mol_type == 'P':
             for i in range(num):
                 segid = f"P{chr(65+idx)}{i}" 
-                gen.add_segment(segid=segid, pdbfile=pdb, auto_angles=False)
+                if model == 'protein':
+                    gen.add_segment(segid=segid, pdbfile=pdb)
+                else:
+                    gen.add_segment(segid=segid, pdbfile=pdb, auto_angles=False)
         elif mol_type == 'R':
             for i in range(num):
                 segid = f"R{chr(65+idx)}{i}" 
