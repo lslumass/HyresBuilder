@@ -92,16 +92,15 @@ def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosec
 
     dh = 0.304/(np.sqrt(c_ion))
     print('Debye-Huckel screening length: ', dh)
-    if c_Mg == 0:
-        nMg = 0
-        lmd0 = 0
-    else:
-        nMg = 0.526*(c_Mg/0.680)**(0.283)/(1+(c_Mg/0.680)**(0.283)) + 0.0012*(Td-30)                                                       
-        lmd0 = 1.265*(nMg/0.172)**0.625/(1+(nMg/0.172)**0.625)
-    print('lmd: ', lmd0)
+
+    # calculate lmd for Mg-P interaction
+    lmd = nMg2lmd(c_Mg, T, RNA='rA')
+    print('lmd: ', lmd)
+
+    # collection of force field parameters
     ffs = {
         'temp': T,                                                  # Temperature
-        'lmd': lmd0,                                                # Charge scaling factor of P-
+        'lmd': lmd,                                                # Charge scaling factor of P-
         'dh': dh*unit.nanometer,                                  # Debye Huckel screening length
         'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
         'er': er_t,                                                  # relative dielectric constant
@@ -109,6 +108,7 @@ def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosec
         'sigma_hb': 0.29*unit.nanometer,                            # sigma of hydrogen bond
         'eps_base': 3.3*unit.kilocalorie_per_mole,                 # base stacking strength
     }
+    
     # 0) load force field files
     if model == 'protein':
         top_pro, param_pro = load_ff('protein')
