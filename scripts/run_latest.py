@@ -1,6 +1,8 @@
 """
 Date: Feb 16, 2025
-Latest running script for HyRes and iCon simulation
+Latest running script for HyRes and iConRNA simulation
+Aauthor: Shanlong Li
+email: shanlongli@umass.edu
 """
 
 from __future__ import division, print_function
@@ -45,10 +47,11 @@ friction = 0.1/unit.picosecond                                  # friction coeff
 system, sim = utils.setup(model=args.model, args=args, dt=dt_equil)
 
 """
-after further modify the system, add the line below:
+if further modify the system, add this line below:
 sim.context.reinitialize(preserveState=True)
 """
 
+# print out the xml file of the system
 with open(f'{out}.xml', 'w') as output:
     output.write(XmlSerializer.serialize(system))
 
@@ -57,10 +60,10 @@ for force in system.getForces():
     print('      ', force.getName())
 
 ################### Minimization, Equilibriation, Production simulation ####################'
-print('# minimizeEnergy:')
-print('before: ', sim.context.getState(getEnergy=True).getPotentialEnergy())
+print('# Minimization running:')
+print('Potential energy before: ', sim.context.getState(getEnergy=True).getPotentialEnergy())
 sim.minimizeEnergy(maxIterations=500000, tolerance=0.01)
-print('after: ', sim.context.getState(getEnergy=True).getPotentialEnergy())
+print('Potential energy after: ', sim.context.getState(getEnergy=True).getPotentialEnergy())
 
 print('\n# Equilibriation running:')
 sim.step(equil_step)
@@ -68,7 +71,7 @@ sim.step(equil_step)
 ## save a pdb traj using large step, xtc traj using small step, and log file
 sim.reporters.append(PDBReporter(f'{out}.pdb', pdb_freq))
 sim.reporters.append(XTCReporter(f'{out}.xtc', traj_freq))
-sim.reporters.append(StateDataReporter(f'{out}.log', log_freq, progress=True, totalSteps=prod_step, temperature=True, potentialEnergy=True, kineticEnergy=True, totalEnergy=True))
+sim.reporters.append(StateDataReporter(f'{out}.log', log_freq, progress=True, totalSteps=prod_step, step=True, temperature=True, totalEnergy=True, speed=True))
 sim.reporters.append(CheckpointReporter(f'{out}.chk', chk_freq))
 
 print('\n# Production simulation running:')

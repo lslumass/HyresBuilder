@@ -591,5 +591,4 @@ def MixSystem(psf, system, ffs):
     system.removeForce(nbforce_index)
     system.removeForce(hmangle_index)
 
-    print('\n# Finished constructing the mixed force field system.')
     return system
