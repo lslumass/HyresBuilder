@@ -70,8 +70,8 @@ def HyresSystem(psf, system, ffs):
     
     print('\n# add custom hydrogen bond force')
     # Add the Custom hydrogen bond force
-    sigma_hb = ffs['sigma_hb']
-    eps_hb = ffs['eps_hb']
+    sigma_hb = 0.29*unit.nanometer
+    eps_hb = 2.0*unit.kilocalorie_per_mole
     formula  = f"""epsilon*(5.0*(sigma/r)^12-6.0*(sigma/r)^10)*swrad*cosd^4*swang;
             swrad = step(rcuton-r)+step(r-rcuton)*(step(rcutoff-r)-step(rcuton-r))*
             roff2*roff2*(roff2-3.0*ron2)/roffon2^3;
@@ -184,7 +184,7 @@ def iConRNASystem(psf, system, ffs):
     print('\n# add base stacking force')
     # base stakcing and paring
     # define relative strength of base pairing and stacking
-    eps_base = ffs['eps_base']
+    eps_base = 2.05*unit.kilocalorie_per_mole
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.0, 'GG':1.0, 'GC':0.8, 'GU':0.8,
               'CA':0.4, 'CG':0.4, 'CC':0.2, 'CU':0.4, 'UA':0.4, 'UG':0.4, 'UC':0.2, 'UU':0.2,
               'A-U':0.83, 'C-G':1.11}
@@ -381,7 +381,6 @@ def MixSystem(psf, system, ffs):
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
         else:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])
-
     system.addForce(ReB)
 
     # 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce
@@ -442,8 +441,8 @@ def MixSystem(psf, system, ffs):
             Cs.append(int(atom.index))
     
     if len(Ns) != 0:
-        sigma_hb = ffs['sigma_hb']
-        eps_hb = ffs['eps_hb']
+        sigma_hb = 0.29*unit.nanometer
+        eps_hb = 2.2*unit.kilocalorie_per_mol
         formula = f"""epsilon*(5*(sigma/r)^12-6*(sigma/r)^10)*step(cos3)*cos3;
                 r=distance(a1,d1); cos3=-cos(phi)^3; phi=angle(a1,d2,d1);
                 sigma = {sigma_hb.value_in_unit(unit.nanometer)}; epsilon = {eps_hb.value_in_unit(unit.kilojoule_per_mole)};
@@ -459,7 +458,7 @@ def MixSystem(psf, system, ffs):
             system.addForce(HBforce)
 
     # 7. Base stacking and pairing
-    eps_base = ffs['eps_base']
+    eps_base = 3.3*unit.kilocalorie_per_mole
     # relative strength of base pairing and stacking
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.1, 'GG':1.1, 'GC':0.8, 'GU':0.8,       # stacking
               'CA':0.6, 'CG':0.6, 'CC':0.5, 'CU':0.4, 'UA':0.5, 'UG':0.5, 'UC':0.4, 'UU':0.4,       # stacking
