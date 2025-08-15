@@ -326,9 +326,6 @@ def MixSystem(psf, system, ffs):
             - dh: Debye-Huckel screening length
             - lmd: Lambda parameter for charge-charge interactions
             - er: Relative dielectric constant
-            - sigma_hb: Hydrogen bond distance parameter
-            - eps_hb: Hydrogen bond energy parameter
-            - eps_base: Base stacking energy parameter
     
     Returns:
         Modified OpenMM system with mixed protein-RNA force field
@@ -340,7 +337,7 @@ def MixSystem(psf, system, ffs):
     top = psf.topology
     
     # 1. Validate force field parameters
-    required_params = ['dh', 'lmd', 'er', 'sigma_hb', 'eps_hb', 'eps_base']
+    required_params = ['dh', 'lmd', 'er']
     missing_params = [param for param in required_params if param not in ffs]
     if missing_params:
         raise ValueError(f"Missing required force field parameters: {', '.join(missing_params)}")
