@@ -53,6 +53,19 @@ def nMg2lmd(cMg, T, F=0.0, M=0.0, n=0.0, RNA='rA'):
     
     return lmd
 
+# calculate relative dielectric constant at temperature T in K
+def cal_er(T):
+    Td = T-273
+    er_t = 87.74-0.4008*Td+9.398*10**(-4)*Td**2-1.41*10**(-6)*Td**3
+    return er_t
+
+# calculate Debye-Huckel screening length in nm
+def cal_dh(c_ion, T):
+    NA = 6.02214076e23          # Avogadro's number
+    er = cal_er(T)
+    lB = 16710/(er*T)          # Bjerrum length in nm, 16710 = e^2/(4*pi*epsilon_0*k_B) in unit of nm*K
+    dh = np.sqrt(1/(8*np.pi*lB*NA*1e-24*c_ion))   # Debye-Huckel screening length in nm
+    return dh*unit.nanometer
 
 def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
     """
@@ -111,20 +124,15 @@ def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosec
         exit(1)
     
     # 3. force field parameters
-    Td = T-273
     temperture = T*unit.kelvin 
-    er_t = 87.74-0.4008*Td+9.398*10**(-4)*Td**2-1.41*10**(-6)*Td**3     # relative electric constant
-    dh = 0.304/(np.sqrt(c_ion))                                         # Debye-Huckel screening length in nm 
-
-    # 3.2. calculate for Mg-P interaction
+    er_t = cal_er(T)                                                   # relative electric constant
+    dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
+    # Mg-P interaction
     lmd = nMg2lmd(c_Mg, T, RNA='rA')
-    print('lmd: ', lmd)
-
-    # 3.3. collection of force field parameters
     ffs = {
         'temp': T,                                                  # Temperature
-        'lmd': lmd,                                                # Charge scaling factor of P-
-        'dh': dh*unit.nanometer,                                  # Debye Huckel screening length
+        'lmd': lmd,                                                  # Charge scaling factor of P-
+        'dh': dh,                                                  # Debye Huckel screening length
         'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
         'er': er_t,                                                  # relative dielectric constant
     }
