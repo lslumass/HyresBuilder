@@ -57,8 +57,7 @@ def nMg2lmd(cMg, T, F=0.0, M=0.0, n=0.0, RNA='rA'):
 def cal_er(T):
     Td = T-273
     er_t = 87.74-0.4008*Td+9.398*10**(-4)*Td**2-1.41*10**(-6)*Td**3
-    er = er_t*60.0/80.0   # scale to 60 at room temperature
-    return er
+    return er_t
 
 # calculate Debye-Huckel screening length in nm
 def cal_dh(c_ion, T):
