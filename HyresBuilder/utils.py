@@ -130,6 +130,8 @@ def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosec
     # 3. force field parameters
     temperture = T*unit.kelvin 
     er_t = cal_er(T)                                                   # relative electric constant
+    if model == 'protein':
+        er_t = er_t*20/77.6
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     # Mg-P interaction
     lmd = nMg2lmd(c_Mg, T, RNA='rA')

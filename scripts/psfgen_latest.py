@@ -45,7 +45,7 @@ def main():
     parser.add_argument("-n", "--num_of_chains", type=int, default=[1,], nargs="+", 
                         help="Number of copies for each pdb; it should have the same length as the given pdb list specified in the '-i' argument")
     parser.add_argument("-m", "--molecule_type", type=str, default=['P'], nargs="+",
-                        help="select from 'P', 'R', 'D', 'C' for protein, RNA, DNA, complex, respectively")
+                        help="select from 'P', 'R', 'D', 'C', 'Mg' for protein, RNA, DNA, complex, Magnesium, respectively")
     parser.add_argument("-t", "--ter", choices=['neutral', 'charged', 'NT', 'CT'], 
                         help="Terminal charged status (choose from ['neutral', 'charged', 'NT', 'CT'])", default='neutral')
     args = parser.parse_args()
@@ -92,8 +92,12 @@ def main():
         elif mol_type == 'C':
             for i in range(num):
                 decompose_complex(pdb, idx, i, gen)
+        elif mol_type == 'Mg':
+            for i in range(num):
+                segid = f"MG{chr(65+idx)}{i}" 
+                gen.add_segment(segid=segid, pdbfile=pdb, auto_angles=False, auto_dihedrals=False)
         else:
-            print("Error: Only type of 'P', 'R', 'D', and 'C' are supported.")
+            print("Error: Only type of 'P', 'R', 'D', 'C', and 'Mg' are supported.")
             exit(1)
 
     # re-set the charge status of terminus
