@@ -457,7 +457,7 @@ def MixSystem(psf, system, ffs):
             system.addForce(HBforce)
 
     # 7. Base stacking and pairing
-    eps_base = 3.3*unit.kilocalorie_per_mole
+    eps_base = 3.2*unit.kilocalorie_per_mole
     # relative strength of base pairing and stacking
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.1, 'GG':1.1, 'GC':0.8, 'GU':0.8,       # stacking
               'CA':0.6, 'CG':0.6, 'CC':0.5, 'CU':0.4, 'UA':0.5, 'UG':0.5, 'UC':0.4, 'UU':0.4,       # stacking
