@@ -244,7 +244,7 @@ def setup2(model, args, dt, lmd, pressure=1*unit.atmosphere, friction=0.1/unit.p
     c_ion = args.salt/1000.0                                   # concentration of ions in M
     c_Mg = args.Mg                                           # concentration of Mg in mM
     ensemble = args.ens
-    lmd = args.lmd
+    lmd = args.Mg
     
     # 2. set pbc and box vector
     if ensemble == 'non' and c_Mg != 0.0:
