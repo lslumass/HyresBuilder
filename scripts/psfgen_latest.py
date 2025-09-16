@@ -4,7 +4,7 @@ import argparse, os
 import MDAnalysis as mda
 
 
-def decompose_complex(pdb, idx, i, gen):
+def decompose_complex(pdb, idx, i, model, gen):
     u = mda.Universe(pdb)
     segids = u.residues.segments.segids
     segnum = len(segids)
@@ -14,7 +14,10 @@ def decompose_complex(pdb, idx, i, gen):
         sel.atoms.write(tmp_pdb)
         if segid.startswith("P"):
             segid = f"PC{chr(65+idx)}{j+i*segnum}"
-            gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False)
+            if model == 'protein':
+                gen.add_segment(segid=segid, pdbfile=tmp_pdb)
+            else:
+                gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False)
         elif segid.startswith("R"):
             segid = f"RC{chr(65+idx)}{j+i*segnum}"
             gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False, auto_dihedrals=False)
@@ -91,7 +94,7 @@ def main():
                 gen.add_segment(segid=segid, pdbfile=pdb, auto_angles=False, auto_dihedrals=False)
         elif mol_type == 'C':
             for i in range(num):
-                decompose_complex(pdb, idx, i, gen)
+                decompose_complex(pdb, idx, i, model, gen)
         elif mol_type == 'Mg':
             for i in range(num):
                 segid = f"MG{chr(65+idx)}{i}" 
