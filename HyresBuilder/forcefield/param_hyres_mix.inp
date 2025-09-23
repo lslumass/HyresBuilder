@@ -1015,7 +1015,7 @@ NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
 
 !                 Emin         Rmin
 !                 (kcal/mol)   (A)
-H        0.00     -0.0075      0.2245   0.00     -0.0498       0.8000  ! amide H                  
+H        0.00     -0.0149      0.2245   0.00     -0.0498       0.8000  ! amide H                  
 C        0.00     -0.0180      2.1000   0.00     -0.1000       1.9000  ! carbonyl C               
 C1E      0.00     -0.0100      2.3650   0.00     -0.1000       1.9000  ! CA in backbone (non-gly) 
 C2E      0.00     -0.0360      2.2350   0.00     -0.1000       1.9000  ! CA in backbone (gly)     
