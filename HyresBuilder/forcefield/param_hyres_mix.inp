@@ -1066,8 +1066,6 @@ C        C        -0.0180      4.2000        ! setting for the same framework of
 
 C        O        -0.0500      3.7000
 QdR      O        -0.1800      4.1363
-P1S      O        -0.0800      3.9237
-P1S      P1S      -0.1350      4.6474
 
 
 END
