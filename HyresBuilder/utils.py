@@ -213,7 +213,7 @@ def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosec
     return system, sim
 
 
-def setup2(model, args, dt, lmd, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
+def setup2(model, args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
     """
     Set up the simulation system with given parameters.
     Parameters:
@@ -274,14 +274,15 @@ def setup2(model, args, dt, lmd, pressure=1*unit.atmosphere, friction=0.1/unit.p
     temperture = T*unit.kelvin 
     er_t = cal_er(T)                                                   # relative electric constant
     if model == 'protein':
-        er_t = er_t*20/77.6
+        er = er_t*20/77.6
+    else: er = er_t*60/80
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     ffs = {
         'temp': T,                                                  # Temperature
         'lmd': lmd,                                                  # Charge scaling factor of P-
         'dh': dh,                                                  # Debye Huckel screening length
         'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
-        'er': er_t,                                                  # relative dielectric constant
+        'er': er,                                                  # relative dielectric constant
     }
 
     # 4. load force field files
