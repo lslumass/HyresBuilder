@@ -277,6 +277,7 @@ def setup2(model, args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit
         er = er_t*20/77.6
     else: er = er_t*60/80
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
+    print(f'er: {er_t}, dh: {dh}, lmd: {lmd}')
     ffs = {
         'temp': T,                                                  # Temperature
         'lmd': lmd,                                                  # Charge scaling factor of P-
