@@ -464,7 +464,7 @@ def MixSystem(psf, system, ffs):
               'A-U':0.89, 'C-G':1.14}   # pairing
     # optimal stacking distance
     r0s = {'AA':0.35, 'AG':0.35, 'GA':0.35, 'GG':0.35, 'AC':0.38, 'AU':0.38, 'GC':0.38, 'GU':0.38,
-           'CA':0.40, 'CG':0.40, 'UA':0.40, 'UG':0.40, 'CC':0.45, 'CU':0.45, 'UC':0.45, 'UU':0.45}
+           'CA':0.40, 'CG':0.40, 'UA':0.40, 'UG':0.40, 'CC':0.43, 'CU':0.43, 'UC':0.43, 'UU':0.43}
 
     # get all the groups of bases
     grps = []
