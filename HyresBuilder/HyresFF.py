@@ -438,7 +438,7 @@ def MixSystem(psf, system, ffs):
     formula = f"138.935456/er*(charge2)/r*exp(-r/dh); dh={dh.value_in_unit(unit.nanometer)}; er={er};"
     Force13 = CustomBondForce(formula)
     Force13.setName('RNA 1-3 Phosphate-interaction')
-    Force14.addPerBondParameter('charge2')
+    Force13.addPerBondParameter('charge2')
     for i in range(num_P-1):
         for j in range(i+1, num_P):
             if phos[i][1] == phos[j][1]:
