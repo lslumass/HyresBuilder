@@ -275,7 +275,8 @@ def setup2(model, args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit
     er_t = cal_er(T)                                                   # relative electric constant
     if model == 'protein':
         er = er_t*20/77.6
-    else: er = er_t*60/80
+    else: 
+        er = er_t
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     print(f'er: {er_t}, dh: {dh}, lmd: {lmd}')
     ffs = {
