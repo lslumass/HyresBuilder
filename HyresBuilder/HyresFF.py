@@ -413,7 +413,7 @@ def MixSystem(psf, system, ffs):
     CNBForce.createExclusionsFromBonds(bondlist, 3)
     system.addForce(CNBForce)
 
-    # 5.1 Add 1-4 nonbonded interaction through custombondforece
+    # 5 Add 1-4 nonbonded interaction through custombondforece
     formula = f"""(4.0*epsilon*six*(six-1.0)+(138.935456/er*charge)/r*exp(-r/dh));
               six=(sigma/r)^6; er={er}; dh={dh.value_in_unit(unit.nanometer)}
               """
@@ -426,25 +426,6 @@ def MixSystem(psf, system, ffs):
         ex = nbforce.getExceptionParameters(idx)
         Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
     system.addForce(Force14)
-
-    # 5.2 Add 1-3 charge interaction for RNA backbone through custombondforce
-    phos = []
-    num_P = 0
-    for atom in psf.topology.atoms():
-        if atom.residue.name in ['A', 'G', 'C', 'U'] and atom.name == 'P':
-            num_P += 1
-            phos.append([int(atom.index), atom.residue.chain.id])
-
-    formula = f"138.935456/er*charge2/r*exp(-r/dh); dh={dh.value_in_unit(unit.nanometer)}; er={er};"
-    Force13 = CustomBondForce(formula)
-    Force13.setName('RNA 1-3 Phosphate-interaction')
-    Force13.addPerBondParameter('charge2')
-    for i in range(num_P-1):
-        j = i+1
-        if phos[i][1] == phos[j][1]:
-            Force13.addBond(phos[i][0], phos[j][0], [1.0])
-    system.addForce(Force13)
-    
 
     # 6. Add the Custom hydrogen bond force for protein backbone
     Ns, Hs, Os, Cs = [], [], [], []
