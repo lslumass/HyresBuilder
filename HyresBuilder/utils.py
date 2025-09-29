@@ -11,8 +11,8 @@ def load_ff(model):
         path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_hyres_mix.inp")
         path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_hyres_mix.inp")
     elif model == 'RNA':
-        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_RNA.inp")
-        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_RNA.inp")
+        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_RNA_mix.inp")
+        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_RNA_mix.inp")
     elif model == 'DNA':
         path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_DNA_mix.inp")
         path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_DNA_mix.inp")
