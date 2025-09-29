@@ -133,7 +133,7 @@ def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosec
     if model == 'protein':
         er = er_t*20/77.6
     else:
-        er = er_t
+        er = er_t*60.0/80.0
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     # Mg-P interaction
     lmd = nMg2lmd(c_Mg, T, RNA='rA')
@@ -276,7 +276,7 @@ def setup2(model, args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit
     if model == 'protein':
         er = er_t*20/77.6
     else: 
-        er = er_t
+        er = er_t*60.0/80.0
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     print(f'er: {er_t}, dh: {dh}, lmd: {lmd}')
     ffs = {
