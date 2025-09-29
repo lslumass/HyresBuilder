@@ -14,10 +14,7 @@ def decompose_complex(pdb, idx, i, model, gen):
         sel.atoms.write(tmp_pdb)
         if segid.startswith("P"):
             segid = f"PC{chr(65+idx)}{j+i*segnum}"
-            if model == 'protein':
-                gen.add_segment(segid=segid, pdbfile=tmp_pdb)
-            else:
-                gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False)
+            gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False)
         elif segid.startswith("R"):
             segid = f"RC{chr(65+idx)}{j+i*segnum}"
             gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False, auto_dihedrals=False)
@@ -42,7 +39,6 @@ def set_terminus(gen, segid, charge_status):
 
 def main():
     parser = argparse.ArgumentParser(description="generate PSF for Hyres systems", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-d', "--model", default='mix', help="simulated system: protein, RNA, or mix")
     parser.add_argument("-i", "--input_pdb_files",  help="Hyres PDB file(s), it should be the pdb of monomer", required=True, nargs="+")
     parser.add_argument("-o", "--output_psf_file", help="output name/path for Hyres PSF", required=True)
     parser.add_argument("-n", "--num_of_chains", type=int, default=[1,], nargs="+", 
@@ -63,16 +59,11 @@ def main():
     assert len(pdb_list) == len(type_list), "molecule type list must have the same length as the pdb list (specified by the '-n' argument)"
     ter = args.ter
 
-    if model in ['protein', 'RNA']:
-        RNA_topology, _ = utils.load_ff('RNA')
-        protein_topology, _ = utils.load_ff('protein')
-    elif model == 'mix':
-        RNA_topology, _ = utils.load_ff('RNA_mix')
-        protein_topology, _ = utils.load_ff('protein_mix')
-    else:
-        print("Error: Only 'protein', 'RNA', and 'mix' models are supported.")
-        exit(1)
+    # load topology files
+    RNA_topology, _ = utils.load_ff('RNA')
+    protein_topology, _ = utils.load_ff('Protein')
 
+    # generate psf
     gen = PsfGen()
     gen.read_topology(RNA_topology)
     gen.read_topology(protein_topology)
@@ -84,10 +75,7 @@ def main():
         if mol_type == 'P':
             for i in range(num):
                 segid = f"P{chr(65+idx)}{i}" 
-                if model == 'protein':
-                    gen.add_segment(segid=segid, pdbfile=pdb)
-                else:
-                    gen.add_segment(segid=segid, pdbfile=pdb, auto_angles=False)
+                gen.add_segment(segid=segid, pdbfile=pdb, auto_angles=False)
         elif mol_type == 'R':
             for i in range(num):
                 segid = f"R{chr(65+idx)}{i}" 
@@ -97,7 +85,7 @@ def main():
                 decompose_complex(pdb, idx, i, model, gen)
         elif mol_type == 'Mg':
             for i in range(num):
-                segid = f"MG{chr(65+idx)}{i}" 
+                segid = f"MG{i}" 
                 gen.add_segment(segid=segid, pdbfile=pdb, auto_angles=False, auto_dihedrals=False)
         else:
             print("Error: Only type of 'P', 'R', 'D', 'C', and 'Mg' are supported.")

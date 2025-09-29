@@ -1,5 +1,5 @@
 """
-Date: Feb 16, 2025
+Date: Sep 29, 2025
 Latest running script for HyRes and iConRNA simulation
 Aauthor: Shanlong Li
 email: shanlongli@umass.edu
@@ -16,7 +16,6 @@ from openmm import *
 
 # input parameters
 parser = argparse.ArgumentParser()
-parser.add_argument('-d', "--model", default='mix', help="simulated system: protein, RNA, or mix")
 parser.add_argument('-c', "--pdb", default='conf.pdb', help="pdb file, default is conf.pdb")
 parser.add_argument('-p', "--psf", default='conf.psf', help="psf file, default is conf.psf")
 parser.add_argument('-o', "--out", default='system', type=str, help="the prefix name for the output files, including xtc, pdb, log, chk")
@@ -44,7 +43,7 @@ friction = 0.1/unit.picosecond                                  # friction coeff
 # utils.setup(model, parser, params, dt, pressure, friction, gpu_id)
 # model: select from 'protein', 'RNA', 'mix'
 # default set: pressure = 1*unit.atmosphere, friction = 0.1/unit.picosecond, gpu_id = "0"
-system, sim = utils.setup(model=args.model, args=args, dt=dt_equil)
+system, sim = utils.setup(args=args, dt=dt_equil)
 
 """
 if further modify the system, add this line below:

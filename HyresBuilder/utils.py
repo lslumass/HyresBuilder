@@ -6,24 +6,21 @@ import numpy as np
 from .HyresFF import *
 
 
-def load_ff(model='protein'):
-    if model == 'protein':
-        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_hyres_GPU.inp")
-        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_hyres_GPU.inp")
-    elif model == 'protein_mix':
+def load_ff(model):
+    if model == 'Protein':
         path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_hyres_mix.inp")
         path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_hyres_mix.inp")
     elif model == 'RNA':
         path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_RNA.inp")
         path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_RNA.inp")
-    elif model == 'RNA_mix':
-        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_RNA_mix.inp")
-        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_RNA_mix.inp")
+    elif model == 'DNA':
+        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_DNA_mix.inp")
+        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_DNA_mix.inp")
     elif model == 'ATP':
         path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_ATP.inp")
         path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_ATP.inp")
     else:
-        print("Error: The model type {} is not supported, choose from hyres4, protein, protein_mix, RNA, RNA2, RNA_mix, ATP.".format(model))
+        print("Error: The model type {} is not supported, only for Portein, RNA, DNA, and, ATP.".format(model))
         exit(1)
     top_inp, param_inp = str(path1), str(path2)
 
@@ -71,13 +68,11 @@ def cal_dh(c_ion, T):
 #    dh = 0.304/np.sqrt(c_ion)   # Debye-Huckel screening length in nm at room temperature
 #    return dh*unit.nanometer
 
-def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
+def setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
     """
     Set up the simulation system with given parameters.
     Parameters:
     -----------
-    model: str
-        The type of model to use ('protein', 'RNA', 'mix').
     args: argparse.Namespace
         The command line arguments containing simulation parameters.
     dt: float
@@ -130,10 +125,7 @@ def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosec
     # 3. force field parameters
     temperture = T*unit.kelvin 
     er_t = cal_er(T)                                                   # relative electric constant
-    if model == 'protein':
-        er = er_t*20/77.6
-    else:
-        er = er_t*60.0/80.0
+    er = er_t*60.0/80.0
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     # Mg-P interaction
     lmd = nMg2lmd(c_Mg, T, RNA='rA')
@@ -147,19 +139,11 @@ def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosec
     }
 
     # 4. load force field files
-    if model == 'protein':
-        top_pro, param_pro = load_ff('protein')
-        params = CharmmParameterSet(top_pro, param_pro)
-    elif model == 'RNA':
-        top_RNA, param_RNA = load_ff('RNA')
-        params = CharmmParameterSet(top_RNA, param_RNA)
-    elif model == 'mix':
-        top_RNA, param_RNA = load_ff('RNA_mix')
-        top_pro, param_pro = load_ff('protein_mix')
-        params = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro)
-    else:
-        print("Error: Only 'protein', 'RNA', and 'mix' models are supported.")
-        exit(1)
+    top_pro, param_pro = load_ff('Protein')
+    top_RNA, param_RNA = load_ff('RNA')
+    #top_DNA, param_DNA = load_ff('DNA')
+    #top_ATP, param_ATP = load_ff('RNA')
+    params = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
@@ -177,18 +161,7 @@ def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosec
 
     # 6. construct force field
     print('\n################## build system ###################')
-    if model == 'protein':
-        system = HyresSystem(psf, system, ffs)
-        print('This is a Hyres protein system')
-    elif model == 'RNA':
-        system = iConRNASystem(psf, system, ffs)
-        print('This is a iConRNA system')
-    elif model == 'mix':
-        system = MixSystem(psf, system, ffs)
-        print('This is a Hyres protein + iConRNA mixed system')
-    else:
-        print("Error: Only 'protein', 'RNA', and 'mix' models are supported. The input value is {}.".format(model))
-        exit(1)
+    system = createSystem(psf, system, ffs)
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
@@ -213,13 +186,11 @@ def setup(model, args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosec
     return system, sim
 
 
-def setup2(model, args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
+def setup2(args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
     """
     Set up the simulation system with given parameters.
     Parameters:
     -----------
-    model: str
-        The type of model to use ('protein', 'RNA', 'mix').
     args: argparse.Namespace
         The command line arguments containing simulation parameters.
     dt: float
@@ -246,7 +217,6 @@ def setup2(model, args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit
     c_ion = args.salt/1000.0                                   # concentration of ions in M
     c_Mg = args.Mg                                           # concentration of Mg in mM
     ensemble = args.ens
-    lmd = args.Mg
     
     # 2. set pbc and box vector
     if ensemble == 'non' and c_Mg != 0.0:
@@ -273,11 +243,10 @@ def setup2(model, args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit
     # 3. force field parameters
     temperture = T*unit.kelvin 
     er_t = cal_er(T)                                                   # relative electric constant
-    if model == 'protein':
-        er = er_t*20/77.6
-    else: 
-        er = er_t*60.0/80.0
+    er = er_t*60.0/80.0
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
+    # Mg-P interaction
+    lmd = args.Mg
     print(f'er: {er_t}, dh: {dh}, lmd: {lmd}')
     ffs = {
         'temp': T,                                                  # Temperature
@@ -288,19 +257,11 @@ def setup2(model, args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit
     }
 
     # 4. load force field files
-    if model == 'protein':
-        top_pro, param_pro = load_ff('protein')
-        params = CharmmParameterSet(top_pro, param_pro)
-    elif model == 'RNA':
-        top_RNA, param_RNA = load_ff('RNA')
-        params = CharmmParameterSet(top_RNA, param_RNA)
-    elif model == 'mix':
-        top_RNA, param_RNA = load_ff('RNA_mix')
-        top_pro, param_pro = load_ff('protein_mix')
-        params = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro)
-    else:
-        print("Error: Only 'protein', 'RNA', and 'mix' models are supported.")
-        exit(1)
+    top_pro, param_pro = load_ff('Protein')
+    top_RNA, param_RNA = load_ff('RNA')
+    #top_DNA, param_DNA = load_ff('DNA')
+    #top_ATP, param_ATP = load_ff('RNA')
+    params = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
@@ -318,18 +279,7 @@ def setup2(model, args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit
 
     # 6. construct force field
     print('\n################## build system ###################')
-    if model == 'protein':
-        system = HyresSystem(psf, system, ffs)
-        print('This is a Hyres protein system')
-    elif model == 'RNA':
-        system = iConRNASystem(psf, system, ffs)
-        print('This is a iConRNA system')
-    elif model == 'mix':
-        system = MixSystem(psf, system, ffs)
-        print('This is a Hyres protein + iConRNA mixed system')
-    else:
-        print("Error: Only 'protein', 'RNA', and 'mix' models are supported. The input value is {}.".format(model))
-        exit(1)
+    system = createSystem(psf, system, ffs)
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
