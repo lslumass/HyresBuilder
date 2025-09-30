@@ -99,11 +99,15 @@ def createSystem(psf, system, ffs):
     DWB.addPerAngleParameter("theta2")
     for angle_idx in range(hmangle.getNumAngles()):
         ang = hmangle.getAngleParameters(angle_idx)
-        if (atoms[ang[0]] == 'C' and atoms[ang[1]] == 'CA' and atoms[ang[2]] == 'CB') or \
-           (atoms[ang[0]] == 'N' and atoms[ang[1]] == 'CA' and atoms[ang[2]] == 'CB'):
-            kDWB = ang[4]
-            theta1 = ang[3]
-
+        resname = residues[ang[1]]
+        if resname in CAB.keys() and (atoms[ang[0]] == 'C' and atoms[ang[1]] == 'CA' and atoms[ang[2]] == 'CB'):
+            DWB.addAngle(ang[0], ang[1], ang[2], [ang[4], ang[3], CAB[residues[resname]]])
+        elif resname in NAB.keys() and (atoms[ang[0]] == 'N' and atoms[ang[1]] == 'CA' and atoms[ang[2]] == 'CB'):
+            DWB.addAngle(ang[0], ang[1], ang[2], [ang[4], ang[3], NAB[residues[resname]]])
+        else:
+            continue
+    system.addForce(DWB)
+    
     # 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce
     dh = ffs['dh']
     lmd = ffs['lmd']
