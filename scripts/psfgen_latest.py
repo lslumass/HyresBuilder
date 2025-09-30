@@ -4,7 +4,7 @@ import argparse, os
 import MDAnalysis as mda
 
 
-def decompose_complex(pdb, idx, i, model, gen):
+def decompose_complex(pdb, idx, i, gen):
     u = mda.Universe(pdb)
     segids = u.residues.segments.segids
     segnum = len(segids)
@@ -49,7 +49,6 @@ def main():
                         help="Terminal charged status (choose from ['neutral', 'charged', 'NT', 'CT'])", default='neutral')
     args = parser.parse_args()
    
-    model = args.model
     pdb_list = args.input_pdb_files
     outpsf = args.output_psf_file
     num_list = args.num_of_chains
@@ -82,7 +81,7 @@ def main():
                 gen.add_segment(segid=segid, pdbfile=pdb, auto_angles=False, auto_dihedrals=False)
         elif mol_type == 'C':
             for i in range(num):
-                decompose_complex(pdb, idx, i, model, gen)
+                decompose_complex(pdb, idx, i, gen)
         elif mol_type == 'Mg':
             for i in range(num):
                 segid = f"MG{i}" 
