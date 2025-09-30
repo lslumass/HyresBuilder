@@ -137,7 +137,7 @@ P2S   C1E   NH1   20.0     110.3  ! pSer
 P2T   C1E   NH1   20.0      98.4  ! pThr  
 
 !CA-CB-CC (and/or CA-CB-CD) angle in amino acid
-C1E   A3K   QdK   20.0     170.0  ! lys
+C1E   A3K   QdK   20.0     165.0  ! lys
 C1E   A3R   QdR   10.0     135.0  ! arg
 C1E   A4H   P1H   20.0     129.5  ! his CA-CB-CC
 C1E   A4H   P2H   20.0     127.6  ! his CA-CB-CD
