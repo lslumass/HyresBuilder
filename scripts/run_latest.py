@@ -28,7 +28,7 @@ args = parser.parse_args()
 out = args.out
 
 # simulation parameters
-dt_equil = 0.0001*unit.picoseconds		                        # time step for equilibration
+dt_equil = 0.001*unit.picoseconds		                        # time step for equilibration
 dt_prod = 0.008*unit.picoseconds                                # time step for production simulation
 prod_step = 250000000                                           # production steps
 equil_step = 10000                                              # equilibration steps
