@@ -102,9 +102,9 @@ def createSystem(psf, system, ffs):
         ang = hmangle.getAngleParameters(angle_idx)
         resname = residues[ang[1]]
         if resname in CAB.keys() and (atoms[ang[0]] == 'C' and atoms[ang[1]] == 'CA' and atoms[ang[2]] == 'CB'):
-            DWB.addAngle(ang[0], ang[1], ang[2], [ang[4], ang[3], CAB[resname]])
+            DWB.addAngle(ang[0], ang[1], ang[2], [ang[4], ang[3], np.radians(CAB[resname])])
         elif resname in NAB.keys() and (atoms[ang[0]] == 'N' and atoms[ang[1]] == 'CA' and atoms[ang[2]] == 'CB'):
-            DWB.addAngle(ang[0], ang[1], ang[2], [ang[4], ang[3], NAB[resname]])
+            DWB.addAngle(ang[0], ang[1], ang[2], [ang[4], ang[3], np.radians(NAB[resname])])
         else:
             continue
     system.addForce(DWB)
