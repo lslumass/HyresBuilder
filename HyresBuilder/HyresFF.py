@@ -60,10 +60,12 @@ def createSystem(psf, system, ffs):
         bondlist.append([bond[0].index, bond[1].index])
     #get all atom name
     atoms = []
+    residues = []
     for atom in psf.topology.atoms():
         atoms.append(atom.name)
+        residues.append(atom.residue.name)
     
-    # 3. Replace HarmonicAngle with Restricted Bending (ReB) potential
+    # 3.1 Replace HarmonicAngle with Restricted Bending (ReB) potential
     ReB = CustomAngleForce("0.5*kt*(theta-theta0)^2/(sin(theta)^kReB);")
     ReB.setName('ReBAngleForce')
     ReB.addPerAngleParameter("theta0")
@@ -75,9 +77,32 @@ def createSystem(psf, system, ffs):
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
         elif atoms[ang[0]] == 'CA' and atoms[ang[1]] == 'CB':
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
+        elif atoms[ang[0]] == 'C' and atoms[ang[1]] == 'CA' and atoms[ang[2]] == 'CB':
+            continue
+        elif atoms[ang[0]] == 'N' and atoms[ang[1]] == 'CA' and atoms[ang[2]] == 'CB':
+            continue
         else:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])
     system.addForce(ReB)
+
+    # 3.2 Replace Harmonic Anglee with double-well potential for C-CA-CB and N-CA-CB
+    # tables for C-CA-CB: CAB, N-CA-CB: NAB
+    CAB = {'Ile': 131.5, 'Leu': 135.0, 'Met': 135.0, 'Phe': 143.0, 'Trp': 136.0, 'Tyr': 130.0, 'Ser': 135.0, 'Thr': 118.0,
+           'Asn': 142.0, 'Cys': 138.0, 'Gln': 151.0, 'Asp': 140.0, 'Glu': 131.0, 'Lys': 135.0, 'Arg': 141.0, 'His': 127.0}
+    NAB = {'Leu': 136.0, 'Phe': 141.0, 'Trp': 135.0, 'Tyr': 126.0, 'Ser': 131.0,
+           'Thr': 120.0, 'Asn': 140.0, 'Cys': 138.0, 'Asp': 138.0, 'His': 128.0}
+    
+    DWB = CustomAngleForce("kDWB*(theta-theta1)^2*(theta-theta2)^2;")
+    DWB.setName('Double-Well C/N-CA-CB AngleForce')
+    DWB.addPerAngleParameter("kDWB")
+    DWB.addPerAngleParameter("theta1")
+    DWB.addPerAngleParameter("theta2")
+    for angle_idx in range(hmangle.getNumAngles()):
+        ang = hmangle.getAngleParameters(angle_idx)
+        if (atoms[ang[0]] == 'C' and atoms[ang[1]] == 'CA' and atoms[ang[2]] == 'CB') or \
+           (atoms[ang[0]] == 'N' and atoms[ang[1]] == 'CA' and atoms[ang[2]] == 'CB'):
+            kDWB = ang[4]
+            theta1 = ang[3]
 
     # 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce
     dh = ffs['dh']

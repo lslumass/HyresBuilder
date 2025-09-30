@@ -22,48 +22,48 @@ C3E   NH1    320.0      1.49  ! N-CH3 in C-ter capping group
 C1E   C3E    300.0      1.63  ! ala
 C1E   A2V    300.0      2.01  ! val
 C1E   A1L    200.0      2.71  ! leu
-C1E   A1I    100.0      2.33  ! ile
-C1E   A5M    100.0      3.26  ! met
+C1E   A1I    100.0      2.50  ! ile
+C1E   A5M    100.0      3.47  ! met
 C1E   P5N    200.0      2.56  ! asn
 C1E   QaD    200.0      2.54  ! asp
-C1E   P4Q    300.0      3.45  ! gln
+C1E   P4Q    100.0      3.06  ! gln
 C1E   QaE    100.0      3.14  ! glu
-C1E   P1C    300.0      2.40  ! cys
+C1E   P1C    200.0      2.40  ! cys
 C1E   P1S    300.0      2.03  ! ser
 C1E   P1T    300.0      2.01  ! thr
-C1E   A3K    200.0      2.65  ! lys
-C1E   A3R    200.0      2.65  ! arg
+C1E   A3K    100.0      2.50  ! lys
+C1E   A3R    100.0      2.50  ! arg
 C1E   A4H    400.0      1.95  ! his
-C1E   A1F    150.0      2.30  ! phe
-C1E   A1Y    150.0      2.30  ! tyr
+C1E   A1F    100.0      2.54  ! phe
+C1E   A1Y    100.0      2.30  ! tyr
 C1E   A1W    300.0      1.99  ! trp
-C1E   A2P    300.0      1.92  ! pro
+C1E   A2P    300.0      1.94  ! pro
 !## CA-CB bonds for pSer and pThr   
 C1E   P2S    250.0      1.61  ! pSer
 C1E   P2T    200.0      2.03  ! pThr
 !bonds in amino acid sidechain-sidechain
-A3K   QdK    100.0      2.95  ! lys
-A3R   QdR    100.0      3.60  ! arg
-A4H   P1H    200.0      2.52  ! his CB-CC
+A3K   QdK     50.0      3.00  ! lys
+A3R   QdR     50.0      3.60  ! arg
+A4H   P1H    300.0      2.52  ! his CB-CC
 A4H   P2H    300.0      2.45  ! his CB-CD
 P1H   P2H    300.0      1.86  ! his CC-CD
-A1F   A2F    300.0      2.45  ! phe CB-CC
-A1F   A3F    300.0      2.87  ! phe CB-CD
-A2F   A3F    300.0      2.22  ! phe CC-CD
-A1Y   A2Y    300.0      2.45  ! tyr CB-CC
+A1F   A2F    300.0      2.52  ! phe CB-CC
+A1F   A3F    300.0      2.52  ! phe CB-CD
+A2F   A3F    300.0      2.57  ! phe CC-CD
+A1Y   A2Y    300.0      2.46  ! tyr CB-CC
 A1Y   P1Y    300.0      3.52  ! tyr CB-CD
-A2Y   P1Y    300.0      2.44  ! tyr CC-CD
-A1W   P1W    300.0      2.58  ! trp CB-CC
-A1W   A2W    300.0      2.53  ! trp CB-CD
+A2Y   P1Y    300.0      2.45  ! tyr CC-CD
+A1W   P1W    300.0      2.55  ! trp CB-CC
+A1W   A2W    300.0      2.55  ! trp CB-CD
 P1W   A2W    300.0      1.85  ! trp CC-CD
 A2W   A3W    300.0      2.15  ! trp CD-CE
-A2W   A4W    300.0      2.15  ! trp CD-CF
-A3W   A4W    300.0      2.25  ! trp CE-CF
+A2W   A4W    300.0      2.14  ! trp CD-CF
+A3W   A4W    300.0      2.24  ! trp CE-CF
 !## CB-CC bonds for pSer and pThr           
 P2S   P3S    200.0      2.53  ! pSer CB-CC  
 P2T   P3T    200.0      3.20  ! pThr CB-CC  
 ! special bond in pro
-N     A2P    400.0      1.86  ! pro
+N     A2P    300.0      1.86  ! pro
 
 THETAS
 !angles in amino acid backbone
@@ -90,91 +90,70 @@ C3E   C     N     20.0     117.5  ! CH3-C-N (N-ter of pro)
 C3E   NH1   H     35.0     120.0  ! H-N-CH3 (C-ter)             
 C     NH1   C3E   77.5     120.0  ! C-N-CH3 (C-ter)             
 !C-CA-CB angle in amino acid
-C     C1E   C3E   90.0     111.2  ! ala
-C     C1E   A2V   20.0     116.3  ! val
-C     C1E   A1L   20.0     120.6  ! leu  
-C     C1E   A1I   20.0     117.8  ! ile  
-C     C1E   A5M   20.0     119.8  ! met  
-C     C1E   P5N   20.0     127.0  ! asn  
-C     C1E   QaD   20.0     121.1  ! asp  
-C     C1E   P4Q   20.0     119.1  ! gln  
-C     C1E   QaE   20.0     116.2  ! glu  
-C     C1E   P1C   20.0     118.3  ! cys  
-C     C1E   P1S   20.0     109.4  ! ser  
-C     C1E   P1T   20.0     116.2  ! thr  
-C     C1E   A3K   20.0     117.0  ! lys  
-C     C1E   A3R   20.0     118.5  ! arg  
-C     C1E   A4H   20.0     112.5  ! his  
-C     C1E   A1F   20.0     123.2  ! phe  
-C     C1E   A1Y   20.0     123.6  ! tyr  
-C     C1E   A1W   20.0     116.0  ! trp  
+C     C1E   C3E   50.0     111.2  ! ala
+C     C1E   A2V   30.0     117.0  ! val
+C     C1E   A1L   0.02      99.0  ! leu  
+C     C1E   A1I   0.02     100.0  ! ile  
+C     C1E   A5M   0.02      96.0  ! met  
+C     C1E   P5N   0.02      95.0  ! asn  
+C     C1E   QaD   0.02      99.0  ! asp  
+C     C1E   P4Q   0.02      98.0  ! gln  
+C     C1E   QaE   0.02     101.0  ! glu  
+C     C1E   P1C   0.02      96.0  ! cys  
+C     C1E   P1S   0.02     102.0  ! ser  
+C     C1E   P1T   0.02     100.0  ! thr  
+C     C1E   A3K   0.02     100.0  ! lys  
+C     C1E   A3R   0.02      98.0  ! arg  
+C     C1E   A4H   0.02     101.0  ! his  
+C     C1E   A1F   0.02      92.0  ! phe  
+C     C1E   A1Y   0.02      92.0  ! tyr  
+C     C1E   A1W   0.02     103.0  ! trp  
 C     C1E   A2P   20.0     115.0  ! pro   change from 121.7 to 115
 !## bond of C-CA-CB for pSer and pThr    
 C     C1E   P2S   20.0     112.3  ! pSer 
 C     C1E   P2T   20.0     101.2  ! pThr 
 
 !N-CA-CB angle in amino acid
-C3E   C1E   NH1   90.0     109.5  ! ala
-A2V   C1E   NH1   20.0     111.3  ! val 
-A1L   C1E   NH1   20.0     114.3  ! leu 
+C3E   C1E   NH1   50.0     109.0  ! ala
+A2V   C1E   NH1   30.0     118.0  ! val 
+A1L   C1E   NH1   0.02     101.0  ! leu 
 A1I   C1E   NH1   20.0     110.4  ! ile 
-A5M   C1E   NH1   20.0     112.7  ! met 
-P5N   C1E   NH1   20.0     104.6  ! asn 
-QaD   C1E   NH1   20.0     106.4  ! asp 
-P4Q   C1E   NH1   20.0     111.0  ! gln 
-QaE   C1E   NH1   20.0     113.7  ! glu 
-P1C   C1E   NH1   20.0     107.0  ! cys 
-P1S   C1E   NH1   20.0     114.2  ! ser 
-P1T   C1E   NH1   20.0     106.9  ! thr 
-A3K   C1E   NH1   20.0     112.3  ! lys 
-A3R   C1E   NH1   20.0     112.2  ! arg 
-A4H   C1E   NH1   20.0     112.8  ! his 
-A1F   C1E   NH1   20.0     108.2  ! phe 
-A1Y   C1E   NH1   20.0     108.7  ! tyr 
-A1W   C1E   NH1   20.0     110.8  ! trp 
+A5M   C1E   NH1   20.0     100.0  ! met 
+P5N   C1E   NH1   0.02      94.0  ! asn 
+QaD   C1E   NH1   0.02      95.0  ! asp 
+P4Q   C1E   NH1   20.0      98.0  ! gln 
+QaE   C1E   NH1   20.0     101.0  ! glu 
+P1C   C1E   NH1   0.02      95.0  ! cys 
+P1S   C1E   NH1   0.02     101.0  ! ser 
+P1T   C1E   NH1   0.02     100.0  ! thr 
+A3K   C1E   NH1   20.0     101.0  ! lys 
+A3R   C1E   NH1   20.0      99.0  ! arg 
+A4H   C1E   NH1   0.02     102.0  ! his 
+A1F   C1E   NH1   0.02      95.0  ! phe 
+A1Y   C1E   NH1   0.02      95.0  ! tyr 
+A1W   C1E   NH1   0.02     100.0  ! trp 
 !## for pSer and pThr                     
 P2S   C1E   NH1   20.0     110.3  ! pSer  
 P2T   C1E   NH1   20.0      98.4  ! pThr  
+
 !CA-CB-CC (and/or CA-CB-CD) angle in amino acid
-C1E   A3K   QdK   20.0     144.9  ! lys
-C1E   A3R   QdR   20.0     137.9  ! arg
+C1E   A3K   QdK   20.0     170.0  ! lys
+C1E   A3R   QdR   10.0     135.0  ! arg
 C1E   A4H   P1H   20.0     129.5  ! his CA-CB-CC
 C1E   A4H   P2H   20.0     127.6  ! his CA-CB-CD
-C1E   A1F   A2F   10.0     116.0  ! phe CA-CB-CC
-C1E   A1F   A3F   20.0     140.2  ! phe CA-CB-CD
-C1E   A1Y   A2Y   10.0     115.8  ! tyr CA-CB-CC
-C1E   A1Y   P1Y   20.0     139.2  ! tyr CA-CB-CD
-C1E   A1W   P1W   20.0     125.6  ! trp CA-CB-CC
-C1E   A1W   A2W   20.0     133.7  ! trp CA-CB-CD
+C1E   A1F   A2F   10.0     130.0  ! phe CA-CB-CC
+C1E   A1F   A3F   10.0     130.0  ! phe CA-CB-CD
+C1E   A1Y   A2Y   10.0     105.0  ! tyr CA-CB-CC
+C1E   A1Y   P1Y   20.0     137.0  ! tyr CA-CB-CD
+C1E   A1W   P1W   20.0     132.0  ! trp CA-CB-CC
+C1E   A1W   A2W   20.0     125.0  ! trp CA-CB-CD
 !## for pSer and pThr                                   
 C1E   P2S   P3S   20.0     132.8  ! pSer CA-CB-CC (PO4) 
 C1E   P2T   P3T   20.0      72.6  ! pThr CA-CB-CC (PO4) 
-!CC-CD-CE, CC-CD-CF, CB-CD-CE, CB-CD-CF in trp
-!#A1W   A2W   A3W   50.0     161.0  ! trp
-P1W   A2W   A3W   50.0     127.9  ! trp
-A1W   A2W   A4W   50.0     98.6   ! trp
-!#P1W   A2W   A4W   50.0     168.1  ! trp
-!C-N-CB for pro
-C     N     A2P   0.00     161.9  ! pro
-!angles within the ring of amino acid side chain
-P1H   A4H   P2H   0.00     60.0   ! his
-A4H   P2H   P1H   0.00     60.0   ! his
-P2H   P1H   A4H   0.00     60.0   ! his
-A1F   A2F   A3F   0.00     60.0   ! phe
-A2F   A3F   A1F   0.00     60.0   ! phe
-A3F   A1F   A2F   0.00     60.0   ! phe
-A1Y   A2Y   P1Y   0.00     60.0   ! tyr
-A2Y   P1Y   A1Y   0.00     60.0   ! tyr
-P1Y   A1Y   A2Y   0.00     60.0   ! tyr
-A1W   P1W   A2W   0.00     60.0   ! trp
-A1W   A2W   P1W   0.00     60.0   ! trp
-A2W   A1W   P1W   0.00     60.0   ! trp
-A2W   A3W   A4W   0.00     60.0   ! trp
-A2W   A4W   A3W   0.00     60.0   ! trp
-A3W   A2W   A4W   0.00     60.0   ! trp
-N     C1E   A2P   0.00     60.0   ! pro
-N     A2P   C1E   0.00     60.0   ! pro
-C1E   N     A2P   0.00     60.0   ! pro
+
+!CC-CD-CE, CB-CD-CF in trp
+P1W   A2W   A3W   50.0     127.1  ! trp
+A1W   A2W   A4W   50.0     101.0  ! trp
 
 PHI
 !phi in amino acid backbone
@@ -281,24 +260,24 @@ NH1   X     X     H      45.00    0     0.0
 C     X     X     O     100.00    0     0.0
 !CA-N-C-CB improper => amino acid chirality
 C1E   X     X     C3E    55.00    0     35.3   ! ala
-C1E   X     X     A2V    55.00    0     35.3   ! val
-C1E   X     X     A1L    55.00    0     35.3   ! leu
-C1E   X     X     A1I    55.00    0     35.3   ! ile
-C1E   X     X     A5M    55.00    0     35.3   ! met
-C1E   X     X     P5N    55.00    0     35.3   ! asn
-C1E   X     X     QaD    55.00    0     35.3   ! asp
-C1E   X     X     P4Q    55.00    0     35.3   ! gln
-C1E   X     X     QaE    55.00    0     35.3   ! glu
-C1E   X     X     P1C    55.00    0     35.3   ! cys
-C1E   X     X     P1S    55.00    0     35.3   ! ser
-C1E   X     X     P1T    55.00    0     35.3   ! thr
-C1E   X     X     A3K    55.00    0     35.3   ! lys
-C1E   X     X     A3R    55.00    0     35.3   ! arg
-C1E   X     X     A4H    55.00    0     35.3   ! his
-C1E   X     X     A1F    55.00    0     35.3   ! phe
-C1E   X     X     A1Y    55.00    0     35.3   ! tyr
-C1E   X     X     A1W    55.00    0     35.3   ! trp
-C1E   X     X     A2P    55.00    0     35.3   ! pro
+C1E   X     X     A2V    55.00    0     25.0   ! val
+C1E   X     X     A1L    30.00    0     23.0   ! leu
+C1E   X     X     A1I    20.00    0     20.0   ! ile
+C1E   X     X     A5M    10.00    0      4.0   ! met
+C1E   X     X     P5N    30.00    0     23.0   ! asn
+C1E   X     X     QaD    30.00    0     23.0   ! asp
+C1E   X     X     P4Q    35.00    0      1.0   ! gln
+C1E   X     X     QaE    30.00    0     31.0   ! glu
+C1E   X     X     P1C    30.00    0     25.3   ! cys
+C1E   X     X     P1S    30.00    0     28.0   ! ser
+C1E   X     X     P1T    15.00    0     30.0   ! thr
+C1E   X     X     A3K    20.00    0     20.0   ! lys
+C1E   X     X     A3R    20.00    0     20.0   ! arg
+C1E   X     X     A4H    55.00    0     29.0   ! his
+C1E   X     X     A1F    10.00    0     25.0   ! phe
+C1E   X     X     A1Y    10.00    0     25.0   ! tyr
+C1E   X     X     A1W    55.00    0     29.0   ! trp
+C1E   X     X     A2P    25.00    0     65.0   ! pro
 !## for pSer                                         
 C1E   X     X     P2S    55.00    0     35.3   ! pSer
 !## for pThr                                         
@@ -1001,7 +980,7 @@ C     NH1   C2E   C     NH1   C2E   C     N   24
 
 
 NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
-     CUTNB 16.0  CTOFNB 18.0  CTONNB 16.
+     CUTNB 16.0  CTOFNB 18.0  CTONNB 16.0
 
 !charmm19 origin     Emin      
 !                 (kcal/mol)
@@ -1027,11 +1006,11 @@ C3E      0.00     -0.1500      2.1158   0.00     -0.3080       2.0158 ! ala,  A,
 A2V      0.00     -0.3000      2.7541   0.00     -0.6200       2.6541 ! val,  V,   
 A1L      0.00     -0.4500      2.9555   0.00     -0.9000       2.9555 ! leu,  L,   
 A1I      0.00     -0.4360      2.9700   0.00     -0.7720       2.5700 ! ile,  I,   
-A5M      0.00     -0.3580      2.9813   0.00     -0.6360       3.3813 ! met,  M,   
+A5M      0.00     -0.3580      2.7813   0.00     -0.6360       3.3813 ! met,  M,   
 P5N      0.00     -0.0900      2.6548   0.00     -0.3800       3.7548 ! asn,  N,   
 QaD      0.00     -0.0740      2.6066   0.00     -0.1480       3.7066 ! asp,  D,   
-P4Q      0.00     -0.1120      2.8908   0.00     -0.4040       3.6908 ! gln,  Q,   
-QaE      0.00     -0.0800      2.8516   0.00     -0.1400       3.9516 ! glu,  E,   
+P4Q      0.00     -0.1120      2.6548   0.00     -0.4040       3.6908 ! gln,  Q,   
+QaE      0.00     -0.0800      2.6066   0.00     -0.1400       3.9516 ! glu,  E,   
 P1C      0.00     -0.2660      2.4695   0.00     -0.5320       2.7695 ! cys,  C,   
 P1S      0.00     -0.0850      2.3237   0.00     -0.1880       2.0237 ! ser,  S,   
 P1T      0.00     -0.1140      2.6231   0.00     -0.2280       2.6231 ! thr,  T,   
