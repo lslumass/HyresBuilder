@@ -88,10 +88,10 @@ def createSystem(psf, system, ffs):
 
     # 3.2 Replace Harmonic Anglee with double-well potential for C-CA-CB and N-CA-CB
     # tables for C-CA-CB: CAB, N-CA-CB: NAB
-    CAB = {'Ile': 131.5, 'Leu': 135.0, 'Met': 135.0, 'Phe': 143.0, 'Trp': 136.0, 'Tyr': 130.0, 'Ser': 135.0, 'Thr': 118.0,
-           'Asn': 142.0, 'Cys': 138.0, 'Gln': 151.0, 'Asp': 140.0, 'Glu': 131.0, 'Lys': 135.0, 'Arg': 141.0, 'His': 127.0}
-    NAB = {'Leu': 136.0, 'Phe': 141.0, 'Trp': 135.0, 'Tyr': 126.0, 'Ser': 131.0,
-           'Thr': 120.0, 'Asn': 140.0, 'Cys': 138.0, 'Asp': 138.0, 'His': 128.0}
+    CAB = {'ILE': 131.5, 'LEU': 135.0, 'MET': 135.0, 'PHE': 143.0, 'TRP': 136.0, 'TYR': 130.0, 'SER': 135.0, 'THR': 118.0,
+           'ASN': 142.0, 'CYS': 138.0, 'GLN': 151.0, 'ASP': 140.0, 'GLU': 131.0, 'LYS': 135.0, 'ARG': 141.0, 'HIS': 127.0}
+    NAB = {'LEU': 136.0, 'PHE': 141.0, 'TRP': 135.0, 'TYR': 126.0, 'SER': 131.0,
+           'THR': 120.0, 'ASN': 140.0, 'CYS': 138.0, 'ASP': 138.0, 'HIS': 128.0}
     
     DWB = CustomAngleForce("kDWB*(theta-theta1)^2*(theta-theta2)^2;")
     DWB.setName('Double-Well C/N-CA-CB AngleForce')
