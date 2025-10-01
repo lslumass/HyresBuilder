@@ -164,6 +164,26 @@ X     C1E   NH1   X       0.00    3     0.0    ! not phi (ala)
 C     C2E   NH1   C       0.30    3     0.0    ! phi (gly)
 X     C2E   NH1   X       0.00    3     0.0    ! not phi (gly)
 !psi in amino acid backbone
+O     C     C1E   C3E     0.10    2       0.0  ! peudo psi for ala
+O     C     C1E   A2V     0.20    2       0.0  ! peudo psi for val
+O     C     C1E   A1L     0.20    2       0.0  ! peudo psi for leu
+O     C     C1E   A1I     0.20    2       0.0  ! peudo psi for ile
+O     C     C1E   A5M     0.20    2      15.0  ! peudo psi for met
+O     C     C1E   P5N     0.20    2       0.0  ! peudo psi for asn
+O     C     C1E   QaD     0.10    2       0.0  ! peudo psi for asp
+O     C     C1E   P4Q     0.20    2      30.0  ! peudo psi for gln
+O     C     C1E   QaE     0.10    2       0.0  ! peudo psi for glu
+O     C     C1E   P1C     0.20    2       0.0  ! peudo psi for cys
+O     C     C1E   P1S     0.10    2       0.0  ! peudo psi for ser
+O     C     C1E   P1T     0.20    2       0.0  ! peudo psi for thr
+O     C     C1E   A3K     0.20    2       0.0  ! peudo psi for lys
+O     C     C1E   A3R     0.20    2       0.0  ! peudo psi for arg
+O     C     C1E   A4H     0.20    2       0.0  ! peudo psi for his
+O     C     C1E   A1F     0.20    2       0.0  ! peudo psi for phe
+O     C     C1E   A1Y     0.20    2       0.0  ! peudo psi for tyr
+O     C     C1E   A1W     0.20    2       0.0  ! peudo psi for trp
+O     C     C1E   A2P     0.50    1    -115.0  ! peudo psi for pro
+
 O     C     C1E   QaD     0.30    1     240.0  ! pseudo psi (glu)
 O     C     C1E   P5N     0.30    1     240.0  ! pseudo psi (asn)
 O     C     C1E   P1T     0.30    1     240.0  ! pseudo psi (thr)
