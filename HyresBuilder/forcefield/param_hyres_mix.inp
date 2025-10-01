@@ -90,25 +90,25 @@ C3E   C     N     20.0     117.5  ! CH3-C-N (N-ter of pro)
 C3E   NH1   H     35.0     120.0  ! H-N-CH3 (C-ter)             
 C     NH1   C3E   77.5     120.0  ! C-N-CH3 (C-ter)             
 !C-CA-CB angle in amino acid
-C     C1E   C3E   90.0     111.2  ! ala
-C     C1E   A2V   80.0     117.0  ! val
-C     C1E   A1L   10.0      99.0  ! leu  
-C     C1E   A1I   20.0     100.0  ! ile  
-C     C1E   A5M   10.0      96.0  ! met  
-C     C1E   P5N   10.0      95.0  ! asn  
-C     C1E   QaD   10.0      99.0  ! asp  
-C     C1E   P4Q   50.0     151.0  ! gln  
-C     C1E   QaE   10.0     101.0  ! glu  
-C     C1E   P1C   10.0      96.0  ! cys  
-C     C1E   P1S   20.0     102.0  ! ser  
-C     C1E   P1T   10.0     100.0  ! thr  
-C     C1E   A3K   15.0     100.0  ! lys  
-C     C1E   A3R   20.0      98.0  ! arg  
-C     C1E   A4H   15.0     101.0  ! his  
-C     C1E   A1F   10.0      92.0  ! phe  
-C     C1E   A1Y   10.0      92.0  ! tyr  
-C     C1E   A1W   10.0     103.0  ! trp  
-C     C1E   A2P   15.0     115.0  ! pro   change from 121.7 to 115
+C     C1E   C3E   90.0     111.2  ! ala, A
+C     C1E   A2V   80.0     117.0  ! val, V
+C     C1E   A1L   10.0      99.0  ! leu, L 
+C     C1E   A1I   20.0     100.0  ! ile, I
+C     C1E   A5M   10.0      96.0  ! met, M
+C     C1E   P5N   10.0      95.0  ! asn, N
+C     C1E   QaD   10.0      99.0  ! asp, D
+C     C1E   P4Q   10.0     100.0  ! gln, Q
+C     C1E   QaE   10.0     101.0  ! glu, E
+C     C1E   P1C   10.0      96.0  ! cys, C
+C     C1E   P1S   20.0     102.0  ! ser, S
+C     C1E   P1T   10.0     100.0  ! thr, T
+C     C1E   A3K   15.0     100.0  ! lys, K
+C     C1E   A3R   20.0      98.0  ! arg, R
+C     C1E   A4H   15.0     101.0  ! his, H
+C     C1E   A1F   10.0      92.0  ! phe, F
+C     C1E   A1Y   10.0      92.0  ! tyr, Y
+C     C1E   A1W   10.0     103.0  ! trp, T
+C     C1E   A2P   15.0     115.0  ! pro, P
 !## bond of C-CA-CB for pSer and pThr    
 C     C1E   P2S   20.0     112.3  ! pSer 
 C     C1E   P2T   20.0     101.2  ! pThr 
