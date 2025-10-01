@@ -186,7 +186,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   C          C    CA   CB
+ANGL N    CA   C          C   CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N  
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
