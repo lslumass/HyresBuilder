@@ -92,7 +92,7 @@ def createSystem(psf, system, ffs):
     #NAB = {'LEU': 136.0, 'PHE': 141.0, 'TRP': 145.0, 'TYR': 126.0, 'SER': 131.0,
     #       'THR': 120.0, 'ASN': 140.0, 'CYS': 138.0, 'ASP': 138.0, 'HIS': 128.0}
     
-    DWB = CustomAngleForce("0.5*kDWB*((theta-theta1)^2*(theta-theta2)^2 + 0.2*exp(-(theta-mid)^2/(2*deta^2))); mid=(theta1+theta2)/2; deta=(theta2-theta1)/5;")
+    DWB = CustomAngleForce("0.5*kDWB*((theta-theta1)^2*(theta-theta2)^2 + 0.1*exp(-(theta-mid)^2/(2*deta^2))); mid=(theta1+theta2)/2; deta=(theta2-theta1)/5;")
     DWB.setName('Double-Well C/N-CA-CB AngleForce')
     DWB.addPerAngleParameter("kDWB")
     DWB.addPerAngleParameter("theta1")
