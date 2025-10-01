@@ -90,14 +90,14 @@ C3E   C     N     20.0     117.5  ! CH3-C-N (N-ter of pro)
 C3E   NH1   H     35.0     120.0  ! H-N-CH3 (C-ter)             
 C     NH1   C3E   77.5     120.0  ! C-N-CH3 (C-ter)             
 !C-CA-CB angle in amino acid
-C     C1E   C3E   50.0     111.2  ! ala
-C     C1E   A2V   30.0     117.0  ! val
+C     C1E   C3E   90.0     111.2  ! ala
+C     C1E   A2V   80.0     117.0  ! val
 C     C1E   A1L   20.0      99.0  ! leu  
 C     C1E   A1I   20.0     100.0  ! ile  
 C     C1E   A5M   20.0      96.0  ! met  
 C     C1E   P5N   20.0      95.0  ! asn  
 C     C1E   QaD   20.0      99.0  ! asp  
-C     C1E   P4Q   20.0      98.0  ! gln  
+C     C1E   P4Q   20.0     151.0  ! gln  
 C     C1E   QaE   20.0     101.0  ! glu  
 C     C1E   P1C   20.0      96.0  ! cys  
 C     C1E   P1S   20.0     102.0  ! ser  
@@ -114,27 +114,27 @@ C     C1E   P2S   20.0     112.3  ! pSer
 C     C1E   P2T   20.0     101.2  ! pThr 
 
 !N-CA-CB angle in amino acid
-C3E   C1E   NH1   50.0     109.0  ! ala
-A2V   C1E   NH1   30.0     118.0  ! val 
-A1L   C1E   NH1   20.0     101.0  ! leu 
-A1I   C1E   NH1   20.0     110.4  ! ile 
-A5M   C1E   NH1   20.0     100.0  ! met 
-P5N   C1E   NH1   20.0      94.0  ! asn 
-QaD   C1E   NH1   20.0      95.0  ! asp 
-P4Q   C1E   NH1   20.0      98.0  ! gln 
-QaE   C1E   NH1   20.0     101.0  ! glu 
-P1C   C1E   NH1   20.0      95.0  ! cys 
-P1S   C1E   NH1   20.0     101.0  ! ser 
-P1T   C1E   NH1   20.0     100.0  ! thr 
-A3K   C1E   NH1   20.0     101.0  ! lys 
-A3R   C1E   NH1   20.0      99.0  ! arg 
-A4H   C1E   NH1   20.0     102.0  ! his 
-A1F   C1E   NH1   20.0      95.0  ! phe 
-A1Y   C1E   NH1   20.0      95.0  ! tyr 
-A1W   C1E   NH1   20.0     100.0  ! trp 
-!## for pSer and pThr                     
-P2S   C1E   NH1   20.0     110.3  ! pSer  
-P2T   C1E   NH1   20.0      98.4  ! pThr  
+!C3E   C1E   NH1   90.0     109.0  ! ala
+!A2V   C1E   NH1   80.0     118.0  ! val 
+!A1L   C1E   NH1   20.0     101.0  ! leu 
+!A1I   C1E   NH1   20.0     110.4  ! ile 
+!A5M   C1E   NH1   20.0     100.0  ! met 
+!P5N   C1E   NH1   20.0      94.0  ! asn 
+!QaD   C1E   NH1   20.0      95.0  ! asp 
+!P4Q   C1E   NH1   20.0      98.0  ! gln 
+!QaE   C1E   NH1   20.0     101.0  ! glu 
+!P1C   C1E   NH1   20.0      95.0  ! cys 
+!P1S   C1E   NH1   20.0     101.0  ! ser 
+!P1T   C1E   NH1   20.0     100.0  ! thr 
+!A3K   C1E   NH1   20.0     101.0  ! lys 
+!A3R   C1E   NH1   20.0      99.0  ! arg 
+!A4H   C1E   NH1   20.0     102.0  ! his 
+!A1F   C1E   NH1   20.0      95.0  ! phe 
+!A1Y   C1E   NH1   20.0      95.0  ! tyr 
+!A1W   C1E   NH1   20.0     100.0  ! trp 
+!!## for pSer and pThr                     
+!P2S   C1E   NH1   20.0     110.3  ! pSer  
+!P2T   C1E   NH1   20.0      98.4  ! pThr  
 
 !CA-CB-CC (and/or CA-CB-CD) angle in amino acid
 C1E   A3K   QdK   20.0     165.0  ! lys
@@ -270,9 +270,9 @@ C1E   X     X     P4Q    35.00    0      1.0   ! gln
 C1E   X     X     QaE    30.00    0     31.0   ! glu
 C1E   X     X     P1C    30.00    0     25.3   ! cys
 C1E   X     X     P1S    30.00    0     28.0   ! ser
-C1E   X     X     P1T    15.00    0     30.0   ! thr
-C1E   X     X     A3K    20.00    0     20.0   ! lys
-C1E   X     X     A3R    20.00    0     20.0   ! arg
+C1E   X     X     P1T    15.00    0     37.0   ! thr
+C1E   X     X     A3K    20.00    0     25.0   ! lys
+C1E   X     X     A3R    20.00    0     25.0   ! arg
 C1E   X     X     A4H    55.00    0     29.0   ! his
 C1E   X     X     A1F    10.00    0     25.0   ! phe
 C1E   X     X     A1Y    10.00    0     25.0   ! tyr
@@ -1006,7 +1006,7 @@ C3E      0.00     -0.1500      2.1158   0.00     -0.3080       2.0158 ! ala,  A,
 A2V      0.00     -0.3000      2.7541   0.00     -0.6200       2.6541 ! val,  V,   
 A1L      0.00     -0.4500      2.9555   0.00     -0.9000       2.9555 ! leu,  L,   
 A1I      0.00     -0.4360      2.9700   0.00     -0.7720       2.5700 ! ile,  I,   
-A5M      0.00     -0.3580      2.7813   0.00     -0.6360       3.3813 ! met,  M,   
+A5M      0.00     -0.3580      2.5813   0.00     -0.6360       3.3813 ! met,  M,   
 P5N      0.00     -0.0900      2.6548   0.00     -0.3800       3.7548 ! asn,  N,   
 QaD      0.00     -0.0740      2.6066   0.00     -0.1480       3.7066 ! asp,  D,   
 P4Q      0.00     -0.1120      2.6548   0.00     -0.4040       3.6908 ! gln,  Q,   

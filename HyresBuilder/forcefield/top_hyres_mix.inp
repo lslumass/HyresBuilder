@@ -72,7 +72,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C   CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
@@ -91,7 +91,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
@@ -110,7 +110,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N 
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
@@ -129,7 +129,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N   
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
@@ -148,7 +148,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N    
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
@@ -167,7 +167,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N   
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
@@ -186,7 +186,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N  
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
@@ -205,7 +205,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N  
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
@@ -224,7 +224,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N 
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
@@ -243,7 +243,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N    
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
@@ -262,7 +262,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
@@ -282,7 +282,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB        CB   CC
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
 ANGL CA   CB   CC
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
@@ -302,7 +302,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
@@ -322,7 +322,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB        CB    CC
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
 ANGL CA   CB   CC
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
@@ -343,7 +343,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB        CB   CC
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
 ANGL CA   CB   CC
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
@@ -364,7 +364,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB        CB   CC
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
 ANGL CA   CB   CC
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
@@ -386,7 +386,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB        CB   CC        CB   CD        CC   CD
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
 ANGL CA   CB   CC         CA   CB   CD
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
@@ -408,7 +408,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB        CB   CC        CB   CD        CC   CD
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
 ANGL CA   CB   CC         CA   CB   CD
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
@@ -430,7 +430,7 @@ ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB        CB   CC        CB   CD        CC   CD
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
 ANGL CA   CB   CC         CA   CB   CD
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
@@ -455,7 +455,7 @@ BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB        CB   CC        CB   CD        CC   CD        CD   CE   
 BOND CD   CF        CE   CF 
 ANGL -C   N    H         -C   N    CA         H    N    CA
-ANGL N    CA   CB        N    CA   C          C    CA   CB
+ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
 ANGL CA   CB   CC        CA   CB   CD         CC   CD   CE
 ANGL CB   CD   CF
