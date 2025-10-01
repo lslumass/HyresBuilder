@@ -92,23 +92,23 @@ C     NH1   C3E   77.5     120.0  ! C-N-CH3 (C-ter)
 !C-CA-CB angle in amino acid
 C     C1E   C3E   90.0     111.2  ! ala
 C     C1E   A2V   80.0     117.0  ! val
-C     C1E   A1L   20.0      99.0  ! leu  
+C     C1E   A1L   10.0      99.0  ! leu  
 C     C1E   A1I   20.0     100.0  ! ile  
-C     C1E   A5M   20.0      96.0  ! met  
-C     C1E   P5N   20.0      95.0  ! asn  
-C     C1E   QaD   20.0      99.0  ! asp  
-C     C1E   P4Q   20.0     151.0  ! gln  
-C     C1E   QaE   20.0     101.0  ! glu  
-C     C1E   P1C   20.0      96.0  ! cys  
+C     C1E   A5M   10.0      96.0  ! met  
+C     C1E   P5N   10.0      95.0  ! asn  
+C     C1E   QaD   10.0      99.0  ! asp  
+C     C1E   P4Q   50.0     151.0  ! gln  
+C     C1E   QaE   10.0     101.0  ! glu  
+C     C1E   P1C   10.0      96.0  ! cys  
 C     C1E   P1S   20.0     102.0  ! ser  
-C     C1E   P1T   20.0     100.0  ! thr  
-C     C1E   A3K   20.0     100.0  ! lys  
+C     C1E   P1T   10.0     100.0  ! thr  
+C     C1E   A3K   15.0     100.0  ! lys  
 C     C1E   A3R   20.0      98.0  ! arg  
-C     C1E   A4H   20.0     101.0  ! his  
-C     C1E   A1F   20.0      92.0  ! phe  
-C     C1E   A1Y   20.0      92.0  ! tyr  
-C     C1E   A1W   20.0     103.0  ! trp  
-C     C1E   A2P   20.0     115.0  ! pro   change from 121.7 to 115
+C     C1E   A4H   15.0     101.0  ! his  
+C     C1E   A1F   10.0      92.0  ! phe  
+C     C1E   A1Y   10.0      92.0  ! tyr  
+C     C1E   A1W   10.0     103.0  ! trp  
+C     C1E   A2P   15.0     115.0  ! pro   change from 121.7 to 115
 !## bond of C-CA-CB for pSer and pThr    
 C     C1E   P2S   20.0     112.3  ! pSer 
 C     C1E   P2T   20.0     101.2  ! pThr 
@@ -260,24 +260,24 @@ NH1   X     X     H      45.00    0     0.0
 C     X     X     O     100.00    0     0.0
 !CA-N-C-CB improper => amino acid chirality
 C1E   X     X     C3E    55.00    0     35.3   ! ala
-C1E   X     X     A2V    55.00    0     25.0   ! val
-C1E   X     X     A1L    30.00    0     23.0   ! leu
+C1E   X     X     A2V    35.00    0     30.0   ! val
+C1E   X     X     A1L    40.00    0     23.0   ! leu
 C1E   X     X     A1I    20.00    0     20.0   ! ile
 C1E   X     X     A5M    10.00    0      4.0   ! met
-C1E   X     X     P5N    30.00    0     23.0   ! asn
-C1E   X     X     QaD    30.00    0     23.0   ! asp
-C1E   X     X     P4Q    35.00    0      1.0   ! gln
-C1E   X     X     QaE    30.00    0     31.0   ! glu
+C1E   X     X     P5N    50.00    0     23.0   ! asn
+C1E   X     X     QaD    30.00    0     25.0   ! asp
+C1E   X     X     P4Q    30.00    0      1.0   ! gln
+C1E   X     X     QaE    20.00    0     31.0   ! glu
 C1E   X     X     P1C    30.00    0     25.3   ! cys
 C1E   X     X     P1S    30.00    0     28.0   ! ser
-C1E   X     X     P1T    15.00    0     37.0   ! thr
-C1E   X     X     A3K    20.00    0     25.0   ! lys
+C1E   X     X     P1T    15.00    0     40.0   ! thr
+C1E   X     X     A3K    15.00    0     25.0   ! lys
 C1E   X     X     A3R    20.00    0     25.0   ! arg
 C1E   X     X     A4H    55.00    0     29.0   ! his
-C1E   X     X     A1F    10.00    0     25.0   ! phe
-C1E   X     X     A1Y    10.00    0     25.0   ! tyr
+C1E   X     X     A1F    20.00    0     25.0   ! phe
+C1E   X     X     A1Y    20.00    0     25.0   ! tyr
 C1E   X     X     A1W    55.00    0     29.0   ! trp
-C1E   X     X     A2P    25.00    0     65.0   ! pro
+C1E   X     X     A2P    20.00    0     65.0   ! pro
 !## for pSer                                         
 C1E   X     X     P2S    55.00    0     35.3   ! pSer
 !## for pThr                                         
