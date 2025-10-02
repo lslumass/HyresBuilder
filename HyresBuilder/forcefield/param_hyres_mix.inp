@@ -107,7 +107,7 @@ C     C1E   A3R   20.0      98.0  ! arg, R
 C     C1E   A4H   15.0     101.0  ! his, H
 C     C1E   A1F   15.0      92.0  ! phe, F
 C     C1E   A1Y   10.0      92.0  ! tyr, Y
-C     C1E   A1W   10.0     103.0  ! trp, T
+C     C1E   A1W   15.0     103.0  ! trp, W
 C     C1E   A2P   15.0     115.0  ! pro, P
 !## bond of C-CA-CB for pSer and pThr    
 C     C1E   P2S   20.0     112.3  ! pSer 
