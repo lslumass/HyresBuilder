@@ -247,7 +247,7 @@ def setup2(args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picose
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     # Mg-P interaction
     lmd = args.Mg
-    print(f'er: {er_t}, dh: {dh}, lmd: {lmd}')
+    print(f'er: {er}, dh: {dh}, lmd: {lmd}')
     ffs = {
         'temp': T,                                                  # Temperature
         'lmd': lmd,                                                  # Charge scaling factor of P-
