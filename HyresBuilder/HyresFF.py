@@ -93,7 +93,7 @@ def createSystem(psf, system, ffs):
     #       'THR': 120.0, 'ASN': 140.0, 'CYS': 138.0, 'ASP': 138.0, 'HIS': 128.0}
     
     DWB = CustomAngleForce("0.5*kDWB*((theta-theta1)^2*(theta-theta2)^2 + 0.1*exp(-(theta-mid)^2/(2*deta^2))); mid=(theta1+theta2)/2; deta=(theta2-theta1)/5;")
-    DWB.setName('Double-Well C/N-CA-CB AngleForce')
+    DWB.setName('Double-Well C-CA-CB AngleForce')
     DWB.addPerAngleParameter("kDWB")
     DWB.addPerAngleParameter("theta1")
     DWB.addPerAngleParameter("theta2")
@@ -106,7 +106,7 @@ def createSystem(psf, system, ffs):
         #    DWB.addAngle(ang[0], ang[1], ang[2], [ang[4], ang[3], np.radians(NAB[resname])])
         else:
             continue
-    system.addForce(DWB)
+    #system.addForce(DWB)
 
     # 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce
     dh = ffs['dh']
