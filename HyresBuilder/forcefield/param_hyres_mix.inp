@@ -93,7 +93,7 @@ C     NH1   C3E   77.5     120.0  ! C-N-CH3 (C-ter)
 C     C1E   C3E   90.0     111.2  ! ala, A
 C     C1E   A2V   80.0     117.0  ! val, V
 C     C1E   A1L   10.0      99.0  ! leu, L 
-C     C1E   A1I   20.0     100.0  ! ile, I
+C     C1E   A1I   15.0     100.0  ! ile, I
 C     C1E   A5M   10.0      96.0  ! met, M
 C     C1E   P5N   15.0      95.0  ! asn, N
 C     C1E   QaD   15.0      99.0  ! asp, D
