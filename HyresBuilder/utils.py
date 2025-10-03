@@ -373,7 +373,7 @@ def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecon
         'dh': dh,                                                  # Debye Huckel screening length
         'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
         'er': er,                                                  # relative dielectric constant
-        'ion_type': args.ion,                                      # ion type, K or Na
+        'ion_type': args.ion*unit.kilocalorie_per_mole,                                      # ion type, K or Na
     }
 
     # 4. load force field files
