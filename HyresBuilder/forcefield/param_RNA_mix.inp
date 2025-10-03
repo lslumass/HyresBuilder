@@ -34,28 +34,28 @@ RU2   RU3   150.0      2.99   ! U: NB-NC
 
 THETAS
 !angles in backbone
-RS1   RP    RS1   10.0     105.0
-RP    RS1   RP    10.0      95.0
-RP    RS1   RS2    8.0     112.0
-RS1   RS2   RP    20.0      55.0
-RS1   RS2   RA1    8.0     136.0  ! C1-C2-NA for A
-RS1   RS2   RG1    8.0     136.0  ! C1-C2-NA for G
-RS1   RS2   RC1   10.0     115.0  ! C1-C2-NA for C
-RS1   RS2   RU1   10.0     115.0  ! C1-C2-NA for U
-RS2   RA1   RA2   70.0     127.0  ! C2-NA-NB for A
-RS2   RG1   RG2   70.0     127.0  ! C2-NA-NB for G
-RS2   RA1   RA4   50.0     117.0  ! C2-NA-ND for A
-RS2   RG1   RG4   40.0     116.0  ! C2-NA-ND for G
-RS2   RC1   RC3   90.0      59.0  ! C2-NA-NC for C
-RS2   RU1   RU3   90.0      59.0  ! C2-NA-NC for U
+RS1   RP    RS1    5.0     105.0
+RP    RS1   RP     5.0      95.0
+RP    RS1   RS2    4.0     112.0
+RS1   RS2   RP    10.0      55.0
+RS1   RS2   RA1    4.0     136.0  ! C1-C2-NA for A
+RS1   RS2   RG1    4.0     136.0  ! C1-C2-NA for G
+RS1   RS2   RC1    5.0     115.0  ! C1-C2-NA for C
+RS1   RS2   RU1    5.0     115.0  ! C1-C2-NA for U
+RS2   RA1   RA2   35.0     127.0  ! C2-NA-NB for A
+RS2   RG1   RG2   35.0     127.0  ! C2-NA-NB for G
+RS2   RA1   RA4   25.0     117.0  ! C2-NA-ND for A
+RS2   RG1   RG4   20.0     116.0  ! C2-NA-ND for G
+RS2   RC1   RC3   45.0      59.0  ! C2-NA-NC for C
+RS2   RU1   RU3   45.0      59.0  ! C2-NA-NC for U
 ! internal angle for A:
-RA1   RA2   RA3   40.0      88.0  !  NA-NB-NC
-RA2   RA3   RA4   40.0      72.0  !  NB-NC-ND
-RA3   RA4   RA1   40.0      84.0  !  NC-ND-NA
+RA1   RA2   RA3   20.0      88.0  !  NA-NB-NC
+RA2   RA3   RA4   20.0      72.0  !  NB-NC-ND
+RA3   RA4   RA1   20.0      84.0  !  NC-ND-NA
 ! internal angle for G:
-RG1   RG2   RG3   40.0      88.0  !  NA-NB-NC
-RG2   RG3   RG4   40.0      83.0  !  NB-NC-ND
-RG3   RG4   RG1   40.0      72.0  !  NC-ND-NA
+RG1   RG2   RG3   20.0      88.0  !  NA-NB-NC
+RG2   RG3   RG4   20.0      83.0  !  NB-NC-ND
+RG3   RG4   RG1   20.0      72.0  !  NC-ND-NA
 
 
 PHI
@@ -120,7 +120,7 @@ RA4      0.00     -0.11583      1.8215   0.00     -0.11583     1.8215 !!        
 
 RG1      0.00     -0.11583      1.8954   0.00     -0.11583     1.8954 !!                         1.9949 !
 RG2      0.00     -0.13244      1.9309   0.00     -0.13244     1.9309 !!                         2.2566 !
-RG3      0.00     -0.14905      1.9241   0.00     -0.14905     1.9241 !!                         2.1379 !
+RG3      0.00     -0.14905      1.9241   0.00     -0.14905     1.9241 !!                G         2.1379 !
 RG4      0.00     -0.14905      2.0089   0.00     -0.14905     2.0089 !!                         2.2321 !
 
 RC1      0.00     -0.11583      2.0452   0.00     -0.11583     2.0452 !!                         2.2724 !
