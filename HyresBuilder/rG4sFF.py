@@ -105,7 +105,7 @@ def rG4sSystem(psf, system, ffs):
     print('\n# add RNA base stacking force')
     # base stakcing and paring
     # define relative strength of base pairing and stacking
-    eps_base = ffs['eps_base']
+    eps_base = 3.2*unit.kilocalorie_per_mole
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.1, 'GG':1.1, 'GC':0.8, 'GU':0.8,
               'CA':0.6, 'CG':0.6, 'CC':0.5, 'CU':0.4, 'UA':0.5, 'UG':0.5, 'UC':0.4, 'UU':0.4,
               'A-U':0.89, 'C-G':1.14}
