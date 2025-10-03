@@ -12,7 +12,7 @@ import numpy as np
 
 
 
-def createSystem(psf, system, ffs):
+def buildSystem(psf, system, ffs):
     """
     Constructs a mixed protein-RNA force field system.
     
