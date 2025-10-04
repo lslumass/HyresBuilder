@@ -17,6 +17,9 @@ def load_ff(model):
     elif model == 'DNA':
         path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_DNA_mix.inp")
         path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_DNA_mix.inp")
+    elif model == 'rG4s':
+        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_RNA_mix.inp")
+        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_rG4s.inp")
     elif model == 'ATP':
         path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_ATP.inp")
         path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_ATP.inp")
@@ -377,7 +380,7 @@ def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecon
     }
 
     # 4. load force field files
-    top_RNA, param_RNA = load_ff('RNA')
+    top_RNA, param_RNA = load_ff('rG4s')
     params = CharmmParameterSet(top_RNA, param_RNA)
 
     print('\n################## load coordinates and topology ###################')
