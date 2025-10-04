@@ -1063,7 +1063,6 @@ P3T      0.00     -0.0700      2.2500   0.00     -0.0700       2.2500 !
 
 NBFIX
 C        C        -0.0180      4.2000        ! setting for the same framework of RNA
-C        O        -0.0300      3.7000
-
+!C        O        -0.0300      3.7000
 
 END
