@@ -42,8 +42,8 @@ RS1   RS2   RA1    8.0     136.0  ! C1-C2-NA for A
 RS1   RS2   RG1    8.0     136.0  ! C1-C2-NA for G
 RS1   RS2   RC1   10.0     115.0  ! C1-C2-NA for C
 RS1   RS2   RU1   10.0     115.0  ! C1-C2-NA for U
-RS2   RA1   RA2   50.0     127.0  ! C2-NA-NB for A
-RS2   RG1   RG2   50.0     127.0  ! C2-NA-NB for G
+RS2   RA1   RA2   70.0     127.0  ! C2-NA-NB for A
+RS2   RG1   RG2   70.0     127.0  ! C2-NA-NB for G
 RS2   RA1   RA4   50.0     117.0  ! C2-NA-ND for A
 RS2   RG1   RG4   40.0     116.0  ! C2-NA-ND for G
 RS2   RC1   RC3   90.0      59.0  ! C2-NA-NC for C
