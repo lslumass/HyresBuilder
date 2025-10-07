@@ -1064,7 +1064,7 @@ P3T      0.00     -0.0700      2.2500   0.00     -0.0700       2.2500 !
 NBFIX
 C        C        -0.0180      4.2000        ! setting for the same framework of RNA
 
-C        O        -0.0250      3.7000
+C        O        -0.0280      3.7000
 QdR      QdR      -0.6000      5.0726
 QdR      A3F      -0.6000      4.8651
 QdR      P1Y      -0.7000      4.9887
