@@ -161,7 +161,7 @@ def setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gp
 
     # 6. construct force field
     print('\n################## build system ###################')
-    system = createSystem(psf, system, ffs)
+    system = buildSystem(psf, system, ffs)
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
@@ -279,7 +279,7 @@ def setup2(args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picose
 
     # 6. construct force field
     print('\n################## build system ###################')
-    system = createSystem(psf, system, ffs)
+    system = buildSystem(psf, system, ffs)
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
