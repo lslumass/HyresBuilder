@@ -167,7 +167,7 @@ def buildSystem(psf, system, ffs):
     
     if len(Ns) != 0:
         sigma_hb = 0.29*unit.nanometer
-        eps_hb = 2.2*unit.kilocalorie_per_mole
+        eps_hb = 2.5*unit.kilocalorie_per_mole
         formula = f"""epsilon*(5*(sigma/r)^12-6*(sigma/r)^10)*step(cos3)*cos3;
                 r=distance(a1,d1); cos3=-cos(phi+0.52)^3; phi=angle(a1,d2,d1);
                 sigma = {sigma_hb.value_in_unit(unit.nanometer)}; epsilon = {eps_hb.value_in_unit(unit.kilojoule_per_mole)};
