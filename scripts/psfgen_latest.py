@@ -32,6 +32,9 @@ def set_terminus(gen, segid, charge_status):
             gen.set_charge(segid, nter, "N", 1.00)
         elif charge_status == 'CT':
             gen.set_charge(segid, cter, "O", -1.00)
+        elif charge_status == 'positive':
+            gen.set_charge(segid, nter, "N", -1.00)
+            gen.set_charge(segid, cter, "O", -1.00)
         else:
             print("Error: Only 'neutral', 'charged', 'NT', and 'CT' charge status are supported.")
             exit(1)
@@ -45,8 +48,8 @@ def main():
                         help="Number of copies for each pdb; it should have the same length as the given pdb list specified in the '-i' argument")
     parser.add_argument("-m", "--molecule_type", type=str, default=['P'], nargs="+",
                         help="select from 'P', 'R', 'D', 'C', 'Mg' for protein, RNA, DNA, complex, Magnesium, respectively")
-    parser.add_argument("-t", "--ter", choices=['neutral', 'charged', 'NT', 'CT'], 
-                        help="Terminal charged status (choose from ['neutral', 'charged', 'NT', 'CT'])", default='neutral')
+    parser.add_argument("-t", "--ter", choices=['neutral', 'charged', 'NT', 'CT', 'positive'], 
+                        help="Terminal charged status (choose from ['neutral', 'charged', 'NT', 'CT', 'positive'])", default='neutral')
     args = parser.parse_args()
    
     pdb_list = args.input_pdb_files
