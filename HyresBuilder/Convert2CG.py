@@ -1,8 +1,27 @@
 import MDAnalysis as mda
 from psfgen import PsfGen
 import os
+from .utils import load_ff
 
 
+def set_terminus(gen, segid, charge_status):
+    # re-set the charge status of terminus
+    if segid.startswith("P"):
+        nter, cter = gen.get_resids(segid)[0], gen.get_resids(segid)[-1]
+        if charge_status == 'charged':
+            gen.set_charge(segid, nter, "N", 1.00)
+            gen.set_charge(segid, cter, "O", -1.00)
+        elif charge_status == 'NT':
+            gen.set_charge(segid, nter, "N", 1.00)
+        elif charge_status == 'CT':
+            gen.set_charge(segid, cter, "O", -1.00)
+        elif charge_status == 'positive':
+            gen.set_charge(segid, nter, "N", -1.00)
+            gen.set_charge(segid, cter, "O", -1.00)
+        else:
+            print("Error: Only 'neutral', 'charged', 'NT', and 'CT' charge status are supported.")
+            exit(1)
+            
 def at2hyres(pdb_in, pdb_out):
     '''
     at2hyres: convert all-atom protein to hyres cg pdb
@@ -284,18 +303,37 @@ def at2icon(pdb_in, pdb_out):
        print('END', file=f)
    print('At2iCon conversion done, output written to', pdb_out)
 
-def at2cg(pdb_in, pdb_out):
+def at2cg(pdb_in, pdb_out, charge_status='neutral'):
    '''
     at2cg: convert all-atom pdb to cg pdb, either hyres for protein or iConRNA for RNA
     in the input pdb, protein segid should start with "P", RNA segid should start with "R"
     pdb_in: input all-atom pdb file
     pdb_out: output cg pdb file
+   charge_status: charge status of protein terminus, only 'neutral' and 'charged' are supported, default is 'neutral'
    '''
+   # set up psfgen
+   # load topology files
+   RNA_topology, _ = load_ff('RNA')
+   protein_topology, _ = load_ff('Protein')
+   gen = PsfGen()
+   gen.read_topology(RNA_topology)
+   gen.read_topology(protein_topology)
+
+   # convert pdb
    u = mda.Universe(pdb_in)
    segids = u.residues.segments.segids
    segnum = len(segids)
-   if segnum > 1:
-       gen = PsfGen()
+   if segnum == 1:
+         if segids[0].startswith("P"):
+            at2hyres(pdb_in, pdb_out)
+            gen.add_segment(segid=segid, pdbfile=pdb_out, auto_angles=False)
+         elif segids[0].startswith("R"):
+            at2icon(pdb_in, pdb_out)
+            gen.add_segment(segid=segid, pdbfile=pdb_out, auto_angles=False, auto_dihedrals=False)
+         else:
+            print("Error: Only protein or RNA is supported.")
+            exit(1)
+   elif segnum > 1:
        for i, segid in enumerate(segids):
            sel = u.select_atoms(f"segid {segid}")
            tmp_pdb = f'tmp_{segid}.pdb'
@@ -303,24 +341,28 @@ def at2cg(pdb_in, pdb_out):
            sel.atoms.write(tmp_pdb)
            if segid.startswith("P"):
                at2hyres(tmp_pdb, tmp_cg_pdb)
-               gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb)
+               gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False)
            elif segid.startswith("R"):
                at2icon(tmp_pdb, tmp_cg_pdb)
-               gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb)
+               gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False, auto_dihedrals=False)
            else:
                print("Error: Only protein-protein or protein-RNA complex is supported.")
                exit(1)
        gen.write_pdb(pdb_out)
-       os.system("rm -r tmp_*.pdb")
        print("Complex conversion done, output written to", pdb_out)
-   elif segnum == 1:
-         if segids[0].startswith("P"):
-            at2hyres(pdb_in, pdb_out)
-         elif segids[0].startswith("R"):
-            at2icon(pdb_in, pdb_out)
-         else:
-            print("Error: Only protein or RNA is supported.")
-            exit(1)
    else:
        print("Error: No segment found.")
        exit(1)
+   
+   #e-set the charge status of terminus
+   for segid in gen.get_segids():
+       if charge_status != "neutral":
+           set_terminus(gen, segid, charge_status)    
+   
+   # write psf file
+   gen.write_psf(filename=f'{pdb_out[:-4]}.psf')
+   print("PSF file written to", f'{pdb_out[:-4]}.psf')
+   # clean up temporary files
+   for file in os.listdir():
+       if file.startswith("tmp_") and file.endswith(".pdb"):
+           os.remove(file)
