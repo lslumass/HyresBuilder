@@ -342,11 +342,11 @@ def at2cg(pdb_in, pdb_out, charge_status='neutral'):
           if segid.startswith("P"):
               at2hyres(tmp_pdb, tmp_cg_pdb)
               gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False)
-              gen.read_coords(segid=segid, pdbfile=tmp_cg_pdb)
+              gen.read_coords(segid=segid, filename=tmp_cg_pdb)
           elif segid.startswith("R"):
               at2icon(tmp_pdb, tmp_cg_pdb)
               gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False, auto_dihedrals=False)
-              gen.read_coords(segid=segid, pdbfile=tmp_cg_pdb)
+              gen.read_coords(segid=segid, filename=tmp_cg_pdb)
           else:
               print("Error: Only protein-protein or protein-RNA complex is supported.")
               exit(1)
