@@ -309,7 +309,7 @@ def at2cg(pdb_in, pdb_out, charge_status='neutral'):
     in the input pdb, protein segid should start with "P", RNA segid should start with "R"
     pdb_in: input all-atom pdb file
     pdb_out: output cg pdb file
-   charge_status: charge status of protein terminus, only 'neutral' and 'charged' are supported, default is 'neutral'
+    charge_status: charge status of protein terminus, only 'neutral' and 'charged' are supported, default is 'neutral'
    '''
    # set up psfgen
    # load topology files
@@ -324,35 +324,37 @@ def at2cg(pdb_in, pdb_out, charge_status='neutral'):
    segids = u.residues.segments.segids
    segnum = len(segids)
    if segnum == 1:
-         if segids[0].startswith("P"):
-            at2hyres(pdb_in, pdb_out)
-            gen.add_segment(segid=segid, pdbfile=pdb_out, auto_angles=False)
-         elif segids[0].startswith("R"):
-            at2icon(pdb_in, pdb_out)
-            gen.add_segment(segid=segid, pdbfile=pdb_out, auto_angles=False, auto_dihedrals=False)
-         else:
-            print("Error: Only protein or RNA is supported.")
-            exit(1)
+      if segids[0].startswith("P"):
+         at2hyres(pdb_in, pdb_out)
+         gen.add_segment(segid=segid, pdbfile=pdb_out, auto_angles=False)
+      elif segids[0].startswith("R"):
+         at2icon(pdb_in, pdb_out)
+         gen.add_segment(segid=segid, pdbfile=pdb_out, auto_angles=False, auto_dihedrals=False)
+      else:
+         print("Error: Only protein or RNA is supported.")
+         exit(1)
    elif segnum > 1:
-       for i, segid in enumerate(segids):
-           sel = u.select_atoms(f"segid {segid}")
-           tmp_pdb = f'tmp_{segid}.pdb'
-           tmp_cg_pdb = f'tmp_cg_{segid}.pdb'
-           sel.atoms.write(tmp_pdb)
-           if segid.startswith("P"):
-               at2hyres(tmp_pdb, tmp_cg_pdb)
-               gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False)
-           elif segid.startswith("R"):
-               at2icon(tmp_pdb, tmp_cg_pdb)
-               gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False, auto_dihedrals=False)
-           else:
-               print("Error: Only protein-protein or protein-RNA complex is supported.")
-               exit(1)
-       gen.write_pdb(pdb_out)
-       print("Complex conversion done, output written to", pdb_out)
+      for i, segid in enumerate(segids):
+          sel = u.select_atoms(f"segid {segid}")
+          tmp_pdb = f'tmp_{segid}.pdb'
+          tmp_cg_pdb = f'tmp_cg_{segid}.pdb'
+          sel.atoms.write(tmp_pdb)
+          if segid.startswith("P"):
+              at2hyres(tmp_pdb, tmp_cg_pdb)
+              gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False)
+              gen.read_coords(segid=segid, pdbfile=tmp_cg_pdb)
+          elif segid.startswith("R"):
+              at2icon(tmp_pdb, tmp_cg_pdb)
+              gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False, auto_dihedrals=False)
+              gen.read_coords(segid=segid, pdbfile=tmp_cg_pdb)
+          else:
+              print("Error: Only protein-protein or protein-RNA complex is supported.")
+              exit(1)
+      gen.write_pdb(pdb_out)
+      print("Complex conversion done, output written to", pdb_out)
    else:
-       print("Error: No segment found.")
-       exit(1)
+      print("Error: No segment found.")
+      exit(1)
    
    #e-set the charge status of terminus
    for segid in gen.get_segids():
