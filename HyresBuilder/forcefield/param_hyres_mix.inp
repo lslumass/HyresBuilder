@@ -1065,12 +1065,12 @@ NBFIX
 C        C        -0.0180      4.2000        ! setting for the same framework of RNA
 !C2E      C2E      -0.1200      4.4700        ! for Gly-rich 
 QdR      QdR      -1.2000      5.0726
-QdR      A3F      -0.7000      4.8651
-QdR      P1Y      -0.9000      4.9887
-QdR      A2W      -0.9000      4.6233
-QdK      A3F      -0.3500      4.6877
-QdK      P1Y      -0.4000      4.8113
-QdK      A2W      -0.4000      4.4459
+QdR      A3F      -0.6000      4.8651
+QdR      P1Y      -0.8000      4.9887
+QdR      A2W      -0.8000      4.6233
+QdK      A3F      -0.3000      4.6877
+QdK      P1Y      -0.3500      4.8113
+QdK      A2W      -0.3500      4.4459
 !# caition-pi interactions
 !QdR      A1F      -0.1800      5.1777
 !QdR      A2F      -0.1800      4.8651
