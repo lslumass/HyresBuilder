@@ -52,8 +52,20 @@ def buildSystem(psf, system, ffs):
             dihedral = force
             dihedral_index = force_index
         elif force.getName() == "CustomNonbondedForce":
+            nbfix = force
             force.setName('LJ Force w/ NBFIX')
+    print('nbforce check:')
+    print(nbforce.getCutoffDistance(), 'cutoff distance for nonbonded force')
+    print(nbforce.getSwitchingDistance(), 'switching distance for nonbonded force')
+    print(nbforce.getNonbondedMethod(), 'nonbonded method')
+    print(nbforce.getUseSwitchingFunction(), 'use switching function or not')
     
+    print('BNFIX force check:')
+    print(nbfix.getCutoffDistance(), 'cutoff distance for nonbonded force')
+    print(nbfix.getSwitchingDistance(), 'switching distance for nonbonded force')
+    print(nbfix.getNonbondedMethod(), 'nonbonded method')
+    print(nbfix.getUseSwitchingFunction(), 'use switching function or not')
+
     # get bondlist
     bondlist = []
     for bond in top.bonds():
