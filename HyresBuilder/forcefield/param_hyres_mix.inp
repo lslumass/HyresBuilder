@@ -1001,9 +1001,8 @@ C     NH1   C2E   C     NH1   C2E   C     N   24
 
 
 !NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
-!     CUTNB 16.0  CTOFNB 18.0  CTONNB 16.0
-NONBONDED nbxmod  5 atom cdiel fshift vatom vdistance vfswitch -
-cutnb 14.0 ctofnb 12.0 ctonnb 10.0 eps 1.0 e14fac 1.0 wmin 1.5 
+!     CUTNB 18.0  CTOFNB 18.0  CTONNB 16.0
+
 !charmm19 origin     Emin      
 !                 (kcal/mol)
 !H        0.00     -0.0498   

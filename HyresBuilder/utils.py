@@ -157,14 +157,14 @@ def setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gp
     psf = CharmmPsfFile(psf_file)
     top = psf.topology
     if ensemble == 'non':
-        system = psf.createSystem(params, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,)
-#                                  nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
+        system = psf.createSystem(params, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,
+                                  nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
     else:
         psf.setBox(lx, ly, lz)
         top.setPeriodicBoxVectors((a, b, c))
         top.setUnitCellDimensions((lx, ly,lz))
-        system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds,)
-#                                  nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
+        system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds,
+                                  nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
         system.setDefaultPeriodicBoxVectors(a, b, c)
 
     # 6. construct force field
