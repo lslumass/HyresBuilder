@@ -1065,9 +1065,9 @@ NBFIX
 C        C        -0.0153      4.2000        ! setting for the same framework of RNA
 
 QdR      QdR      -1.2000      5.0726
-QdR      A3F      -0.3500      4.8651
-QdR      P1Y      -0.4500      4.9887
-QdR      A2W      -0.4500      4.6233
+QdR      A3F      -0.4000      4.8651
+QdR      P1Y      -0.5000      4.9887
+QdR      A2W      -0.5000      4.6233
 
 
 END
