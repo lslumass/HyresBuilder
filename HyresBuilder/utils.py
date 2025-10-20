@@ -127,11 +127,11 @@ def setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gp
         exit(1)
     
     # 3. force field parameters
-    cutoff = 1.8*unit.nanometer                                 # nonbonded cutoff
-    d_switch = 1.6*unit.nanometer                               # switch function starting distance
+    cutoff = 1.2*unit.nanometer                                 # nonbonded cutoff
+    d_switch = 1.1*unit.nanometer                               # switch function starting distance
     temperature = T*unit.kelvin 
     er_t = cal_er(T)                                                   # relative electric constant
-    er = er_t*60.0/80.0
+    er = er_t*60.0/77.6
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     # Mg-P interaction
     lmd = nMg2lmd(c_Mg, T, RNA='rA')
@@ -249,11 +249,11 @@ def setup2(args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picose
         exit(1)
     
     # 3. force field parameters
-    cutoff = 1.8*unit.nanometer                                 # nonbonded cutoff
-    d_switch = 1.6*unit.nanometer                               # switch function starting distance
+    cutoff = 1.2*unit.nanometer                                 # nonbonded cutoff
+    d_switch = 1.1*unit.nanometer                               # switch function starting distance
     temperature = T*unit.kelvin 
     er_t = cal_er(T)                                                   # relative electric constant
-    er = er_t*60.0/80.0
+    er = er_t*60.0/77.6
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     # Mg-P interaction
     lmd = args.Mg
@@ -371,11 +371,11 @@ def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecon
         exit(1)
     
     # 3. force field parameters
-    cutoff = 1.8*unit.nanometer                                 # nonbonded cutoff
-    d_switch = 1.6*unit.nanometer                               # switch function starting distance
+    cutoff = 1.2*unit.nanometer                                 # nonbonded cutoff
+    d_switch = 1.1*unit.nanometer                               # switch function starting distance
     temperature = T*unit.kelvin 
     er_t = cal_er(T)                                                   # relative electric constant
-    er = er_t*60.0/80.0
+    er = er_t*60.0/77.6
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     # Mg-P interaction
     lmd = nMg2lmd(c_Mg, T, RNA='rA')
