@@ -172,7 +172,7 @@ def buildSystem(psf, system, ffs):
     # relative strength of base pairing and stacking
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.1, 'GG':1.1, 'GC':0.8, 'GU':0.8,       # stacking
               'CA':0.6, 'CG':0.6, 'CC':0.5, 'CU':0.4, 'UA':0.5, 'UG':0.5, 'UC':0.4, 'UU':0.4,       # stacking
-              'A-U':0.89, 'C-G':1.14}   # pairing
+              'A-U':0.89, 'C-G':1.14, 'G-U':0.76, 'general':0.76}   # pairing
     # optimal stacking distance
     r0s = {'AA':0.35, 'AG':0.35, 'GA':0.35, 'GG':0.35, 'AC':0.38, 'AU':0.38, 'GC':0.38, 'GU':0.38,
            'CA':0.40, 'CG':0.40, 'UA':0.40, 'UG':0.40, 'CC':0.43, 'CU':0.43, 'UC':0.43, 'UU':0.43}
@@ -296,6 +296,29 @@ def buildSystem(psf, system, ffs):
                 pairCG.addDonor(c_b[idx], c_c[idx], c_a[idx])
             system.addForce(pairCG)
             print(pairCG.getNumAcceptors(), pairCG.getNumDonors(), 'CG')
+
+        # add G-U pair through CustomHbondForce
+        eps_GU = eps_base*scales['G-U']
+        r_gu = 0.35*unit.nanometer
+
+        if num_G != 0 and num_U !=0:
+            formula = f"""eps_GU*(5.0*(r_gu/r)^12-6.0*(r_gu/r)^10)*step_phi; r=distance(a1,d1);
+                        step_phi=step(cos_phi)*cos_phi; cos_phi=-cos(phi)^5; phi=angle(d1,a1,a2);
+                        eps_GU={eps_GU.value_in_unit(unit.kilojoule_per_mole)};
+                        r_gu={r_gu.value_in_unit(unit.nanometer)}
+                      """
+            pairGU = CustomHbondForce(formula)
+            pairGU.setName('GUpairForce')
+            pairGU.setNonbondedMethod(nbforce.getNonbondedMethod())
+            pairGU.setCutoffDistance(0.65*unit.nanometers)
+
+            for idx in range(len(g_c)):
+                pairGU.addAcceptor(g_c[idx], g_b[idx], -1)
+            for idx in range(len(u_b)):
+                pairGU.addDonor(u_b[idx], -1, -1)
+            system.addForce(pairGU)
+            print(pairGU.getNumAcceptors(), pairGU.getNumDonors(), 'GU')
+
    
     # 8. Delete the NonbondedForce and HarmonicAngleForce
     system.removeForce(nbforce_index)
