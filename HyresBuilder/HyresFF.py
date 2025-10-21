@@ -171,7 +171,7 @@ def buildSystem(psf, system, ffs):
     eps_base = 3.4*unit.kilocalorie_per_mole
     # relative strength of base pairing and stacking
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.1, 'GG':1.1, 'GC':0.8, 'GU':0.8,       # stacking
-              'CA':0.6, 'CG':0.6, 'CC':0.5, 'CU':0.4, 'UA':0.5, 'UG':0.5, 'UC':0.4, 'UU':0.2,       # stacking
+              'CA':0.6, 'CG':0.6, 'CC':0.5, 'CU':0.4, 'UA':0.5, 'UG':0.5, 'UC':0.4, 'UU':0.1,       # stacking
               'A-U':0.89, 'C-G':1.14, 'G-U':0.76, 'general':0.76}   # pairing
     # optimal stacking distance
     r0s = {'AA':0.35, 'AG':0.35, 'GA':0.35, 'GG':0.35, 'AC':0.38, 'AU':0.38, 'GC':0.38, 'GU':0.38,
