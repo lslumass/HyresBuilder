@@ -1052,11 +1052,12 @@ A4W      0.00     -0.1108      2.3292   0.00     -0.1680       2.6292 ! trp,
 
 NBFIX
 C        C        -0.0163      4.2000        ! setting for the same framework of RNA
+C        O        -0.0250      3.7000
 
-!QdR      QdR      -1.2000      5.0726
-QdR      A3F      -0.6000      4.8651
-QdR      P1Y      -0.8000      4.9887
-QdR      A2W      -0.8000      4.6233
+!# cation-pi interactions
+QdR      A3F      -0.5000      4.8651
+QdR      P1Y      -0.7000      4.9887
+QdR      A2W      -0.7000      4.6233
 !QdK      A3F      -0.2000      4.6877
 !QdK      P1Y      -0.4000      4.8113
 !QdK      A2W      -0.4000      4.4459
