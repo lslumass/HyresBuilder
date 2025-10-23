@@ -7,6 +7,10 @@ pdb: openmm.app.PDBFile
 residue_list: list of residue index to be restrained
 """
 
+from openmm.unit import *
+from openmm.app import *
+from openmm import *
+
 
 def posres_CA(system, pdb, residue_list=None):
     # add restraint
