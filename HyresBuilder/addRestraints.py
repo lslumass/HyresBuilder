@@ -16,12 +16,13 @@ def posres_CA(system, pdb, residue_list=None):
     # add restraint
     ### set position restraints CA atoms
     restraint = CustomExternalForce('k*((x-x0)^2+(y-y0)^2+(z-z0)^2)')
+    restraint.setName("Ca_position_restraint")
     restraint.addGlobalParameter('k', 200.0*kilojoule_per_mole/unit.nanometer)
     restraint.addPerParticleParameter('x0')
     restraint.addPerParticleParameter('y0')
     restraint.addPerParticleParameter('z0')
 
     for atom in pdb.topology.atoms():
-        if atom.residue.index in residue_list and atom.name == 'CA':
+        if atom.residue.id in residue_list and atom.name == 'CA':
             restraint.addParticle(atom.index, pdb.positions[atom.index])
     system.addForce(restraint)
