@@ -23,6 +23,7 @@ def posres_CA(system, pdb, residue_list=None):
     restraint.addPerParticleParameter('z0')
 
     for atom in pdb.topology.atoms():
-        if atom.residue.id in residue_list and atom.name == 'CA':
+        resid, name = int(atom.residue.id), atom.name
+        if resid in residue_list and name == 'CA':
             restraint.addParticle(atom.index, pdb.positions[atom.index])
     system.addForce(restraint)
