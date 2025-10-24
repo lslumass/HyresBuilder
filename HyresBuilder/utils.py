@@ -151,12 +151,14 @@ def setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gp
     psf = CharmmPsfFile(psf_file)
     top = psf.topology
     if ensemble == 'non':
-        system = psf.createSystem(params, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds)
+        system = psf.createSystem(params, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,
+                                  nonbondedCutoff=1.2*unit.nanometer, switchDistance=1.1*unit.nanometer)
     else:
         psf.setBox(lx, ly, lz)
         top.setPeriodicBoxVectors((a, b, c))
         top.setUnitCellDimensions((lx, ly,lz))
-        system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds)
+        system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds,
+                                  nonbondedCutoff=1.2*unit.nanometer, switchDistance=1.1*unit.nanometer)
         system.setDefaultPeriodicBoxVectors(a, b, c)
 
     # 6. construct force field
@@ -269,12 +271,14 @@ def setup2(args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picose
     psf = CharmmPsfFile(psf_file)
     top = psf.topology
     if ensemble == 'non':
-        system = psf.createSystem(params, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds)
+        system = psf.createSystem(params, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,
+                                  nonbondedCutoff=1.2*unit.nanometer, switchDistance=1.1*unit.nanometer)
     else:
         psf.setBox(lx, ly, lz)
         top.setPeriodicBoxVectors((a, b, c))
         top.setUnitCellDimensions((lx, ly,lz))
-        system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds)
+        system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds,
+                                  nonbondedCutoff=1.2*unit.nanometer, switchDistance=1.1*unit.nanometer)
         system.setDefaultPeriodicBoxVectors(a, b, c)
 
     # 6. construct force field
