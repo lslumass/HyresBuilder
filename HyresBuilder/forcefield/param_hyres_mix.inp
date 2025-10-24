@@ -282,24 +282,24 @@ NH1   X     X     H      45.00    0     0.0
 C     X     X     O     100.00    0     0.0
 !CA-N-C-CB improper => amino acid chirality
 C1E   X     X     C3E    55.00    0     35.3   ! ala
-C1E   X     X     A2V    35.00    0     30.0   ! val
-C1E   X     X     A1L    40.00    0     23.0   ! leu
-C1E   X     X     A1I    20.00    0     20.0   ! ile
-C1E   X     X     A5M    15.00    0      4.0   ! met
-C1E   X     X     P5N    50.00    0     25.0   ! asn
-C1E   X     X     QaD    30.00    0     25.0   ! asp
-C1E   X     X     P4Q    30.00    0      1.0   ! gln
-C1E   X     X     QaE    20.00    0     31.0   ! glu
-C1E   X     X     P1C    30.00    0     25.3   ! cys
-C1E   X     X     P1S    30.00    0     28.0   ! ser
-C1E   X     X     P1T    15.00    0     40.0   ! thr
-C1E   X     X     A3K    15.00    0     25.0   ! lys
-C1E   X     X     A3R    20.00    0     25.0   ! arg
-C1E   X     X     A4H    55.00    0     29.0   ! his
-C1E   X     X     A1F    20.00    0     25.0   ! phe
-C1E   X     X     A1Y    15.00    0     28.0   ! tyr
-C1E   X     X     A1W    55.00    0     29.0   ! trp
-C1E   X     X     A2P    20.00    0     65.0   ! pro
+C1E   X     X     A2V    55.00    0     35.3   ! val
+C1E   X     X     A1L    55.00    0     35.3   ! leu
+C1E   X     X     A1I    55.00    0     35.3   ! ile
+C1E   X     X     A5M    55.00    0     35.3   ! met
+C1E   X     X     P5N    55.00    0     35.3   ! asn
+C1E   X     X     QaD    55.00    0     35.3   ! asp
+C1E   X     X     P4Q    55.00    0     35.3   ! gln
+C1E   X     X     QaE    55.00    0     35.3   ! glu
+C1E   X     X     P1C    55.00    0     35.3   ! cys
+C1E   X     X     P1S    55.00    0     35.3   ! ser
+C1E   X     X     P1T    55.00    0     35.3   ! thr
+C1E   X     X     A3K    55.00    0     35.3   ! lys
+C1E   X     X     A3R    55.00    0     35.3   ! arg
+C1E   X     X     A4H    55.00    0     35.3   ! his
+C1E   X     X     A1F    55.00    0     35.3   ! phe
+C1E   X     X     A1Y    55.00    0     35.3   ! tyr
+C1E   X     X     A1W    55.00    0     35.3   ! trp
+C1E   X     X     A2P    55.00    0     35.3   ! pro
 
 !## for pSer                                         
 C1E   X     X     P2S    55.00    0     35.3   ! pSer
