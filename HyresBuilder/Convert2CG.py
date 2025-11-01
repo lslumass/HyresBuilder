@@ -310,6 +310,8 @@ def at2cg(pdb_in, pdb_out, charge_status='neutral'):
     pdb_in: input all-atom pdb file
     pdb_out: output cg pdb file
     charge_status: charge status of protein terminus, only 'neutral' and 'charged' are supported, default is 'neutral'
+
+    output: CG pdb file and psf file
    '''
    # set up psfgen
    # load topology files
@@ -356,7 +358,7 @@ def at2cg(pdb_in, pdb_out, charge_status='neutral'):
       print("Error: No segment found.")
       exit(1)
    
-   #e-set the charge status of terminus
+   #re-set the charge status of terminus
    for segid in gen.get_segids():
        if charge_status != "neutral":
            set_terminus(gen, segid, charge_status)    
@@ -368,3 +370,24 @@ def at2cg(pdb_in, pdb_out, charge_status='neutral'):
    for file in os.listdir():
        if file.startswith("tmp_") and file.endswith(".pdb"):
            os.remove(file)
+
+
+# Command-line interface
+def main():
+    """Command-line interface for Convert2CG."""
+    import argparse
+    
+    parser = argparse.ArgumentParser(
+        description='Convert2CG: All-atom to HyRes/iConRNA converting'
+    )
+    parser.add_argument('aa', help='Input pdb file')
+    parser.add_argument('cg', help='Output pdb file, will be used as psf filename')
+    parser.add_argument('--terminal', '-t', type=str, default='neutral', help='Charged status of terminus: neutral, charged, NT, and CT')
+    
+    args = parser.parse_args()
+
+    # convert
+    at2cg(args.aa, args.cg, terminal=args.terminal)
+
+if __name__ == '__main__':
+    main()

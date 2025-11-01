@@ -331,7 +331,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(
-        description='HyresBuilder: Ultra-fast HyRes to all-atom backmapping'
+        description='Backmap: Ultra-fast HyRes to all-atom backmapping'
     )
     
     parser.add_argument('input', help='Input HyRes structure/trajectory file')
