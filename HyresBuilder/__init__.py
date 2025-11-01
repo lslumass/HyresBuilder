@@ -46,12 +46,12 @@ __url__ = 'https://github.com/lslumass/HyresBuilder'
 #    )
 #
 #
-#__all__ = [
-#    '__version__',
-#    '__author__',
-#    '__email__',
-#    '__license__',
-#    '__url__',
+__all__ = [
+    '__version__',
+    '__author__',
+    '__email__',
+    '__license__',
+    '__url__',
 #    # functions
 #    'add_residue',
 #    'geometry',
@@ -71,7 +71,7 @@ __url__ = 'https://github.com/lslumass/HyresBuilder'
 #    # Rotamer functions
 #    'ROTAMER_LIBRARY',
 #    'opt_side_chain',
-#]
+]
 
 #from .HyresBuilder import *
 #from .Geometry import *
