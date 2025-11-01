@@ -56,6 +56,7 @@ setup(
     include_package_data=True,
     install_requires=INSTALL_REQUIRES,
     extras_require={"test": TEST_REQUIRES + INSTALL_REQUIRES,},
+
     classifiers=[
         # Trove classifiers
         # (https://pypi.python.org/pypi?%3Aaction=list_classifiers)
@@ -67,4 +68,10 @@ setup(
         "Topic :: Scientific/Engineering :: Chemistry",
         "Intended Audience :: Science/Research",
     ],
+
+    entry_points={
+        'console_scripts': [
+            'hyres-backmap=HyresBuilder.backmap:main',
+        ]
+    }
 )
