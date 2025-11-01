@@ -1,7 +1,7 @@
 from setuptools import setup
 
 
-INSTALL_REQUIRES = ["Biopython"]
+INSTALL_REQUIRES = ["Biopython", "MDAnalysis>=2.0.0", "numba>=0.53.0", "numpy>=1.19.0"]
 
 TEST_REQUIRES = [
     # testing and coverage
@@ -29,15 +29,16 @@ setup(
     version=__version__,
     author="Shanlong Li",
     author_email="shanlongli@umass.edu",
-    description="Create HyRes peptide PDB files with specified geometry",
+    description="Prepare HyRes protein and iConRNA simulation",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/wayuer19/HyresBuilder",
-    download_url="https://github.com/wayuer19/HyresBuilder/releases",
+    url="https://github.com/lslumass/HyresBuilder",
+    download_url="https://github.com/lslumass/HyresBuilder/releases",
     platforms="Tested on Ubuntu 22.04",
     packages=["HyresBuilder"],
     package_dir={'HyresBuilder':'HyresBuilder'},
-    package_data={"HyresBuilder":["map/*.map", "forcefield/*.inp"]},
+    package_data={"HyresBuilder":["map/*.map", "map/*.pdb", "forcefield/*.inp"]},
+    include_package_data=True,
     install_requires=INSTALL_REQUIRES,
     extras_require={"test": TEST_REQUIRES + INSTALL_REQUIRES,},
     classifiers=[
