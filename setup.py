@@ -1,6 +1,32 @@
 from setuptools import setup
+from pathlib import Path
 
 
+# Read version from package
+version_file = Path(__file__).parent / 'HyresBuilder' / '__init__.py'
+version_info = {}
+if version_file.exists():
+    with open(version_file) as f:
+        for line in f:
+            if line.startswith('__version__'):
+                exec(line, version_info)
+                break
+__version__ = version_info.get('__version__', '1.0.0')
+
+# Read README
+readme_file = Path(__file__).parent / 'README.md'
+if readme_file.exists():
+    with open(readme_file, 'r', encoding='utf-8') as f:
+        long_description = f.read()
+else:
+    long_description = (
+        'HyResBuilder is for preparing HyRes protein model and iConRNA model.'
+        'Main Functions:'
+        '- build HyRes and/or iConRNA force field'
+        '- convert all-atom structures to CG ones'
+        '- backmap CG structures to all-atom ones'
+        '- construct CG model from sequence'
+    )
 INSTALL_REQUIRES = ["Biopython", "MDAnalysis>=2.0.0", "numba>=0.53.0", "numpy>=1.19.0"]
 
 TEST_REQUIRES = [
@@ -12,17 +38,6 @@ TEST_REQUIRES = [
     "collective.checkdocs",
     "pygments",
 ]
-
-
-with open("README.md", "r") as f:
-    long_description = f.read()
-
-with open("HyresBuilder/__init__.py", "r") as f:
-    init = f.readlines()
-
-for line in init:
-    if "__version__" in line:
-        __version__ = line.split('"')[-2]
 
 setup(
     name="HyresBuilder",
