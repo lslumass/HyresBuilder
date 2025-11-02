@@ -1,4 +1,3 @@
-import sys
 from psfgen import PsfGen
 from HyresBuilder import utils
 import MDAnalysis as mda
