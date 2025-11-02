@@ -69,7 +69,7 @@ def check_clashes(mobile, existing_atoms, clash_distance=2.0, exclude_residue=No
             existing_resids = existing.resids
             if len(existing_resids) > 0:
                 # Exclude same residue and immediate neighbors
-                if any(abs(existing_resids[0] - exclude_residue) <= 1):
+                if np.any(abs(existing_resids[0] - exclude_residue) <= 1):
                     continue
         
         # Get heavy atoms only
