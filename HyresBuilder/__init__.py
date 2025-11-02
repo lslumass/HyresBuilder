@@ -27,7 +27,7 @@ try:
         StructureCache,
     )
     from .Rotamer import (
-        ROTAMER_LIBRARY,
+        rotate_about_axis_fast,
         opt_side_chain,
     )
 except ImportError as e:
@@ -54,7 +54,7 @@ __all__ = [
     'get_map_directory',
     'StructureCache',
     # Rotamer functions
-    'ROTAMER_LIBRARY',
+    'rotate_about_axis_fast',
     'opt_side_chain',
 ]
 
