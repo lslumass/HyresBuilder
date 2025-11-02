@@ -93,10 +93,7 @@ def rotate_side_chain_fine_search(resname, refs, sides, existing_coords=None,
     angle_step : int
         Angle step size in degrees (smaller = more thorough, slower)
     """
-    try:
-        from .Rotamer import rotate_about_axis_fast, normalize_vector
-    except ImportError:
-        from Rotamer import rotate_about_axis_fast, normalize_vector
+    from .Rotamer import rotate_about_axis_fast, normalize_vector
     
     # Simple residues: SER, THR, CYS, VAL (1 chi angle)
     if resname in ['SER', 'THR', 'CYS', 'VAL']:
@@ -296,10 +293,7 @@ def rotate_side_chain_fine_search(resname, refs, sides, existing_coords=None,
     # For complex residues (ARG, LYS, HIS, PHE, TYR, TRP), use top-5 rotamer library
     # to avoid excessive computation time
     else:
-        try:
-            from .Rotamer import opt_side_chain
-        except ImportError:
-            from Rotamer import opt_side_chain
+        from .Rotamer import opt_side_chain
         opt_side_chain(resname, refs, sides)
 
 
@@ -357,7 +351,7 @@ class StructureCache:
 
 
 def backmap_structure(input_file, output_file, map_dir=None, verbose=True, 
-                     check_clashes=True, clash_distance=2.0, angle_step=15):
+                     check_clashes_enabled=True, clash_distance=2.0, angle_step=15):
     """
     Backmap a single HyRes structure to all-atom representation.
     
@@ -371,7 +365,7 @@ def backmap_structure(input_file, output_file, map_dir=None, verbose=True,
         Directory containing ideal structures
     verbose : bool, optional
         Print progress information (default: True)
-    check_clashes : bool, optional
+    check_clashes_enabled : bool, optional
         Enable clash detection and avoidance (default: True)
     clash_distance : float, optional
         Distance threshold for clash detection in Angstroms (default: 2.0)
@@ -386,8 +380,8 @@ def backmap_structure(input_file, output_file, map_dir=None, verbose=True,
         print('HyresBuilder - Single Structure Backmapping')
         print(f'Input: {input_file}')
         print(f'Output: {output_file}')
-        print(f'Clash detection: {"enabled" if check_clashes else "disabled"}')
-        if check_clashes:
+        print(f'Clash detection: {"enabled" if check_clashes_enabled else "disabled"}')
+        if check_clashes_enabled:
             print(f'Clash distance: {clash_distance} Å')
             print(f'Angle step: {angle_step}°')
         print('-' * 60)
@@ -450,7 +444,7 @@ def backmap_structure(input_file, output_file, map_dir=None, verbose=True,
             if res_data['needs_sidechain'] and res_data['ref_indices'] is not None:
                 refs = hyres.atoms[res_data['ref_indices']]
                 
-                if check_clashes and len(existing_coords_list) > 0:
+                if check_clashes_enabled and len(existing_coords_list) > 0:
                     # Combine all existing coordinates (exclude neighboring residues)
                     existing_coords = []
                     for j, coords in enumerate(existing_coords_list):
@@ -485,7 +479,7 @@ def backmap_structure(input_file, output_file, map_dir=None, verbose=True,
                     )
             
             # Store heavy atom coordinates for future clash checks
-            if check_clashes:
+            if check_clashes_enabled:
                 heavy_atoms = mobile.select_atoms("not name H*")
                 existing_coords_list.append(heavy_atoms.positions.copy())
             
@@ -504,7 +498,7 @@ def backmap_structure(input_file, output_file, map_dir=None, verbose=True,
     if verbose:
         print(f'  Processed {len(cache.residue_data)}/{len(cache.residue_data)} residues')
         print('-' * 60)
-        if check_clashes:
+        if check_clashes_enabled:
             print(f'Clash statistics:')
             print(f'  Residues with clashes: {clash_count}')
             clash_rate = 100 * clash_count / len(cache.residue_data)
@@ -517,7 +511,7 @@ def backmap_structure(input_file, output_file, map_dir=None, verbose=True,
 
 
 def backmap_trajectory(input_file, topology, output, map_dir=None, stride=1, 
-                      verbose=True, check_clashes=False, clash_distance=2.0,
+                      verbose=True, check_clashes_enabled=False, clash_distance=2.0,
                       angle_step=20):
     """
     Backmap a HyRes trajectory to all-atom representation.
@@ -538,7 +532,7 @@ def backmap_trajectory(input_file, topology, output, map_dir=None, stride=1,
         Process every Nth frame (default: 1)
     verbose : bool, optional
         Print progress information (default: True)
-    check_clashes : bool, optional
+    check_clashes_enabled : bool, optional
         Enable clash detection (default: False for speed)
     clash_distance : float, optional
         Clash threshold in Angstroms (default: 2.0)
@@ -554,8 +548,8 @@ def backmap_trajectory(input_file, topology, output, map_dir=None, stride=1,
         print(f'Topology: {topology}')
         print(f'Output: {output}')
         print(f'Stride: {stride}')
-        print(f'Clash detection: {"enabled" if check_clashes else "disabled"}')
-        if check_clashes:
+        print(f'Clash detection: {"enabled" if check_clashes_enabled else "disabled"}')
+        if check_clashes_enabled:
             print(f'Clash distance: {clash_distance} Å')
             print(f'Angle step: {angle_step}°')
         print('-' * 60)
@@ -626,7 +620,7 @@ def backmap_trajectory(input_file, topology, output, map_dir=None, stride=1,
                 if res_data['needs_sidechain'] and res_data['ref_indices'] is not None:
                     refs = hyres.atoms[res_data['ref_indices']]
                     
-                    if check_clashes and len(existing_coords_list) > 0:
+                    if check_clashes_enabled and len(existing_coords_list) > 0:
                         existing_coords = []
                         for j, coords in enumerate(existing_coords_list):
                             if abs(j - i) > 2:
@@ -650,7 +644,7 @@ def backmap_trajectory(input_file, topology, output, map_dir=None, stride=1,
                         )
                 
                 # Store coordinates
-                if check_clashes:
+                if check_clashes_enabled:
                     heavy_atoms = mobile.select_atoms("not name H*")
                     existing_coords_list.append(heavy_atoms.positions.copy())
                 
