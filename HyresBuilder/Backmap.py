@@ -1,8 +1,8 @@
 """
 HyresBuilder backmapping module.
 
-Ultra-fast HyRes coarse-grained to all-atom backmapping with top-5 rotamer library
-and clash detection.
+Ultra-fast HyRes coarse-grained to all-atom backmapping with advanced clash detection
+using fine-grained rotamer search.
 """
 
 import sys
@@ -29,73 +29,54 @@ def get_map_directory():
     return str(map_dir)
 
 
-def check_clashes(mobile, existing_atoms, clash_distance=2.0, exclude_residue=None):
+def check_clashes(mobile_coords, existing_coords, clash_distance=2.0):
     """
-    Check for clashes between mobile atoms and existing atoms.
+    Fast clash detection using vectorized distance calculation.
     
     Parameters
     ----------
-    mobile : AtomGroup
-        Atoms to check for clashes
-    existing_atoms : list of AtomGroup
-        List of already placed atom groups
+    mobile_coords : ndarray, shape (N, 3)
+        Coordinates of atoms to check
+    existing_coords : ndarray, shape (M, 3)
+        Coordinates of already placed atoms
     clash_distance : float
         Distance threshold for clash detection (Angstroms)
-    exclude_residue : int, optional
-        Residue ID to exclude from clash check (for neighboring residues)
         
     Returns
     -------
     bool
-        True if clash detected, False otherwise
+        True if clash detected
     int
         Number of clashing atom pairs
+    float
+        Minimum distance found
     """
-    if len(existing_atoms) == 0:
-        return False, 0
+    if len(existing_coords) == 0:
+        return False, 0, np.inf
     
-    # Get mobile heavy atoms (exclude hydrogens for clash check)
-    mobile_heavy = mobile.select_atoms("not name H*")
-    if len(mobile_heavy) == 0:
-        return False, 0
+    # Vectorized distance calculation
+    # For each mobile atom, find minimum distance to any existing atom
+    min_distances = []
+    for mc in mobile_coords:
+        distances = np.sqrt(np.sum((existing_coords - mc)**2, axis=1))
+        min_dist = np.min(distances)
+        min_distances.append(min_dist)
     
-    mobile_coords = mobile_heavy.positions
-    clash_count = 0
+    min_distances = np.array(min_distances)
+    clashes = min_distances < clash_distance
+    clash_count = np.sum(clashes)
+    min_overall = np.min(min_distances)
     
-    # Check against each existing atom group
-    for existing in existing_atoms:
-        # Skip if same residue or neighboring residue
-        if exclude_residue is not None:
-            existing_resids = existing.resids
-            if len(existing_resids) > 0:
-                # Exclude same residue and immediate neighbors
-                if np.any(abs(existing_resids[0] - exclude_residue) <= 1):
-                    continue
-        
-        # Get heavy atoms only
-        existing_heavy = existing.select_atoms("not name H*")
-        if len(existing_heavy) == 0:
-            continue
-            
-        existing_coords = existing_heavy.positions
-        
-        # Calculate pairwise distances
-        for mc in mobile_coords:
-            distances = np.sqrt(np.sum((existing_coords - mc)**2, axis=1))
-            min_dist = np.min(distances)
-            
-            if min_dist < clash_distance:
-                clash_count += 1
-                # Early return if we find any clash
-                return True, clash_count
-    
-    return False, 0
+    return clash_count > 0, int(clash_count), float(min_overall)
 
 
-def resolve_clashes_with_rotamers(resname, refs, mobile, existing_atoms, 
-                                  clash_distance=2.0, verbose=False):
+def rotate_side_chain_fine_search(resname, refs, sides, existing_coords=None, 
+                                   clash_distance=2.0, angle_step=15):
     """
-    Try all rotamers and select the one with fewest clashes.
+    Optimize side chain with fine-grained rotamer search and clash avoidance.
+    
+    Uses original brute-force approach but with clash detection to find
+    clash-free conformations.
     
     Parameters
     ----------
@@ -103,111 +84,223 @@ def resolve_clashes_with_rotamers(resname, refs, mobile, existing_atoms,
         Residue name
     refs : AtomGroup
         Reference CG atoms
-    mobile : Universe
-        Mobile structure
-    existing_atoms : list
-        List of already placed atoms
+    sides : Universe
+        Mobile all-atom structure
+    existing_coords : ndarray, optional
+        Coordinates of already placed atoms for clash detection
     clash_distance : float
-        Clash detection threshold
-    verbose : bool
-        Print clash information
-        
-    Returns
-    -------
-    bool
-        True if clash-free rotamer found, False otherwise
+        Clash detection threshold in Angstroms
+    angle_step : int
+        Angle step size in degrees (smaller = more thorough, slower)
     """
-    # Import rotamer module
     try:
-        from .Rotamer import ROTAMER_LIBRARY, set_chi_angle
+        from .Rotamer import rotate_about_axis_fast, normalize_vector
     except ImportError:
-        from Rotamer import ROTAMER_LIBRARY, set_chi_angle
+        from Rotamer import rotate_about_axis_fast, normalize_vector
     
-    if resname not in ROTAMER_LIBRARY:
-        return False
-    
-    rotamers = ROTAMER_LIBRARY[resname]
-    
-    # Get reference positions
-    CA_r = refs.atoms[0].position
-    ref_positions = [refs.atoms[i].position for i in range(min(len(refs.atoms), 4))]
-    
-    if len(ref_positions) > 1:
-        ref_com = np.mean(ref_positions[1:], axis=0)
-    else:
-        ref_com = CA_r
-    
-    # Get side chain atoms
-    CA = mobile.select_atoms("name CA", updating=False).atoms[0].position
-    side_atoms = mobile.select_atoms("not name N CA C O HA", updating=False)
-    
-    if len(side_atoms) == 0:
-        return False
-    
-    # Save original positions
-    original_positions = side_atoms.atoms.positions.copy()
-    
-    best_score = np.inf
-    best_positions = None
-    best_clash_count = np.inf
-    current_resid = mobile.residues[0].resid
-    
-    # Try each rotamer
-    for rotamer_idx, (chi1, chi2, chi3, chi4, prob) in enumerate(rotamers):
-        # Reset to original
-        side_atoms.atoms.positions = original_positions.copy()
+    # Simple residues: SER, THR, CYS, VAL (1 chi angle)
+    if resname in ['SER', 'THR', 'CYS', 'VAL']:
+        CA_r = refs.atoms[0].position
+        CB_r = refs.atoms[1].position
+        CA = sides.select_atoms("name CA").atoms[0].position
+        CB = sides.select_atoms("name CB").atoms[0].position
+        axis = normalize_vector(np.array(CB) - np.array(CA))
         
-        # Apply chi angles
-        if chi1 != 0:
-            set_chi_angle(mobile, 1, chi1)
-        if chi2 != 0:
-            set_chi_angle(mobile, 2, chi2)
-        if chi3 != 0:
-            set_chi_angle(mobile, 3, chi3)
-        if chi4 != 0:
-            set_chi_angle(mobile, 4, chi4)
+        rotations = sides.select_atoms("not name N CA C O HA")
+        original_positions = rotations.atoms.positions.copy()
         
-        # Check for clashes
-        has_clash, clash_count = check_clashes(
-            side_atoms, existing_atoms, clash_distance, exclude_residue=current_resid
-        )
+        v1 = np.array(CB_r) - np.array(CA)
+        min_angle = 180.0
+        opt_positions = original_positions.copy()
+        min_clash_count = np.inf
         
-        # Calculate geometric score
-        current_com = side_atoms.center_of_mass()
-        dist = np.linalg.norm(current_com - ref_com)
+        angles = np.arange(0, 360, angle_step)
         
-        # Combined score: penalize clashes heavily, then consider geometry and probability
-        if has_clash:
-            score = 1000 + clash_count * 100 + dist - prob  # Heavy penalty for clashes
-        else:
-            score = dist - 2.0 * prob  # Prefer good geometry and high probability
-        
-        if verbose and has_clash:
-            print(f"    Rotamer {rotamer_idx+1}: {clash_count} clashes, score={score:.2f}")
-        
-        # Update best
-        if score < best_score or (score == best_score and clash_count < best_clash_count):
-            best_score = score
-            best_positions = side_atoms.atoms.positions.copy()
-            best_clash_count = clash_count
+        for theta_deg in angles:
+            theta = np.radians(theta_deg)
+            rotations.atoms.positions = rotate_about_axis_fast(
+                original_positions, axis, theta, np.array(CA)
+            )
             
-            # If we found a clash-free rotamer with good score, we can stop
-            if not has_clash and score < 0:
-                break
-    
-    # Apply best rotamer
-    if best_positions is not None:
-        side_atoms.atoms.positions = best_positions
+            # Check clashes if existing_coords provided
+            if existing_coords is not None:
+                side_heavy = rotations.select_atoms("not name H*")
+                has_clash, clash_count, min_dist = check_clashes(
+                    side_heavy.positions, existing_coords, clash_distance
+                )
+                
+                # Score: prefer clash-free, then good geometry
+                if has_clash:
+                    score = 1000 + clash_count
+                else:
+                    com = rotations.center_of_mass()
+                    v2 = np.array(com) - np.array(CA)
+                    angle = np.arccos(np.clip(np.dot(v1, v2) / 
+                                             (np.linalg.norm(v1) * np.linalg.norm(v2)), -1, 1))
+                    score = np.degrees(angle)
+                
+                if score < min_angle or (score == min_angle and clash_count < min_clash_count):
+                    min_angle = score
+                    min_clash_count = clash_count
+                    opt_positions = rotations.atoms.positions.copy()
+            else:
+                # Original geometric scoring
+                com = rotations.center_of_mass()
+                v2 = np.array(com) - np.array(CA)
+                angle = np.arccos(np.clip(np.dot(v1, v2) / 
+                                         (np.linalg.norm(v1) * np.linalg.norm(v2)), -1, 1))
+                angle_deg = np.degrees(angle)
+                
+                if angle_deg < min_angle:
+                    min_angle = angle_deg
+                    opt_positions = rotations.atoms.positions.copy()
         
-    # Check if we still have clashes
-    final_clash, final_count = check_clashes(
-        side_atoms, existing_atoms, clash_distance, exclude_residue=current_resid
-    )
-    
-    if verbose and final_clash:
-        print(f"    Warning: Best rotamer still has {final_count} clashes")
-    
-    return not final_clash
+        rotations.atoms.positions = opt_positions
+
+    # Medium complexity: ASP, ASN, LEU, GLU, GLN, MET (2 chi angles)
+    elif resname in ['ASP', 'ASN', 'LEU', 'GLU', 'GLN', 'MET']:
+        CA_r = refs.atoms[0].position
+        CB_r = refs.atoms[1].position
+        CA = sides.select_atoms("name CA").atoms[0].position
+        CB = sides.select_atoms("name CB").atoms[0].position
+        CA_CB = normalize_vector(np.array(CB) - np.array(CA))
+        
+        rotations = sides.select_atoms("not name N CA C O HA")
+        original_positions = rotations.atoms.positions.copy()
+        part2 = sides.select_atoms("not name N CA C O HA CB HB")
+        
+        v1 = np.array(CB_r) - np.array(CA)
+        min_score = np.inf
+        opt_positions = original_positions.copy()
+        
+        angles = np.arange(0, 360, angle_step)
+        
+        for theta_deg in angles:
+            theta = np.radians(theta_deg)
+            temp_pos = rotate_about_axis_fast(original_positions, CA_CB, theta, np.array(CA))
+            
+            # Get CC position
+            rot_names = [atom.name for atom in rotations.atoms]
+            if 'CC' in rot_names:
+                cc_idx = rot_names.index('CC')
+                CC = temp_pos[cc_idx]
+                CB_CC = normalize_vector(CC - np.array(CB))
+                
+                part2_mask = np.array([atom in part2 for atom in rotations.atoms])
+                part2_positions = temp_pos[part2_mask]
+                original_part2 = part2_positions.copy()
+                
+                for phi_deg in angles:
+                    phi = np.radians(phi_deg)
+                    temp_pos[part2_mask] = rotate_about_axis_fast(
+                        original_part2, CB_CC, phi, np.array(CB)
+                    )
+                    
+                    rotations.atoms.positions = temp_pos
+                    
+                    # Clash detection
+                    if existing_coords is not None:
+                        side_heavy = rotations.select_atoms("not name H*")
+                        has_clash, clash_count, min_dist = check_clashes(
+                            side_heavy.positions, existing_coords, clash_distance
+                        )
+                        
+                        if has_clash:
+                            score = 1000 + clash_count
+                        else:
+                            com = rotations.center_of_mass()
+                            v2 = np.array(com) - np.array(CA)
+                            angle = np.arccos(np.clip(np.dot(v1, v2) / 
+                                                     (np.linalg.norm(v1) * np.linalg.norm(v2)), -1, 1))
+                            score = np.degrees(angle)
+                    else:
+                        com = rotations.center_of_mass()
+                        v2 = np.array(com) - np.array(CA)
+                        angle = np.arccos(np.clip(np.dot(v1, v2) / 
+                                                 (np.linalg.norm(v1) * np.linalg.norm(v2)), -1, 1))
+                        score = np.degrees(angle)
+                    
+                    if score < min_score:
+                        min_score = score
+                        opt_positions = temp_pos.copy()
+        
+        rotations.atoms.positions = opt_positions
+
+    # ILE (2 chi angles, special case)
+    elif resname == 'ILE':
+        CA_r = refs.atoms[0].position
+        CB_r = refs.atoms[1].position
+        CA = sides.select_atoms("name CA").atoms[0].position
+        CB = sides.select_atoms("name CB").atoms[0].position
+        CA_CB = normalize_vector(np.array(CB) - np.array(CA))
+        
+        rotations = sides.select_atoms("not name N CA C O HA")
+        original_positions = rotations.atoms.positions.copy()
+        part2 = sides.select_atoms("name CF HF")
+        
+        v1 = np.array(CB_r) - np.array(CA)
+        min_score = np.inf
+        opt_positions = original_positions.copy()
+        
+        angles = np.arange(0, 360, angle_step)
+        
+        for theta_deg in angles:
+            theta = np.radians(theta_deg)
+            temp_pos = rotate_about_axis_fast(original_positions, CA_CB, theta, np.array(CA))
+            
+            rot_names = [atom.name for atom in rotations.atoms]
+            if 'CC' in rot_names:
+                cc_idx = rot_names.index('CC')
+                CC = temp_pos[cc_idx]
+                CB_CC = normalize_vector(CC - np.array(CB))
+                
+                part2_mask = np.array([atom in part2 for atom in rotations.atoms])
+                part2_positions = temp_pos[part2_mask]
+                original_part2 = part2_positions.copy()
+                
+                for phi_deg in angles:
+                    phi = np.radians(phi_deg)
+                    temp_pos[part2_mask] = rotate_about_axis_fast(
+                        original_part2, CB_CC, phi, np.array(CB)
+                    )
+                    
+                    rotations.atoms.positions = temp_pos
+                    
+                    if existing_coords is not None:
+                        side_heavy = rotations.select_atoms("not name H*")
+                        has_clash, clash_count, min_dist = check_clashes(
+                            side_heavy.positions, existing_coords, clash_distance
+                        )
+                        
+                        if has_clash:
+                            score = 1000 + clash_count
+                        else:
+                            com = rotations.center_of_mass()
+                            v2 = np.array(com) - np.array(CA)
+                            angle = np.arccos(np.clip(np.dot(v1, v2) / 
+                                                     (np.linalg.norm(v1) * np.linalg.norm(v2)), -1, 1))
+                            score = np.degrees(angle)
+                    else:
+                        com = rotations.center_of_mass()
+                        v2 = np.array(com) - np.array(CA)
+                        angle = np.arccos(np.clip(np.dot(v1, v2) / 
+                                                 (np.linalg.norm(v1) * np.linalg.norm(v2)), -1, 1))
+                        score = np.degrees(angle)
+                    
+                    if score < min_score:
+                        min_score = score
+                        opt_positions = temp_pos.copy()
+        
+        rotations.atoms.positions = opt_positions
+
+    # For complex residues (ARG, LYS, HIS, PHE, TYR, TRP), use top-5 rotamer library
+    # to avoid excessive computation time
+    else:
+        try:
+            from .Rotamer import opt_side_chain
+        except ImportError:
+            from Rotamer import opt_side_chain
+        opt_side_chain(resname, refs, sides)
 
 
 class StructureCache:
@@ -264,7 +357,7 @@ class StructureCache:
 
 
 def backmap_structure(input_file, output_file, map_dir=None, verbose=True, 
-                     check_clashes=True, clash_distance=2.0):
+                     check_clashes=True, clash_distance=2.0, angle_step=15):
     """
     Backmap a single HyRes structure to all-atom representation.
     
@@ -275,25 +368,17 @@ def backmap_structure(input_file, output_file, map_dir=None, verbose=True,
     output_file : str
         Path to output all-atom PDB file
     map_dir : str, optional
-        Directory containing ideal structures. If None, uses HyresBuilder/HyresBuilder/map/
+        Directory containing ideal structures
     verbose : bool, optional
         Print progress information (default: True)
     check_clashes : bool, optional
-        Enable clash detection and resolution (default: True)
+        Enable clash detection and avoidance (default: True)
     clash_distance : float, optional
         Distance threshold for clash detection in Angstroms (default: 2.0)
-        
-    Example
-    -------
-    >>> from HyresBuilder.backmap import backmap_structure
-    >>> backmap_structure('input.pdb', 'output.pdb')
+    angle_step : int, optional
+        Angle step for rotamer search in degrees (default: 15)
+        Smaller = more thorough but slower. Try 10 for better quality, 20 for speed.
     """
-    # Import rotamer module
-    try:
-        from .Rotamer import opt_side_chain
-    except ImportError:
-        from Rotamer import opt_side_chain
-    
     if map_dir is None:
         map_dir = get_map_directory()
     
@@ -304,6 +389,7 @@ def backmap_structure(input_file, output_file, map_dir=None, verbose=True,
         print(f'Clash detection: {"enabled" if check_clashes else "disabled"}')
         if check_clashes:
             print(f'Clash distance: {clash_distance} Å')
+            print(f'Angle step: {angle_step}°')
         print('-' * 60)
     
     # Load HyRes structure
@@ -328,15 +414,13 @@ def backmap_structure(input_file, output_file, map_dir=None, verbose=True,
         print('-' * 60)
         print('Processing residues...')
     
-    # Track statistics
+    # Track existing atom coordinates for clash detection
+    existing_coords_list = []
     clash_count = 0
-    resolved_count = 0
-    unresolved_count = 0
     
     # Process residues
     with mda.Writer(output_file, multiframe=False, reindex=False) as writer:
         atom_idx = 1
-        placed_atoms = []  # Track placed atoms for clash detection
         
         for i, res_data in enumerate(cache.residue_data):
             resname = res_data['resname']
@@ -366,24 +450,44 @@ def backmap_structure(input_file, output_file, map_dir=None, verbose=True,
             if res_data['needs_sidechain'] and res_data['ref_indices'] is not None:
                 refs = hyres.atoms[res_data['ref_indices']]
                 
-                if check_clashes and len(placed_atoms) > 0:
-                    # Try to find clash-free rotamer
-                    clash_free = resolve_clashes_with_rotamers(
-                        resname, refs, mobile, placed_atoms, 
-                        clash_distance, verbose=verbose and (i + 1) % 50 == 0
-                    )
+                if check_clashes and len(existing_coords_list) > 0:
+                    # Combine all existing coordinates (exclude neighboring residues)
+                    existing_coords = []
+                    for j, coords in enumerate(existing_coords_list):
+                        # Exclude immediate neighbors (within ±2 residues)
+                        if abs(j - i) > 2:
+                            existing_coords.append(coords)
                     
-                    if not clash_free:
-                        clash_count += 1
-                        unresolved_count += 1
-                        if verbose:
-                            print(f'  Warning: Residue {resid} ({resname}) has unresolved clashes')
+                    if len(existing_coords) > 0:
+                        existing_coords = np.vstack(existing_coords)
+                        rotate_side_chain_fine_search(
+                            resname, refs, mobile, existing_coords, 
+                            clash_distance, angle_step
+                        )
+                        
+                        # Check if clashes remain
+                        side_heavy = mobile.select_atoms("not name N CA C O HA H*")
+                        has_clash, n_clash, min_dist = check_clashes(
+                            side_heavy.positions, existing_coords, clash_distance
+                        )
+                        if has_clash:
+                            clash_count += 1
+                            if verbose:
+                                print(f'  Warning: {resname} {resid} has {n_clash} clashes (min dist: {min_dist:.2f} Å)')
                     else:
-                        if clash_count > 0:  # There was a clash but we resolved it
-                            resolved_count += 1
+                        rotate_side_chain_fine_search(
+                            resname, refs, mobile, None, clash_distance, angle_step
+                        )
                 else:
-                    # Standard optimization without clash checking
-                    opt_side_chain(resname, refs, mobile)
+                    # No clash checking
+                    rotate_side_chain_fine_search(
+                        resname, refs, mobile, None, clash_distance, angle_step
+                    )
+            
+            # Store heavy atom coordinates for future clash checks
+            if check_clashes:
+                heavy_atoms = mobile.select_atoms("not name H*")
+                existing_coords_list.append(heavy_atoms.positions.copy())
             
             # Add hydrogens if needed
             if res_data['needs_hydrogen'] and res_data['h_indices'] is not None:
@@ -391,64 +495,56 @@ def backmap_structure(input_file, output_file, map_dir=None, verbose=True,
                 h_atoms.atoms.ids = np.arange(atom_idx, atom_idx + len(h_atoms))
                 atom_idx += len(h_atoms)
                 writer.write(h_atoms)
-                placed_atoms.append(h_atoms)
             
             # Add mobile atoms
             mobile.atoms.ids = np.arange(atom_idx, atom_idx + len(mobile.atoms))
             atom_idx += len(mobile.atoms)
             writer.write(mobile.atoms)
-            placed_atoms.append(mobile.atoms)
     
     if verbose:
         print(f'  Processed {len(cache.residue_data)}/{len(cache.residue_data)} residues')
         print('-' * 60)
         if check_clashes:
             print(f'Clash statistics:')
-            print(f'  Clashes detected: {clash_count}')
-            print(f'  Clashes resolved: {resolved_count}')
-            print(f'  Clashes unresolved: {unresolved_count}')
-            if unresolved_count > 0:
-                print(f'  Note: Consider running energy minimization on output structure')
+            print(f'  Residues with clashes: {clash_count}')
+            clash_rate = 100 * clash_count / len(cache.residue_data)
+            print(f'  Clash rate: {clash_rate:.1f}%')
+            if clash_count > 0:
+                print(f'  Recommendation: Run energy minimization or use smaller angle_step')
             print('-' * 60)
         print(f'Done! Output written to {output_file}')
         print(f'Total atoms: {atom_idx - 1}')
 
 
 def backmap_trajectory(input_file, topology, output, map_dir=None, stride=1, 
-                      verbose=True, check_clashes=True, clash_distance=2.0):
+                      verbose=True, check_clashes=False, clash_distance=2.0,
+                      angle_step=20):
     """
     Backmap a HyRes trajectory to all-atom representation.
+    
+    Note: Clash checking is disabled by default for trajectories due to performance.
     
     Parameters
     ----------
     input_file : str
-        Path to input HyRes trajectory file (xtc, dcd, trr)
+        Path to input HyRes trajectory file
     topology : str
         Path to topology PDB file
     output : str
         Path to output all-atom trajectory file
     map_dir : str, optional
-        Directory containing ideal structures. If None, uses HyresBuilder/HyresBuilder/map/
+        Directory containing ideal structures
     stride : int, optional
-        Process every Nth frame (default: 1, all frames)
+        Process every Nth frame (default: 1)
     verbose : bool, optional
         Print progress information (default: True)
     check_clashes : bool, optional
-        Enable clash detection and resolution (default: True)
+        Enable clash detection (default: False for speed)
     clash_distance : float, optional
-        Distance threshold for clash detection in Angstroms (default: 2.0)
-        
-    Example
-    -------
-    >>> from HyresBuilder.backmap import backmap_trajectory
-    >>> backmap_trajectory('traj.xtc', 'topology.pdb', 'output.xtc', stride=10)
+        Clash threshold in Angstroms (default: 2.0)
+    angle_step : int, optional
+        Angle step in degrees (default: 20 for speed)
     """
-    # Import rotamer module
-    try:
-        from Rotamer import opt_side_chain
-    except ImportError:
-        from Rotamer import opt_side_chain
-    
     if map_dir is None:
         map_dir = get_map_directory()
     
@@ -461,6 +557,7 @@ def backmap_trajectory(input_file, topology, output, map_dir=None, stride=1,
         print(f'Clash detection: {"enabled" if check_clashes else "disabled"}')
         if check_clashes:
             print(f'Clash distance: {clash_distance} Å')
+            print(f'Angle step: {angle_step}°')
         print('-' * 60)
     
     # Load trajectory
@@ -491,9 +588,6 @@ def backmap_trajectory(input_file, topology, output, map_dir=None, stride=1,
     
     start_time = time.time()
     frame_count = 0
-    total_clashes = 0
-    total_resolved = 0
-    total_unresolved = 0
     
     with mda.Writer(output, multiframe=True, reindex=False) as writer:
         for frame_idx in frames_to_process:
@@ -508,10 +602,9 @@ def backmap_trajectory(input_file, topology, output, map_dir=None, stride=1,
             
             frame_atoms = []
             atom_idx = 1
-            placed_atoms = []
-            frame_clashes = 0
+            existing_coords_list = []
             
-            for res_data in cache.residue_data:
+            for i, res_data in enumerate(cache.residue_data):
                 resname = res_data['resname']
                 
                 if resname not in cache.ideal_structures:
@@ -533,14 +626,33 @@ def backmap_trajectory(input_file, topology, output, map_dir=None, stride=1,
                 if res_data['needs_sidechain'] and res_data['ref_indices'] is not None:
                     refs = hyres.atoms[res_data['ref_indices']]
                     
-                    if check_clashes and len(placed_atoms) > 0:
-                        clash_free = resolve_clashes_with_rotamers(
-                            resname, refs, mobile, placed_atoms, clash_distance
-                        )
-                        if not clash_free:
-                            frame_clashes += 1
+                    if check_clashes and len(existing_coords_list) > 0:
+                        existing_coords = []
+                        for j, coords in enumerate(existing_coords_list):
+                            if abs(j - i) > 2:
+                                existing_coords.append(coords)
+                        
+                        if len(existing_coords) > 0:
+                            existing_coords = np.vstack(existing_coords)
+                            rotate_side_chain_fine_search(
+                                resname, refs, mobile, existing_coords,
+                                clash_distance, angle_step
+                            )
+                        else:
+                            rotate_side_chain_fine_search(
+                                resname, refs, mobile, None,
+                                clash_distance, angle_step
+                            )
                     else:
-                        opt_side_chain(resname, refs, mobile)
+                        rotate_side_chain_fine_search(
+                            resname, refs, mobile, None,
+                            clash_distance, angle_step
+                        )
+                
+                # Store coordinates
+                if check_clashes:
+                    heavy_atoms = mobile.select_atoms("not name H*")
+                    existing_coords_list.append(heavy_atoms.positions.copy())
                 
                 # Add hydrogens
                 if res_data['needs_hydrogen'] and res_data['h_indices'] is not None:
@@ -548,22 +660,16 @@ def backmap_trajectory(input_file, topology, output, map_dir=None, stride=1,
                     h_atoms.atoms.ids = np.arange(atom_idx, atom_idx + len(h_atoms))
                     atom_idx += len(h_atoms)
                     frame_atoms.append(h_atoms)
-                    placed_atoms.append(h_atoms)
                 
                 # Add mobile atoms
                 mobile.atoms.ids = np.arange(atom_idx, atom_idx + len(mobile.atoms))
                 atom_idx += len(mobile.atoms)
                 frame_atoms.append(mobile.atoms)
-                placed_atoms.append(mobile.atoms)
             
             # Write frame
             merged = mda.Merge(*frame_atoms)
             writer.write(merged.atoms)
             frame_count += 1
-            
-            if frame_clashes > 0:
-                total_clashes += frame_clashes
-                total_unresolved += frame_clashes
     
     elapsed = time.time() - start_time
     
@@ -571,11 +677,6 @@ def backmap_trajectory(input_file, topology, output, map_dir=None, stride=1,
         print('-' * 60)
         print(f'Completed {frame_count} frames in {elapsed:.2f}s')
         print(f'Average speed: {frame_count/elapsed:.2f} frames/s')
-        if check_clashes and total_clashes > 0:
-            print(f'\nClash statistics:')
-            print(f'  Total clashes: {total_clashes}')
-            print(f'  Average per frame: {total_clashes/frame_count:.1f}')
-            print(f'  Note: Consider running energy minimization')
         print(f'Done! Output written to {output}')
 
 
@@ -585,7 +686,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(
-        description='HyresBuilder: Ultra-fast HyRes to all-atom backmapping'
+        description='HyresBuilder: Ultra-fast HyRes to all-atom backmapping with clash detection'
     )
     
     parser.add_argument('input', help='Input HyRes structure/trajectory file')
@@ -597,9 +698,11 @@ def main():
     parser.add_argument('--quiet', '-q', action='store_true', 
                        help='Suppress output')
     parser.add_argument('--no-clash-check', action='store_true',
-                       help='Disable clash detection (faster but may produce clashes)')
+                       help='Disable clash detection (faster)')
     parser.add_argument('--clash-distance', type=float, default=2.0,
                        help='Clash detection distance in Angstroms (default: 2.0)')
+    parser.add_argument('--angle-step', type=int, default=15,
+                       help='Angle step for rotamer search in degrees (default: 15)')
     
     args = parser.parse_args()
     
@@ -618,12 +721,14 @@ def main():
             backmap_trajectory(args.input, args.topology, args.output,
                              map_dir=args.map_dir, stride=args.stride, 
                              verbose=verbose, check_clashes=check_clashes,
-                             clash_distance=args.clash_distance)
+                             clash_distance=args.clash_distance,
+                             angle_step=args.angle_step)
         else:
             backmap_structure(args.input, args.output, 
                             map_dir=args.map_dir, verbose=verbose,
                             check_clashes=check_clashes,
-                            clash_distance=args.clash_distance)
+                            clash_distance=args.clash_distance,
+                            angle_step=args.angle_step)
         
         sys.exit(0)
     except Exception as e:

@@ -1,365 +1,477 @@
-"""
-HyresBuilder rotamer module for backmap.
-
-Ultra-fast rotamer library with TOP 5 most probable rotamers per residue.
-Uses Dunbrack 2010 backbone-independent rotamer library.
-"""
-
 import numpy as np
 from numba import jit
-import functools
 
-# Top 5 most probable rotamers from Dunbrack 2010 backbone-independent library
-# Format: (chi1, chi2, chi3, chi4, probability)
-ROTAMER_LIBRARY = {
-    'SER': [
-        (62.0, 0, 0, 0, 0.39),
-        (-63.0, 0, 0, 0, 0.32),
-        (180.0, 0, 0, 0, 0.29),
-    ],
-    'THR': [
-        (62.0, 0, 0, 0, 0.38),
-        (-63.0, 0, 0, 0, 0.36),
-        (180.0, 0, 0, 0, 0.26),
-    ],
-    'CYS': [
-        (-63.0, 0, 0, 0, 0.52),
-        (62.0, 0, 0, 0, 0.37),
-        (180.0, 0, 0, 0, 0.11),
-    ],
-    'VAL': [
-        (175.0, 0, 0, 0, 0.47),
-        (-60.0, 0, 0, 0, 0.39),
-        (63.0, 0, 0, 0, 0.14),
-    ],
-    'ILE': [
-        (-60.0, 170.0, 0, 0, 0.40),
-        (-60.0, 65.0, 0, 0, 0.29),
-        (175.0, 65.0, 0, 0, 0.16),
-        (175.0, 170.0, 0, 0, 0.15),
-    ],
-    'LEU': [
-        (-60.0, 175.0, 0, 0, 0.28),
-        (180.0, 65.0, 0, 0, 0.22),
-        (-85.0, 65.0, 0, 0, 0.19),
-        (-60.0, 80.0, 0, 0, 0.17),
-        (62.0, 175.0, 0, 0, 0.14),
-    ],
-    'ASP': [
-        (-60.0, -20.0, 0, 0, 0.38),
-        (-60.0, 30.0, 0, 0, 0.26),
-        (180.0, -10.0, 0, 0, 0.20),
-        (180.0, 65.0, 0, 0, 0.16),
-    ],
-    'ASN': [
-        (-60.0, -20.0, 0, 0, 0.35),
-        (-60.0, 30.0, 0, 0, 0.28),
-        (180.0, -10.0, 0, 0, 0.21),
-        (180.0, 65.0, 0, 0, 0.16),
-    ],
-    'GLU': [
-        (-60.0, 180.0, -20.0, 0, 0.22),
-        (-60.0, -80.0, -10.0, 0, 0.18),
-        (-60.0, 180.0, 65.0, 0, 0.16),
-        (180.0, 65.0, -10.0, 0, 0.14),
-        (-70.0, -30.0, -20.0, 0, 0.12),
-    ],
-    'GLN': [
-        (-60.0, 180.0, 20.0, 0, 0.24),
-        (-60.0, -75.0, 10.0, 0, 0.19),
-        (-60.0, 180.0, 65.0, 0, 0.17),
-        (180.0, 65.0, 10.0, 0, 0.15),
-        (-70.0, -30.0, 20.0, 0, 0.12),
-    ],
-    'MET': [
-        (-60.0, 180.0, 70.0, 0, 0.27),
-        (-60.0, -75.0, 70.0, 0, 0.21),
-        (180.0, 65.0, 70.0, 0, 0.18),
-        (-60.0, 180.0, 180.0, 0, 0.14),
-        (180.0, 180.0, 70.0, 0, 0.10),
-    ],
-    'LYS': [
-        (-60.0, 180.0, 68.0, 180.0, 0.19),
-        (-60.0, 180.0, 180.0, 180.0, 0.17),
-        (-60.0, 180.0, 180.0, 65.0, 0.13),
-        (180.0, 180.0, 68.0, 180.0, 0.12),
-        (-60.0, 180.0, 65.0, -85.0, 0.10),
-    ],
-    'ARG': [
-        (-60.0, 180.0, 65.0, -85.0, 0.20),
-        (-60.0, 180.0, 180.0, -85.0, 0.18),
-        (-60.0, 180.0, 65.0, 175.0, 0.15),
-        (180.0, 65.0, 65.0, -85.0, 0.12),
-        (-60.0, -67.0, -60.0, -85.0, 0.10),
-    ],
-    'HIS': [
-        (-60.0, -75.0, 0, 0, 0.42),
-        (-60.0, 80.0, 0, 0, 0.29),
-        (180.0, -75.0, 0, 0, 0.17),
-        (180.0, 80.0, 0, 0, 0.12),
-    ],
-    'PHE': [
-        (-60.0, 90.0, 0, 0, 0.49),
-        (180.0, 80.0, 0, 0, 0.38),
-        (-60.0, -90.0, 0, 0, 0.13),
-    ],
-    'TYR': [
-        (-60.0, 90.0, 0, 0, 0.49),
-        (180.0, 80.0, 0, 0, 0.39),
-        (-60.0, -90.0, 0, 0, 0.12),
-    ],
-    'TRP': [
-        (-60.0, -90.0, 0, 0, 0.46),
-        (-60.0, 105.0, 0, 0, 0.28),
-        (180.0, -90.0, 0, 0, 0.16),
-        (180.0, 105.0, 0, 0, 0.10),
-    ],
-}
-
-@jit(nopython=True, cache=True)
-def normalize_vector(v):
-    """Fast vector normalization."""
-    norm = np.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
-    if norm > 1e-10:
+@jit(nopython=True)
+def norm_vector_fast(v):
+    """Fast vector normalization using numba."""
+    norm = np.sqrt(np.sum(v * v))
+    if norm > 0:
         return v / norm
     return v
 
-@jit(nopython=True, cache=True)
-def rotation_matrix_axis_angle(axis, angle):
-    """Compute rotation matrix using Rodrigues' formula."""
-    c = np.cos(angle)
-    s = np.sin(angle)
-    t = 1.0 - c
-    
-    x, y, z = axis[0], axis[1], axis[2]
-    
-    R = np.array([
-        [t*x*x + c,   t*x*y - s*z, t*x*z + s*y],
-        [t*x*y + s*z, t*y*y + c,   t*y*z - s*x],
-        [t*x*z - s*y, t*y*z + s*x, t*z*z + c  ]
-    ], dtype=np.float64)
-    
-    return R
+@jit(nopython=True)
+def cal_angle_fast(v1, v2):
+    """Fast angle calculation using numba."""
+    dot = np.sum(v1 * v2)
+    len1 = np.sqrt(np.sum(v1 * v1))
+    len2 = np.sqrt(np.sum(v2 * v2))
+    cos_angle = dot / (len1 * len2)
+    # Clamp to avoid numerical errors
+    cos_angle = np.clip(cos_angle, -1.0, 1.0)
+    return np.arccos(cos_angle) * 180.0 / np.pi
 
-@jit(nopython=True, cache=True)
-def rotate_points(coords, axis, angle, center):
-    """Rotate coordinates around axis through center."""
-    R = rotation_matrix_axis_angle(axis, angle)
-    centered = coords - center
-    rotated = np.dot(centered, R.T)
-    return rotated + center
+@jit(nopython=True)
+def rotate_about_axis_fast(coords, axis, angle, support):
+    """
+    Fast rotation using Rodrigues' formula with numba optimization.
+    coords: (N, 3) array of coordinates
+    axis: (3,) normalized axis vector
+    angle: rotation angle in radians
+    support: (3,) support vector
+    """
+    # Translate to origin
+    coords = coords - support
+    
+    # Rodrigues' rotation formula
+    cos_a = np.cos(angle)
+    sin_a = np.sin(angle)
+    
+    # Pre-compute dot products
+    dots = np.sum(coords * axis, axis=1)
+    
+    # Cross products
+    crosses = np.cross(coords, axis)
+    
+    # Rodrigues formula: v_rot = v*cos + (k×v)*sin + k(k·v)(1-cos)
+    rotated = coords * cos_a + crosses * sin_a + axis * dots[:, np.newaxis] * (1 - cos_a)
+    
+    # Translate back
+    return rotated + support
 
-@jit(nopython=True, cache=True)
-def compute_dihedral(p1, p2, p3, p4):
-    """Compute dihedral angle between 4 points."""
-    b1 = p2 - p1
-    b2 = p3 - p2
-    b3 = p4 - p3
-    
-    b2_norm = np.sqrt(np.sum(b2 * b2))
-    if b2_norm < 1e-10:
-        return 0.0
-    
-    b2_unit = b2 / b2_norm
-    
-    # Project b1 and b3 onto plane perpendicular to b2
-    v1 = b1 - np.dot(b1, b2_unit) * b2_unit
-    v2 = b3 - np.dot(b3, b2_unit) * b2_unit
-    
-    # Calculate angle
-    x = np.dot(v1, v2)
-    y = np.dot(np.cross(b2_unit, v1), v2)
-    
-    return np.arctan2(y, x)
-
-@functools.lru_cache(maxsize=128)
-def get_chi_atom_names(resname, chi_num):
-    """Get atom names for chi angle (cached)."""
-    chi_defs = {
-        'SER': {1: ('N', 'CA', 'CB', 'OG')},
-        'THR': {1: ('N', 'CA', 'CB', 'OG1')},
-        'CYS': {1: ('N', 'CA', 'CB', 'SG')},
-        'VAL': {1: ('N', 'CA', 'CB', 'CG1')},
-        'ILE': {1: ('N', 'CA', 'CB', 'CG1'), 2: ('CA', 'CB', 'CG1', 'CD1')},
-        'LEU': {1: ('N', 'CA', 'CB', 'CG'), 2: ('CA', 'CB', 'CG', 'CD1')},
-        'ASP': {1: ('N', 'CA', 'CB', 'CG'), 2: ('CA', 'CB', 'CG', 'OD1')},
-        'ASN': {1: ('N', 'CA', 'CB', 'CG'), 2: ('CA', 'CB', 'CG', 'OD1')},
-        'GLU': {1: ('N', 'CA', 'CB', 'CG'), 2: ('CA', 'CB', 'CG', 'CD'), 3: ('CB', 'CG', 'CD', 'OE1')},
-        'GLN': {1: ('N', 'CA', 'CB', 'CG'), 2: ('CA', 'CB', 'CG', 'CD'), 3: ('CB', 'CG', 'CD', 'OE1')},
-        'MET': {1: ('N', 'CA', 'CB', 'CG'), 2: ('CA', 'CB', 'CG', 'SD'), 3: ('CB', 'CG', 'SD', 'CE')},
-        'LYS': {1: ('N', 'CA', 'CB', 'CG'), 2: ('CA', 'CB', 'CG', 'CD'), 
-                3: ('CB', 'CG', 'CD', 'CE'), 4: ('CG', 'CD', 'CE', 'NZ')},
-        'ARG': {1: ('N', 'CA', 'CB', 'CG'), 2: ('CA', 'CB', 'CG', 'CD'), 
-                3: ('CB', 'CG', 'CD', 'NE'), 4: ('CG', 'CD', 'NE', 'CZ')},
-        'HIS': {1: ('N', 'CA', 'CB', 'CG'), 2: ('CA', 'CB', 'CG', 'ND1')},
-        'PHE': {1: ('N', 'CA', 'CB', 'CG'), 2: ('CA', 'CB', 'CG', 'CD1')},
-        'TYR': {1: ('N', 'CA', 'CB', 'CG'), 2: ('CA', 'CB', 'CG', 'CD1')},
-        'TRP': {1: ('N', 'CA', 'CB', 'CG'), 2: ('CA', 'CB', 'CG', 'CD1')},
-    }
-    
-    if resname in chi_defs and chi_num in chi_defs[resname]:
-        return chi_defs[resname][chi_num]
-    return None
-
-def find_atom_with_alternatives(sides, name, alternatives=None):
-    """Find atom by name, trying alternative names if needed."""
-    if alternatives is None:
-        alternatives = []
-    
-    # Try primary name first
-    sel = sides.select_atoms(f"name {name}", updating=False)
-    if len(sel) > 0:
-        return sel[0]
-    
-    # Try alternatives
-    for alt_name in alternatives:
-        sel = sides.select_atoms(f"name {alt_name}", updating=False)
-        if len(sel) > 0:
-            return sel[0]
-    
-    return None
-
-def set_chi_angle(sides, chi_num, target_angle_deg):
-    """Set chi angle to target value."""
-    resname = sides.residues[0].resname
-    atom_names = get_chi_atom_names(resname, chi_num)
-    
-    if atom_names is None:
-        return
-    
-    # Alternative atom names for different naming conventions
-    name_alternatives = {
-        'CG': ['CC'],
-        'CD': ['CC', 'CD1'],
-        'CD1': ['CC'],
-        'CE': ['CD'],
-        'OG': [],
-        'OG1': [],
-        'SG': [],
-        'CG1': ['CC'],
-        'SD': ['S'],
-        'OD1': [],
-        'OE1': [],
-        'ND1': ['N1'],
-        'NE': ['N1'],
-        'NZ': ['N1'],
-        'CZ': [],
-    }
-    
-    # Find atoms
-    atoms = []
-    for name in atom_names:
-        alternatives = name_alternatives.get(name, [])
-        atom = find_atom_with_alternatives(sides, name, alternatives)
-        if atom is None:
-            return
-        atoms.append(atom)
-    
-    # Get positions
-    positions = np.array([a.position for a in atoms], dtype=np.float64)
-    
-    # Compute current dihedral
-    current_angle = compute_dihedral(positions[0], positions[1], positions[2], positions[3])
-    
-    # Calculate rotation needed
-    target_angle = np.radians(target_angle_deg)
-    delta = target_angle - current_angle
-    
-    # Rotation axis (bond between atoms 2 and 3)
-    axis = normalize_vector(positions[2] - positions[1])
-    center = positions[1]
-    
-    # Select atoms to rotate based on chi number
-    if chi_num == 1:
-        to_rotate = sides.select_atoms("not name N CA C O HA CB HB", updating=False)
-    elif chi_num == 2:
-        to_rotate = sides.select_atoms(
-            "not name N CA C O HA CB HB CG CC HG HC", updating=False)
-    elif chi_num == 3:
-        to_rotate = sides.select_atoms(
-            "not name N CA C O HA CB HB CG CC HG HC CD CC HD", updating=False)
-    elif chi_num == 4:
-        to_rotate = sides.select_atoms(
-            "name NZ HZ N1 HN CZ NH1 HH1 NH2 HH2", updating=False)
+def norm_vector(v):
+    """Normalise a vector."""
+    factor = np.linalg.norm(v, axis=-1)
+    if isinstance(factor, np.ndarray):
+        v /= factor[..., np.newaxis]
     else:
-        return
+        v /= factor
+
+def cal_normal(v1, v2):
+    return np.cross(v1, v2)
+
+def cal_distance(coord1, coord2):
+    temp = np.array(coord1) - np.array(coord2)
+    return np.sqrt(np.dot(temp, temp))
+
+def cal_angle(v1, v2):
+    """Wrapper for compatibility."""
+    return cal_angle_fast(np.array(v1, dtype=np.float64), np.array(v2, dtype=np.float64))
+
+def rotate_about_axis(coords, axis, angle, support=None):
+    """
+    Optimized rotation function.
+    """
+    positions = np.asarray(coords, dtype=np.float64)
+    axis = np.asarray(axis, dtype=np.float64)
     
-    if len(to_rotate) == 0:
-        return
+    if support is None:
+        support = np.zeros(3, dtype=np.float64)
+    else:
+        support = np.asarray(support, dtype=np.float64)
     
-    # Apply rotation
-    coords = to_rotate.positions.copy()
-    to_rotate.positions = rotate_points(coords, axis, delta, center)
+    # Normalize axis
+    axis = norm_vector_fast(axis)
+    
+    # Handle single coordinate vs array
+    if positions.ndim == 1:
+        positions = positions.reshape(1, 3)
+        result = rotate_about_axis_fast(positions, axis, angle, support)
+        return result[0]
+    
+    return rotate_about_axis_fast(positions, axis, angle, support)
 
 def opt_side_chain(resname, refs, sides):
     """
-    Optimize side chain using TOP 5 most probable rotamers.
-    
-    Tries all rotamers and selects the best match to reference geometry.
-    
-    Parameters
-    ----------
-    resname : str
-        Residue name (three-letter code)
-    refs : AtomGroup
-        Reference atoms from coarse-grained model (CA, CB, CC, CD, etc.)
-    sides : Universe
-        All-atom residue structure to optimize
+    Optimized side chain optimization with vectorized operations.
     """
-    if resname not in ROTAMER_LIBRARY:
-        return
+    # Pre-compute rotation angles once
+    angles = np.deg2rad(np.arange(0, 360, 5))
     
-    rotamers = ROTAMER_LIBRARY[resname]
-    
-    # Get reference positions for scoring
-    CA_r = refs.atoms[0].position
-    ref_positions = [refs.atoms[i].position for i in range(min(len(refs.atoms), 4))]
-    
-    # Calculate reference center of mass (excluding CA)
-    if len(ref_positions) > 1:
-        ref_com = np.mean(ref_positions[1:], axis=0)
-    else:
-        ref_com = CA_r
-    
-    # Get side chain atoms for scoring
-    CA = sides.select_atoms("name CA", updating=False).atoms[0].position
-    side_atoms = sides.select_atoms("not name N CA C O HA", updating=False)
-    
-    if len(side_atoms) == 0:
-        return
-    
-    # Save original positions
-    original_positions = side_atoms.atoms.positions.copy()
-    
-    best_score = np.inf
-    best_positions = None
-    
-    # Try each rotamer
-    for chi1, chi2, chi3, chi4, prob in rotamers:
-        # Reset to original
-        side_atoms.atoms.positions = original_positions.copy()
+    # Simple residues: SER, THR, CYS, VAL
+    if resname in ['SER', 'THR', 'CYS', 'VAL']:
+        CA_r = refs.atoms[0].position
+        CB_r = refs.atoms[1].position
+        CA = sides.select_atoms("name CA").atoms[0].position
+        CB = sides.select_atoms("name CB").atoms[0].position
+        axis = np.array(CB) - np.array(CA)
+        axis = norm_vector_fast(axis)
         
-        # Apply chi angles
-        if chi1 != 0:
-            set_chi_angle(sides, 1, chi1)
-        if chi2 != 0:
-            set_chi_angle(sides, 2, chi2)
-        if chi3 != 0:
-            set_chi_angle(sides, 3, chi3)
-        if chi4 != 0:
-            set_chi_angle(sides, 4, chi4)
+        rotations = sides.select_atoms("not name N CA C O HA")
+        original_positions = rotations.atoms.positions.copy()
         
-        # Calculate score: distance between side chain COM and reference COM
-        current_com = side_atoms.center_of_mass()
-        dist = np.linalg.norm(current_com - ref_com)
+        v1 = np.array(CB_r) - np.array(CA)
+        min_angle = 180.0
+        opt_positions = original_positions.copy()
         
-        # Weight by rotamer probability (favor high probability rotamers)
-        score = dist - 2.0 * prob
+        for theta in angles:
+            # Rotate all atoms at once
+            rotations.atoms.positions = rotate_about_axis_fast(
+                original_positions, axis, theta, np.array(CA)
+            )
+            
+            com = rotations.center_of_mass()
+            v2 = np.array(com) - np.array(CA)
+            angle = cal_angle_fast(v1, v2)
+            
+            if angle < min_angle:
+                min_angle = angle
+                opt_positions = rotations.atoms.positions.copy()
         
-        if score < best_score:
-            best_score = score
-            best_positions = side_atoms.atoms.positions.copy()
+        rotations.atoms.positions = opt_positions
+
+    # Medium residues: ASP, ASN, LEU, GLU, GLN, MET
+    elif resname in ['ASP', 'ASN', 'LEU', 'GLU', 'GLN', 'MET']:
+        CA_r = refs.atoms[0].position
+        CB_r = refs.atoms[1].position
+        CA = sides.select_atoms("name CA").atoms[0].position
+        CB = sides.select_atoms("name CB").atoms[0].position
+        CA_CB = norm_vector_fast(np.array(CB) - np.array(CA))
+        
+        rotations = sides.select_atoms("not name N CA C O HA")
+        original_positions = rotations.atoms.positions.copy()
+        part2 = sides.select_atoms("not name N CA C O HA CB HB")
+        
+        v1 = np.array(CB_r) - np.array(CA)
+        min_angle = 180.0
+        opt_positions = original_positions.copy()
+        
+        for theta in angles:
+            temp_pos = rotate_about_axis_fast(original_positions, CA_CB, theta, np.array(CA))
+            
+            # Get CC position from temp positions
+            rot_idx = [i for i, atom in enumerate(rotations.atoms)]
+            rot_names = [atom.name for atom in rotations.atoms]
+            cc_idx = rot_names.index('CC') if 'CC' in rot_names else None
+            
+            if cc_idx is not None:
+                CC = temp_pos[cc_idx]
+                CB_CC = norm_vector_fast(CC - np.array(CB))
+                
+                # Get part2 indices and positions
+                part2_mask = np.array([atom in part2 for atom in rotations.atoms])
+                part2_positions = temp_pos[part2_mask]
+                original_part2 = part2_positions.copy()
+                
+                for phi in angles:
+                    temp_pos[part2_mask] = rotate_about_axis_fast(
+                        original_part2, CB_CC, phi, np.array(CB)
+                    )
+                    
+                    rotations.atoms.positions = temp_pos
+                    com = rotations.center_of_mass()
+                    v2 = np.array(com) - np.array(CA)
+                    angle = cal_angle_fast(v1, v2)
+                    
+                    if angle < min_angle:
+                        min_angle = angle
+                        opt_positions = temp_pos.copy()
+        
+        rotations.atoms.positions = opt_positions
+
+    # ILE
+    elif resname == 'ILE':
+        CA_r = refs.atoms[0].position
+        CB_r = refs.atoms[1].position
+        CA = sides.select_atoms("name CA").atoms[0].position
+        CB = sides.select_atoms("name CB").atoms[0].position
+        CA_CB = norm_vector_fast(np.array(CB) - np.array(CA))
+        
+        rotations = sides.select_atoms("not name N CA C O HA")
+        original_positions = rotations.atoms.positions.copy()
+        part2 = sides.select_atoms("name CF HF")
+        
+        v1 = np.array(CB_r) - np.array(CA)
+        min_angle = 180.0
+        opt_positions = original_positions.copy()
+        
+        for theta in angles:
+            temp_pos = rotate_about_axis_fast(original_positions, CA_CB, theta, np.array(CA))
+            
+            rot_names = [atom.name for atom in rotations.atoms]
+            cc_idx = rot_names.index('CC') if 'CC' in rot_names else None
+            
+            if cc_idx is not None:
+                CC = temp_pos[cc_idx]
+                CB_CC = norm_vector_fast(CC - np.array(CB))
+                
+                part2_mask = np.array([atom in part2 for atom in rotations.atoms])
+                part2_positions = temp_pos[part2_mask]
+                original_part2 = part2_positions.copy()
+                
+                for phi in angles:
+                    temp_pos[part2_mask] = rotate_about_axis_fast(
+                        original_part2, CB_CC, phi, np.array(CB)
+                    )
+                    
+                    rotations.atoms.positions = temp_pos
+                    com = rotations.center_of_mass()
+                    v2 = np.array(com) - np.array(CA)
+                    angle = cal_angle_fast(v1, v2)
+                    
+                    if angle < min_angle:
+                        min_angle = angle
+                        opt_positions = temp_pos.copy()
+        
+        rotations.atoms.positions = opt_positions
+
+    # ARG - Multi-stage optimization
+    elif resname == 'ARG':
+        _optimize_arg(resname, refs, sides, angles)
+
+    # LYS - Multi-stage optimization  
+    elif resname == 'LYS':
+        _optimize_lys(resname, refs, sides, angles)
+
+    # Aromatic residues: HIS, PHE, TYR, TRP
+    elif resname in ['HIS', 'PHE', 'TYR', 'TRP']:
+        _optimize_aromatic(resname, refs, sides, angles)
+
+def _optimize_arg(resname, refs, sides, angles):
+    """Separate function for ARG optimization."""
+    CA_r = refs.select_atoms("name CA").atoms[0].position
+    CB_r = refs.select_atoms("name CB").atoms[0].position
+    CC_r = refs.select_atoms("name CC").atoms[0].position
+    CA = sides.select_atoms("name CA").atoms[0].position
+    CB = sides.select_atoms("name CB").atoms[0].position
+    CA_CB = norm_vector_fast(np.array(CB) - np.array(CA))
     
-    # Apply best rotamer
-    if best_positions is not None:
-        side_atoms.atoms.positions = best_positions
+    rotations = sides.select_atoms("not name N CA C O HA")
+    original_positions = rotations.atoms.positions.copy()
+    part2 = sides.select_atoms("not name N CA C O HA CB HB")
+    
+    v1 = np.array(CB_r) - np.array(CA)
+    min_angle = 180.0
+    opt_positions = original_positions.copy()
+    
+    for theta in angles:
+        temp_pos = rotate_about_axis_fast(original_positions, CA_CB, theta, np.array(CA))
+        
+        rot_names = [atom.name for atom in rotations.atoms]
+        cc_idx = rot_names.index('CC') if 'CC' in rot_names else None
+        
+        if cc_idx:
+            CC = temp_pos[cc_idx]
+            CB_CC = norm_vector_fast(CC - np.array(CB))
+            
+            part2_mask = np.array([atom in part2 for atom in rotations.atoms])
+            part2_positions = temp_pos[part2_mask]
+            original_part2 = part2_positions.copy()
+            
+            for phi in angles:
+                temp_pos[part2_mask] = rotate_about_axis_fast(
+                    original_part2, CB_CC, phi, np.array(CB)
+                )
+                
+                rotations.atoms.positions = temp_pos
+                com = rotations.center_of_mass()
+                v2 = np.array(com) - np.array(CA)
+                angle = cal_angle_fast(v1, v2)
+                
+                if angle < min_angle:
+                    min_angle = angle
+                    opt_positions = temp_pos.copy()
+    
+    rotations.atoms.positions = opt_positions
+    
+    # Second stage optimization for ARG tail
+    v1 = np.array(CC_r) - np.array(CA)
+    CD = sides.select_atoms("name CD").atoms[0].position
+    N1 = sides.select_atoms("name N1").atoms[0].position
+    CD_N1 = norm_vector_fast(np.array(N1) - np.array(CD))
+    part3 = sides.select_atoms("not name N CA C O HA CB HB CC HC CD HD")
+    
+    original_part3 = part3.atoms.positions.copy()
+    opt_positions = original_part3.copy()
+    min_angle = 180.0
+    
+    for theta in angles:
+        part3.atoms.positions = rotate_about_axis_fast(
+            original_part3, CD_N1, theta, np.array(CD)
+        )
+        
+        com = part3.center_of_mass()
+        v2 = np.array(com) - np.array(CA)
+        angle = cal_angle_fast(v1, v2)
+        
+        if angle < min_angle:
+            min_angle = angle
+            opt_positions = part3.atoms.positions.copy()
+    
+    part3.atoms.positions = opt_positions
+
+def _optimize_lys(resname, refs, sides, angles):
+    """Separate function for LYS optimization."""
+    # Similar structure to ARG - implementation follows same pattern
+    # [Abbreviated for space - follows same optimization pattern as ARG]
+    CA_r = refs.select_atoms("name CA").atoms[0].position
+    CB_r = refs.select_atoms("name CB").atoms[0].position
+    CC_r = refs.select_atoms("name CC").atoms[0].position
+    CA = sides.select_atoms("name CA").atoms[0].position
+    CB = sides.select_atoms("name CB").atoms[0].position
+    CA_CB = norm_vector_fast(np.array(CB) - np.array(CA))
+    
+    rotations = sides.select_atoms("not name N CA C O HA")
+    original_positions = rotations.atoms.positions.copy()
+    part2 = sides.select_atoms("not name N CA C O HA CB HB")
+    
+    v1 = np.array(CB_r) - np.array(CA)
+    min_angle = 180.0
+    opt_positions = original_positions.copy()
+    
+    for theta in angles:
+        temp_pos = rotate_about_axis_fast(original_positions, CA_CB, theta, np.array(CA))
+        
+        rot_names = [atom.name for atom in rotations.atoms]
+        cc_idx = rot_names.index('CC') if 'CC' in rot_names else None
+        
+        if cc_idx:
+            CC = temp_pos[cc_idx]
+            CB_CC = norm_vector_fast(CC - np.array(CB))
+            
+            part2_mask = np.array([atom in part2 for atom in rotations.atoms])
+            part2_positions = temp_pos[part2_mask]
+            original_part2 = part2_positions.copy()
+            
+            for phi in angles:
+                temp_pos[part2_mask] = rotate_about_axis_fast(
+                    original_part2, CB_CC, phi, np.array(CB)
+                )
+                
+                rotations.atoms.positions = temp_pos
+                com = rotations.center_of_mass()
+                v2 = np.array(com) - np.array(CA)
+                angle = cal_angle_fast(v1, v2)
+                
+                if angle < min_angle:
+                    min_angle = angle
+                    opt_positions = temp_pos.copy()
+    
+    rotations.atoms.positions = opt_positions
+    
+    # Second stage
+    v1 = np.array(CC_r) - np.array(CA)
+    CC = sides.select_atoms("name CC").atoms[0].position
+    CD = sides.select_atoms("name CD").atoms[0].position
+    CC_CD = norm_vector_fast(np.array(CD) - np.array(CC))
+    part3 = sides.select_atoms("name CD HD CE HE N1 HN")
+    
+    original_part3 = part3.atoms.positions.copy()
+    opt_positions = original_part3.copy()
+    min_angle = 180.0
+    
+    for theta in angles:
+        part3.atoms.positions = rotate_about_axis_fast(
+            original_part3, CC_CD, theta, np.array(CC)
+        )
+        
+        grp_CC = sides.select_atoms("name CE HE N1 HN")
+        com = grp_CC.center_of_mass()
+        v2 = np.array(com) - np.array(CA)
+        angle = cal_angle_fast(v1, v2)
+        
+        if angle < min_angle:
+            min_angle = angle
+            opt_positions = part3.atoms.positions.copy()
+    
+    part3.atoms.positions = opt_positions
+
+def _optimize_aromatic(resname, refs, sides, angles):
+    """Optimized aromatic residue side chain placement."""
+    CA_r = refs.select_atoms("name CA").atoms[0].position
+    CB_r = refs.select_atoms("name CB").atoms[0].position
+    CC_r = refs.select_atoms("name CC").atoms[0].position
+    CD_r = refs.select_atoms("name CD").atoms[0].position
+    CA = sides.select_atoms("name CA").atoms[0].position
+    CB = sides.select_atoms("name CB").atoms[0].position
+    CA_CB = norm_vector_fast(np.array(CB) - np.array(CA))
+    
+    rotations = sides.select_atoms("not name N CA C O HA")
+    original_positions = rotations.atoms.positions.copy()
+    
+    v1 = np.array(CB_r) - np.array(CA)
+    min_angle = 180.0
+    opt_positions = original_positions.copy()
+    
+    for theta in angles:
+        rotations.atoms.positions = rotate_about_axis_fast(
+            original_positions, CA_CB, theta, np.array(CA)
+        )
+        
+        grp_CB = sides.select_atoms("name CB HB CC")
+        com_CB = grp_CB.center_of_mass()
+        v2 = np.array(com_CB) - np.array(CA)
+        angle = cal_angle_fast(v1, v2)
+        
+        if angle < min_angle:
+            min_angle = angle
+            opt_positions = rotations.atoms.positions.copy()
+    
+    rotations.atoms.positions = opt_positions
+    
+    # Ring plane optimization
+    CC = sides.select_atoms("name CC").atoms[0].position
+    CB_CC = norm_vector_fast(np.array(CC) - np.array(CB))
+    part2 = sides.select_atoms("not name N CA C O HA CB HB")
+    original_part2 = part2.atoms.positions.copy()
+    
+    min_dist = np.inf
+    opt_positions = original_part2.copy()
+    
+    # Define groups based on residue type
+    if resname == 'HIS':
+        grp_names = [
+            "name CB HB CC",
+            "name N1 CE HE",
+            "name CD HD N2 HN"
+        ]
+    elif resname == 'PHE':
+        grp_names = [
+            "name CB HB CC",
+            "name CE HE CG HG",
+            "name CF HF CH HH"
+        ]
+    elif resname == 'TYR':
+        grp_names = [
+            "name CB HB CC",
+            "name CE HE CG HG",
+            "name CF HF CH O1 HO"
+        ]
+    elif resname == 'TRP':
+        grp_names = [
+            "name CB HB CC",
+            "name CD HD N1 HN",
+            "name CE CF"
+        ]
+    
+    for phi in angles:
+        part2.atoms.positions = rotate_about_axis_fast(
+            original_part2, CB_CC, phi, np.array(CB)
+        )
+        
+        # Calculate total distance to reference
+        total_dist = 0.0
+        for i, grp_sel in enumerate(grp_names):
+            grp = sides.select_atoms(grp_sel)
+            com = grp.center_of_mass()
+            if i == 0:
+                total_dist += cal_distance(com, CB_r)
+            elif i == 1:
+                total_dist += cal_distance(com, CC_r)
+            elif i == 2:
+                total_dist += cal_distance(com, CD_r)
+        
+        if total_dist < min_dist:
+            min_dist = total_dist
+            opt_positions = part2.atoms.positions.copy()
+    
+    part2.atoms.positions = opt_positions
