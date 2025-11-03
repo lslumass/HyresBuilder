@@ -3,8 +3,7 @@ This package is built for the simulation of HyRes protein and iConRNA (iConDNA l
 **Main functions:**
 1. Construct HyRes peptide structure from sequence or convert atomistic structure into HyRes model;   
 2. Construct iConRNA model from sequence or convert atomistic structure into iConRNA model;   
-3. Set up HyRes and/or iConRNA force fields;   
-4. Backmap CG structures to all-atom ones.   
+3. Set up HyRes and/or iConRNA force fields;  
 
 
 ## Dependencies:
@@ -114,3 +113,6 @@ options:
 ```python run_latest.py -c conf.pdb -p conf.psf -o test -t 298 -e NVT -b 10 -s 150 -m 5```
 3. slab simulation of condensate at 15*15*50 nm rectangle box:   
 ```python run_latest.py -c conf.pdb -p conf.psf -o test -t 298 -e NVT -b 15 15 50 -s 150```
+
+## Backmap to all-atom 
+[cg2all](https://github.com/huhlim/cg2all) works well for hyres to do backmap.  

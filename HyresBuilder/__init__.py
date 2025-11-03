@@ -20,16 +20,6 @@ try:
         at2hyres,
         at2icon,
     )
-    from .Backmap import (
-        backmap_structure,
-        backmap_trajectory,
-        get_map_directory,
-        StructureCache,
-    )
-    from .Rotamer import (
-        ROTAMER_LIBRARY,
-        opt_side_chain,
-    )
 except ImportError as e:
     import warnings
     warnings.warn(
@@ -48,14 +38,6 @@ __all__ = [
     'at2cg',
     'at2hyres',
     'at2icon',
-    # backmap functions
-    'backmap_structure',
-    'backmap_trajectory',
-    'get_map_directory',
-    'StructureCache',
-    # Rotamer functions
-    'ROTAMER_LIBRARY',
-    'opt_side_chain',
 ]
 
 #from .HyresBuilder import *
