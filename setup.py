@@ -27,7 +27,7 @@ else:
         '- backmap CG structures to all-atom ones'
         '- construct CG model from sequence'
     )
-INSTALL_REQUIRES = ["Biopython", "MDAnalysis>=2.0.0", "numba>=0.53.0", "numpy>=1.19.0"]
+INSTALL_REQUIRES = ["Biopython", "MDAnalysis>=2.0.0", "numpy>=1.19.0"]
 
 TEST_REQUIRES = [
     # testing and coverage
@@ -52,7 +52,7 @@ setup(
     platforms="Tested on Ubuntu 22.04",
     packages=["HyresBuilder"],
     package_dir={'HyresBuilder':'HyresBuilder'},
-    package_data={"HyresBuilder":["map/*.map", "map/*.pdb", "forcefield/*.inp"]},
+    package_data={"HyresBuilder":["map/*.map", "forcefield/*.inp"]},
     include_package_data=True,
     install_requires=INSTALL_REQUIRES,
     extras_require={"test": TEST_REQUIRES + INSTALL_REQUIRES,},
