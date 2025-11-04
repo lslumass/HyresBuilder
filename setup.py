@@ -71,7 +71,6 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'hyres-backmap=HyresBuilder.Backmap:main',
             'convert2cg=HyresBuilder.Convert2CG:main',
         ]
     }

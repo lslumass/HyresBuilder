@@ -4,7 +4,6 @@ HyResBuilder is for preparing HyRes protein model and iConRNA model.
 Main Functions:
 - build HyRes and/or iConRNA force field
 - convert all-atom structures to CG ones
-- backmap CG structures to all-atom ones
 - construct CG model from sequence
 """
 
@@ -19,23 +18,6 @@ try:
         at2cg,
         at2hyres,
         at2icon,
-    )
-    from .Backmap import (
-        backmap_structure,
-        backmap_trajectory,
-        get_map_directory,
-        StructureCache,
-        check_clashes,
-        rotate_side_chain_fine_search,
-    )
-    from .Rotamer import (
-        opt_side_chain,
-        normalize_vector,
-        rotate_about_axis,
-        rotate_about_axis_fast,
-        cal_angle,
-        cal_distance,
-        cal_normal,
     )
 except ImportError as e:
     import warnings
@@ -55,21 +37,6 @@ __all__ = [
     'at2cg',
     'at2hyres',
     'at2icon',
-    # Main functions
-    'backmap_structure',
-    'backmap_trajectory',
-    'get_map_directory',
-    'StructureCache',
-    'check_clashes',
-    'rotate_side_chain_fine_search',
-    # Rotamer functions
-    'opt_side_chain',
-    'normalize_vector',
-    'rotate_about_axis',
-    'rotate_about_axis_fast',
-    'cal_angle',
-    'cal_distance',
-    'cal_normal',
 ]
 
 #from .HyresBuilder import *
