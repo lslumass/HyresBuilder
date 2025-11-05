@@ -1,0 +1,10 @@
+tolerance 3.0
+filetype pdb
+output conf.pdb
+pbc 1000.0 1000.0 1000.0
+
+structure monomer.pdb
+  number 100
+  changechains
+  inside cube 0. 0. 0. 1000.
+end structure
