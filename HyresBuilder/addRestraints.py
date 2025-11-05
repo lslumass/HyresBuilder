@@ -2,9 +2,6 @@
 simple version of adding restraints
 Date: Oct 23, 2025
 Author: Shanlong Li
-system: openmm.System
-pdb: openmm.app.PDBFile
-residue_list: list of residue index to be restrained
 """
 
 from openmm.unit import *
@@ -13,6 +10,11 @@ from openmm import *
 
 
 def posres_CA(system, pdb, residue_list=None):
+    """
+    system: openmm.System
+    pdb: openmm.app.PDBFile
+    residue_list: list of residue index to be restrained
+    """
     # add restraint
     ### set position restraints CA atoms
     restraint = CustomExternalForce('k*((x-x0)^2+(y-y0)^2+(z-z0)^2)')
