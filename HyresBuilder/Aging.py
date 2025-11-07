@@ -18,9 +18,9 @@ def inRegisterHB(system, top, res_list, age=1.0):
     res_list: list of residue indices for in-Register beta sheets
     age: aging stength as HB force strength
     """
-    for force in system.getForces():
-        if force.getName() == "NonbondedForce":
-            nbforce = force
+    #for force in system.getForces():
+    #    if force.getName() == "NonbondedForce":
+    #        nbforce = force
 
     Ns, Hs, Os = [], [], []
     for atom in top.atoms():
@@ -43,7 +43,7 @@ def inRegisterHB(system, top, res_list, age=1.0):
                 """
         inRegHB = CustomHbondForce(formula)
         inRegHB.setName('inRegister HBForce')
-        inRegHB.setNonbondedMethod(nbforce.getNonbondedMethod())
+        #inRegHB.setNonbondedMethod(nbforce.getNonbondedMethod())
         inRegHB.setCutoffDistance(0.45*unit.nanometers)
         inRegHB.addPerDonorParameter("di")  # resid for donor
         inRegHB.addPerAcceptorParameter("ai")  # resid for acceptor
