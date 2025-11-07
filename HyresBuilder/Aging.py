@@ -24,13 +24,14 @@ def inRegisterHB(system, top, res_list, age=1.0):
 
     Ns, Hs, Os = [], [], []
     for atom in top.atoms():
-        if atom.residue.name != 'PRO' and int(atom.residue.id) in res_list:
+        resid = int(atom.residue.id)
+        if atom.residue.name != 'PRO' and resid in res_list:
             if atom.name == "N":
-                Ns.append([int(atom.index), atom.residue.id])
+                Ns.append([int(atom.index), resid])
             if atom.name == "H":
-                Hs.append([int(atom.index), atom.residue.id])
+                Hs.append([int(atom.index), resid])
             if atom.name == "O":
-                Os.append([int(atom.index), atom.residue.id])
+                Os.append([int(atom.index), resid])
 
     if len(Ns) != 0:
         sigma_hb = 0.29*unit.nanometer
