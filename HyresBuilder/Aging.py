@@ -10,12 +10,11 @@ from openmm.app import *
 from openmm import *
 
 
-def inRegisterHB(system, psf, res_list, age=1.0):
+def inRegisterHB(system, res_list, age=1.0):
     """
     hydrogen bonds between same residues only for in-Register beta sheets
     Parameters:
     system: openmm system object
-    psf: openmm psf object
     res_list: list of residue indices for in-Register beta sheets
     age: aging stength as HB force strength
     """
@@ -24,7 +23,7 @@ def inRegisterHB(system, psf, res_list, age=1.0):
             nbforce = force
 
     Ns, Hs, Os = [], [], []
-    for atom in psf.topology.atoms():
+    for atom in system.topology.atoms():
         if atom.residue.name != 'PRO' and atom.residue.resid in res_list:
             if atom.name == "N":
                 Ns.append([int(atom.index), atom.residue.resid])
