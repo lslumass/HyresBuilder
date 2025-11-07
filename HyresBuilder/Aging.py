@@ -10,12 +10,13 @@ from openmm.app import *
 from openmm import *
 
 
-def inRegisterHB(system, psf, age=1.0):
+def inRegisterHB(system, psf, res_list, age=1.0):
     """
     hydrogen bonds between same residues only for in-Register beta sheets
     Parameters:
     system: openmm system object
     psf: openmm psf object
+    res_list: list of residue indices for in-Register beta sheets
     age: aging stength as HB force strength
     """
     for force in system.getForces():
@@ -24,19 +25,20 @@ def inRegisterHB(system, psf, age=1.0):
 
     Ns, Hs, Os = [], [], []
     for atom in psf.topology.atoms():
-        if atom.residue.name != 'PRO':
+        if atom.residue.name != 'PRO' and atom.residue.resid in res_list:
             if atom.name == "N":
-                Ns.append(int(atom.index))
+                Ns.append([int(atom.index), atom.residue.resid])
             if atom.name == "H":
-                Hs.append(int(atom.index))
+                Hs.append([int(atom.index), atom.residue.resid])
             if atom.name == "O":
-                Os.append(int(atom.index))
+                Os.append([int(atom.index), atom.residue.resid])
 
     if len(Ns) != 0:
         sigma_hb = 0.29*unit.nanometer
         eps_hb = age*unit.kilocalorie_per_mole
-        formula = f"""epsilon*(5*(sigma/r)^12-6*(sigma/r)^10)*step(cos3)*cos3;
-                r=distance(a1,d1); cos3=-cos(phi)^3; phi=angle(a1,d2,d1);
+        # cond = delta(adi); adi=di-ai; if resid is same, cond=1, else cond=0
+        formula = f"""epsilon*(5*(sigma/r)^12-6*(sigma/r)^10)*step(cos3)*cos3*cond;
+                r=distance(a1,d1); cos3=-cos(phi)^3; phi=angle(a1,d2,d1); cond=delta(adi); adi=di-ai;
                 sigma = {sigma_hb.value_in_unit(unit.nanometer)};
                 epsilon = {eps_hb.value_in_unit(unit.kilojoule_per_mole)};
                 """
@@ -44,9 +46,11 @@ def inRegisterHB(system, psf, age=1.0):
         inRegHB.setName('inRegister HBForce')
         inRegHB.setNonbondedMethod(nbforce.getNonbondedMethod())
         inRegHB.setCutoffDistance(0.45*unit.nanometers)
+        inRegHB.addPerDonorParameter("di")  # resid for donor
+        inRegHB.addPerAcceptorParameter("ai")  # resid for acceptor
         for idx in range(len(Hs)):
-            inRegHB.addDonor(Ns[idx], Hs[idx], -1)
-            inRegHB.addAcceptor(Os[idx], -1, -1)
+            inRegHB.addDonor(Ns[idx][0], Hs[idx][0], -1, [Hs[idx][1],])
+            inRegHB.addAcceptor(Os[idx][0], -1, -1, [Hs[idx][1],])
         
         system.addForce(inRegHB)
     return system
