@@ -10,7 +10,7 @@ from openmm.app import *
 from openmm import *
 
 
-def inRegisterHB(system, res_list, age=1.0):
+def inRegisterHB(system, top, res_list, age=1.0):
     """
     hydrogen bonds between same residues only for in-Register beta sheets
     Parameters:
@@ -23,7 +23,7 @@ def inRegisterHB(system, res_list, age=1.0):
             nbforce = force
 
     Ns, Hs, Os = [], [], []
-    for atom in system.topology.atoms():
+    for atom in top.atoms():
         if atom.residue.name != 'PRO' and atom.residue.resid in res_list:
             if atom.name == "N":
                 Ns.append([int(atom.index), atom.residue.resid])
