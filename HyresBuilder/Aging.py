@@ -51,6 +51,7 @@ def inRegisterHB(system, top, res_list, age=1.0):
         for idx in range(len(Hs)):
             inRegHB.addDonor(Ns[idx][0], Hs[idx][0], -1, [Hs[idx][1],])
             inRegHB.addAcceptor(Os[idx][0], -1, -1, [Hs[idx][1],])
+            inRegHB.addExclusion(idx, idx)
         
         system.addForce(inRegHB)
     return system
