@@ -24,7 +24,7 @@ def inRegisterHB(system, top, res_list, age=1.0):
 
     Ns, Hs, Os = [], [], []
     for atom in top.atoms():
-        if atom.residue.name != 'PRO' and atom.residue.id in res_list:
+        if atom.residue.name != 'PRO' and int(atom.residue.id) in res_list:
             if atom.name == "N":
                 Ns.append([int(atom.index), atom.residue.id])
             if atom.name == "H":
