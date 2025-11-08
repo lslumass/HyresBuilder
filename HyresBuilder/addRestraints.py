@@ -9,11 +9,12 @@ from openmm.app import *
 from openmm import *
 
 
-def posres_CA(system, pdb, residue_list=None):
+def posres_CA(system, pdb, residue_list=None, limited_range=None):
     """
     system: openmm.System
     pdb: openmm.app.PDBFile
     residue_list: list of residue index to be restrained
+    limited_range: tuple defined the index range of CA for restraint
     """
     # add restraint
     ### set position restraints CA atoms
@@ -23,9 +24,14 @@ def posres_CA(system, pdb, residue_list=None):
     restraint.addPerParticleParameter('x0')
     restraint.addPerParticleParameter('y0')
     restraint.addPerParticleParameter('z0')
-
+    
+    if limited_range:
+        atom_min, atom_max = limited_range[0], limited_range[1]
+    else:
+        atom_min, atom_max = 0, len(pdb.topology.atoms())
     for atom in pdb.topology.atoms():
         resid, name = int(atom.residue.id), atom.name
         if resid in residue_list and name == 'CA':
-            restraint.addParticle(atom.index, pdb.positions[atom.index])
+            if atom.index > atom_min and atom.index < atom_max:
+                restraint.addParticle(atom.index, pdb.positions[atom.index])
     system.addForce(restraint)
