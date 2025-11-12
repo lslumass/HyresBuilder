@@ -116,7 +116,7 @@ def at2hyres(pdb_in, pdb_out):
 
         # convert at to cg
         bbcg1=['CA', 'N', 'HN', 'HT1']        # should be modified further
-        bbcg2=['C', 'O']
+        bbcg2=['C', 'O', 'OT1']
         ntercg=['CAY', 'CY', 'OY']
         ctercg=['NT', 'HNT', 'CAT']
         inx=0
