@@ -4,18 +4,18 @@ import os
 from .utils import load_ff
 
 
-def set_terminus(gen, segid, charge_status):
+def set_terminus(gen, segid, terminal):
     # re-set the charge status of terminus
     if segid.startswith("P"):
         nter, cter = gen.get_resids(segid)[0], gen.get_resids(segid)[-1]
-        if charge_status == 'charged':
+        if terminal == 'charged':
             gen.set_charge(segid, nter, "N", 1.00)
             gen.set_charge(segid, cter, "O", -1.00)
-        elif charge_status == 'NT':
+        elif terminal == 'NT':
             gen.set_charge(segid, nter, "N", 1.00)
-        elif charge_status == 'CT':
+        elif terminal == 'CT':
             gen.set_charge(segid, cter, "O", -1.00)
-        elif charge_status == 'positive':
+        elif terminal == 'positive':
             gen.set_charge(segid, nter, "N", -1.00)
             gen.set_charge(segid, cter, "O", -1.00)
         else:
@@ -303,7 +303,7 @@ def at2icon(pdb_in, pdb_out):
        print('END', file=f)
    print('At2iCon conversion done, output written to', pdb_out)
 
-def at2cg(pdb_in, pdb_out, charge_status='neutral'):
+def at2cg(pdb_in, pdb_out, terminal='neutral'):
    '''
     at2cg: convert all-atom pdb to cg pdb, either hyres for protein or iConRNA for RNA
     in the input pdb, protein segid should start with "P", RNA segid should start with "R"
@@ -360,8 +360,8 @@ def at2cg(pdb_in, pdb_out, charge_status='neutral'):
    
    #re-set the charge status of terminus
    for segid in gen.get_segids():
-       if charge_status != "neutral":
-           set_terminus(gen, segid, charge_status)    
+       if terminal != "neutral":
+           set_terminus(gen, segid, terminal)    
    
    # write psf file
    gen.write_psf(filename=f'{pdb_out[:-4]}.psf')
