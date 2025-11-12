@@ -116,7 +116,7 @@ def at2hyres(pdb_in, pdb_out):
 
         # convert at to cg
         bbcg1=['CA', 'N', 'HN', 'HT1']        # should be modified further
-        bbcg2=['C', 'O', 'OT1']
+        bbcg2=['C', 'OT1']
         ntercg=['CAY', 'CY', 'OY']
         ctercg=['NT', 'HNT', 'CAT']
         inx=0
@@ -162,6 +162,13 @@ def at2hyres(pdb_in, pdb_out):
                       inx=inx+1
                       if data[ires][j][2] in ['HN', 'HT1']:
                          data[ires][j][2]='H'
+                      data[ires][j][1]=inx
+                      data[ires][j][3]=data[ires][j][3]+'_'
+                      printcg(data[ires][j])
+                   elif data[ires][j][2] in bbcg2:
+                      inx=inx+1
+                      if data[ires][j][2] in ['OT1']:
+                         data[ires][j][2]='O'
                       data[ires][j][1]=inx
                       data[ires][j][3]=data[ires][j][3]+'_'
                       printcg(data[ires][j])
