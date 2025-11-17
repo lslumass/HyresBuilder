@@ -28,7 +28,7 @@ args = parser.parse_args()
 out = args.out
 
 # simulation parameters
-dt_equil = 0.001*unit.picoseconds		                        # time step for equilibration
+dt_equil = 0.001*unit.picoseconds		                        # time step for equilibration, for bad configuration, use 0.0001 ps
 dt_prod = 0.008*unit.picoseconds                                # time step for production simulation
 prod_step = 250000000                                           # production steps
 equil_step = 10000                                              # equilibration steps
@@ -67,9 +67,10 @@ print('Potential energy after: ', sim.context.getState(getEnergy=True).getPotent
 print('\n# Equilibriation running:')
 sim.step(equil_step)
 
-## save a pdb traj using large step, xtc traj using small step, and log file
+## save a pdb traj using large step, xtc/dcd traj using small step, and log file
 sim.reporters.append(PDBReporter(f'{out}.pdb', pdb_freq))
-sim.reporters.append(XTCReporter(f'{out}.xtc', traj_freq))
+#sim.reporters.append(XTCReporter(f'{out}.xtc', traj_freq))      # xtc traj
+sim.reporters.append(DCDReporter(f'{out}.dcd', traj_freq))      # dcd traj
 sim.reporters.append(StateDataReporter(f'{out}.log', log_freq, progress=True, totalSteps=prod_step, step=True, temperature=True, totalEnergy=True, speed=True))
 sim.reporters.append(CheckpointReporter(f'{out}.chk', chk_freq))
 
