@@ -1057,9 +1057,9 @@ C        C        -0.0144      4.2000        ! setting for the same framework of
 
 !# cation-pi interactions
 QdR      QdR      -1.2000      5.0726
-QdR      A3F      -0.5000      4.8651
-QdR      P1Y      -0.6000      4.9887
-QdR      A2W      -0.6000      4.6233
+!QdR      A3F      -0.5000      4.8651
+!QdR      P1Y      -0.6000      4.9887
+!QdR      A2W      -0.6000      4.6233
 
 QdK      A3F      -0.3000      4.6877
 QdK      P1Y      -0.4000      4.8113
