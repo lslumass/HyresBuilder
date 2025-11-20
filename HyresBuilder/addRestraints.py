@@ -18,9 +18,9 @@ def posres_CA(system, pdb, residue_list=None, limited_range=None):
     """
     # add restraint
     ### set position restraints CA atoms
-    restraint = CustomExternalForce('k*((x-x0)^2+(y-y0)^2+(z-z0)^2)')
+    restraint = CustomExternalForce('kpos*((x-x0)^2+(y-y0)^2+(z-z0)^2)')
     restraint.setName("Ca_position_restraint")
-    restraint.addGlobalParameter('k', 200.0*kilojoule_per_mole/unit.nanometer)
+    restraint.addGlobalParameter('kpos', 200.0*kilojoule_per_mole/unit.nanometer)
     restraint.addPerParticleParameter('x0')
     restraint.addPerParticleParameter('y0')
     restraint.addPerParticleParameter('z0')
@@ -57,15 +57,15 @@ def comres_xyz(system, pdb, groups):
         return [cx, cy, cz]
 
     print('com of selected residues:', com(groups))
-    com_xyz = CustomCentroidBondForce(1, 'k*((x1 - cx)^2 + (y1 - cy)^2 + (z1 - cz)^2);')
+    com_xyz = CustomCentroidBondForce(1, 'kxyz*((x1 - cx)^2 + (y1 - cy)^2 + (z1 - cz)^2);')
     com_xyz.setName("COM_xyz_restraint")
     com_xyz.addGroup(groups)
-    com_xyz.addGlobalParameter('k', 500.0*kilojoule_per_mole/(unit.nanometer**2))
-    com_xyz.addGlobalParameter('cx', com(groups)[0])
-    com_xyz.addGlobalParameter('cy', com(groups)[1])
-    com_xyz.addGlobalParameter('cz', com(groups)[2])
+    com_xyz.addGlobalParameter('kxyz', 500.0*kilojoule_per_mole/(unit.nanometer**2))
+    com_xyz.addPerBondParameter('cx')
+    com_xyz.addPerBondParameter('cy')
+    com_xyz.addPerBondParameter('cz')
     com_xyz.setUsesPeriodicBoundaryConditions(True)
-    com_xyz.addBond([0])
+    com_xyz.addBond([0], com(groups))
     system.addForce(com_xyz)
 
 
@@ -88,12 +88,12 @@ def comres_yz(system, pdb, groups):
         return [cx, cy, cz]
 
     print('com of selected residues:', com(groups))
-    com_yz = CustomCentroidBondForce(1, 'k*((y1 - cy)^2 + (z1 - cz)^2);')
+    com_yz = CustomCentroidBondForce(1, 'kyz*((y1 - cy1)^2 + (z1 - cz1)^2);')
     com_yz.setName("COM_yz_restraint")
     com_yz.addGroup(groups)
-    com_yz.addGlobalParameter('k', 500.0*kilojoule_per_mole/(unit.nanometer**2))
-    com_yz.addGlobalParameter('cy', com(groups)[1])
-    com_yz.addGlobalParameter('cz', com(groups)[2])
+    com_yz.addGlobalParameter('kyz', 500.0*kilojoule_per_mole/(unit.nanometer**2))
+    com_yz.addPerBondParameter('cy1')
+    com_yz.addPerBondParameter('cz1')
     com_yz.setUsesPeriodicBoundaryConditions(True)
-    com_yz.addBond([0])
+    com_yz.addBond([0], com(groups)[1:])
     system.addForce(com_yz)
