@@ -4,6 +4,7 @@ from openmm.app import *
 from openmm import *
 import numpy as np
 from .HyresFF import *
+from .rG4sFF import *
 
 
 def load_ff(model):
@@ -156,6 +157,125 @@ def setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gp
     # 6. construct force field
     print('\n################## build system ###################')
     system = buildSystem(psf, system, ffs)
+
+    # 7. set simulation
+    print('\n################### prepare simulation ####################')
+    if ensemble == 'NPT':
+        print('This is a NPT system')
+        system.addForce(MonteCarloBarostat(pressure, temperature, 25))
+    elif ensemble == 'NVT':
+        print('This is a NVT system')
+    elif ensemble == 'non':
+        print('This is a non-periodic system')
+    else:
+        print("Error: The ensemble must be NPT, NVT or non. The input value is {}.".format(ensemble))
+        exit(1)
+
+    integrator = LangevinMiddleIntegrator(temperature, friction, dt)
+    plat = Platform.getPlatformByName('CUDA')
+    prop = {'Precision': 'mixed', 'DeviceIndex': gpu_id}
+    sim = Simulation(top, system, integrator, plat, prop)
+    sim.context.setPositions(pdb.positions)
+    sim.context.setVelocitiesToTemperature(temperature)
+    print(f'Langevin, CUDA, {temperature}')
+    return system, sim
+
+
+def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
+    """
+    Set up the rG4s simulation system with given parameters.
+    Parameters:
+    -----------
+    args: argparse.Namespace
+        The command line arguments containing simulation parameters.
+    dt: float
+        The time step for the integrator.
+    pressure: unit.Quantity
+        The pressure for the MonteCarloBarostat (default is 1 atm).
+    friction: unit.Quantity
+        The friction coefficient for the Langevin integrator (default is 0.1 / ps).
+    gpu_id: str
+        The GPU device index to use (default is "0").
+    Returns:
+    --------
+    system: openmm.System
+        The constructed OpenMM system.
+    sim: openmm.app.Simulation
+        The OpenMM simulation object.
+    """
+
+    print('\n################## set up simulation parameters ###################')
+    # 1. input parameters
+    pdb_file = args.pdb
+    psf_file = args.psf
+    T = args.temp
+    c_ion = args.salt/1000.0                                   # concentration of ions in M
+    c_Mg = args.Mg                                           # concentration of Mg in mM
+    ensemble = args.ens
+    
+    # 2. set pbc and box vector
+    if ensemble == 'non' and c_Mg != 0.0:
+        print("Error: Mg ion cannot be usde in non-periodic system.")
+        exit(1)
+    if ensemble in ['NPT', 'NVT']:
+        # pbc box length
+        if len(args.box) == 1:
+            lx, ly, lz = args.box[0], args.box[0], args.box[0]
+        elif len(args.box) == 3:
+            lx = args.box[0]
+            ly = args.box[1]
+            lz = args.box[2]
+        else:
+            print("Error: You must provide either one or three values for box.")
+            exit(1)
+        a = Vec3(lx, 0.0, 0.0)
+        b = Vec3(0.0, ly, 0.0)
+        c = Vec3(0.0, 0.0, lz)
+    elif ensemble not in ['NPT', 'NVT', 'non']:
+        print("Error: The ensemble must be NPT, NVT or non. The input value is {}.".format(ensemble))
+        exit(1)
+    
+    # 3. force field parameters
+    cutoff = 1.0*unit.nanometer                                 # nonbonded cutoff
+    temperature = T*unit.kelvin 
+    er_t = cal_er(T)                                                   # relative electric constant
+    er = er_t*60.0/77.6
+    dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
+    # Mg-P interaction
+    lmd = nMg2lmd(c_Mg, T, RNA='rA')
+    print(f'er: {er}, dh: {dh}, lmd: {lmd}')
+    ffs = {
+        'temp': T,                                                  # Temperature
+        'lmd': lmd,                                                  # Charge scaling factor of P-
+        'dh': dh,                                                  # Debye Huckel screening length
+        'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
+        'er': er,                                                  # relative dielectric constant
+        'ion_type': args.ion*unit.kilocalorie_per_mole,                                      # ion type, K or Na
+    }
+
+    # 4. load force field files
+    top_RNA, param_RNA = load_ff('rG4s')
+    params = CharmmParameterSet(top_RNA, param_RNA)
+
+    print('\n################## load coordinates and topology ###################')
+    # 5. import coordinates and topology form charmm pdb and psf
+    pdb = PDBFile(pdb_file)
+    psf = CharmmPsfFile(psf_file)
+    top = psf.topology
+    if ensemble == 'non':
+        system = psf.createSystem(params, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,
+                                  nonbondedCutoff=cutoff, temperature=temperature)
+    else:
+        psf.setBox(lx, ly, lz)
+        top.setPeriodicBoxVectors((a, b, c))
+        top.setUnitCellDimensions((lx, ly,lz))
+        system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds,
+                                  nonbondedCutoff=cutoff, temperature=temperature)
+        system.setDefaultPeriodicBoxVectors(a, b, c)
+
+    # 6. construct force field
+    print('\n################## build system ###################')
+    system = rG4sSystem(psf, system, ffs)
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
