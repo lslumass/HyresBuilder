@@ -4,18 +4,18 @@ import os
 from .utils import load_ff
 
 
-def set_terminus(gen, segid, charge_status):
+def set_terminus(gen, segid, terminal):
     # re-set the charge status of terminus
     if segid.startswith("P"):
         nter, cter = gen.get_resids(segid)[0], gen.get_resids(segid)[-1]
-        if charge_status == 'charged':
+        if terminal == 'charged':
             gen.set_charge(segid, nter, "N", 1.00)
             gen.set_charge(segid, cter, "O", -1.00)
-        elif charge_status == 'NT':
+        elif terminal == 'NT':
             gen.set_charge(segid, nter, "N", 1.00)
-        elif charge_status == 'CT':
+        elif terminal == 'CT':
             gen.set_charge(segid, cter, "O", -1.00)
-        elif charge_status == 'positive':
+        elif terminal == 'positive':
             gen.set_charge(segid, nter, "N", -1.00)
             gen.set_charge(segid, cter, "O", -1.00)
         else:
@@ -117,6 +117,7 @@ def at2hyres(pdb_in, pdb_out):
         # convert at to cg
         bbcg1=['CA', 'N', 'HN', 'HT1']        # should be modified further
         bbcg2=['C', 'O']
+        bbcg3=['C', 'OT1']
         ntercg=['CAY', 'CY', 'OY']
         ctercg=['NT', 'HNT', 'CAT']
         inx=0
@@ -162,6 +163,13 @@ def at2hyres(pdb_in, pdb_out):
                       inx=inx+1
                       if data[ires][j][2] in ['HN', 'HT1']:
                          data[ires][j][2]='H'
+                      data[ires][j][1]=inx
+                      data[ires][j][3]=data[ires][j][3]+'_'
+                      printcg(data[ires][j])
+                   elif data[ires][j][2] in bbcg3:
+                      inx=inx+1
+                      if data[ires][j][2] in ['OT1']:
+                         data[ires][j][2]='O'
                       data[ires][j][1]=inx
                       data[ires][j][3]=data[ires][j][3]+'_'
                       printcg(data[ires][j])
@@ -303,7 +311,7 @@ def at2icon(pdb_in, pdb_out):
        print('END', file=f)
    print('At2iCon conversion done, output written to', pdb_out)
 
-def at2cg(pdb_in, pdb_out, charge_status='neutral'):
+def at2cg(pdb_in, pdb_out, terminal='neutral'):
    '''
     at2cg: convert all-atom pdb to cg pdb, either hyres for protein or iConRNA for RNA
     in the input pdb, protein segid should start with "P", RNA segid should start with "R"
@@ -360,8 +368,8 @@ def at2cg(pdb_in, pdb_out, charge_status='neutral'):
    
    #re-set the charge status of terminus
    for segid in gen.get_segids():
-       if charge_status != "neutral":
-           set_terminus(gen, segid, charge_status)    
+       if terminal != "neutral":
+           set_terminus(gen, segid, terminal)    
    
    # write psf file
    gen.write_psf(filename=f'{pdb_out[:-4]}.psf')
