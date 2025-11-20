@@ -391,7 +391,8 @@ def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecon
 
     # 4. load force field files
     top_RNA, param_RNA = load_ff('rG4s')
-    params = CharmmParameterSet(top_RNA, param_RNA)
+    top_pro, param_pro = load_ff('Protein')
+    params = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
