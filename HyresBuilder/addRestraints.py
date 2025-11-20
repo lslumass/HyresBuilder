@@ -88,12 +88,12 @@ def comres_yz(system, pdb, groups):
         return [cx, cy, cz]
 
     print('com of selected residues:', com(groups))
-    com_yz = CustomCentroidBondForce(1, 'kyz*((y1 - cy1)^2 + (z1 - cz1)^2);')
+    com_yz = CustomCentroidBondForce(1, 'kyz*((y1 - cy)^2 + (z1 - cz)^2);')
     com_yz.setName("COM_yz_restraint")
     com_yz.addGroup(groups)
     com_yz.addGlobalParameter('kyz', 500.0*kilojoule_per_mole/(unit.nanometer**2))
-    com_yz.addPerBondParameter('cy1')
-    com_yz.addPerBondParameter('cz1')
+    com_yz.addPerBondParameter('cy')
+    com_yz.addPerBondParameter('cz')
     com_yz.setUsesPeriodicBoundaryConditions(True)
     com_yz.addBond([0], com(groups)[1:])
     system.addForce(com_yz)
