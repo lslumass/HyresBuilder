@@ -16,8 +16,8 @@ def load_ff(model):
         top_inp = str(files("HyresBuilder") / "forcefield" / "top_RNA.inp")
         param_inp = str(files("HyresBuilder") / "forcefield" / "param_RNA.inp")
     elif model == 'rG4s':
-        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_RNA.inp")
-        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_rG4s.inp")
+        top_inp = str(files("HyresBuilder") / "forcefield" / "top_RNA.inp")
+        param_inp = str(files("HyresBuilder") / "forcefield" / "param_rG4s.inp")
     else:
         print("Error: The model type {} is not supported, only for Portein and RNA.".format(model))
         exit(1)
@@ -258,7 +258,8 @@ def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecon
 
     # 4. load force field files
     top_RNA, param_RNA = load_ff('rG4s')
-    params = CharmmParameterSet(top_RNA, param_RNA)
+    top_pro, param_pro = load_ff('Protein')
+    params = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
