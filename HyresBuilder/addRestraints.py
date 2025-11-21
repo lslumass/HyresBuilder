@@ -38,6 +38,28 @@ def posres_CA(system, pdb, residue_list=None, limited_range=None):
     system.addForce(restraint)
 
 
+def posres(system, pdb, groups):
+    """
+    system: openmm.System
+    pdb: openmm.app.PDBFile
+    groups: list of atom index for com
+    """
+    # add restraint
+    ### set position restraints CA atoms
+    restraint = CustomExternalForce('kpos*((x-x0)^2+(y-y0)^2+(z-z0)^2)')
+    restraint.setName("Ca_position_restraint")
+    restraint.addGlobalParameter('kpos', 200.0*kilojoule_per_mole/unit.nanometer)
+    restraint.addPerParticleParameter('x0')
+    restraint.addPerParticleParameter('y0')
+    restraint.addPerParticleParameter('z0')
+    
+    atoms = list(pdb.topology.atoms()) 
+    for atom in atoms:
+        if atom.index in groups:
+            restraint.addParticle(atom.index, pdb.positions[atom.index])
+    system.addForce(restraint)
+
+
 def comres_xyz(system, pdb, groups):
     """
     system: openmm.System
