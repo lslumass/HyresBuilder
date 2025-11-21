@@ -14,6 +14,9 @@ def load_ff(model):
     elif model == 'RNA':
         top_inp = str(files("HyresBuilder") / "forcefield" / "top_RNA.inp")
         param_inp = str(files("HyresBuilder") / "forcefield" / "param_RNA.inp")
+    elif model == 'rG4s':
+        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_RNA.inp")
+        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_rG4s.inp")
     else:
         print("Error: The model type {} is not supported, only for Portein and RNA.".format(model))
         exit(1)
