@@ -1,4 +1,5 @@
 from importlib.resources import files
+import pkg_resources as pkg_res
 from openmm.unit import *
 from openmm.app import *
 from openmm import *
