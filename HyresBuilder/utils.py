@@ -66,7 +66,7 @@ def cal_dh(c_ion, T):
 #    dh = 0.304/np.sqrt(c_ion)   # Debye-Huckel screening length in nm at room temperature
 #    return dh*unit.nanometer
 
-def setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
+def setup(args, dt, er_ref=60, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
     """
     Set up the simulation system with given parameters.
     Parameters:
@@ -124,7 +124,7 @@ def setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gp
     cutoff = 1.0*unit.nanometer                                 # nonbonded cutoff without switch
     temperature = T*unit.kelvin 
     er_t = cal_er(T)                                                   # relative electric constant
-    er = er_t*60.0/77.6
+    er = er_t*er_ref/77.6
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     # Mg-P interaction
     lmd = nMg2lmd(c_Mg, T, RNA='rA')
@@ -185,7 +185,7 @@ def setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gp
     return system, sim
 
 
-def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
+def rG4s_setup(args, dt, er_ref=60, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
     """
     Set up the rG4s simulation system with given parameters.
     Parameters:
@@ -243,7 +243,7 @@ def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecon
     cutoff = 1.0*unit.nanometer                                 # nonbonded cutoff
     temperature = T*unit.kelvin 
     er_t = cal_er(T)                                                   # relative electric constant
-    er = er_t*60.0/77.6
+    er = er_t*er_ref/77.6
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     # Mg-P interaction
     lmd = nMg2lmd(c_Mg, T, RNA='rA')
