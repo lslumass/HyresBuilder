@@ -19,7 +19,7 @@ MASS   315 RU1   42.041   ! NCC   base -N-C=C- for C, U
 MASS   316 RC3   28.010   ! CO    base -C(=O)- for C, U
 MASS   317 RU3   28.010   ! CO    base -C(=O)- for C, U
 MASS   318 MG    24.305   ! fully hydrated Mg2+
-MASS   319 CA    40.078   ! fully hydrated Ca2+
+MASS   319 CAL   40.078   ! fully hydrated Ca2+
 
 DECL -C1
 DECL +P
@@ -131,6 +131,6 @@ ATOM MG   MG      2.00  !
 
 RESI CA+          2.00  !                    
 GROUP                   !                       
-ATOM CA   CA      2.00  ! 
+ATOM CAL  CAL     2.00  ! 
 
 END
