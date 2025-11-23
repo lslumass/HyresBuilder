@@ -64,7 +64,7 @@ def rG4sSystem(psf, system, ffs):
     ress = []
     for atom in psf.topology.atoms():
         atoms.append(atom.name)
-        ress.append(atom.residue.name)
+        ress.append(atom.residue.index)
     
     # 3 Replace HarmonicAngle with Restricted Bending (ReB) potential
     ReB = CustomAngleForce("0.5*kt*(theta-theta0)^2/(sin(theta)^kReB);")
