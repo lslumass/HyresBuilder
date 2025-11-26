@@ -56,7 +56,7 @@ with open(f'{out}.xml', 'w') as output:
 
 print('\n# Now, the system has:')
 for force in system.getForces():
-    print('      ', force.getName())
+    print('      ForceName: ', force.getName(), '    ForceGroup: ', force.getForceGroup())
 
 ################### Minimization, Equilibriation, Production simulation ####################'
 print('# Minimization running:')
