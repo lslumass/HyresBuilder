@@ -16,7 +16,7 @@ def assign_segid(pdb_in, pdb_out):
 
    dnas = {"DA", "DT", "DG", "DC", "DI"}
    rnas = {"A", "U", "G", "C", "I"}
-   counts = {'protein': 0, 'rna': 0, 'dna': 0, 'other': 0}
+   counts = {'protein': 0, 'rna': 0, 'dna': 0}
 
    if is_empty:
       print("No chainID or segID detected!")
@@ -36,7 +36,7 @@ def assign_segid(pdb_in, pdb_out):
             counts['dna'] += 1
          else:
             segname = "UNK"
-         chain.segid = segname
+         chain.segids = segname
       u0.atoms.write(pdb_out)
       result = f"{pdb_out}"
    else:
