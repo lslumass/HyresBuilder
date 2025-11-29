@@ -189,9 +189,11 @@ class AmyloidFibrilBuilder:
                 
                 # Align mobile layer to reference
                 align.alignto(mobile, ref, select=(f"chainID {top2}", f"chainID {top1}"))
+                ref = mobile.copy()
                 
                 # Extract top layer
-                top = mobile.select_atoms(f"chainID {top1}").copy()
+                top_copy = mda.Merge(mobile.select_atoms(f"chainID {top1}"))
+                top = top_copy.atoms
                 old_ids = np.unique(top.chainIDs)
                 n = len(old_ids)
                 
@@ -199,16 +201,13 @@ class AmyloidFibrilBuilder:
                 if n == 1:
                     new_id = 'A' if i % 2 == 0 else 'B'
                     top.chainIDs = new_id
-                    top1 = new_id
                 else:
                     for k, old_id in enumerate(old_ids):
                         mask = (top.chainIDs == old_id)
-                        new_id = alphabet[(i * nprotof + k) % 26]
+                        new_id = alphabet[k % 26]
                         top.atoms[mask].chainIDs = new_id
-                        top1 = top1 + " " + new_id
                 
                 writer.write(top)
-                ref = mobile.copy()
         
         logger.info(f"Successfully built extended structure: {out_path}")
         return str(out_path)
@@ -233,14 +232,13 @@ class AmyloidFibrilBuilder:
                 logger.info("No missing residues found in structure")
                 return {}
             
+            chain_loop = block.find_loop("_pdbx_unobs_or_zero_occ_residues.auth_asym_id")
+            resid_loop = block.find_loop("_pdbx_unobs_or_zero_occ_residues.auth_seq_id")
             result = {}
-            for row in loop:
-                chain = row["_pdbx_unobs_or_zero_occ_residues.auth_asym_id"]
-                resid = int(row["_pdbx_unobs_or_zero_occ_residues.auth_seq_id"])
-                
+            for chain, resid in zip(chain_loop, resid_loop):
                 if chain not in result:
                     result[chain] = []
-                result[chain].append(resid)
+                result[chain].append(int(resid))
             
             logger.info(f"Found missing residues in {len(result)} chain(s)")
             for chain, residues in result.items():
@@ -252,14 +250,14 @@ class AmyloidFibrilBuilder:
             logger.error(f"Error reading missing residues: {e}")
             return {}
     
-    def create_alignment_file(self, nprotof: int = 2, nlayers: int = 40,
+    def create_alignment_file(self, nprotof: int = 2, nlayer: int = 40,
                              output_file: str = "alignment.ali") -> None:
         """
         Create alignment file for MODELLER loop modeling.
         
         Args:
             nprotof: Number of protofilaments per layer
-            nlayers: Number of layers
+            nlayer: Number of layers
             output_file: Output alignment filename
         """
         if not self.fasta_file.exists():
@@ -275,7 +273,7 @@ class AmyloidFibrilBuilder:
         
         logger.info(f"Creating alignment file for sequence of length {len(seq)}")
         
-        nchains = nprotof * nlayers
+        nchains = nprotof * nlayer
         missings = self.read_missing_residues()
         
         # Get chain order
@@ -286,12 +284,12 @@ class AmyloidFibrilBuilder:
         ali_path = self.work_dir / output_file
         
         with open(ali_path, 'w') as f:
-            print('>P1;miss\nstructureX:40mer::A::::::', file=f)
+            print(f'>P1;miss\nstructureX:{self.pdb_id}_{nlayer}layers::A::::::', file=f)
             
             tem1 = ''  # Sequence with gaps for missing residues
             tem2 = ''  # Complete sequence
             
-            for layer in range(nlayers):
+            for layer in range(nlayer):
                 for n, chain in enumerate(tops):
                     cnt = layer * nprotof + n
                     res_missed = missings.get(chain, [])
@@ -327,9 +325,8 @@ class AmyloidFibrilBuilder:
         logger.info("Starting loop modeling with MODELLER...")
         
         ali_path = self.work_dir / alignment_file
-        if not ali_path.exists():
-            logger.info("Alignment file not found, creating it...")
-            self.create_alignment_file(nprotof, nlayers, alignment_file)
+        logger.info("Creating alignment.ali file...")
+        self.create_alignment_file(nprotof, nlayers, alignment_file)
         
         # Configure MODELLER
         log.verbose()
