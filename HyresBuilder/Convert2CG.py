@@ -1,8 +1,47 @@
 import MDAnalysis as mda
 from psfgen import PsfGen
+import numpy as np
 import os
 from .utils import load_ff
 
+
+def assign_segid(pdb_in, pdb_out):
+   # assign the segid as P001, P002, ..., R001, R002,..., D001, D002, D003,... if not exist
+   ## check if segid exist
+   u0 = mda.Universe(pdb_in)
+   segids = u0.atoms.segids
+   chainids = u0.atoms.chainIDs
+   is_mirror_of_chain = np.array_equal(segids, chainids)
+   is_empty = np.all(segids == '') or len(segids) == 0
+
+   dnas = {"DA", "DT", "DG", "DC", "DI"}
+   rnas = {"A", "U", "G", "C", "I"}
+   counts = {'protein': 0, 'rna': 0, 'dna': 0, 'other': 0}
+
+   if is_empty:
+      print("No chainID or segID detected!")
+      exit(1)
+   elif is_mirror_of_chain:
+      chains = u0.atoms.split('segment')
+      for chain in chains:
+         resname = chain.residues[1]     # get the second residue name
+         if chain.select_atoms("protein").n_atoms > 0:
+            segname = f"P{counts['protein']:03d}"
+            counts['protein'] += 1
+         elif resname in rnas:
+            segname = f"R{counts['rna']:03d}"
+            counts['rna'] += 1
+         elif resname in dnas:
+            segname = f"D{counts['dna']:03d}"
+            counts['dna'] += 1
+         else:
+            segname = "UNK"
+         chain.segid = segname
+      u0.atoms.write(pdb_out)
+      result = f"{pdb_out}"
+   else:
+      result = f"{pdb_in}"
+   return result
 
 def set_terminus(gen, segid, terminal):
     # re-set the charge status of terminus
@@ -382,20 +421,22 @@ def at2cg(pdb_in, pdb_out, terminal='neutral'):
 
 # Command-line interface
 def main():
-    """Command-line interface for Convert2CG."""
-    import argparse
-    
-    parser = argparse.ArgumentParser(
-        description='Convert2CG: All-atom to HyRes/iConRNA converting'
-    )
-    parser.add_argument('aa', help='Input pdb file')
-    parser.add_argument('cg', help='Output pdb file, will be used as psf filename')
-    parser.add_argument('--terminal', '-t', type=str, default='neutral', help='Charged status of terminus: neutral, charged, NT, and CT')
-    
-    args = parser.parse_args()
+   """Command-line interface for Convert2CG."""
+   import argparse
+   
+   parser = argparse.ArgumentParser(
+       description='Convert2CG: All-atom to HyRes/iConRNA converting'
+   )
+   parser.add_argument('aa', help='Input pdb file')
+   parser.add_argument('cg', help='Output pdb file, will be used as psf filename')
+   parser.add_argument('--terminal', '-t', type=str, default='neutral', help='Charged status of terminus: neutral, charged, NT, and CT')
+   
+   args = parser.parse_args()
 
-    # convert
-    at2cg(args.aa, args.cg, terminal=args.terminal)
+   # segid check and set
+   fixed_pdb = assign_segid(pdb_in=args.aa, pdb_out=f"{args.aa[:-4]}_segid_fix.pdb")
+   # convert
+   at2cg(fixed_pdb, args.cg, terminal=args.terminal)
 
 if __name__ == '__main__':
     main()
