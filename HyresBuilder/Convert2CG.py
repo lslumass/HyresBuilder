@@ -20,8 +20,7 @@ def assign_segid(pdb_in, pdb_out):
    counts = {'protein': 0, 'rna': 0, 'dna': 0}
 
    if is_empty:
-      print("No chainID or segID detected!")
-      exit(1)
+      raise ValueError("No chainID or segID detected!")
    elif is_mirror_of_chain:
       chains = u0.atoms.split('segment')
       for chain in chains:
@@ -59,8 +58,7 @@ def set_terminus(gen, segid, terminal):
             gen.set_charge(segid, nter, "N", -1.00)
             gen.set_charge(segid, cter, "O", -1.00)
         else:
-            print("Error: Only 'neutral', 'charged', 'NT', and 'CT' charge status are supported.")
-            exit(1)
+            raise ValueError("Only 'neutral', 'charged', 'NT', and 'CT' charge status are supported.")
             
 def at2hyres(pdb_in, pdb_out):
     '''
@@ -263,8 +261,7 @@ def at2hyres(pdb_in, pdb_out):
                       data[ires][j][3]=data[ires][j][3]+'_'
                       printcg(data[ires][j])
             else:
-               print(iresname,"is not recognized" )
-               quit()
+               raise ValueError(f"{iresname} is not recognized")
 
         f2.write("%3s\n" % ("END"))
     print("At2Hyres conversion done, output written to", pdb_out)
@@ -351,15 +348,25 @@ def at2icon(pdb_in, pdb_out):
        print('END', file=f)
    print('At2iCon conversion done, output written to', pdb_out)
 
-def at2cg(pdb_in, pdb_out, terminal='neutral'):
+def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
    '''
     at2cg: convert all-atom pdb to cg pdb, either hyres for protein or iConRNA for RNA
     in the input pdb, protein segid should start with "P", RNA segid should start with "R"
-    pdb_in: input all-atom pdb file
-    pdb_out: output cg pdb file
-    charge_status: charge status of protein terminus, only 'neutral' and 'charged' are supported, default is 'neutral'
+    
+    Parameters:
+    -----------
+    pdb_in: str
+        Input all-atom pdb file
+    pdb_out: str
+        Output cg pdb file
+    terminal: str
+        Charge status of protein terminus: 'neutral', 'charged', 'NT', 'CT'. Default is 'neutral'
+    cleanup: bool
+        Whether to clean up temporary files. Default is True
 
-    output: CG pdb file and psf file
+    Returns:
+    --------
+    tuple: (pdb_file, psf_file) - paths to output files
    '''
    # set up psfgen
    # load topology files
@@ -374,15 +381,15 @@ def at2cg(pdb_in, pdb_out, terminal='neutral'):
    segids = u.residues.segments.segids
    segnum = len(segids)
    if segnum == 1:
-      if segids[0].startswith("P"):
+      segid = segids[0]
+      if segid.startswith("P"):
          at2hyres(pdb_in, pdb_out)
          gen.add_segment(segid=segid, pdbfile=pdb_out, auto_angles=False)
-      elif segids[0].startswith("R"):
+      elif segid.startswith("R"):
          at2icon(pdb_in, pdb_out)
          gen.add_segment(segid=segid, pdbfile=pdb_out, auto_angles=False, auto_dihedrals=False)
       else:
-         print("Error: Only protein or RNA is supported.")
-         exit(1)
+         raise ValueError("Only protein or RNA is supported.")
    elif segnum > 1:
       for i, segid in enumerate(segids):
           sel = u.select_atoms(f"segid {segid}")
@@ -398,13 +405,11 @@ def at2cg(pdb_in, pdb_out, terminal='neutral'):
               gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False, auto_dihedrals=False)
               gen.read_coords(segid=segid, filename=tmp_cg_pdb)
           else:
-              print("Error: Only protein-protein or protein-RNA complex is supported.")
-              exit(1)
+              raise ValueError("Only protein-protein or protein-RNA complex is supported.")
       gen.write_pdb(pdb_out)
       print("Complex conversion done, output written to", pdb_out)
    else:
-      print("Error: No segment found.")
-      exit(1)
+      raise ValueError("No segment found.")
    
    #re-set the charge status of terminus
    for segid in gen.get_segids():
@@ -412,12 +417,17 @@ def at2cg(pdb_in, pdb_out, terminal='neutral'):
            set_terminus(gen, segid, terminal)    
    
    # write psf file
-   gen.write_psf(filename=f'{pdb_out[:-4]}.psf')
-   print("PSF file written to", f'{pdb_out[:-4]}.psf')
+   psf_file = f'{pdb_out[:-4]}.psf'
+   gen.write_psf(filename=psf_file)
+   print("PSF file written to", psf_file)
+   
    # clean up temporary files
-   for file in os.listdir():
-       if file.startswith("tmp_") and file.endswith(".pdb"):
-           os.remove(file)
+   if cleanup:
+       for file in os.listdir():
+           if file.startswith("tmp_") and file.endswith(".pdb"):
+               os.remove(file)
+   
+   return pdb_out, psf_file
 
 
 # Command-line interface
@@ -430,7 +440,8 @@ def main():
    )
    parser.add_argument('aa', help='Input pdb file')
    parser.add_argument('cg', help='Output pdb file, will be used as psf filename')
-   parser.add_argument('--terminal', '-t', type=str, default='neutral', help='Charged status of terminus: neutral, charged, NT, and CT')
+   parser.add_argument('--terminal', '-t', type=str, default='neutral', 
+                      help='Charged status of terminus: neutral, charged, NT, and CT')
    
    args = parser.parse_args()
 
