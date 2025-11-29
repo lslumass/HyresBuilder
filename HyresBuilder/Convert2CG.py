@@ -2,6 +2,7 @@ import MDAnalysis as mda
 from psfgen import PsfGen
 import numpy as np
 import os
+import warnings
 from .utils import load_ff
 
 
@@ -36,7 +37,7 @@ def assign_segid(pdb_in, pdb_out):
             counts['dna'] += 1
          else:
             segname = "UNK"
-         chain.segids = segname
+         chain.segments.segids = segname
       u0.atoms.write(pdb_out)
       result = f"{pdb_out}"
    else:
@@ -433,6 +434,7 @@ def main():
    
    args = parser.parse_args()
 
+   warnings.filterwarnings('ignore', category=UserWarning, module='MDAnalysis')
    # segid check and set
    fixed_pdb = assign_segid(pdb_in=args.aa, pdb_out=f"{args.aa[:-4]}_segid_fix.pdb")
    # convert
