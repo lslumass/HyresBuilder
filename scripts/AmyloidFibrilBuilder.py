@@ -13,6 +13,9 @@ import MDAnalysis as mda
 from MDAnalysis.analysis import align
 from modeller import *
 from modeller.automodel import *
+import pdbfixer
+from openmm.app import PDBFile
+from HyresBuilder import Convert2CG
 import gemmi
 import numpy as np
 import string
@@ -134,15 +137,13 @@ class AmyloidFibrilBuilder:
         logger.info(f"Chain order (top to bottom): {ordered_chains}")
         return ordered_chains
     
-    def build_long_core(self, nprotof: int = 2, nlayer: int = 40, 
-                       output_file: Optional[str] = None) -> str:
+    def build_long_core(self, nprotof: int = 2, nlayer: int = 40) -> str:
         """
         Build extended fibril core by stacking layers.
         
         Args:
             nprotof: Number of protofilaments per layer
             nlayer: Number of layers to build
-            output_file: Custom output filename (optional)
             
         Returns:
             Path to output PDB file
@@ -177,8 +178,7 @@ class AmyloidFibrilBuilder:
         mobile = sel.copy()
         
         # Prepare output
-        if output_file is None:
-            output_file = f"{nlayer}layers_{self.pdb_id}.pdb"
+        output_file = f"{self.pdb_id}_{nlayer}layers.pdb"
         out_path = self.work_dir / output_file
         
         alphabet = string.ascii_uppercase
@@ -199,11 +199,13 @@ class AmyloidFibrilBuilder:
                 if n == 1:
                     new_id = 'A' if i % 2 == 0 else 'B'
                     top.chainIDs = new_id
+                    top1 = new_id
                 else:
                     for k, old_id in enumerate(old_ids):
                         mask = (top.chainIDs == old_id)
                         new_id = alphabet[(i * nprotof + k) % 26]
                         top.atoms[mask].chainIDs = new_id
+                        top1 = top1 + " " + new_id
                 
                 writer.write(top)
                 ref = mobile.copy()
@@ -353,6 +355,18 @@ class AmyloidFibrilBuilder:
         logger.info("Loop modeling completed successfully")
 
 
+def prepare_run_script(origin_script, new_script, grp):
+    new_section = f"""
+\n## add position restraints to the core region
+addRestraints.posres_CA(system, PDBFile(args.pdb), grp={grp})
+sim.context.reinitialize(preserveState=True)\n
+"""
+    with open(origin_script, 'r') as f:
+        lines = f.readlines()
+    lines.insert(51, new_section)
+    with open(new_script, 'w') as f:
+        f.write(lines)
+
 def main():
     """
     Command-line interface for AmyloidFibrilBuilder.
@@ -370,14 +384,14 @@ Example:
     
     # Required argument
     parser.add_argument('pdb_id', type=str, help='PDB identifier (e.g., 6msm)')
-    
     # Optional arguments
     parser.add_argument('--nlayers', '-n', type=int, default=40, help='Number of layers to build (default: 40)')
     parser.add_argument('--nprotof', '-p', type=int, default=2, help='Number of protofilaments per layer (default: 2)')
     parser.add_argument('--ncycles', '-c', type=int, default=5, help='Number of optimization cycles for loop modeling (default: 5)')
-    parser.add_argument('--output', '-o', type=str, default=None, help='Output filename for final structure (default: auto-generated)')
+    parser.add_argument('--output', '-o', type=str, default='conf.pdb', help='Output filename for final structure if hyres true')
+    parser.add_argument('--terminal', '-t', type=str, default='neutral', help='If hyres true, Charged status of terminus: neutral, charged, NT, and CT')
     parser.add_argument('--work-dir', '-w', type=str, default='.', help='Working directory for input/output files (default: current directory)')
-    parser.add_argument('--skip-loops', action='store_true', help='Skip loop modeling step, only build core structure')
+    parser.add_argument('--hyres', action='store_true', help='Convert to HyRes model after building')
     parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose logging output')
     parser.add_argument('--version', action='version', version='AmyloidFibrilBuilder 1.0.0')
     
@@ -406,36 +420,51 @@ Example:
         
         # Step 2: Build extended structure
         logger.info(f"[Step 2/3] Building {args.nlayers}-layer core structure...")
-        output_pdb = builder.build_long_core(
+        core_pdb = builder.build_long_core(
             nprotof=args.nprotof,
             nlayer=args.nlayers,
-            output_file=args.output
         )
-        logger.info(f"✓ Core structure built: {output_pdb}\n")
+        logger.info(f"✓ Core structure built: {core_pdb}\n")
         
         # Step 3: Model missing loops
-        if not args.skip_loops:
-            logger.info(f"[Step 3/3] Modeling missing loops ({args.ncycles} optimization cycles)...")
-            logger.info("This may take several minutes depending on structure size...")
-            builder.add_missing_loops(
-                core_structure=output_pdb,
-                nprotof=args.nprotof,
-                nlayers=args.nlayers,
-                ncycles=args.ncycles
-            )
-            logger.info("✓ Loop modeling completed\n")
-        else:
-            logger.info("[Step 3/3] Skipping loop modeling (--skip-loops)\n")
+        logger.info(f"[Step 3/3] Modeling missing loops ({args.ncycles} optimization cycles)...")
+        logger.info("This may take several minutes depending on structure size...")
+        builder.add_missing_loops(nprotof=args.nprotof, nlayers=args.nlayers, ncycles=args.ncycles)
+        logger.info("✓ Loop modeling completed\n")
         
         # Success message
         logger.info("=" * 70)
         logger.info("SUCCESS! Final structure ready")
         logger.info("=" * 70)
-        logger.info(f"Output file: {output_pdb}")
-        if not args.skip_loops:
-            logger.info(f"Modeled structure: fill.B99990001.pdb")
+        logger.info(f"Modeled structure: fill.B99990001.pdb")
         logger.info("=" * 70)
         
+        # Convert to HyRes model
+        if args.hyres:
+            ## add Hydrogen using pdbfixer
+            tmp_file = f"{args.pdb_id}_fill_addH.pdb"
+            fixer = pdbfixer.PDBFixer(filename='fill.B99990001.pdb')
+            fixer.addMissingHydrogens(7.0)
+            PDBFile.writeFile(fixer.topology, fixer.positions, open(tmp_file, 'w'))
+            ## convert2cg
+            hyres_pdb, hyres_psf = Convert2CG.at2cg(pdb_in=tmp_file, pdb_out=args.output, terminal=args.terminal, cleanup=True)
+            ## add restraint to run script
+            u0 = mda.Universe(hyres_psf, hyres_pdb)
+            chains = u0.atoms.split('segment')
+            nchains = len(chains)
+            seqs = []
+            posres_grp = []
+            with open(f"{args.work_dir}/alignment.ali", 'r') as f1:
+                for line in f1.readlines()[2::nchains+2]:
+                    line.strip('\n')
+                    seq = [0 if char == '-' else 1 for char in line[:-1]]
+                    seqs.append(seq)
+            for seq, chain in zip(seqs, chains):
+                CAs = chain.select_atoms('name CA')
+                for s, CA in zip(seq, CAs):
+                    if s == 1:
+                        posres_grp.append(CA.index)
+            prepare_run_script(f'{args.work_dir}/run_latest.py', f'{args.work_dir}/run_latest_restraint.py', grp=posres_grp)
         sys.exit(0)
         
     except KeyboardInterrupt:
