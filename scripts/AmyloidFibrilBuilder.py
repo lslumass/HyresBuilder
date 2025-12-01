@@ -102,7 +102,37 @@ class AmyloidFibrilBuilder:
         
         return True
     
-    def get_top_chains(self, universe: mda.Universe) -> List[str]:
+    def get_protof_number(self) -> int:
+        """
+        Get the number of protofaliment
+        Returns:
+            number of protofaliment
+        """
+        doc = gemmi.cif.read_file(f"{self.pdb_id}.cif")
+        block = doc.sole_block()
+        # get the strand number
+        strands = block.find_values('_entity_poly.pdbx_strand_id')
+        if len(strands) != 1:
+            logger.error("Not a homotypic fibril")
+            exit(1)
+        else:
+            n_strand = len(strands[0].split(','))
+
+        # get the layer number through strand stacking
+        n_layer = 1
+        vals = block.find_values('_struct_sheet.number_strands')
+        if vals:
+            try:
+                layers = [int(s) for s in vals]
+                n_layer = max(layers)
+            except ValueError:
+                pass   # n_layer = 1
+        
+        # calculate the number of monomer in each layer
+        nprotof = int(n_strand / n_layer)
+        return nprotof
+    
+    def get_top_chains(self, universe: mda.Universe, nprotof=2) -> List[str]:
         """
         Get chains ordered from top to bottom based on Z-coordinate of center of mass.
         
@@ -134,8 +164,14 @@ class AmyloidFibrilBuilder:
         chain_z_coords.sort(key=lambda x: x[1], reverse=True)
         ordered_chains = [item[0] for item in chain_z_coords]
         
-        logger.info(f"Chain order (top to bottom): {ordered_chains}")
-        return ordered_chains
+        # keep the origin oder of the chains in same layer
+        layer1, layer2, rest = ordered_chains[:nprotof], ordered_chains[nprotof:2*nprotof], ordered_chains[2*nprotof:]
+        pos = {item: i  for i, item in enumerate(valid_chains)}
+        layer1_reordered = sorted(layer1, key=lambda x: pos[x])
+        layer2_reordered = sorted(layer2, key=lambda x: pos[x])
+        result = layer1_reordered + layer2_reordered + rest
+        logger.info(f"Chain order (top to bottom): {result}")
+        return result
     
     def build_long_core(self, nprotof: int = 2, nlayer: int = 40) -> str:
         """
@@ -335,15 +371,24 @@ class AmyloidFibrilBuilder:
         env.io.atom_files_directory = [str(self.work_dir), './atom_files']
         
         # Initialize automodel
-        a = AutoModel(env, alnfile=str(ali_path), knowns='miss', sequence='fill')
+        ## Define segments for renaming
+        segments = ['A' if i % 2 == 0 else 'B' for i in range(nlayers*nprotof)]
+        residues = [1] * nlayers*nprotof
+
+        class MyAutoModel(AutoModel):
+            def special_patches(self, aln):
+                self.rename_segments(segment_ids=segments, renumber_residues=residues)
+
+        a = MyAutoModel(env, alnfile=str(ali_path), knowns='miss', sequence='fill')
         
         a.starting_model = 1
         a.ending_model = 1
         a.library_schedule = autosched.slow
-        a.max_var_iterations = 300
+        a.max_var_iterations = 500
         a.md_level = refine.slow
         a.repeat_optimization = ncycles
         a.max_molpdf = 1e8
+        a.deviation = 4.0
         a.assess_methods = (assess.DOPE, assess.GA341, assess.normalized_dope)
         
         logger.info(f"Running MODELLER with {ncycles} optimization cycles...")
@@ -352,17 +397,22 @@ class AmyloidFibrilBuilder:
         logger.info("Loop modeling completed successfully")
 
 
-def prepare_run_script(origin_script, new_script, grp):
+def prepare_run_script(origin_script, new_script, alignment_file):
     new_section = f"""
 \n## add position restraints to the core region
-addRestraints.posres_CA(system, PDBFile(args.pdb), grp={grp})
+addRestraints.posre_amyloid(system, PDBFile(args.pdb), '{alignment_file}')
 sim.context.reinitialize(preserveState=True)\n
 """
     with open(origin_script, 'r') as f:
         lines = f.readlines()
-    lines.insert(51, new_section)
+        insert_line = -1
+        for line_idx, line in enumerate(lines):
+            if line.startswith("### insert restaint here ###"):
+                insert_line = line_idx + 1
+
+    lines.insert(insert_line, new_section)
     with open(new_script, 'w') as f:
-        f.write(lines)
+        f.writelines(lines)
 
 def main():
     """
@@ -375,7 +425,7 @@ def main():
 Example:
   python amyloid_builder.py 6msm --nlayers 40 --nprotof 2 --ncycles 5
   python amyloid_builder.py 6msm -n 40 -p 2 -c 5 -o my_fibril.pdb
-  python amyloid_builder.py 6msm  # Use defaults: 40 layers, 2 protofilaments, 5 cycles
+  python amyloid_builder.py 6msm  # Use defaults: 40 layers, 5 cycles
         """
     )
     
@@ -383,7 +433,7 @@ Example:
     parser.add_argument('pdb_id', type=str, help='PDB identifier (e.g., 6msm)')
     # Optional arguments
     parser.add_argument('--nlayers', '-n', type=int, default=40, help='Number of layers to build (default: 40)')
-    parser.add_argument('--nprotof', '-p', type=int, default=2, help='Number of protofilaments per layer (default: 2)')
+    parser.add_argument('--nprotof', '-p', type=int, default=None, help='Number of protofilaments per layer (default: None, automatically found)')
     parser.add_argument('--ncycles', '-c', type=int, default=5, help='Number of optimization cycles for loop modeling (default: 5)')
     parser.add_argument('--output', '-o', type=str, default='conf.pdb', help='Output filename for final structure if hyres true')
     parser.add_argument('--terminal', '-t', type=str, default='neutral', help='If hyres true, Charged status of terminus: neutral, charged, NT, and CT')
@@ -402,7 +452,7 @@ Example:
         logger.info("=" * 70)
         logger.info(f"AMYLOID FIBRIL BUILDER - PDB: {args.pdb_id.upper()}")
         logger.info("=" * 70)
-        logger.info(f"Parameters: {args.nlayers} layers, {args.nprotof} protofilaments, {args.ncycles} cycles")
+        logger.info(f"Parameters: {args.nlayers} layers, {args.ncycles} cycles of relaxation")
         logger.info("=" * 70 + "\n")
         
         # Initialize builder
@@ -417,8 +467,14 @@ Example:
         
         # Step 2: Build extended structure
         logger.info(f"[Step 2/3] Building {args.nlayers}-layer core structure...")
+        nprotof = args.nprotof
+        if nprotof is None:
+            logger.info("Getting number of protofilament from CIF...")
+            nprotof = builder.get_protof_number()
+            logger.info(f'Find {nprotof} protofilaments\n')
+        # build core
         core_pdb = builder.build_long_core(
-            nprotof=args.nprotof,
+            nprotof=nprotof,
             nlayer=args.nlayers,
         )
         logger.info(f"✓ Core structure built: {core_pdb}\n")
@@ -426,7 +482,7 @@ Example:
         # Step 3: Model missing loops
         logger.info(f"[Step 3/3] Modeling missing loops ({args.ncycles} optimization cycles)...")
         logger.info("This may take several minutes depending on structure size...")
-        builder.add_missing_loops(nprotof=args.nprotof, nlayers=args.nlayers, ncycles=args.ncycles)
+        builder.add_missing_loops(nprotof=nprotof, nlayers=args.nlayers, ncycles=args.ncycles)
         logger.info("✓ Loop modeling completed\n")
         
         # Success message
@@ -444,24 +500,10 @@ Example:
             fixer.addMissingHydrogens(7.0)
             PDBFile.writeFile(fixer.topology, fixer.positions, open(tmp_file, 'w'))
             ## convert2cg
-            hyres_pdb, hyres_psf = Convert2CG.at2cg(pdb_in=tmp_file, pdb_out=args.output, terminal=args.terminal, cleanup=True)
+            pdb_fixed = Convert2CG.assign_segid(pdb_in=tmp_file, pdb_out=f"{args.pdb_id}_all_segid.pdb")
+            hyres_pdb, hyres_psf = Convert2CG.at2cg(pdb_in=pdb_fixed, pdb_out=args.output, terminal=args.terminal, cleanup=True)
             ## add restraint to run script
-            u0 = mda.Universe(hyres_psf, hyres_pdb)
-            chains = u0.atoms.split('segment')
-            nchains = len(chains)
-            seqs = []
-            posres_grp = []
-            with open(f"{args.work_dir}/alignment.ali", 'r') as f1:
-                for line in f1.readlines()[2::nchains+2]:
-                    line.strip('\n')
-                    seq = [0 if char == '-' else 1 for char in line[:-1]]
-                    seqs.append(seq)
-            for seq, chain in zip(seqs, chains):
-                CAs = chain.select_atoms('name CA')
-                for s, CA in zip(seq, CAs):
-                    if s == 1:
-                        posres_grp.append(CA.index)
-            prepare_run_script(f'{args.work_dir}/run_latest.py', f'{args.work_dir}/run_latest_restraint.py', grp=posres_grp)
+            prepare_run_script(f'{args.work_dir}/run_latest.py', f'{args.work_dir}/run_latest_restraint.py', f"{args.work_dir}/alignment.ali")
         sys.exit(0)
         
     except KeyboardInterrupt:
