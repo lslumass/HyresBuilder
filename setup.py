@@ -72,6 +72,8 @@ setup(
     entry_points={
         'console_scripts': [
             'convert2cg=HyresBuilder.Convert2CG:main',
+            'hyresbuilder=HyresBuilder.HyresBuilder:main',
+            'genpsf=HyresBuilder.GenPsf:main',
         ]
     }
 )

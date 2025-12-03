@@ -15,6 +15,7 @@ This file is provided to you under the MIT License."""
 import math, warnings
 from typing import List, Optional, Union
 
+import Bio.PDB
 from Bio.PDB.Polypeptide import is_aa
 from Bio.PDB.Atom import Atom
 from Bio.PDB.Residue import Residue
@@ -1002,3 +1003,35 @@ This function should be used only when the structure object is completed and no 
     # modify last residue of the structure to contain the OXT atom
     resRef.add(OXT)
     return structure
+
+
+def build(name, sequence):
+    """
+    sequence: str for the sequence in one-letter
+    name: idp name, used as name.pdb
+    """
+    s0 = sequence[0]
+    geo = geometry(s0)
+    structure = initialize_res(geo)
+    for s in sequence[1:]:
+        geo = geometry(s)
+        add_residue(structure, geo)
+    
+    out = Bio.PDB.PDBIO()
+    out.set_structure(structure)
+    out.save(f"{name}.pdb")
+
+
+def main():
+    """Command-line interface"""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='HyresBuilder: build CG protein from sequence')
+    parser.add_argument('name', type=str, help='protein name, output name.pdb')
+    parser.add_argument('seq', type=str, help='sequence in one-letter')
+
+    args = parser.parse_args()
+    build(args.name, args.seq)
+
+if __name__ == '__main__':
+    main()
