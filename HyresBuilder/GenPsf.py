@@ -36,7 +36,7 @@ def split_chains(pdb):
                     if atoms:
                         chains.append(atoms)
                     currentID = chainid
-                    types.appen(get_type(resname))
+                    types.append(get_type(resname))
                     atoms = [line]
                 else:
                     atoms.append(line)
