@@ -47,7 +47,7 @@ def split_chains(pdb):
         if t in ['P', 'R', 'D']:
             tmp_pdb = f"psfgentmp_{i}.pdb"
         elif t in ['M', 'C']:
-            tmp_pdb = f"psfgentem_{t}.pdb"
+            tmp_pdb = f"psfgentmp_{t}.pdb"
         else:
             print('Unkown molecule type')
             exit(1)
@@ -91,9 +91,9 @@ def genpsf(pdb_in, psf_out, terminal):
         if t in ["P", "R", "D"]:
             tmp_pdb = f"psfgentmp_{i}.pdb"
         else:
-            tmp_pdb = f"psfgentem_{t}.pdb"
+            tmp_pdb = f"psfgentmp_{t}.pdb"
 
-        segid = f"P{counts[{t}]:03d}"
+        segid = f"{t}{counts[t]:03d}"
         counts[t] += 1
         if t == 'P':
             gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False)
