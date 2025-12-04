@@ -40,7 +40,7 @@ def build(name, sequence):
     with open(out, 'w') as f:
         print('REMARK  iConRNA', file=f)
         print('REMARK  CREATE BY RNABUILDER/SHANLONG LI', file=f)
-        print('REMARK  Ref: S. Li and J. Chen, PNAS, 2025, 122, e2504583122.')
+        print('REMARK  Ref: S. Li and J. Chen, PNAS, 2025, 122, e2504583122.', file=f)
         print('REMARK  SEQUENCE: {}'.format(sequence), file=f)
         idx = 0
         res = 0
