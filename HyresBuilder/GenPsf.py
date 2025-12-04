@@ -3,7 +3,60 @@ from HyresBuilder import utils
 import argparse, os, glob
 import numpy as np
 import MDAnalysis as mda
+from itertools import groupby
 
+
+def split_chains(pdb):
+    aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
+                   "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
+    rnas = ["ADE", "GUA", "CYT", "URA"]
+    dnas = ["DAD", "DGU", "DCY", "DTH"]
+    mg, cal = ["MG+"], ["CA+"] 
+    def get_type(resname):
+        chaintype = (
+            'P' if resname in aas else
+            'R' if resname in rnas else
+            'D' if resname in dnas else
+            'M' if resname in mg else
+            'C' if resname in cal else
+            None
+        )
+        return chaintype
+
+    currentID = None
+    atoms = []
+    chains = []
+    types = []
+    with open(pdb, 'r') as f:
+        for line in f:
+            if line.startswith('ATOM'):
+                chainid = line[21]
+                resname = line[17:20]
+                if chainid != currentID:
+                    if atoms:
+                        chains.append(atoms)
+                    currentID = chainid
+                    types.appen(get_type(resname))
+                    atoms = [line]
+                else:
+                    atoms.append(line)
+        if atoms:
+            chains.append(atoms)
+    # save out each chain
+    for i, t, chain in enumerate(zip(types, chains)):
+        if t in ['P', 'R', 'D']:
+            tmp_pdb = f"psfgentmp_{i}.pdb"
+        elif t in ['M', 'C']:
+            tmp_pdb = f"psfgentem_{t}.pdb"
+        else:
+            print('Unkown molecule type')
+            exit(1)
+
+        with open(tmp_pdb, 'w') as f:
+            for line in chain:
+                f.write(line)
+            f.write('END\n')
+    return types
 
 def set_terminus(gen, segid, charge_status):
     if segid.startswith("P"):
@@ -31,48 +84,21 @@ def genpsf(pdb_in, psf_out, terminal):
     gen = PsfGen()
     gen.read_topology(RNA_topology)
     gen.read_topology(protein_topology)
-    u = mda.Universe(pdb_in)
 
-    dnas = {"DA", "DT", "DG", "DC", "DI"}
-    rnas = {"A", "U", "G", "C", "I"}
-    counts = {'protein': 0, 'rna': 0, 'dna': 0, 'MG': 0, 'CAL': 0}
-
-    chains = u.atoms.split('segment')
-    for chain in chains:
-        resname = chain.residues[0] # get the first residue name
-        if chain.select_atoms("name CA").n_atoms > 0:
-            segid = f"P{counts['protein']:03d}"
-            counts['protein'] += 1
-            tmp_pdb = f'psftmp_{segid}.pdb'
-            chain.atoms.write(tmp_pdb)
-            gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False)
-        elif resname in rnas:
-            segid = f"R{counts['rna']:03d}"
-            counts['rna'] += 1
-            tmp_pdb = f'psftmp_{segid}.pdb'
-            chain.atoms.write(tmp_pdb)
-            gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False, auto_dihedrals=False)
-        elif resname in dnas:
-            segid = f"D{counts['dna']:03d}"
-            counts['dna'] += 1
-            tmp_pdb = f'psftmp_{segid}.pdb'
-            chain.atoms.write(tmp_pdb)
-            gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False, auto_dihedrals=False)
-        elif resname == 'MG+':
-            segid = f"MG{counts['MG']:04d}"
-            counts['MG'] += 1
-            tmp_pdb = f'psftmp_{segid}.pdb'
-            chain.atoms.write(tmp_pdb)
-            gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False, auto_dihedrals=False)
-        elif resname == 'CA+':
-            segid = f"CA{counts['CAL']:04d}"
-            counts['CAL'] += 1
-            tmp_pdb = f'psftmp_{segid}.pdb'
-            chain.atoms.write(tmp_pdb)
-            gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False, auto_dihedrals=False)
+    counts = {'P': 0, 'R': 0, 'D': 0, 'M': 0, 'C': 0}
+    types = split_chains(pdb_in)
+    for i, t in enumerate(types):
+        if t in ["P", "R", "D"]:
+            tmp_pdb = f"psfgentmp_{i}.pdb"
         else:
-            print('There are UNKNOWN residue types')
-            exit(1)
+            tmp_pdb = f"psfgentem_{t}.pdb"
+
+        segid = f"P{counts[{t}]:03d}"
+        counts[t] += 1
+        if t == 'P':
+            gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False)
+        else:
+            gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False, auto_dihedrals=False)
 
     # re-set the charge status of terminus
     for segid in gen.get_segids():
