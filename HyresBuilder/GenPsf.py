@@ -106,9 +106,6 @@ def genpsf(pdb_in, psf_out, terminal):
             set_terminus(gen, segid, terminal)       
             
     gen.write_psf(filename=psf_out)
-    # cleanup
-    for file_path in glob.glob("psftmp_*.pdb"):
-        os.remove(file_path)
 
 def main():
     parser = argparse.ArgumentParser(description="generate PSF for Hyres/iCon systems", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -119,6 +116,9 @@ def main():
     args = parser.parse_args()
 
     genpsf(args.pdb, args.psf, args.ter)
+    # cleanup
+    for file_path in glob.glob("psfgentmp_*.pdb"):
+        os.remove(file_path)
     
 
 if __name__ == '__main__':
