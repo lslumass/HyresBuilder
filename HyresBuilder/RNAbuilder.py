@@ -9,7 +9,7 @@ import argparse
 import numpy as np
 from pathlib import Path
 
-nos = {'A': 'ADE', 'G': 'GUA', 'C': 'CYT', 'U': 'URA'}
+
 def printcg(atoms, file):
     for atom in atoms:
         file.write('{}  {:5d} {:>2}   {} {}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}      {}\n'.format(atom[0],int(atom[1]),atom[2],atom[3],atom[4],int(atom[5]),atom[6],atom[7],atom[8],atom[9],atom[10], atom[11]))
@@ -19,6 +19,7 @@ def read_map(seq):
     filename = "map/"+seq+".map"
     f_map = Path(__file__).parent / filename
     data = np.genfromtxt(f_map, dtype=None, names=('index', 'name', 'rx', 'ry', 'rz'), encoding='utf-8')
+    nos = {'A': 'ADE', 'G': 'GUA', 'C': 'CYT', 'U': 'URA'}
     for l in data:
         atom = ['ATOM', l[0], l[1], nos[seq], 'X', 1, l[2], l[3], l[4], 1.00, 0.00, 'RNA']
         atoms.append(atom)
@@ -52,3 +53,18 @@ def build(seqs, out):
             res += 1
             printcg(atoms, f)
         print('END', file=f)
+
+def main():
+    """Command-line interface"""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='RNABuilder: build iConRNA from sequence')
+    parser.add_argument('name', type=str, help='protein name, output: name.pdb')
+    parser.add_argument('seq', type=str, help='sequence in one-letter')
+
+    args = parser.parse_args()
+    build(args.name, args.seq)
+
+if __name__ == '__main__':
+    main()
+

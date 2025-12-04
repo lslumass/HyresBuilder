@@ -73,6 +73,7 @@ setup(
         'console_scripts': [
             'convert2cg=HyresBuilder.Convert2CG:main',
             'hyresbuilder=HyresBuilder.HyresBuilder:main',
+            'rnabuilder=HyresBuilder.RNABuilder:main',
             'genpsf=HyresBuilder.GenPsf:main',
         ]
     }
