@@ -86,8 +86,8 @@ def genpsf(pdb_in, psf_out, terminal):
 
 def main():
     parser = argparse.ArgumentParser(description="generate PSF for Hyres/iCon systems", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("pdb", help="CG PDB file(s)", required=True, default='conf.pdb')
-    parser.add_argument("psf", help="output name/path for PSF", required=True, default='conf.psf')
+    parser.add_argument("pdb", help="CG PDB file(s)", default='conf.pdb')
+    parser.add_argument("psf", help="output name/path for PSF", default='conf.psf')
     parser.add_argument("-t", "--ter", choices=['neutral', 'charged', 'NT', 'CT', 'positive'], 
                         help="Terminal charged status (choose from ['neutral', 'charged', 'NT', 'CT', 'positive'])", default='neutral')
     args = parser.parse_args()
