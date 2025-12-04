@@ -43,7 +43,7 @@ def split_chains(pdb):
         if atoms:
             chains.append(atoms)
     # save out each chain
-    for i, t, chain in enumerate(zip(types, chains)):
+    for i, (t, chain) in enumerate(zip(types, chains)):
         if t in ['P', 'R', 'D']:
             tmp_pdb = f"psfgentmp_{i}.pdb"
         elif t in ['M', 'C']:
