@@ -35,14 +35,17 @@ def transform(ref, atoms):
         atom[8] -= dz
     return atoms
 
-def build(seqs, out):
+def build(name, sequence):
+    out = f'{name}.pdb'
     with open(out, 'w') as f:
-        print('REMARK  HyRes RNA', file=f)
+        print('REMARK  iConRNA', file=f)
         print('REMARK  CREATE BY RNABUILDER/SHANLONG LI', file=f)
+        print('REMARK  Ref: S. Li and J. Chen, PNAS, 2025, 122, e2504583122.')
+        print('REMARK  SEQUENCE: {}'.format(sequence), file=f)
         idx = 0
         res = 0
         ref = [9000.0, 9000.0, 9000.0]
-        for seq in seqs:
+        for seq in sequence:
             atoms = read_map(seq)
             for atom in atoms:
                 atom[1] += idx
