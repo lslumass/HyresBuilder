@@ -1059,8 +1059,8 @@ C        C        -0.0144      4.2000        ! setting for the same framework of
 P4Q      P4Q      -0.3000      5.0000
 P4Q      P1Y      -0.3000      4.8000
 P4Q      P5N      -0.2800      4.9000
-P5N      P5N      -0.2800      4.8000
-P5N      P1Y      -0.2800      4.8000
+P5N      P5N      -0.2500      4.8000
+P5N      P1Y      -0.2500      4.8000
 !# cation-pi interactions
 QdR      QdR      -1.2000      5.0726
 QdR      A1F      -0.5000      4.8651
