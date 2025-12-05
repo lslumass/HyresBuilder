@@ -56,10 +56,10 @@ with open(f'{out}.xml', 'w') as output:
 
 print('\n# Now, the system has:')
 for force in system.getForces():
-    print('      ForceName: ', force.getName(), '    ForceGroup: ', force.getForceGroup())
+    print(f'      ForceName: {force.getName():<20}    ForceGroup: {force.getForceGroup():<20}')
 
 ################### Minimization, Equilibriation, Production simulation ####################'
-print('# Minimization running:')
+print('\n# Minimization running:')
 print('Potential energy before: ', sim.context.getState(getEnergy=True).getPotentialEnergy())
 sim.minimizeEnergy(maxIterations=500000, tolerance=0.01)
 print('Potential energy after: ', sim.context.getState(getEnergy=True).getPotentialEnergy())

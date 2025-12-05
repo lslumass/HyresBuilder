@@ -1,1037 +1,427 @@
-"""This module is part of the PeptideBuilder library,
-written by Matthew Z. Tien, Dariya K. Sydykova,
-Austin G. Meyer, and Claus O. Wilke.
+"""
+HyRes Protein Builder Module
+Build HyRes protein structures from amino acid sequences.
+"""
 
-The PeptideBuilder module contains code to generate 3D
-structures of peptides. It requires the Geometry module
-(also part of the PeptideBuilder library), which contains
-default bond lengths and angles for all amino acids.
-
-This module also requires the Bio.PDB module from
-Biopython, for structure manipulation.
-
-This file is provided to you under the MIT License."""
-
-import math, warnings
-from typing import List, Optional, Union
-
-import Bio.PDB
-from Bio.PDB.Polypeptide import is_aa
-from Bio.PDB.Atom import Atom
-from Bio.PDB.Residue import Residue
-from Bio.PDB.Chain import Chain
-from Bio.PDB.Model import Model
-from Bio.PDB.Structure import Structure
-from Bio.PDB.vectors import Vector, rotaxis, calc_dihedral, calc_angle
 import numpy as np
 
-from .Geometry import (
-    AlaGeo,
-    ArgGeo,
-    AsnGeo,
-    AspGeo,
-    CysGeo,
-    GlnGeo,
-    GluGeo,
-    GlyGeo,
-    HisGeo,
-    IleGeo,
-    LeuGeo,
-    LysGeo,
-    MetGeo,
-    PheGeo,
-    ProGeo,
-    SerGeo,
-    ThrGeo,
-    TrpGeo,
-    TyrGeo,
-    ValGeo,
-    geometry,
-    Geo,
-)
+# Single letter to three letter code mapping
+AA_THREE_LETTER = {
+    'A': 'ALA', 'C': 'CYS', 'D': 'ASP', 'E': 'GLU',
+    'F': 'PHE', 'G': 'GLY', 'H': 'HIS', 'I': 'ILE',
+    'K': 'LYS', 'L': 'LEU', 'M': 'MET', 'N': 'ASN',
+    'P': 'PRO', 'Q': 'GLN', 'R': 'ARG', 'S': 'SER',
+    'T': 'THR', 'V': 'VAL', 'W': 'TRP', 'Y': 'TYR'
+}
 
+# Amino acid structure database
+# Format: {code: [(atom_name, x, y, z), ...]}
+AMINO_ACID_STRUCTURES = {
+    'G': [  # Glycine
+        ('C-', 1.520,  0.000,  0.000),
+        ('O-', 2.165,  0.803, -0.673),
+        ( 'N', 2.116, -0.911,  0.764),
+        ( 'H', 1.558, -1.528,  1.282),
+        ('CA', 3.561, -1.002,  0.841),
+        ( 'C', 4.061, -2.364,  0.386),
+        ( 'O', 3.468, -3.400,  0.683),
+        ('N+', 5.169, -2.378, -0.349),
+        ('H+', 5.604, -1.525, -0.559),
+    ],
+    'A': [  # Alanine
+        ('C-', 1.520,  0.000,  0.000),
+        ('O-', 2.165,  0.803, -0.673),
+        ( 'N', 2.116, -0.911,  0.764),
+        ( 'H', 1.558, -1.528,  1.282),
+        ('CA', 3.561, -1.002,  0.841),
+        ('CB', 3.989, -0.704,  2.385),
+        ( 'C', 4.061, -2.364,  0.386),
+        ( 'O', 3.468, -3.400,  0.683),
+        ('N+', 5.169, -2.378, -0.349),
+        ('H+', 5.604, -1.525, -0.559),
+    ],
+    'V': [  # Valine
+        ('C-', 1.520,  0.000,  0.000),
+        ('O-', 2.165,  0.803, -0.673),
+        ( 'N', 2.116, -0.911,  0.764),
+        ( 'H', 1.558, -1.528,  1.282),
+        ('CA', 3.561, -1.002,  0.841),
+        ('CB', 3.989, -0.704,  2.385),
+        ( 'C', 4.061, -2.364,  0.386),
+        ( 'O', 3.468, -3.400,  0.683),
+        ('N+', 5.169, -2.378, -0.349),
+        ('H+', 5.604, -1.525, -0.559),
+    ],
+    'I': [  # Isoleucine
+        ('C-', 1.520,  0.000,  0.000),
+        ('O-', 2.165,  0.803, -0.673),
+        ( 'N', 2.116, -0.911,  0.764),
+        ( 'H', 1.558, -1.528,  1.282),
+        ('CA', 3.561, -1.002,  0.841),
+        ('CB', 3.989, -0.704,  2.385),
+        ( 'C', 4.061, -2.364,  0.386),
+        ( 'O', 3.468, -3.400,  0.683),
+        ('N+', 5.169, -2.378, -0.349),
+        ('H+', 5.604, -1.525, -0.559),
+    ],
+    'L': [  # Leucine
+        ('C-', 1.520,  0.000,  0.000),
+        ('O-', 2.165,  0.803, -0.673),
+        ( 'N', 2.116, -0.911,  0.764),
+        ( 'H', 1.558, -1.528,  1.282),
+        ('CA', 3.561, -1.002,  0.841),
+        ('CB', 3.989, -0.704,  2.385),
+        ( 'C', 4.061, -2.364,  0.386),
+        ( 'O', 3.468, -3.400,  0.683),
+        ('N+', 5.169, -2.378, -0.349),
+        ('H+', 5.604, -1.525, -0.559),
+    ],
+    'M': [  # Methionine
+        ('C-', 1.520,  0.000,  0.000),
+        ('O-', 2.165,  0.803, -0.673),
+        ( 'N', 2.116, -0.911,  0.764),
+        ( 'H', 1.558, -1.528,  1.282),
+        ('CA', 3.561, -1.002,  0.841),
+        ('CB', 3.989, -0.704,  2.385),
+        ( 'C', 4.061, -2.364,  0.386),
+        ( 'O', 3.468, -3.400,  0.683),
+        ('N+', 5.169, -2.378, -0.349),
+        ('H+', 5.604, -1.525, -0.559),
+    ],
+    'S': [  # Serine
+        ('C-', 1.520,  0.000,  0.000),
+        ('O-', 2.165,  0.803, -0.673),
+        ( 'N', 2.116, -0.911,  0.764),
+        ( 'H', 1.558, -1.528,  1.282),
+        ('CA', 3.561, -1.002,  0.841),
+        ('CB', 3.989, -0.704,  2.385),
+        ( 'C', 4.061, -2.364,  0.386),
+        ( 'O', 3.468, -3.400,  0.683),
+        ('N+', 5.169, -2.378, -0.349),
+        ('H+', 5.604, -1.525, -0.559),
+    ],
+    'T': [  # Threonine
+        ('C-', 1.520,  0.000,  0.000),
+        ('O-', 2.165,  0.803, -0.673),
+        ( 'N', 2.116, -0.911,  0.764),
+        ( 'H', 1.558, -1.528,  1.282),
+        ('CA', 3.561, -1.002,  0.841),
+        ('CB', 3.989, -0.704,  2.385),
+        ( 'C', 4.061, -2.364,  0.386),
+        ( 'O', 3.468, -3.400,  0.683),
+        ('N+', 5.169, -2.378, -0.349),
+        ('H+', 5.604, -1.525, -0.559),
+    ],
+    'N': [  # Asparagine
+        ('C-', 1.520,  0.000,  0.000),
+        ('O-', 2.165,  0.803, -0.673),
+        ( 'N', 2.116, -0.911,  0.764),
+        ( 'H', 1.558, -1.528,  1.282),
+        ('CA', 3.561, -1.002,  0.841),
+        ('CB', 3.989, -0.704,  2.385),
+        ( 'C', 4.061, -2.364,  0.386),
+        ( 'O', 3.468, -3.400,  0.683),
+        ('N+', 5.169, -2.378, -0.349),
+        ('H+', 5.604, -1.525, -0.559),
+    ],
+    'Q': [  # Glutamine
+        ('C-', 1.520,  0.000,  0.000),
+        ('O-', 2.165,  0.803, -0.673),
+        ( 'N', 2.116, -0.911,  0.764),
+        ( 'H', 1.558, -1.528,  1.282),
+        ('CA', 3.561, -1.002,  0.841),
+        ('CB', 3.989, -0.704,  2.385),
+        ( 'C', 4.061, -2.364,  0.386),
+        ( 'O', 3.468, -3.400,  0.683),
+        ('N+', 5.169, -2.378, -0.349),
+        ('H+', 5.604, -1.525, -0.559),
+    ],
+    'C': [  # Cysteine
+        ('C-', 1.520,  0.000,  0.000),
+        ('O-', 2.165,  0.803, -0.673),
+        ( 'N', 2.116, -0.911,  0.764),
+        ( 'H', 1.558, -1.528,  1.282),
+        ('CA', 3.561, -1.002,  0.841),
+        ('CB', 3.989, -0.704,  2.385),
+        ( 'C', 4.061, -2.364,  0.386),
+        ( 'O', 3.468, -3.400,  0.683),
+        ('N+', 5.169, -2.378, -0.349),
+        ('H+', 5.604, -1.525, -0.559),
+    ],
+    'D': [  # Aspartic Acid
+        ('C-', 1.520,  0.000,  0.000),
+        ('O-', 2.165,  0.803, -0.673),
+        ( 'N', 2.116, -0.911,  0.764),
+        ( 'H', 1.558, -1.528,  1.282),
+        ('CA', 3.561, -1.002,  0.841),
+        ('CB', 3.989, -0.704,  2.385),
+        ( 'C', 4.061, -2.364,  0.386),
+        ( 'O', 3.468, -3.400,  0.683),
+        ('N+', 5.169, -2.378, -0.349),
+        ('H+', 5.604, -1.525, -0.559),
+    ],
+    'E': [  # Glutamic Acid
+        ('C-', 1.520,  0.000,  0.000),
+        ('O-', 2.165,  0.803, -0.673),
+        ( 'N', 2.116, -0.911,  0.764),
+        ( 'H', 1.558, -1.528,  1.282),
+        ('CA', 3.561, -1.002,  0.841),
+        ('CB', 3.989, -0.704,  2.385),
+        ( 'C', 4.061, -2.364,  0.386),
+        ( 'O', 3.468, -3.400,  0.683),
+        ('N+', 5.169, -2.378, -0.349),
+        ('H+', 5.604, -1.525, -0.559),
+    ],
+    'R': [  # Arginine
+        ('C-', 59.174, -42.097,  -4.596),
+        ('O-', 58.546, -43.153,  -4.536),
+        ( 'N', 60.359, -42.020,  -5.194),
+        ( 'H', 60.819, -41.155,  -5.214),
+        ('CA', 60.972, -43.183,  -5.807),
+        ('CB', 60.898, -42.645,  -8.309),
+        ('CC', 59.783, -40.041, -10.381),
+        ( 'C', 62.316, -43.506,  -5.174),
+        ( 'O', 63.108, -42.621,  -4.857),
+        ('N+', 62.590, -44.793,  -4.982),
+        ('H+', 61.925, -45.460,  -5.252),
+    ],
+    'K': [  # Lysine
+        ('C-', 59.174, -42.097,  -4.596),
+        ('O-', 58.546, -43.153,  -4.536),
+        ( 'N', 60.359, -42.020,  -5.194),
+        ( 'H', 60.819, -41.155,  -5.214),
+        ('CA', 60.972, -43.183,  -5.807),
+        ('CB', 60.898, -42.645,  -8.309),
+        ('CC', 59.783, -40.041, -10.381),
+        ( 'C', 62.316, -43.506,  -5.174),
+        ( 'O', 63.108, -42.621,  -4.857),
+        ('N+', 62.590, -44.793,  -4.982),
+        ('H+', 61.925, -45.460,  -5.252),
+    ],
+    'H': [  # Histidine
+        ('C-', 34.329, -24.265, -2.457),
+        ('O-', 33.695, -25.296, -2.672),
+        ( 'N', 35.584, -24.115, -2.873),
+        ( 'H', 36.046, -23.274, -2.677),
+        ('CA', 36.267, -25.165, -3.604),
+        ('CB', 36.662, -24.455, -5.365),
+        ('CC', 36.150, -22.184, -6.330),
+        ('CD', 37.036, -23.323, -7.504),
+        ( 'C', 37.514, -25.635, -2.873),
+        ( 'O', 38.262, -24.843, -2.300),
+        ('N+', 37.756, -26.942, -2.884),
+        ('H+', 37.129, -27.531, -3.355),
+    ],
+    'F': [  # Phenylalanine
+        ('C-', 18.161, -11.852, -0.844),
+        ('O-', 18.459, -11.762,  0.346),
+        ( 'N', 18.526, -12.898, -1.580),
+        ( 'H', 18.264, -12.922, -2.524),
+        ('CA', 19.296, -13.988, -1.013),
+        ('CB', 17.663, -15.675, -0.913),
+        ('CC', 15.435, -15.063, -1.725),
+        ('CD', 15.227, -17.181, -1.093),
+        ( 'C', 20.629, -14.160, -1.724),
+        ( 'O', 20.727, -14.049, -2.945),
+        ('N+', 21.681, -14.438, -0.959),
+        ('H+', 21.550, -14.517,  0.009),
+    ],
+    'Y': [  # Tyrosine
+        ('C-', 45.403, -32.086, -3.894),
+        ('O-', 45.340, -32.198, -5.117),
+        ( 'N', 46.552, -32.215, -3.237),
+        ( 'H', 46.550, -32.117, -2.262),
+        ('CA', 47.793, -32.495, -3.934),
+        ('CB', 48.864, -30.411, -3.763),
+        ('CC', 47.618, -28.666, -2.577),
+        ('CD', 49.407, -27.039, -2.907),
+        ( 'C', 48.414, -33.801, -3.467),
+        ( 'O', 48.412, -34.128, -2.281),
+        ('N+', 48.961, -34.571, -4.404),
+        ('H+', 48.937, -34.265, -5.335),
+    ],
+    'W': [  # Tryptophan
+        ('C-', 20.629, -14.160, -1.724),
+        ('O-', 20.727, -14.049, -2.945),
+        ( 'N', 21.681, -14.438, -0.959),
+        ( 'H', 21.550, -14.517,  0.009),
+        ('CA', 23.001, -14.623, -1.530),
+        ('CB', 24.073, -13.094, -0.843),
+        ('CC', 23.206, -11.235,  0.722),
+        ('CD', 26.476, -12.365, -1.151),
+        ('CE', 26.436, -10.598,  0.073),
+        ('CF', 28.402, -11.409, -1.144),
+        ( 'C', 23.550, -16.009, -1.232),
+        ( 'O', 23.390, -16.544, -0.136),
+        ('N+', 24.212, -16.612, -2.216),
+        ('H+', 24.312, -16.143, -3.070),
+    ],
+    'P': [  # Proline
+        ('C-',  7.149, -3.831, -0.322),
+        ('O-',  7.952, -2.903, -0.241),
+        ( 'N',  7.474, -5.070,  0.038),
+        ('CA',  8.794, -5.388,  0.545),
+        ('CB',  8.425, -5.720,  2.421),
+        ( 'C',  9.495, -6.418, -0.325),
+        ( 'O',  8.890, -7.376, -0.804),
+        ('N+', 10.794, -6.231, -0.542),
+        ('H+', 11.230, -5.452, -0.138),
+    ],
+    # Add more amino acids here with their structure data
+    # Format: ('atom_name', x, y, z)
+}
 
-def calculateCoordinates(
-    refA: Residue, refB: Residue, refC: Residue, L: float, ang: float, di: float
-) -> np.ndarray:
-    AV = refA.get_vector()
-    BV = refB.get_vector()
-    CV = refC.get_vector()
-
-    CA = AV - CV
-    CB = BV - CV
-
-    ##CA vector
-    AX = CA[0]
-    AY = CA[1]
-    AZ = CA[2]
-
-    ##CB vector
-    BX = CB[0]
-    BY = CB[1]
-    BZ = CB[2]
-
-    ##Plane Parameters
-    A = (AY * BZ) - (AZ * BY)
-    B = (AZ * BX) - (AX * BZ)
-    G = (AX * BY) - (AY * BX)
-
-    ##Dot Product Constant
-    F = math.sqrt(BX * BX + BY * BY + BZ * BZ) * L * math.cos(ang * (math.pi / 180.0))
-
-    ##Constants
-    const = math.sqrt(
-        math.pow((B * BZ - BY * G), 2)
-        * (
-            -(F * F) * (A * A + B * B + G * G)
-            + (
-                B * B * (BX * BX + BZ * BZ)
-                + A * A * (BY * BY + BZ * BZ)
-                - (2 * A * BX * BZ * G)
-                + (BX * BX + BY * BY) * G * G
-                - (2 * B * BY) * (A * BX + BZ * G)
-            )
-            * L
-            * L
-        )
-    )
-    denom = (
-        (B * B) * (BX * BX + BZ * BZ)
-        + (A * A) * (BY * BY + BZ * BZ)
-        - (2 * A * BX * BZ * G)
-        + (BX * BX + BY * BY) * (G * G)
-        - (2 * B * BY) * (A * BX + BZ * G)
-    )
-
-    X = (
-        (B * B * BX * F) - (A * B * BY * F) + (F * G) * (-A * BZ + BX * G) + const
-    ) / denom
-
-    if (B == 0 or BZ == 0) and (BY == 0 or G == 0):
-        const1 = math.sqrt(
-            G * G * (-A * A * X * X + (B * B + G * G) * (L - X) * (L + X))
-        )
-        Y = ((-A * B * X) + const1) / (B * B + G * G)
-        Z = -(A * G * G * X + B * const1) / (G * (B * B + G * G))
-    else:
-        Y = (
-            (A * A * BY * F) * (B * BZ - BY * G)
-            + G * (-F * math.pow(B * BZ - BY * G, 2) + BX * const)
-            - A * (B * B * BX * BZ * F - B * BX * BY * F * G + BZ * const)
-        ) / ((B * BZ - BY * G) * denom)
-        Z = (
-            (A * A * BZ * F) * (B * BZ - BY * G)
-            + (B * F) * math.pow(B * BZ - BY * G, 2)
-            + (A * BX * F * G) * (-B * BZ + BY * G)
-            - B * BX * const
-            + A * BY * const
-        ) / ((B * BZ - BY * G) * denom)
-
-    # Get the new Vector from the origin
-    D = Vector(X, Y, Z) + CV
-    with warnings.catch_warnings():
-        # ignore inconsequential warning
-        warnings.simplefilter("ignore")
-        temp = calc_dihedral(AV, BV, CV, D) * (180.0 / math.pi)
-
-    di = di - temp
-    rot = rotaxis(math.pi * (di / 180.0), CV - BV)
-    D = (D - BV).left_multiply(rot) + BV
-
-    return D.get_array()
-
-
-def makeGly(segID: int, N, H, CA, C, O, geo: Geo) -> Residue:
-    """Creates a Glycine residue"""
-    res = Residue((" ", segID, " "), "GLY", "    ")
-
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeAla(segID: int, N, H, CA, C, O, geo: AlaGeo) -> Residue:
-    """Creates an Alanine residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-
-    res = Residue((" ", segID, " "), "ALA", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeSer(segID: int, N, H, CA, C, O, geo: SerGeo) -> Residue:
-    """Creates a Serine residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
+def get_amino_acid(code):
+    """Get amino acid structure by single-letter code."""
+    if code not in AMINO_ACID_STRUCTURES:
+        raise ValueError(f"Amino acid '{code}' not found in structure database")
     
-    ##Create Reside Data Structure
-    res = Residue((" ", segID, " "), "SER", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeCys(segID: int, N, H, CA, C, O, geo: CysGeo) -> Residue:
-    """Creates a Cysteine residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-    
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-
-    res = Residue((" ", segID, " "), "CYS", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeVal(segID: int, N, H, CA, C, O, geo: ValGeo) -> Residue:
-    """Creates a Valine residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-
-    res = Residue((" ", segID, " "), "VAL", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeIle(segID: int, N, H, CA, C, O, geo: IleGeo) -> Residue:
-    """Creates an Isoleucine residue"""
-    ##R-group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-    
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-
-    res = Residue((" ", segID, " "), "ILE", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeLeu(segID: int, N, H, CA, C, O, geo: LeuGeo) -> Residue:
-    """Creates a Leucine residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-
-    res = Residue((" ", segID, " "), "LEU", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeThr(segID: int, N, H, CA, C, O, geo: ThrGeo) -> Residue:
-    """Creates a Threonine residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-
-    res = Residue((" ", segID, " "), "THR", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeArg(segID: int, N, H, CA, C, O, geo: ArgGeo) -> Residue:
-    """Creates an Arginie residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    CB_CC_length = geo.CB_CC_length
-    CA_CB_CC_angle = geo.CA_CB_CC_angle
-    N_CA_CB_CC_diangle = geo.N_CA_CB_CC_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-    carbon_g = calculateCoordinates(
-        N, CA, CB, CB_CC_length, CA_CB_CC_angle, N_CA_CB_CC_diangle
-    )
-    CC = Atom("CC", carbon_g, 0.0, 1.0, " ", " CC", 0, "C")
-
-    res = Residue((" ", segID, " "), "ARG", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(CC)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeLys(segID: int, N, H, CA, C, O, geo: LysGeo) -> Residue:
-    """Creates a Lysine residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    CB_CC_length = geo.CB_CC_length
-    CA_CB_CC_angle = geo.CA_CB_CC_angle
-    N_CA_CB_CC_diangle = geo.N_CA_CB_CC_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-    carbon_g = calculateCoordinates(
-        N, CA, CB, CB_CC_length, CA_CB_CC_angle, N_CA_CB_CC_diangle
-    )
-    CC = Atom("CC", carbon_g, 0.0, 1.0, " ", " CC", 0, "C")
-
-    res = Residue((" ", segID, " "), "LYS", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(CC)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeAsp(segID: int, N, H, CA, C, O, geo: AspGeo) -> Residue:
-    """Creates an Aspartic Acid residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-
-    res = Residue((" ", segID, " "), "ASP", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeAsn(segID, N, H, CA, C, O, geo):
-    """Creates an Asparagine residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-    
-    res = Residue((" ", segID, " "), "ASN", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeGlu(segID: int, N, H, CA, C, O, geo: GluGeo) -> Residue:
-    """Creates a Glutamic Acid residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-
-    res = Residue((" ", segID, " "), "GLU", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeGln(segID: int, N, H, CA, C, O, geo: GlnGeo) -> Residue:
-    """Creates a Glutamine residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-
-    res = Residue((" ", segID, " "), "GLN", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeMet(segID: int, N, H, CA, C, O, geo: MetGeo) -> Residue:
-    """Creates a Methionine residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-
-    res = Residue((" ", segID, " "), "MET", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeHis(segID: int, N, H, CA, C, O, geo: HisGeo) -> Residue:
-    """Creates a Histidine residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    CB_CC_length = geo.CB_CC_length
-    CA_CB_CC_angle = geo.CA_CB_CC_angle
-    N_CA_CB_CC_diangle = geo.N_CA_CB_CC_diangle
-
-    CC_CD_length = geo.CC_CD_length
-    CB_CC_CD_angle = geo.CB_CC_CD_angle
-    CA_CB_CC_CD_diangle = geo.CA_CB_CC_CD_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-    carbon_g = calculateCoordinates(
-        N, CA, CB, CB_CC_length, CA_CB_CC_angle, N_CA_CB_CC_diangle
-    )
-    CC = Atom("CC", carbon_g, 0.0, 1.0, " ", " CC", 0, "C")
-    carbon_d2 = calculateCoordinates(
-        CA, CB, CC, CC_CD_length, CB_CC_CD_angle, CA_CB_CC_CD_diangle
-    )
-    CD = Atom("CD", carbon_d2, 0.0, 1.0, " ", " CD", 0, "C")
-
-    res = Residue((" ", segID, " "), "HIS", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(CC)
-    res.add(CD)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makePro(segID: int, N, H, CA, C, O, geo: ProGeo) -> Residue:
-    """Creates a Proline residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-
-    res = Residue((" ", segID, " "), "PRO", "    ")
-    res.add(N)
-    res.add(CA)
-    res.add(CB)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makePhe(segID: int, N, H, CA, C, O, geo: PheGeo) -> Residue:
-    """Creates a Phenylalanine residue"""
-    ##R-Group    
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    CB_CC_length = geo.CB_CC_length
-    CA_CB_CC_angle = geo.CA_CB_CC_angle
-    N_CA_CB_CC_diangle = geo.N_CA_CB_CC_diangle
-
-    CC_CD_length = geo.CC_CD_length
-    CB_CC_CD_angle = geo.CB_CC_CD_angle
-    CA_CB_CC_CD_diangle = geo.CA_CB_CC_CD_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-    carbon_g = calculateCoordinates(
-        N, CA, CB, CB_CC_length, CA_CB_CC_angle, N_CA_CB_CC_diangle
-    )
-    CC = Atom("CC", carbon_g, 0.0, 1.0, " ", " CC", 0, "C")
-    carbon_d2 = calculateCoordinates(
-        CA, CB, CC, CC_CD_length, CB_CC_CD_angle, CA_CB_CC_CD_diangle
-    )
-    CD = Atom("CD", carbon_d2, 0.0, 1.0, " ", " CD", 0, "C")
-
-    res = Residue((" ", segID, " "), "PHE", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(CC)
-    res.add(CD)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeTyr(segID: int, N, H, CA, C, O, geo: TyrGeo) -> Residue:
-    """Creates a Tyrosine residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    CB_CC_length = geo.CB_CC_length
-    CA_CB_CC_angle = geo.CA_CB_CC_angle
-    N_CA_CB_CC_diangle = geo.N_CA_CB_CC_diangle
-
-    CC_CD_length = geo.CC_CD_length
-    CB_CC_CD_angle = geo.CB_CC_CD_angle
-    CA_CB_CC_CD_diangle = geo.CA_CB_CC_CD_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-    carbon_g = calculateCoordinates(
-        N, CA, CB, CB_CC_length, CA_CB_CC_angle, N_CA_CB_CC_diangle
-    )
-    CC = Atom("CC", carbon_g, 0.0, 1.0, " ", " CC", 0, "C")
-    carbon_d2 = calculateCoordinates(
-        CA, CB, CC, CC_CD_length, CB_CC_CD_angle, CA_CB_CC_CD_diangle
-    )
-    CD = Atom("CD", carbon_d2, 0.0, 1.0, " ", " CD", 0, "C")
-
-    res = Residue((" ", segID, " "), "TYR", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(CC)
-    res.add(CD)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def makeTrp(segID: int, N, H, CA, C, O, geo: TrpGeo) -> Residue:
-    """Creates a Tryptophan residue"""
-    ##R-Group
-    CA_CB_length = geo.CA_CB_length
-    C_CA_CB_angle = geo.C_CA_CB_angle
-    N_C_CA_CB_diangle = geo.N_C_CA_CB_diangle
-
-    CB_CC_length = geo.CB_CC_length
-    CA_CB_CC_angle = geo.CA_CB_CC_angle
-    N_CA_CB_CC_diangle = geo.N_CA_CB_CC_diangle
-
-    CB_CD_length = geo.CB_CD_length
-    CA_CB_CD_angle = geo.CA_CB_CD_angle
-    N_CA_CB_CD_diangle = geo.N_CA_CB_CD_diangle
-
-    CD_CE_length = geo.CD_CE_length
-    CB_CD_CE_angle = geo.CB_CD_CE_angle
-    CA_CB_CD_CE_diangle = geo.CA_CB_CD_CE_diangle
-
-    CD_CF_length = geo.CD_CF_length
-    CB_CD_CF_angle = geo.CB_CD_CF_angle
-    CA_CB_CD_CF_diangle = geo.CA_CB_CD_CF_diangle
-
-    carbon_b = calculateCoordinates(
-        N, C, CA, CA_CB_length, C_CA_CB_angle, N_C_CA_CB_diangle
-    )
-    CB = Atom("CB", carbon_b, 0.0, 1.0, " ", " CB", 0, "C")
-    carbon_g = calculateCoordinates(
-        N, CA, CB, CB_CC_length, CA_CB_CC_angle, N_CA_CB_CC_diangle
-    )
-    CC = Atom("CC", carbon_g, 0.0, 1.0, " ", " CC", 0, "C")
-    carbon_d1 = calculateCoordinates(
-        N, CA, CB, CB_CD_length, CA_CB_CD_angle, N_CA_CB_CD_diangle
-    )
-    CD = Atom("CD", carbon_d1, 0.0, 1.0, " ", " CD", 0, "C")
-    carbon_d2 = calculateCoordinates(
-        CA, CB, CD, CD_CE_length, CB_CD_CE_angle, CA_CB_CD_CE_diangle
-    )
-    CE = Atom("CE", carbon_d2, 0.0, 1.0, " ", " CE", 0, "C")
-    carbon_e2 = calculateCoordinates(
-        CA, CB, CD, CD_CF_length, CB_CD_CF_angle, CA_CB_CD_CF_diangle
-    )
-    CF = Atom("CF", carbon_e2, 0.0, 1.0, " ", " CF", 0, "C")
-
-    ##Create Residue DS
-    res = Residue((" ", segID, " "), "TRP", "    ")
-    res.add(N)
-    res.add(H)
-    res.add(CA)
-    res.add(CB)
-    res.add(CC)
-    res.add(CD)
-    res.add(CE)
-    res.add(CF)
-    res.add(C)
-    res.add(O)
-    return res
-
-
-def make_res_of_type(segID: int, N, H, CA, C, O, geo: Geo) -> Residue:
-    if isinstance(geo, GlyGeo):
-        res = makeGly(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, AlaGeo):
-        res = makeAla(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, SerGeo):
-        res = makeSer(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, CysGeo):
-        res = makeCys(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, ValGeo):
-        res = makeVal(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, IleGeo):
-        res = makeIle(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, LeuGeo):
-        res = makeLeu(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, ThrGeo):
-        res = makeThr(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, ArgGeo):
-        res = makeArg(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, LysGeo):
-        res = makeLys(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, AspGeo):
-        res = makeAsp(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, GluGeo):
-        res = makeGlu(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, AsnGeo):
-        res = makeAsn(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, GlnGeo):
-        res = makeGln(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, MetGeo):
-        res = makeMet(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, HisGeo):
-        res = makeHis(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, ProGeo):
-        res = makePro(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, PheGeo):
-        res = makePhe(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, TyrGeo):
-        res = makeTyr(segID, N, H, CA, C, O, geo)
-    elif isinstance(geo, TrpGeo):
-        res = makeTrp(segID, N, H, CA, C, O, geo)
-    else:
-        res = makeGly(segID, N, H, CA, C, O, geo)
-
-    return res
-
-
-def initialize_res(residue: Union[Geo, str]) -> Structure:
-    """Creates a new structure containing a single amino acid. The type and
-    geometry of the amino acid are determined by the argument, which has to be
-    either a geometry object or a single-letter amino acid code.
-    The amino acid will be placed into chain A of model 0."""
-
-    if isinstance(residue, Geo):
-        geo = residue
-    elif isinstance(residue, str):
-        geo = geometry(residue)
-    else:
-        raise ValueError("Invalid residue argument:", residue)
-
-    segID = 1
-    AA = geo.residue_name
-    CA_N_length = geo.CA_N_length
-    CA_C_length = geo.CA_C_length
-    N_CA_C_angle = geo.N_CA_C_angle
-
-    CA_coord = np.array([0.0, 0.0, 0.0])
-    C_coord = np.array([CA_C_length, 0, 0])
-    N_coord = np.array(
-        [
-            CA_N_length * math.cos(N_CA_C_angle * (math.pi / 180.0)),
-            CA_N_length * math.sin(N_CA_C_angle * (math.pi / 180.0)),
-            0,
-        ]
-    )
-
-    N = Atom("N", N_coord, 0.0, 1.0, " ", " N", 0, "N")
-    CA = Atom("CA", CA_coord, 0.0, 1.0, " ", " CA", 0, "C")
-    C = Atom("C", C_coord, 0.0, 1.0, " ", " C", 0, "C")
-
-    ## Create Hydrogen atom
-    N_H_length = geo.N_H_length
-    CA_N_H_angle = geo.CA_N_H_angle
-    C_CA_N_H_diangle = geo.C_CA_N_H_diangle
-    hydrogen = calculateCoordinates(C, CA, N, N_H_length, CA_N_H_angle, C_CA_N_H_diangle)
-    H = Atom("H", hydrogen, 0.0, 1.0, " ", " H", 0, "H")
-    
-    ##Create Carbonyl atom (to be moved later)
-    C_O_length = geo.C_O_length
-    CA_C_O_angle = geo.CA_C_O_angle
-    N_CA_C_O_diangle = geo.N_CA_C_O_diangle
-
-    carbonyl = calculateCoordinates(
-        N, CA, C, C_O_length, CA_C_O_angle, N_CA_C_O_diangle
-    )
-    O = Atom("O", carbonyl, 0.0, 1.0, " ", " O", 0, "O")
-
-    res = make_res_of_type(segID, N, H, CA, C, O, geo)
-
-    cha = Chain("A")
-    cha.add(res)
-
-    mod = Model(0)
-    mod.add(cha)
-
-    struc = Structure("X")
-    struc.add(mod)
-    return struc
-
-
-def getReferenceResidue(structure: Structure) -> Residue:
-    """Returns the last residue of chain A model 0 of the given structure.
-
-    This function is a helper function that should not normally be called
-    directly."""
-
-    # If the following line doesn't work we're in trouble.
-    # Likely initialize_res() wasn't called.
-    resRef = structure[0]["A"].child_list[-1]
-
-    # If the residue is not an amino acid we're in trouble.
-    # Likely somebody is trying to append residues to an existing
-    # structure that has non-amino-acid molecules in the chain.
-    assert is_aa(resRef)
-
-    return resRef
-
-
-def add_residue_from_geo(structure: Structure, geo: Geo) -> Structure:
-    """Adds a residue to chain A model 0 of the given structure, and
-    returns the new structure. The residue to be added is determined by
-    the geometry object given as second argument.
-
-    This function is a helper function and should not normally be called
-    directly. Call add_residue() instead."""
-    resRef = getReferenceResidue(structure)
-    AA = geo.residue_name
-    segID = resRef.get_id()[1]
-    segID += 1
-
-    ##geometry to bring together residue
-    peptide_bond = geo.peptide_bond
-    CA_C_N_angle = geo.CA_C_N_angle
-    C_N_CA_angle = geo.C_N_CA_angle
-
-    ##Backbone Coordinates
-    N_CA_C_angle = geo.N_CA_C_angle
-    CA_N_length = geo.CA_N_length
-    CA_C_length = geo.CA_C_length
-    phi = geo.phi
-    psi_im1 = geo.psi_im1
-    omega = geo.omega
-
-    N_coord = calculateCoordinates(resRef["N"], resRef["CA"], resRef["C"], peptide_bond, CA_C_N_angle, psi_im1)
-    N = Atom("N", N_coord, 0.0, 1.0, " ", " N", 0, "N")
-
-    CA_coord = calculateCoordinates(resRef["CA"], resRef["C"], N, CA_N_length, C_N_CA_angle, omega)
-    CA = Atom("CA", CA_coord, 0.0, 1.0, " ", " CA", 0, "C")
-
-    C_coord = calculateCoordinates(resRef["C"], N, CA, CA_C_length, N_CA_C_angle, phi)
-    C = Atom("C", C_coord, 0.0, 1.0, " ", " C", 0, "C")
-    
-    ##Create Carbonyl atom (to be moved later)
-    C_O_length = geo.C_O_length
-    CA_C_O_angle = geo.CA_C_O_angle
-    N_CA_C_O_diangle = geo.N_CA_C_O_diangle
-
-    carbonyl = calculateCoordinates(N, CA, C, C_O_length, CA_C_O_angle, N_CA_C_O_diangle)
-    O = Atom("O", carbonyl, 0.0, 1.0, " ", " O", 0, "O")
-
-    if AA != 'P':
-        ## Create Hydrogen atom
-        N_H_length = geo.N_H_length
-        CA_N_H_angle = geo.CA_N_H_angle
-        C_CA_N_H_diangle = geo.C_CA_N_H_diangle
-    
-        hydrogen = calculateCoordinates(C, CA, N, N_H_length, CA_N_H_angle, C_CA_N_H_diangle)
-        H = Atom("H", hydrogen, 0.0, 1.0, " ", " H", 0, "H")
-    else:
-        H = O
-    
-    res = make_res_of_type(segID, N, H, CA, C, O, geo)
-
-    resRef["O"].set_coord(
-        calculateCoordinates(
-            res["N"], resRef["CA"], resRef["C"], C_O_length, CA_C_O_angle, 180.0
-        )
-    )
-
-    ghost = Atom(
-        "N",
-        calculateCoordinates(
-            res["N"], res["CA"], res["C"], peptide_bond, CA_C_N_angle, psi_im1
-        ),
-        0.0,
-        0.0,
-        " ",
-        "N",
-        0,
-        "N",
-    )
-    res["O"].set_coord(
-        calculateCoordinates(
-            res["N"], res["CA"], res["C"], C_O_length, CA_C_O_angle, 180.0
-        )
-    )
-
-    structure[0]["A"].add(res)
-    return structure
-
-
-def make_extended_structure(AA_chain: str) -> Structure:
-    """Place a sequence of amino acids into a peptide in the extended
-    conformation. The argument AA_chain holds the sequence of amino
-    acids to be used."""
-    geo = geometry(AA_chain[0])
-    struc = initialize_res(geo)
-
-    for i in range(1, len(AA_chain)):
-        AA = AA_chain[i]
-        geo = geometry(AA)
-        add_residue(struc, geo)
-
-    return struc
-
-
-def add_residue(
-    structure: Structure, residue: Union[Geo, str], phi=-120, psi_im1=140, omega=-370
-) -> Structure:
-    """Adds a residue to chain A model 0 of the given structure, and
-    returns the new structure. The residue to be added can be specified
-    in two ways: either as a geometry object (in which case
-    the remaining arguments phi, psi_im1, and omega are ignored) or as a
-    single-letter amino-acid code. In the latter case, the optional
-    arguments phi, psi_im1, and omega specify the corresponding backbone
-    angles.
-
-    When omega is specified, it needs to be a value greater than or equal
-    to -360. Values below -360 are ignored."""
-
-    if isinstance(residue, Geo):
-        geo = residue
-    elif isinstance(residue, str):
-        geo = geometry(residue)
-        geo.phi = phi
-        geo.psi_im1 = psi_im1
-        if omega > -361:
-            geo.omega = omega
-    else:
-        raise ValueError("Invalid residue argument:", residue)
-
-    return add_residue_from_geo(structure, geo)
-
-
-def make_structure(
-    AA_chain: str, phi: List[float], psi_im1: List[float], omega: Optional[List] = None
-) -> Structure:
-    """Place a sequence of amino acids into a peptide with specified
-    backbone dihedral angles. The argument AA_chain holds the
-    sequence of amino acids to be used. The arguments phi and psi_im1 hold
-    lists of backbone angles, one for each amino acid, *starting from
-    the second amino acid in the chain*. The argument
-    omega (optional) holds a list of omega angles, also starting from
-    the second amino acid in the chain."""
-    geo = geometry(AA_chain[0])
-    struc = initialize_res(geo)
-
-    if omega is None or not len(omega):
-        for i in range(1, len(AA_chain)):
-            AA = AA_chain[i]
-            add_residue(struc, AA, phi[i - 1], psi_im1[i - 1])
-    else:
-        for i in range(1, len(AA_chain)):
-            AA = AA_chain[i]
-            add_residue(struc, AA, phi[i - 1], psi_im1[i - 1], omega[i - 1])
-
-    return struc
-
-
-def make_structure_from_geos(geos: List[Geo]) -> Structure:
-    """Creates a structure out of a list of geometry objects."""
-    model_structure = initialize_res(geos[0])
-    for i in range(1, len(geos)):
-        add_residue(model_structure, geos[i])
-
-    return model_structure
-
-
-def add_terminal_OXT(structure: Structure, C_OXT_length: float = 1.23) -> Structure:
-    """Adds a terminal oxygen atom ('OXT') to the last residue of chain A model 0 of the given structure, and returns the new structure. The OXT atom object will be contained in the last residue object of the structure.
-
-This function should be used only when the structure object is completed and no further residues need to be appended."""
-
-    rad = 180.0 / math.pi
-
-    # obtain last residue infomation
-    resRef = getReferenceResidue(structure)
-    N_resRef = resRef["N"]
-    CA_resRef = resRef["CA"]
-    C_resRef = resRef["C"]
-    O_resRef = resRef["O"]
-
-    n_vec = N_resRef.get_vector()
-    ca_vec = CA_resRef.get_vector()
-    c_vec = C_resRef.get_vector()
-    o_vec = O_resRef.get_vector()
-
-    # geometry to bring together residue
-    CA_C_OXT_angle = calc_angle(ca_vec, c_vec, o_vec) * rad
-    N_CA_C_O_diangle = calc_dihedral(n_vec, ca_vec, c_vec, o_vec) * rad
-    N_CA_C_OXT_diangle = N_CA_C_O_diangle - 180.0
-    if N_CA_C_O_diangle < 0:
-        N_CA_C_OXT_diangle = N_CA_C_O_diangle + 180.0
-
-    # OXT atom creation
-    OXT_coord = calculateCoordinates(
-        N_resRef, CA_resRef, C_resRef, C_OXT_length, CA_C_OXT_angle, N_CA_C_OXT_diangle
-    )
-    OXT = Atom("OXT", OXT_coord, 0.0, 1.0, " ", "OXT", 0, "O")
-
-    # modify last residue of the structure to contain the OXT atom
-    resRef.add(OXT)
-    return structure
-
-
-def build(name, sequence):
+    atoms = []
+    for i, (name, x, y, z) in enumerate(AMINO_ACID_STRUCTURES[code], 1):
+        atoms.append({
+            'index': i,
+            'name': name,
+            'coords': np.array([x, y, z], dtype=float)
+        })
+    return atoms
+
+def get_coords(res_name, atom_names):
+    """Extract coordinates from AMINO_ACID_STRUCTURES."""
+    res = AMINO_ACID_STRUCTURES[res_name]
+    name_to_coord = {name: np.array([x, y, z], dtype=float) for name, x, y, z in res}
+    return np.vstack([name_to_coord[a] for a in atom_names])
+
+def get_from_ref(ref, atom_names):
+    """Extract coordinates from reference residue."""
+    name_to_coord = {atom['name']: atom['coords'] for atom in ref}
+    return np.vstack([name_to_coord[a] for a in atom_names])
+
+def kabsch(P, Q):
+    """Compute optimal rotation R and translation t using Kabsch algorithm."""
+    Pc = P.mean(axis=0)
+    Qc = Q.mean(axis=0)
+    P_centered = P - Pc
+    Q_centered = Q - Qc
+    H = P_centered.T @ Q_centered
+    U, S, Vt = np.linalg.svd(H)
+    R = Vt.T @ U.T
+    if np.linalg.det(R) < 0:  # Fix improper rotation
+        Vt[-1, :] *= -1
+        R = Vt.T @ U.T
+    t = Qc - R @ Pc
+    return R, t
+
+def align_residues(ref, resA_name, resB_name):
     """
-    sequence: str for the sequence in one-letter
-    name: idp name, used as name.pdb
+    Align residue B to residue A using backbone atoms.
+    Handles Proline: skips H/H+ if either residue is 'P'.
+    Returns list of dicts for B atoms (excluding alignment atoms).
     """
-    s0 = sequence[0]
-    geo = geometry(s0)
-    structure = initialize_res(geo)
-    for s in sequence[1:]:
-        geo = geometry(s)
-        add_residue(structure, geo)
-    
-    out = Bio.PDB.PDBIO()
-    out.set_structure(structure)
-    out.save(f"{name}.pdb")
+    # Default alignment atoms
+    atoms_A = ["C", "O", "N+"]
+    atoms_B = ["C-", "O-", "N"]
 
+    # Include H/H+ if neither is Proline
+    if resA_name != 'P' and resB_name != 'P':
+        atoms_A.append("H+")
+        atoms_B.append("H")
+
+    # Extract coordinates
+    QA = get_from_ref(ref, atoms_A)
+    PB = get_coords(resB_name, atoms_B)
+
+    # Compute rotation and translation
+    R, t = kabsch(PB, QA)
+
+    # Transform all atoms of B, excluding alignment atoms
+    ref, B_atoms = [], []
+    for i, (name, x, y, z) in enumerate(AMINO_ACID_STRUCTURES[resB_name]):
+        coord = np.array([x, y, z], dtype=float)
+        new_coord = R @ coord + t
+        ref.append({
+            'index': i,
+            'name': name,
+            'coords': new_coord
+        })
+        if name not in ['C-', 'O-', 'N+', 'H+']:
+            B_atoms.append({
+                'index': i,
+                'name': name,
+                'coords': new_coord
+            })
+        
+    return ref, B_atoms
+
+def write_pdb(atoms, filename):
+    """Write atoms to PDB file."""
+    with open(filename, 'w') as f:
+        f.write("REMARK   Peptide chain generated by PeptideBuilder\n")
+        for atom in atoms:
+            # PDB format: ATOM line
+            line = f"ATOM  {atom['global_index']:5d}  {atom['name']:<3s} {atom['res_name']:<3s} A{atom['res_num']:4d}    "
+            line += f"{atom['coords'][0]:8.3f}{atom['coords'][1]:8.3f}{atom['coords'][2]:8.3f}"
+            line += "  1.00  0.00           \n"
+            f.write(line)
+        f.write("END\n")
+
+def build_peptide(sequence, output_file='hyres.pdb'):
+    all_atoms = []
+    atom_counter = 1
+    ref = None
+
+    for i, aa in enumerate(sequence):
+        if aa not in AMINO_ACID_STRUCTURES:
+            raise ValueError(f"Amino acid '{aa}' not found in structure database")
+        if i == 0:
+            res0 = get_amino_acid(aa)
+            ref = res0
+            atoms = [{'index': a['index'], 'name': a['name'], 
+                    'coords': a['coords'].copy()} for a in res0[2:-2]]
+            for atom in atoms:
+                atom['res_num'] = i + 1
+                atom['res_name'] = AA_THREE_LETTER.get(aa, aa)
+                atom['global_index'] = atom_counter
+                atom_counter += 1
+            all_atoms.extend(atoms)
+        else:
+            ref, new_res = align_residues(ref, sequence[i-1], aa)
+            atoms = [{'index': a['index'], 'name': a['name'], 
+                    'coords': a['coords'].copy()} for a in new_res]
+            for atom in atoms:
+                atom['res_num'] = i + 1
+                atom['res_name'] = AA_THREE_LETTER.get(aa, aa)
+                atom['global_index'] = atom_counter
+                atom_counter += 1
+            all_atoms.extend(atoms)
+    
+    # Write PDB file
+    write_pdb(all_atoms, output_file)
+    print(f"Peptide chain built: {len(sequence)} residues, {len(all_atoms)} atoms")
+    print(f"Output written to: {output_file}")
 
 def main():
-    """Command-line interface"""
+    "Command-line interface to build peptide from sequence."
     import argparse
     
-    parser = argparse.ArgumentParser(description='HyresBuilder: build CG protein from sequence')
-    parser.add_argument('name', type=str, help='protein name, output name.pdb')
-    parser.add_argument('seq', type=str, help='sequence in one-letter')
-
+    parser = argparse.ArgumentParser(
+        description='Build a peptide chain from sequence: hyresbuilder name sequence, output: name.pdb.')
+    
+    parser.add_argument('name', type=str,
+                        help='pdb file name, output will be name.pdb. default: hyres.pdb')
+    parser.add_argument('sequence', type=str,
+                        help='Amino acid sequence (single-letter codes, e.g., ACDEFG)')
+    
     args = parser.parse_args()
-    build(args.name, args.seq)
+    output_file = f"{args.name}.pdb"
+    sequence = args.sequence.upper()
+    
+    # Build peptide
+    build_peptide(sequence, output_file=output_file)
+    #try:
+    #    build_peptide(sequence, output_file=output_file)
+    #except Exception as e:
+    #    print(f"Error: {e}")
+    #    exit(1)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
