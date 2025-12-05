@@ -13,33 +13,11 @@ __email__ = "shanlongli@umass.edu"
 __license__ = 'MIT'
 __url__ = 'https://github.com/lslumass/HyresBuilder'
 
-try:
-    from .Convert2CG import (
-        at2cg,
-        at2hyres,
-        at2icon,
-    )
-except ImportError as e:
-    import warnings
-    warnings.warn(
-        f"Could not import HyresBuilder modules: {e}\n",
-        ImportWarning
-    )
-
-
 __all__ = [
     '__version__',
     '__author__',
     '__email__',
     '__license__',
     '__url__',
-    # at2cg
-    'at2cg',
-    'at2hyres',
-    'at2icon',
 ]
 
-#from .HyresBuilder import *
-#from .Geometry import *
-#from .RNAbuilder import *
-#from .HyresFF import *
