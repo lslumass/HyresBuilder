@@ -86,7 +86,7 @@ def posre_amyloid(system, pdb, alignment_file):
                     if atom.name == 'CA':
                         ca = atom.index
             grp.append(ca)
-    
+    print(grp) 
     # add position restraint
     posres_CAs(system, pdb, grp)
 
