@@ -364,7 +364,8 @@ def write_pdb(atoms, filename):
             f.write(line)
         f.write("END\n")
 
-def build_peptide(sequence, output_file='hyres.pdb'):
+def build_peptide(name, sequence):
+    output_file = f"{name}.pdb"
     all_atoms = []
     atom_counter = 1
     ref = None
@@ -412,16 +413,11 @@ def main():
                         help='Amino acid sequence (single-letter codes, e.g., ACDEFG)')
     
     args = parser.parse_args()
-    output_file = f"{args.name}.pdb"
+    name = args.name
     sequence = args.sequence.upper()
     
     # Build peptide
-    build_peptide(sequence, output_file=output_file)
-    #try:
-    #    build_peptide(sequence, output_file=output_file)
-    #except Exception as e:
-    #    print(f"Error: {e}")
-    #    exit(1)
+    build_peptide(name, sequence)
 
 if __name__ == "__main__":
     main()
