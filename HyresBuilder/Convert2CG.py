@@ -239,7 +239,7 @@ def at2hyres(pdb_in, pdb_out):
                     atom_serial += 1
                     new_name = 'H' if atom['name'] in ['HN', 'HT1'] else atom['name']
                     f.write(f"{atom['record']:4s}  {atom_serial:5d} {new_name:2s}   "
-                           f"{resname+'_':3s} {atom['chain']}{int(atom['resid']):4d}    "
+                           f"{resname:3s} {atom['chain']}{int(atom['resid']):4d}    "
                            f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
                            f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
             
@@ -249,7 +249,7 @@ def at2hyres(pdb_in, pdb_out):
                     atom_serial += 1
                     new_name = 'O' if atom['name'] == 'OT1' else atom['name']
                     f.write(f"{atom['record']:4s}  {atom_serial:5d} {new_name:2s}   "
-                           f"{resname+'_':3s} {atom['chain']}{int(atom['resid']):4d}    "
+                           f"{resname:3s} {atom['chain']}{int(atom['resid']):4d}    "
                            f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
                            f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
             
@@ -268,7 +268,7 @@ def at2hyres(pdb_in, pdb_out):
                 if resname not in ['AMN', 'CBX'] and atom['name'] in bb_atoms_2:
                     atom_serial += 1
                     f.write(f"{atom['record']:4s}  {atom_serial:5d} {atom['name']:2s}   "
-                           f"{resname+'_':3s} {atom['chain']}{int(atom['resid']):4d}    "
+                           f"{resname:3s} {atom['chain']}{int(atom['resid']):4d}    "
                            f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
                            f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
         
@@ -448,7 +448,8 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
             gen.read_coords(segid=segid, filename=tmp_cg_pdb)
         elif mol_type == 'R':
             at2icon(tmp_pdb, tmp_cg_pdb)
-            gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False, auto_dihedrals=False)
+            gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, 
+                          auto_angles=False, auto_dihedrals=False)
             gen.read_coords(segid=segid, filename=tmp_cg_pdb)
         else:
             raise ValueError(f"Unsupported molecule type: {mol_type}")
