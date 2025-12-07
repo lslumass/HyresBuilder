@@ -1,4 +1,3 @@
-import MDAnalysis as mda
 from psfgen import PsfGen
 import numpy as np
 import os
@@ -6,450 +5,492 @@ import warnings
 from .utils import load_ff
 
 
-def assign_segid(pdb_in, pdb_out):
-   # assign the segid as P001, P002, ..., R001, R002,..., D001, D002, D003,... if not exist
-   ## check if segid exist
-   u0 = mda.Universe(pdb_in)
-   segids = u0.atoms.segids
-   chainids = u0.atoms.chainIDs
-   is_mirror_of_chain = np.array_equal(segids, chainids)
-   is_empty = np.all(segids == '') or len(segids) == 0
+def split_chains(pdb):
+    """Split PDB file into separate chains and identify their types."""
+    aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
+           "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
+    rnas = ["ADE", "GUA", "CYT", "URA"]
+    dnas = ["DAD", "DGU", "DCY", "DTH"]
+    counts = {'P': 0, 'R': 0, 'D': 0}
 
-   dnas = {"DA", "DT", "DG", "DC", "DI"}
-   rnas = {"A", "U", "G", "C", "I"}
-   counts = {'protein': 0, 'rna': 0, 'dna': 0}
+    def get_type(resname):
+        if resname in aas:
+            return 'P'
+        elif resname in rnas:
+            return 'R'
+        elif resname in dnas:
+            return 'D'
+        return None
 
-   if is_empty:
-      raise ValueError("No chainID or segID detected!")
-   elif is_mirror_of_chain:
-      chains = u0.atoms.split('segment')
-      for chain in chains:
-         resname = chain.residues[1]     # get the second residue name
-         if chain.select_atoms("protein").n_atoms > 0:
-            segname = f"P{counts['protein']:03d}"
-            counts['protein'] += 1
-         elif resname in rnas:
-            segname = f"R{counts['rna']:03d}"
-            counts['rna'] += 1
-         elif resname in dnas:
-            segname = f"D{counts['dna']:03d}"
-            counts['dna'] += 1
-         else:
-            segname = "UNK"
-         chain.segments.segids = segname
-      u0.atoms.write(pdb_out)
-      result = f"{pdb_out}"
-   else:
-      result = f"{pdb_in}"
-   return result
+    current_chain = None
+    chain_atoms = []
+    chains = []
+    types = []
+    segids = []
+    
+    with open(pdb, 'r') as f:
+        for line in f:
+            if line.startswith('ATOM'):
+                chain_id = line[21]
+                resname = line[17:20].strip()
+                
+                if chain_id != current_chain:
+                    if chain_atoms:
+                        chains.append(chain_atoms)
+                    current_chain = chain_id
+                    mol_type = get_type(resname)
+                    if mol_type is None:
+                        raise ValueError(f'Unknown residue type: {resname}')
+                    types.append(mol_type)
+                    segid = f"{mol_type}{counts[mol_type]:03d}"
+                    counts[mol_type] += 1
+                    segids.append(segid)
+                    chain_atoms = [line]
+                else:
+                    chain_atoms.append(line)
+        
+        if chain_atoms:
+            chains.append(chain_atoms)
+
+    # Save each chain to temporary file
+    for i, chain in enumerate(chains):
+        with open(f"aa2cgtmp_{i}_aa.pdb", 'w') as f:
+            for line in chain:
+                f.write(line)
+            f.write('END\n')
+    
+    return types, segids
+
 
 def set_terminus(gen, segid, terminal):
-    # re-set the charge status of terminus
-    if segid.startswith("P"):
-        nter, cter = gen.get_resids(segid)[0], gen.get_resids(segid)[-1]
-        if terminal == 'charged':
-            gen.set_charge(segid, nter, "N", 1.00)
-            gen.set_charge(segid, cter, "O", -1.00)
-        elif terminal == 'NT':
-            gen.set_charge(segid, nter, "N", 1.00)
-        elif terminal == 'CT':
-            gen.set_charge(segid, cter, "O", -1.00)
-        elif terminal == 'positive':
-            gen.set_charge(segid, nter, "N", -1.00)
-            gen.set_charge(segid, cter, "O", -1.00)
-        else:
-            raise ValueError("Only 'neutral', 'charged', 'NT', and 'CT' charge status are supported.")
-            
+    """Set the charge status of protein terminus."""
+    if not segid.startswith("P"):
+        return
+        
+    resids = gen.get_resids(segid)
+    nter, cter = resids[0], resids[-1]
+    
+    if terminal == 'charged':
+        gen.set_charge(segid, nter, "N", 1.00)
+        gen.set_charge(segid, cter, "O", -1.00)
+    elif terminal == 'NT':
+        gen.set_charge(segid, nter, "N", 1.00)
+    elif terminal == 'CT':
+        gen.set_charge(segid, cter, "O", -1.00)
+    elif terminal == 'neutral':
+        pass
+    else:
+        raise ValueError("Only 'neutral', 'charged', 'NT', and 'CT' are supported.")
+
+
 def at2hyres(pdb_in, pdb_out):
-    '''
-    at2hyres: convert all-atom protein to hyres cg pdb
-    pdb_in: input all-atom pdb file
-    pdb_out: output hyres cg pdb file
-    '''
-    # read input pdb file
-    data, tmp = {}, {}
-    natom, nres, pre, iatom = 0, 1, 1, 0
-    with open(pdb_in, 'r') as f1:
-        for l in f1:
-            if l.startswith("REMARK"):
-               pass
-            elif l.startswith("ATOM"):
-                 natom=natom+1
-                 if l[22:26].strip() == str(pre):
-                    iatom=iatom+1
-                    tmp[iatom]=[l[:4].strip(), l[4:11].strip(), l[11:16].strip(), l[17:20].strip(), l[20:22].strip(), l[22:26].strip(), l[30:38].strip(), l[38:46].strip(), l[46:54].strip(), l[54:60].strip(), l[60:66].strip(), l[66:77].strip()]
-                 elif l[22:26].strip() != str(pre):
-                    data[nres]=tmp
-                    nres=nres+1
-                    pre=l[22:26].strip()
-                    iatom=1
-                    tmp={}
-                    tmp[iatom]=[l[:4].strip(), l[4:11].strip(), l[11:16].strip(), l[17:20].strip(), l[20:22].strip(), l[22:26].strip(), l[30:38].strip(), l[38:46].strip(), l[46:54].strip(), l[54:60].strip(), l[60:66].strip(), l[66:77].strip()]
-
-            else:
-               pass
-            data[nres]=tmp
-    print("There are",natom,"atoms /",nres,"residues")
-
-    # rename HSD, HSE, HSP as HIS (HYRES ONLY RECOGNIZES NEUTRAL HIS)
-    for i in range(1,nres+1):
-       if data[i][1][3] in ['HSD', 'HSE', 'HSP']:
-          for j in range(1, len(data[i])+1):
-             data[i][j][3] = 'HIS'
-
-    # mapping rules
-    reslist=['amn','cbx','gly', 'ala', 'val', 'leu', 'ile', 'met', 'asn', 'asp', 'gln', 'glu', 'cys', 'ser', 'thr', 'pro', 'lys', 'arg', 'his', 'phe', 'tyr', 'trp']
-    single=['ala', 'val', 'leu', 'ile', 'met', 'asn', 'asp', 'gln', 'glu', 'cys', 'ser', 'thr', 'pro']
-    def maprule(resname):
-        nsc, sc1, sc2, sc3, sc4, sc5, bb, nter, cter = 0, [], [], [], [], [], [], [], []
-        if resname in ['amn', 'cbx']:
-           nter=['CAY', 'HY1', 'HY2', 'HY3', 'CY', 'OY']
-           cter=['NT', 'HNT', 'CAT', 'HT1', 'HT2', 'HT3']
-        if resname in reslist and resname not in ['pro', 'gly', 'amn', 'cbx']:
-           bb=['CA', 'HA', 'C', 'O', 'N', 'HN']
-        elif resname == 'gly':
-           bb=['CA', 'HA1', 'HA2', 'C', 'O', 'N', 'HN']
-        elif resname == 'pro':
-           bb=['CA', 'HA', 'C', 'O', 'N']
-        if resname == 'lys':
-           nsc=2
-           sc1=['CB', 'HB1', 'HB2', 'CG', 'HG1', 'HG2', 'CD', 'HD1', 'HD2']
-           sc2=['CE', 'HE1', 'HE2', 'NZ', 'HZ1', 'HZ2', 'HZ3']
-        elif resname == 'arg':
-           nsc=2
-           sc1=['CB', 'HB1', 'HB2', 'CG', 'HG1', 'HG2', 'CD', 'HD1', 'HD2']
-           sc2=['NE', 'HE', 'CZ', 'NH1', 'HH11', 'HH12', 'NH2', 'HH21', 'HH22']
-        elif resname == 'his':
-           nsc=3
-           sc1=['CB', 'HB1', 'HB2', 'CG']
-           sc2=['CD2', 'HD2', 'NE2']
-           sc3=['ND1', 'HD1', 'CE1', 'HE1']
-        elif resname == 'phe':
-           nsc=3
-           sc1=['CB', 'HB1', 'HB2', 'CG', 'CD1', 'HD1']
-           sc2=['CD2', 'HD2', 'CE2', 'HE2']
-           sc3=['CE1', 'HE1', 'CZ', 'HZ']
-        elif resname == 'tyr':
-           nsc=3
-           sc1=['CB', 'HB1', 'HB2', 'CG', 'CD1', 'HD1']
-           sc2=['CD2', 'HD2', 'CE2', 'HE2']
-           sc3=['CE1', 'HE1', 'CZ', 'OH', 'HH']
-        elif resname == 'trp':
-           nsc=5
-           sc1=['CB', 'HB1', 'HB2', 'CG']
-           sc2=['CD1', 'HD1', 'NE1', 'HE1']
-           sc3=['CD2', 'CE2']
-           sc4=['CZ2', 'HZ2', 'CH2', 'HH2']
-           sc5=['CE3', 'HE3', 'CZ3', 'HZ3']
-        elif resname in single:
-           nsc=1
-        elif resname in ['gly', 'amn', 'cbx']:
-           nsc=0
-        return nsc,bb,nter,cter,sc1,sc2,sc3,sc4,sc5
-
-    # output in pdb-format
-    with open(pdb_out, 'w') as f2:
-        def printcg(atom):
-            f2.write("%4s  %5d %2s   %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s\n" % (atom[0],int(atom[1]),atom[2],atom[3][:3],atom[4], int(atom[5]),float(atom[6]),float(atom[7]),float(atom[8]),float(atom[9]),float(atom[10]), atom[11]))
-
-        # convert at to cg
-        bbcg1=['CA', 'N', 'HN', 'HT1', 'H']        # should be modified further
-        bbcg2=['C', 'O']
-        bbcg3=['C', 'OT1']
-        ntercg=['CAY', 'CY', 'OY']
-        ctercg=['NT', 'HNT', 'CAT']
-        inx=0
-        for ires in range(1,nres+1,1):   # loop over all residues
-            iresname=data[ires][1][3].lower()  # residue name in lowercase
-            iresatnum=len(data[ires].keys())   # number of atoms in the residue
-            if iresname in reslist:
-               # mapping rules
-               (nsc,bb,nter,cter,sc1,sc2,sc3,sc4,sc5)=maprule(str(iresname))
-               if iresname in single:
-                  sc1=[item[2] for item in data[ires].values() if item[2] not in bb if item[2] not in nter if item[2] not in cter]
-               # initializing
-               coor={}
-               num={}
-               for i in range(1,6,1):
-                   coor[i]=[0,0,0]
-                   num[i]=0
-               # compute com for each sc bead
-               for j in range(1,iresatnum+1,1): # loop over all atoms in the residue
-                   if data[ires][j][2] in ntercg:
-                       inx += 1
-                       data[ires][j][1]=inx
-                       nt = data[ires][j]
-                       if data[ires][j][2] == 'CAY':
-                          nt[2]='CL'
-                       elif data[ires][j][2] == 'CY':
-                          nt[2]='C'
-                       elif data[ires][j][2] == 'OY':
-                          nt[2]='O'
-                       printcg(nt)
-                   elif data[ires][j][2] in ctercg:
-                       inx += 1
-                       data[ires][j][1]=inx
-                       ct = data[ires][j]
-                       if data[ires][j][2] == 'NT':
-                          ct[2]='N'
-                       elif data[ires][j][2] == 'HNT':
-                          ct[2]='H'
-                       elif data[ires][j][2] == 'CAT':
-                          ct[2]='CA'
-                       printcg(ct)
-                   elif data[ires][j][2] in bbcg1:
-                      inx=inx+1
-                      if data[ires][j][2] in ['HN', 'HT1']:
-                         data[ires][j][2]='H'
-                      data[ires][j][1]=inx
-                      data[ires][j][3]=data[ires][j][3]+'_'
-                      printcg(data[ires][j])
-                   elif data[ires][j][2] in bbcg3:
-                      inx=inx+1
-                      if data[ires][j][2] in ['OT1']:
-                         data[ires][j][2]='O'
-                      data[ires][j][1]=inx
-                      data[ires][j][3]=data[ires][j][3]+'_'
-                      printcg(data[ires][j])
-                   elif data[ires][j][2] in sc1:
-                      num[1]=num[1]+1
-                      coor[1][0]=coor[1][0]+float(data[ires][j][6]) # x
-                      coor[1][1]=coor[1][1]+float(data[ires][j][7]) # y
-                      coor[1][2]=coor[1][2]+float(data[ires][j][8]) # z
-                   elif data[ires][j][2] in sc2:
-                      num[2]=num[2]+1
-                      coor[2][0]=coor[2][0]+float(data[ires][j][6]) # x
-                      coor[2][1]=coor[2][1]+float(data[ires][j][7]) # y
-                      coor[2][2]=coor[2][2]+float(data[ires][j][8]) # z
-                   elif data[ires][j][2] in sc3:
-                      num[3]=num[3]+1
-                      coor[3][0]=coor[3][0]+float(data[ires][j][6]) # x
-                      coor[3][1]=coor[3][1]+float(data[ires][j][7]) # y
-                      coor[3][2]=coor[3][2]+float(data[ires][j][8]) # z
-                   elif data[ires][j][2] in sc4:
-                      num[4]=num[4]+1
-                      coor[4][0]=coor[4][0]+float(data[ires][j][6]) # x
-                      coor[4][1]=coor[4][1]+float(data[ires][j][7]) # y
-                      coor[4][2]=coor[4][2]+float(data[ires][j][8]) # z
-                   elif data[ires][j][2] in sc5:
-                      num[5]=num[5]+1
-                      coor[5][0]=coor[5][0]+float(data[ires][j][6]) # x
-                      coor[5][1]=coor[5][1]+float(data[ires][j][7]) # y
-                      coor[5][2]=coor[5][2]+float(data[ires][j][8]) # z
-               for i in range(1,nsc+1,1):
-                   inx=inx+1
-                   if i == 1:
-                      name='CB'
-                   elif i == 2:
-                      name='CC'
-                   elif i == 3:
-                      name='CD'
-                   elif i == 4:
-                      name='CE'
-                   elif i == 5:
-                      name='CF'
-                   coor[i][0]=coor[i][0]/num[i]
-                   coor[i][1]=coor[i][1]/num[i]
-                   coor[i][2]=coor[i][2]/num[i]
-                   tmp=[data[ires][1][0],inx,name,data[ires][1][3], data[ires][1][4], data[ires][1][5],coor[i][0],coor[i][1],coor[i][2],data[ires][1][9],data[ires][1][10],data[ires][1][11],]
-                   printcg(tmp)
-               # this is to make sure cg atoms are in correct order
-               for j in range(1,iresatnum+1,1): # loop over all atoms in the residue
-                   if data[ires][j][3] not in ['AMN', 'CBX'] and data[ires][j][2] in bbcg2:
-                      inx=inx+1
-                      data[ires][j][1]=inx
-                      data[ires][j][3]=data[ires][j][3]+'_'
-                      printcg(data[ires][j])
-            else:
-               raise ValueError(f"{iresname} is not recognized")
-
-        f2.write("%3s\n" % ("END"))
-    print("At2Hyres conversion done, output written to", pdb_out)
-
-def at2icon(pdb_in, pdb_out):
-   '''
-    at2icon: convert all-atom RNA to iConRNA pdb
-    pdb_in: input all-atom pdb file
-    pdb_out: output iConRNA pdb file
-   '''
-   # output in pdb-format
-   def printcg(atom, f):
-       f.write("%4s  %5d %2s   %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s\n" % (atom[0],int(atom[1]),atom[2],atom[3][:3],atom[4], int(atom[5]),float(atom[6]),float(atom[7]),float(atom[8]),float(atom[9]),float(atom[10]), atom[11]))
-   
-   def aa2cg(sel, resid, segid, cg_bead):
-       atom_grp = u.select_atoms(sel)
-       com = atom_grp.center_of_mass()
-       atom = ['ATOM', idx, cg_bead, res.resname, 'X', resid, com[0], com[1], com[2], 1.00, 0.00, segid]
-       printcg(atom, f)
-   
-   u = mda.Universe(pdb_in)
-   idx = 1
-   with open(pdb_out, 'w') as f:
-       for segment in u.segments:
-           segid = segment.segid
-           for res in segment.residues:
-               resname = res.resname
-               resid = res.resid
-               sel = f"(name P O1P O2P O5' and resid {resid} and segid {segid}) or (name O3' and resid {resid-1} and segid {segid})"
-               aa2cg(sel, resid, segid, 'P')
-               idx += 1
-               sel = f"name C4' and resid {resid} and segid {segid}"
-               aa2cg(sel, resid, segid, 'C1')
-               idx += 1
-               sel = f"name C1' and resid {resid} and segid {segid}"
-               aa2cg(sel, resid, segid, 'C2')
-               idx += 1
-               if resname == 'ADE':
-                   sel = f"name N9 C4 and resid {resid} and segid {segid}"
-                   aa2cg(sel, resid, segid, 'NA')
-                   idx += 1
-                   sel = f"name C8 H8 N7 C5 and resid {resid} and segid {segid}"
-                   aa2cg(sel, resid, segid, 'NB')
-                   idx += 1
-                   sel = f"name C6 N1 N6 H61 H62 and resid {resid} and segid {segid}"
-                   aa2cg(sel, resid, segid, 'NC')
-                   idx += 1
-                   sel = f"name C2 H2 N3 and resid {resid} and segid {segid}"
-                   aa2cg(sel, resid, segid, 'ND')
-                   idx += 1
-               elif resname == 'GUA':
-                   sel = f"name N9 C4 and resid {resid} and segid {segid}"
-                   aa2cg(sel, resid, segid, 'NA')
-                   idx += 1
-                   sel = f"name C8 H8 N7 C5 and resid {resid} and segid {segid}"
-                   aa2cg(sel, resid, segid, 'NB')
-                   idx += 1
-                   sel = f"name C6 N1 N6 H1 O6 and resid {resid} and segid {segid}"
-                   aa2cg(sel, resid, segid, 'NC')
-                   idx += 1
-                   sel = f"name C2 N2 H21 H22 N3 and resid {resid} and segid {segid}"
-                   aa2cg(sel, resid, segid, 'ND')
-                   idx += 1
-               elif resname == 'CYT':
-                   sel = f"name N1 C5 H5 C6 H6 and resid {resid} and segid {segid}"
-                   aa2cg(sel, resid, segid, 'NA')
-                   idx += 1
-                   sel = f"name C4 N4 H41 H42 N3 and resid {resid} and segid {segid}"
-                   aa2cg(sel, resid, segid, 'NB')
-                   idx += 1
-                   sel = f"name C2 O2 and resid {resid} and segid {segid}"
-                   aa2cg(sel, resid, segid, 'NC')
-                   idx += 1
-               elif resname == 'URA':
-                   sel = f"name N1 C5 H5 C6 H6 and resid {resid} and segid {segid}"
-                   aa2cg(sel, resid, segid, 'NA')
-                   idx += 1
-                   sel = f"name C4 O4 N3 H3 and resid {resid} and segid {segid}"
-                   aa2cg(sel, resid, segid, 'NB')
-                   idx += 1
-                   sel = f"name C2 O2 and resid {resid} and segid {segid}"
-                   aa2cg(sel, resid, segid, 'NC')
-                   idx += 1
-       print('END', file=f)
-   print('At2iCon conversion done, output written to', pdb_out)
-
-def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
-   '''
-    at2cg: convert all-atom pdb to cg pdb, either hyres for protein or iConRNA for RNA
-    in the input pdb, protein segid should start with "P", RNA segid should start with "R"
+    """
+    Convert all-atom protein to HyRes CG PDB.
     
     Parameters:
     -----------
-    pdb_in: str
-        Input all-atom pdb file
-    pdb_out: str
-        Output cg pdb file
-    terminal: str
-        Charge status of protein terminus: 'neutral', 'charged', 'NT', 'CT'. Default is 'neutral'
-    cleanup: bool
-        Whether to clean up temporary files. Default is True
+    pdb_in : str
+        Input all-atom PDB file
+    pdb_out : str
+        Output HyRes CG PDB file
+    """
+    # Parse PDB file into residues
+    residues = {}
+    current_resid = None
+    atom_count = 0
+    
+    with open(pdb_in, 'r') as f:
+        for line in f:
+            if not line.startswith("ATOM"):
+                continue
+                
+            atom_count += 1
+            resid = int(line[22:26].strip())
+            
+            if resid not in residues:
+                residues[resid] = {}
+            
+            atom_idx = len(residues[resid]) + 1
+            residues[resid][atom_idx] = {
+                'record': line[:4].strip(),
+                'serial': line[4:11].strip(),
+                'name': line[12:16].strip(),
+                'resname': line[17:20].strip(),
+                'chain': line[21],
+                'resid': line[22:26].strip(),
+                'x': float(line[30:38].strip()),
+                'y': float(line[38:46].strip()),
+                'z': float(line[46:54].strip()),
+                'occ': float(line[54:60].strip()) if line[54:60].strip() else 1.00,
+                'bfac': float(line[60:66].strip()) if line[60:66].strip() else 0.00,
+                'segid': line[72:76].strip() if len(line) > 72 else ''
+            }
 
+    num_residues = len(residues)
+    print(f"Processing {atom_count} atoms / {num_residues} residues")
+
+    # Rename histidine variants to HIS
+    for resid in residues:
+        first_atom = residues[resid][1]
+        if first_atom['resname'] in ['HSD', 'HSE', 'HSP']:
+            for atom in residues[resid].values():
+                atom['resname'] = 'HIS'
+
+    # Mapping rules for residues
+    single_bead_sc = ['ALA', 'VAL', 'LEU', 'ILE', 'MET', 'ASN', 'ASP', 
+                      'GLN', 'GLU', 'CYS', 'SER', 'THR', 'PRO']
+    
+    sc_mapping = {
+        'LYS': [['CB', 'HB1', 'HB2', 'CG', 'HG1', 'HG2', 'CD', 'HD1', 'HD2'],
+                ['CE', 'HE1', 'HE2', 'NZ', 'HZ1', 'HZ2', 'HZ3']],
+        'ARG': [['CB', 'HB1', 'HB2', 'CG', 'HG1', 'HG2', 'CD', 'HD1', 'HD2'],
+                ['NE', 'HE', 'CZ', 'NH1', 'HH11', 'HH12', 'NH2', 'HH21', 'HH22']],
+        'HIS': [['CB', 'HB1', 'HB2', 'CG'],
+                ['CD2', 'HD2', 'NE2'],
+                ['ND1', 'HD1', 'CE1', 'HE1']],
+        'PHE': [['CB', 'HB1', 'HB2', 'CG', 'CD1', 'HD1'],
+                ['CD2', 'HD2', 'CE2', 'HE2'],
+                ['CE1', 'HE1', 'CZ', 'HZ']],
+        'TYR': [['CB', 'HB1', 'HB2', 'CG', 'CD1', 'HD1'],
+                ['CD2', 'HD2', 'CE2', 'HE2'],
+                ['CE1', 'HE1', 'CZ', 'OH', 'HH']],
+        'TRP': [['CB', 'HB1', 'HB2', 'CG'],
+                ['CD1', 'HD1', 'NE1', 'HE1'],
+                ['CD2', 'CE2'],
+                ['CZ2', 'HZ2', 'CH2', 'HH2'],
+                ['CE3', 'HE3', 'CZ3', 'HZ3']]
+    }
+    
+    bb_standard = ['CA', 'HA', 'C', 'O', 'N', 'HN']
+    bb_gly = ['CA', 'HA1', 'HA2', 'C', 'O', 'N', 'HN']
+    bb_pro = ['CA', 'HA', 'C', 'O', 'N']
+    
+    nter_atoms = ['CAY', 'CY', 'OY']
+    cter_atoms = ['NT', 'HNT', 'CAT']
+    bb_atoms_1 = ['CA', 'N', 'HN', 'HT1', 'H']
+    bb_atoms_2 = ['C', 'O']
+    bb_atoms_3 = ['C', 'OT1']
+    
+    nter_rename = {'CAY': 'CL', 'CY': 'C', 'OY': 'O'}
+    cter_rename = {'NT': 'N', 'HNT': 'H', 'CAT': 'CA'}
+    
+    # Write CG PDB
+    atom_serial = 0
+    with open(pdb_out, 'w') as f:
+        for resid in sorted(residues.keys()):
+            res = residues[resid]
+            first_atom = res[1]
+            resname = first_atom['resname']
+            
+            # Determine backbone and sidechain atoms
+            if resname == 'GLY':
+                bb_atoms = bb_gly
+            elif resname == 'PRO':
+                bb_atoms = bb_pro
+            else:
+                bb_atoms = bb_standard
+            
+            # Get sidechain beads for this residue
+            if resname in sc_mapping:
+                sc_beads = sc_mapping[resname]
+            elif resname in single_bead_sc:
+                # Collect all non-backbone atoms as single sidechain bead
+                sc_beads = [[atom['name'] for atom in res.values() 
+                            if atom['name'] not in bb_atoms 
+                            and atom['name'] not in nter_atoms 
+                            and atom['name'] not in cter_atoms]]
+            else:
+                sc_beads = []
+            
+            # Calculate sidechain bead centers
+            sc_centers = []
+            for bead_atoms in sc_beads:
+                coords = []
+                for atom in res.values():
+                    if atom['name'] in bead_atoms:
+                        coords.append([atom['x'], atom['y'], atom['z']])
+                if coords:
+                    center = np.mean(coords, axis=0)
+                    sc_centers.append(center)
+            
+            # Write N-terminal atoms
+            for atom in res.values():
+                if atom['name'] in nter_atoms:
+                    atom_serial += 1
+                    new_name = nter_rename.get(atom['name'], atom['name'])
+                    f.write(f"{atom['record']:4s}  {atom_serial:5d} {new_name:2s}   "
+                           f"{resname:3s} {atom['chain']}{int(atom['resid']):4d}    "
+                           f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
+                           f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
+            
+            # Write C-terminal atoms
+            for atom in res.values():
+                if atom['name'] in cter_atoms:
+                    atom_serial += 1
+                    new_name = cter_rename.get(atom['name'], atom['name'])
+                    f.write(f"{atom['record']:4s}  {atom_serial:5d} {new_name:2s}   "
+                           f"{resname:3s} {atom['chain']}{int(atom['resid']):4d}    "
+                           f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
+                           f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
+            
+            # Write backbone atoms (first group)
+            for atom in res.values():
+                if atom['name'] in bb_atoms_1:
+                    atom_serial += 1
+                    new_name = 'H' if atom['name'] in ['HN', 'HT1'] else atom['name']
+                    f.write(f"{atom['record']:4s}  {atom_serial:5d} {new_name:2s}   "
+                           f"{resname+'_':3s} {atom['chain']}{int(atom['resid']):4d}    "
+                           f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
+                           f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
+            
+            # Write backbone atoms (terminal group)
+            for atom in res.values():
+                if atom['name'] in bb_atoms_3:
+                    atom_serial += 1
+                    new_name = 'O' if atom['name'] == 'OT1' else atom['name']
+                    f.write(f"{atom['record']:4s}  {atom_serial:5d} {new_name:2s}   "
+                           f"{resname+'_':3s} {atom['chain']}{int(atom['resid']):4d}    "
+                           f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
+                           f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
+            
+            # Write sidechain beads
+            bead_names = ['CB', 'CC', 'CD', 'CE', 'CF']
+            for i, center in enumerate(sc_centers):
+                atom_serial += 1
+                f.write(f"{first_atom['record']:4s}  {atom_serial:5d} {bead_names[i]:2s}   "
+                       f"{resname:3s} {first_atom['chain']}{int(first_atom['resid']):4d}    "
+                       f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
+                       f"{first_atom['occ']:6.2f}{first_atom['bfac']:6.2f}      "
+                       f"{first_atom['segid']:4s}\n")
+            
+            # Write backbone C and O atoms (second group)
+            for atom in res.values():
+                if resname not in ['AMN', 'CBX'] and atom['name'] in bb_atoms_2:
+                    atom_serial += 1
+                    f.write(f"{atom['record']:4s}  {atom_serial:5d} {atom['name']:2s}   "
+                           f"{resname+'_':3s} {atom['chain']}{int(atom['resid']):4d}    "
+                           f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
+                           f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
+        
+        f.write("END\n")
+    
+    print(f"At2Hyres conversion done, output written to {pdb_out}")
+
+
+def at2icon(pdb_in, pdb_out):
+    """
+    Convert all-atom RNA to iConRNA PDB.
+    
+    Parameters:
+    -----------
+    pdb_in : str
+        Input all-atom PDB file
+    pdb_out : str
+        Output iConRNA PDB file
+    """
+    # Parse PDB file
+    atoms = []
+    with open(pdb_in, 'r') as f:
+        for line in f:
+            if line.startswith('ATOM'):
+                atoms.append({
+                    'name': line[12:16].strip(),
+                    'resname': line[17:20].strip(),
+                    'chain': line[21],
+                    'resid': int(line[22:26].strip()),
+                    'x': float(line[30:38].strip()),
+                    'y': float(line[38:46].strip()),
+                    'z': float(line[46:54].strip()),
+                    'segid': line[72:76].strip() if len(line) > 72 else ''
+                })
+    
+    # Group by segment and residue
+    segments = {}
+    for atom in atoms:
+        segid = atom['segid']
+        resid = atom['resid']
+        if segid not in segments:
+            segments[segid] = {}
+        if resid not in segments[segid]:
+            segments[segid][resid] = {
+                'resname': atom['resname'], 
+                'chain': atom['chain'], 
+                'atoms': []
+            }
+        segments[segid][resid]['atoms'].append(atom)
+    
+    # Base bead mappings for each nucleotide
+    base_mappings = {
+        'ADE': [
+            ('NA', ['N9', 'C4']),
+            ('NB', ['C8', 'H8', 'N7', 'C5']),
+            ('NC', ['C6', 'N1', 'N6', 'H61', 'H62']),
+            ('ND', ['C2', 'H2', 'N3'])
+        ],
+        'GUA': [
+            ('NA', ['N9', 'C4']),
+            ('NB', ['C8', 'H8', 'N7', 'C5']),
+            ('NC', ['C6', 'N1', 'H1', 'O6']),
+            ('ND', ['C2', 'N2', 'H21', 'H22', 'N3'])
+        ],
+        'CYT': [
+            ('NA', ['N1', 'C5', 'H5', 'C6', 'H6']),
+            ('NB', ['C4', 'N4', 'H41', 'H42', 'N3']),
+            ('NC', ['C2', 'O2'])
+        ],
+        'URA': [
+            ('NA', ['N1', 'C5', 'H5', 'C6', 'H6']),
+            ('NB', ['C4', 'O4', 'N3', 'H3']),
+            ('NC', ['C2', 'O2'])
+        ]
+    }
+    
+    atom_serial = 0
+    with open(pdb_out, 'w') as f:
+        for segid in sorted(segments.keys()):
+            for resid in sorted(segments[segid].keys()):
+                res_data = segments[segid][resid]
+                resname = res_data['resname']
+                chain = res_data['chain']
+                res_atoms = res_data['atoms']
+                
+                # P bead (phosphate group)
+                p_atoms = [a for a in res_atoms if a['name'] in ["P", "O1P", "O2P", "O5'"]]
+                # Add O3' from previous residue
+                if resid - 1 in segments[segid]:
+                    prev_atoms = segments[segid][resid - 1]['atoms']
+                    p_atoms.extend([a for a in prev_atoms if a['name'] == "O3'"])
+                
+                if p_atoms:
+                    coords = np.array([[a['x'], a['y'], a['z']] for a in p_atoms])
+                    center = coords.mean(axis=0)
+                    atom_serial += 1
+                    f.write(f"ATOM  {atom_serial:5d}  P   {resname:3s} {chain}{resid:4d}    "
+                           f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
+                           f"  1.00  0.00      {segid:4s}\n")
+                
+                # C1 bead (C4' sugar)
+                c1_atoms = [a for a in res_atoms if a['name'] == "C4'"]
+                if c1_atoms:
+                    coords = np.array([[a['x'], a['y'], a['z']] for a in c1_atoms])
+                    center = coords.mean(axis=0)
+                    atom_serial += 1
+                    f.write(f"ATOM  {atom_serial:5d}  C1  {resname:3s} {chain}{resid:4d}    "
+                           f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
+                           f"  1.00  0.00      {segid:4s}\n")
+                
+                # C2 bead (C1' sugar)
+                c2_atoms = [a for a in res_atoms if a['name'] == "C1'"]
+                if c2_atoms:
+                    coords = np.array([[a['x'], a['y'], a['z']] for a in c2_atoms])
+                    center = coords.mean(axis=0)
+                    atom_serial += 1
+                    f.write(f"ATOM  {atom_serial:5d}  C2  {resname:3s} {chain}{resid:4d}    "
+                           f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
+                           f"  1.00  0.00      {segid:4s}\n")
+                
+                # Base beads
+                if resname in base_mappings:
+                    for bead_name, atom_names in base_mappings[resname]:
+                        base_atoms = [a for a in res_atoms if a['name'] in atom_names]
+                        if base_atoms:
+                            coords = np.array([[a['x'], a['y'], a['z']] for a in base_atoms])
+                            center = coords.mean(axis=0)
+                            atom_serial += 1
+                            f.write(f"ATOM  {atom_serial:5d}  {bead_name:2s}  {resname:3s} "
+                                   f"{chain}{resid:4d}    "
+                                   f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
+                                   f"  1.00  0.00      {segid:4s}\n")
+        
+        f.write('END\n')
+    
+    print(f'At2iCon conversion done, output written to {pdb_out}')
+
+
+def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
+    """
+    Convert all-atom PDB to CG PDB (HyRes for protein or iConRNA for RNA).
+    
+    Parameters:
+    -----------
+    pdb_in : str
+        Input all-atom PDB file
+    pdb_out : str
+        Output CG PDB file
+    terminal : str
+        Charge status of protein terminus: 'neutral', 'charged', 'NT', 'CT'
+    cleanup : bool
+        Whether to clean up temporary files
+    
     Returns:
     --------
-    tuple: (pdb_file, psf_file) - paths to output files
-   '''
-   # set up psfgen
-   # load topology files
-   RNA_topology, _ = load_ff('RNA')
-   protein_topology, _ = load_ff('Protein')
-   gen = PsfGen()
-   gen.read_topology(RNA_topology)
-   gen.read_topology(protein_topology)
-
-   # convert pdb
-   u = mda.Universe(pdb_in)
-   segids = u.residues.segments.segids
-   segnum = len(segids)
-   if segnum == 1:
-      segid = segids[0]
-      if segid.startswith("P"):
-         at2hyres(pdb_in, pdb_out)
-         gen.add_segment(segid=segid, pdbfile=pdb_out, auto_angles=False)
-      elif segid.startswith("R"):
-         at2icon(pdb_in, pdb_out)
-         gen.add_segment(segid=segid, pdbfile=pdb_out, auto_angles=False, auto_dihedrals=False)
-      else:
-         raise ValueError("Only protein or RNA is supported.")
-   elif segnum > 1:
-      for i, segid in enumerate(segids):
-          sel = u.select_atoms(f"segid {segid}")
-          tmp_pdb = f'tmp_{segid}.pdb'
-          tmp_cg_pdb = f'tmp_cg_{segid}.pdb'
-          sel.atoms.write(tmp_pdb)
-          if segid.startswith("P"):
-              at2hyres(tmp_pdb, tmp_cg_pdb)
-              gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False)
-              gen.read_coords(segid=segid, filename=tmp_cg_pdb)
-          elif segid.startswith("R"):
-              at2icon(tmp_pdb, tmp_cg_pdb)
-              gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False, auto_dihedrals=False)
-              gen.read_coords(segid=segid, filename=tmp_cg_pdb)
-          else:
-              raise ValueError("Only protein-protein or protein-RNA complex is supported.")
-      gen.write_pdb(pdb_out)
-      print("Complex conversion done, output written to", pdb_out)
-   else:
-      raise ValueError("No segment found.")
-   
-   #re-set the charge status of terminus
-   for segid in gen.get_segids():
-       if terminal != "neutral":
-           set_terminus(gen, segid, terminal)    
-   
-   # write psf file
-   psf_file = f'{pdb_out[:-4]}.psf'
-   gen.write_psf(filename=psf_file)
-   print("PSF file written to", psf_file)
-   
-   # clean up temporary files
-   if cleanup:
-       for file in os.listdir():
-           if file.startswith("tmp_") and file.endswith(".pdb"):
-               os.remove(file)
-   
-   return pdb_out, psf_file
+    tuple : (pdb_file, psf_file)
+    """
+    # Load topology files
+    RNA_topology, _ = load_ff('RNA')
+    protein_topology, _ = load_ff('Protein')
+    
+    # Set up psfgen
+    gen = PsfGen()
+    gen.read_topology(RNA_topology)
+    gen.read_topology(protein_topology)
+    
+    # Split chains and convert
+    types, segids = split_chains(pdb_in)
+    
+    for i, (mol_type, segid) in enumerate(zip(types, segids)):
+        tmp_pdb = f"aa2cgtmp_{i}_aa.pdb"
+        tmp_cg_pdb = f"aa2cgtmp_{i}_cg.pdb"
+        
+        if mol_type == 'P':
+            at2hyres(tmp_pdb, tmp_cg_pdb)
+            gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False)
+            gen.read_coords(segid=segid, filename=tmp_cg_pdb)
+        elif mol_type == 'R':
+            at2icon(tmp_pdb, tmp_cg_pdb)
+            gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False, auto_dihedrals=False)
+            gen.read_coords(segid=segid, filename=tmp_cg_pdb)
+        else:
+            raise ValueError(f"Unsupported molecule type: {mol_type}")
+    
+    # Write PDB file
+    gen.write_pdb(pdb_out)
+    print(f"Conversion done, output written to {pdb_out}")
+    
+    # Set terminus charge status
+    for segid in gen.get_segids():
+        set_terminus(gen, segid, terminal)
+    
+    # Write PSF file
+    psf_file = f'{pdb_out[:-4]}.psf'
+    gen.write_psf(filename=psf_file)
+    print(f"PSF file written to {psf_file}")
+    
+    # Clean up temporary files
+    if cleanup:
+        for file in os.listdir():
+            if file.startswith("aa2cgtmp_") and file.endswith(".pdb"):
+                os.remove(file)
+    
+    return pdb_out, psf_file
 
 
-# Command-line interface
 def main():
-   """Command-line interface for Convert2CG."""
-   import argparse
-   
-   parser = argparse.ArgumentParser(
-       description='Convert2CG: All-atom to HyRes/iConRNA converting'
-   )
-   parser.add_argument('aa', help='Input pdb file')
-   parser.add_argument('cg', help='Output pdb file, will be used as psf filename')
-   parser.add_argument('--terminal', '-t', type=str, default='neutral', 
-                      help='Charged status of terminus: neutral, charged, NT, and CT')
-   
-   args = parser.parse_args()
+    """Command-line interface for Convert2CG."""
+    import argparse
+    
+    parser = argparse.ArgumentParser(
+        description='Convert2CG: All-atom to HyRes/iConRNA converting'
+    )
+    parser.add_argument('aa', help='Input PDB file')
+    parser.add_argument('cg', help='Output PDB file')
+    parser.add_argument('--terminal', '-t', type=str, default='neutral', 
+                       help='Charge status of terminus: neutral, charged, NT, CT')
+    
+    args = parser.parse_args()
+    warnings.filterwarnings('ignore', category=UserWarning)
+    at2cg(args.aa, args.cg, terminal=args.terminal)
 
-   warnings.filterwarnings('ignore', category=UserWarning, module='MDAnalysis')
-   # segid check and set
-   fixed_pdb = assign_segid(pdb_in=args.aa, pdb_out=f"{args.aa[:-4]}_segid_fix.pdb")
-   # convert
-   at2cg(fixed_pdb, args.cg, terminal=args.terminal)
 
 if __name__ == '__main__':
     main()

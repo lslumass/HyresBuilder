@@ -1,9 +1,6 @@
 from psfgen import PsfGen
 from HyresBuilder import utils
 import argparse, os, glob
-import numpy as np
-import MDAnalysis as mda
-from itertools import groupby
 
 
 def split_chains(pdb):
