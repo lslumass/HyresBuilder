@@ -498,10 +498,9 @@ Example:
             tmp_file = f"{args.pdb_id}_fill_addH.pdb"
             fixer = pdbfixer.PDBFixer(filename='fill.B99990001.pdb')
             fixer.addMissingHydrogens(7.0)
-            PDBFile.writeFile(fixer.topology, fixer.positions, open(tmp_file, 'w'))
+            PDBFile.writeFile(fixer.topology, fixer.positions, open(tmp_file, 'w'), keepIds=True)
             ## convert2cg
-            pdb_fixed = Convert2CG.assign_segid(pdb_in=tmp_file, pdb_out=f"{args.pdb_id}_all_segid.pdb")
-            hyres_pdb, hyres_psf = Convert2CG.at2cg(pdb_in=pdb_fixed, pdb_out=args.output, terminal=args.terminal, cleanup=True)
+            Convert2CG.at2cg(pdb_in=tmp_file, pdb_out=args.output, terminal=args.terminal, cleanup=True)
             ## add restraint to run script
             prepare_run_script(f'{args.work_dir}/run_latest.py', f'{args.work_dir}/run_latest_restraint.py', f"{args.work_dir}/alignment.ali")
         sys.exit(0)
