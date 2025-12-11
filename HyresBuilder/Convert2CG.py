@@ -115,10 +115,10 @@ def at2hyres(pdb_in, pdb_out):
                 name = 'H'
             elif name in ['O', 'OT1']:
                 name = 'O'
-            #elif name in ['OT2', 'OXT']:
-            #    continue
-            #elif name.startswith('H') and name not in ['HN', 'HT1', 'H']:
-            #    continue
+            elif name in ['OT2', 'OXT']:
+                continue
+            elif name.startswith('H'):
+                continue
             
             residues[resid][atom_idx] = {
                 'record': line[:4].strip(),
@@ -135,7 +135,6 @@ def at2hyres(pdb_in, pdb_out):
                 'segid': line[72:76].strip() if len(line) > 72 else ''
             }
 
-    print(residues)
     num_residues = len(residues)
     print(f"Processing {atom_count} atoms / {num_residues} residues")
 
