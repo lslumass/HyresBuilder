@@ -111,10 +111,18 @@ def at2hyres(pdb_in, pdb_out):
                 residues[resid] = {}
             
             atom_idx = len(residues[resid]) + 1
+            name = line[12:16].strip()
+            if name in ['HN', 'HT1']:
+                name = 'H'
+            elif name == 'OT1':
+                name = 'O'
+            elif name.startswith('H'):
+                continue
+            
             residues[resid][atom_idx] = {
                 'record': line[:4].strip(),
                 'serial': line[4:11].strip(),
-                'name': line[12:16].strip(),
+                'name': name,
                 'resname': line[17:20].strip(),
                 'chain': line[21],
                 'resid': line[22:26].strip(),
@@ -161,18 +169,9 @@ def at2hyres(pdb_in, pdb_out):
                 ['CE3', 'HE3', 'CZ3', 'HZ3']]
     }
     
-    bb_standard = ['CA', 'HA', 'C', 'O', 'N', 'HN']
-    bb_gly = ['CA', 'HA1', 'HA2', 'C', 'O', 'N', 'HN']
-    bb_pro = ['CA', 'HA', 'C', 'O', 'N']
-    
-    nter_atoms = ['CAY', 'CY', 'OY']
-    cter_atoms = ['NT', 'HNT', 'CAT']
-    bb_atoms_1 = ['CA', 'N', 'HN', 'HT1', 'H']
+    bb_atoms = ['CA', 'C', 'O', 'N', 'H']
+    bb_atoms_1 = ['CA', 'N', 'H']
     bb_atoms_2 = ['C', 'O']
-    bb_atoms_3 = ['C', 'OT1']
-    
-    nter_rename = {'CAY': 'CL', 'CY': 'C', 'OY': 'O'}
-    cter_rename = {'NT': 'N', 'HNT': 'H', 'CAT': 'CA'}
     
     # Write CG PDB
     atom_serial = 0
@@ -182,23 +181,15 @@ def at2hyres(pdb_in, pdb_out):
             first_atom = res[1]
             resname = first_atom['resname']
             
-            # Determine backbone and sidechain atoms
-            if resname == 'GLY':
-                bb_atoms = bb_gly
-            elif resname == 'PRO':
-                bb_atoms = bb_pro
-            else:
-                bb_atoms = bb_standard
-            
             # Get sidechain beads for this residue
             if resname in sc_mapping:
                 sc_beads = sc_mapping[resname]
             elif resname in single_bead_sc:
                 # Collect all non-backbone atoms as single sidechain bead
-                sc_beads = [[atom['name'] for atom in res.values() 
-                            if atom['name'] not in bb_atoms 
-                            and atom['name'] not in nter_atoms 
-                            and atom['name'] not in cter_atoms]]
+                sc_beads = [[atom['name'] for atom in res.values() if atom['name'] not in bb_atoms]]
+            elif resname != 'GLY':
+                print(f"Error: Unknown residue type {resname}")
+                exit(1)
             else:
                 sc_beads = []
             
@@ -213,41 +204,10 @@ def at2hyres(pdb_in, pdb_out):
                     center = np.mean(coords, axis=0)
                     sc_centers.append(center)
             
-            # Write N-terminal atoms
-            for atom in res.values():
-                if atom['name'] in nter_atoms:
-                    atom_serial += 1
-                    new_name = nter_rename.get(atom['name'], atom['name'])
-                    f.write(f"{atom['record']:4s}  {atom_serial:5d} {new_name:2s}   "
-                           f"{resname:3s} {atom['chain']}{int(atom['resid']):4d}    "
-                           f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
-                           f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
-            
-            # Write C-terminal atoms
-            for atom in res.values():
-                if atom['name'] in cter_atoms:
-                    atom_serial += 1
-                    new_name = cter_rename.get(atom['name'], atom['name'])
-                    f.write(f"{atom['record']:4s}  {atom_serial:5d} {new_name:2s}   "
-                           f"{resname:3s} {atom['chain']}{int(atom['resid']):4d}    "
-                           f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
-                           f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
-            
             # Write backbone atoms (first group)
             for atom in res.values():
                 if atom['name'] in bb_atoms_1:
                     atom_serial += 1
-                    new_name = 'H' if atom['name'] in ['HN', 'HT1'] else atom['name']
-                    f.write(f"{atom['record']:4s}  {atom_serial:5d} {new_name:2s}   "
-                           f"{resname:3s} {atom['chain']}{int(atom['resid']):4d}    "
-                           f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
-                           f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
-            
-            # Write backbone atoms (terminal group)
-            for atom in res.values():
-                if atom['name'] in bb_atoms_3:
-                    atom_serial += 1
-                    new_name = 'O' if atom['name'] == 'OT1' else atom['name']
                     f.write(f"{atom['record']:4s}  {atom_serial:5d} {new_name:2s}   "
                            f"{resname:3s} {atom['chain']}{int(atom['resid']):4d}    "
                            f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
@@ -265,7 +225,7 @@ def at2hyres(pdb_in, pdb_out):
             
             # Write backbone C and O atoms (second group)
             for atom in res.values():
-                if resname not in ['AMN', 'CBX'] and atom['name'] in bb_atoms_2:
+                if atom['name'] in bb_atoms_2:
                     atom_serial += 1
                     f.write(f"{atom['record']:4s}  {atom_serial:5d} {atom['name']:2s}   "
                            f"{resname:3s} {atom['chain']}{int(atom['resid']):4d}    "

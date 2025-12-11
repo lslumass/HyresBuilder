@@ -13,8 +13,6 @@ import MDAnalysis as mda
 from MDAnalysis.analysis import align
 from modeller import *
 from modeller.automodel import *
-import pdbfixer
-from openmm.app import PDBFile
 from HyresBuilder import Convert2CG
 import gemmi
 import numpy as np
@@ -24,7 +22,7 @@ import logging
 import argparse
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
 # Configure logging
 logging.basicConfig(
@@ -396,6 +394,221 @@ class AmyloidFibrilBuilder:
         
         logger.info("Loop modeling completed successfully")
 
+def add_backbone_hydrogen(pdb_file, output_file):
+    """
+    Add backbone hydrogen atoms (H) to peptide chains in a PDB file.
+    Preserves all original atoms (backbone and side chains).
+    
+    Parameters:
+    -----------
+    pdb_file : str
+        Path to input PDB file
+    output_file : str
+        Path to output PDB file with added H atoms
+    """
+    
+    def parse_atom_line(line):
+        """Parse a PDB ATOM line and extract relevant information."""
+        atom_serial = int(line[6:11].strip())
+        atom_name = line[12:16].strip()
+        residue_name = line[17:20].strip()
+        chain_id = line[21]
+        residue_seq = int(line[22:26].strip())
+        x = float(line[30:38].strip())
+        y = float(line[38:46].strip())
+        z = float(line[46:54].strip())
+        occupancy = line[54:60].strip() if len(line) > 54 else "1.00"
+        temp_factor = line[60:66].strip() if len(line) > 60 else "0.00"
+        element = line[76:78].strip() if len(line) > 76 else ""
+        
+        return {
+            'serial': atom_serial,
+            'name': atom_name,
+            'residue': residue_name,
+            'chain': chain_id,
+            'res_seq': residue_seq,
+            'coords': np.array([x, y, z]),
+            'occupancy': occupancy,
+            'temp_factor': temp_factor,
+            'element': element,
+            'line': line
+        }
+    
+    def format_atom_line(serial, atom_name, residue_name, chain_id, residue_seq, 
+                        coords, occupancy="1.00", temp_factor="0.00", element="H"):
+        """Format an ATOM line in PDB format."""
+        return (f"ATOM  {serial:5d}  {atom_name:3s} {residue_name:3s} {chain_id}{residue_seq:4d}    "
+                f"{coords[0]:8.3f}{coords[1]:8.3f}{coords[2]:8.3f}{occupancy:>6s}{temp_factor:>6s}"
+                f"          {element:>2s}\n")
+    
+    def calculate_h_position(n_coord, ca_coord, c_prev_coord):
+        """
+        Calculate the position of backbone H atom bonded to N.
+        
+        The H is placed along the N-C(previous) direction with proper geometry:
+        - N-H bond length: 1.01 Å
+        - C-N-H angle: ~120° (sp2 hybridization)
+        
+        Parameters:
+        -----------
+        n_coord : np.array
+            Coordinates of N atom
+        ca_coord : np.array
+            Coordinates of CA atom (current residue)
+        c_prev_coord : np.array
+            Coordinates of C atom from previous residue (or current for first residue)
+        """
+        # Vector from C(prev) to N
+        v_cn = n_coord - c_prev_coord
+        v_cn = v_cn / np.linalg.norm(v_cn)
+        
+        # Vector from N to CA
+        v_nca = ca_coord - n_coord
+        v_nca = v_nca / np.linalg.norm(v_nca)
+        
+        # Bisector direction (for ideal geometry)
+        # The H should be opposite to the peptide bond direction
+        # but also considering the CA position
+        bisector = v_cn - v_nca
+        bisector = bisector / np.linalg.norm(bisector)
+        
+        # N-H bond length (standard: 1.01 Å)
+        nh_bond_length = 1.01
+        
+        # Position H atom
+        h_coord = n_coord + bisector * nh_bond_length
+        
+        return h_coord
+    
+    # Read PDB file and store all lines
+    with open(pdb_file, 'r') as f:
+        lines = f.readlines()
+    
+    # First pass: organize atoms by residue to find N, CA, C positions
+    # and detect chain segments
+    residue_data = []  # List of (line_idx, atom_dict) to maintain order
+    residue_lookup = {}  # For quick lookup: (chain, res_seq, segment_id) -> {atom_name: atom_dict}
+    
+    current_segment_id = 0
+    prev_chain = None
+    prev_res_seq = None
+    
+    for idx, line in enumerate(lines):
+        if not line.startswith('ATOM'):
+            continue
+        
+        atom = parse_atom_line(line)
+        chain = atom['chain']
+        res_seq = atom['res_seq']
+        
+        # Detect chain break: different chain ID OR non-consecutive residue numbers
+        is_new_segment = False
+        if prev_chain is None:
+            is_new_segment = True
+        elif chain != prev_chain:
+            is_new_segment = True
+        elif abs(res_seq - prev_res_seq) > 1:
+            is_new_segment = True
+        
+        if is_new_segment and prev_chain is not None:
+            current_segment_id += 1
+        
+        # Store atom with its original line index and segment info
+        atom['line_idx'] = idx
+        atom['segment_id'] = current_segment_id
+        residue_data.append((idx, atom))
+        
+        # Also store in lookup dictionary
+        key = (chain, res_seq, current_segment_id)
+        if key not in residue_lookup:
+            residue_lookup[key] = {}
+        residue_lookup[key][atom['name']] = atom
+        
+        prev_chain = chain
+        prev_res_seq = res_seq
+    
+    # Second pass: build output with H atoms inserted after N atoms
+    output_lines = []
+    current_serial = 1
+    
+    # Group residues by segment
+    segments = {}
+    for idx, atom in residue_data:
+        seg_id = atom['segment_id']
+        if seg_id not in segments:
+            segments[seg_id] = []
+        key = (atom['chain'], atom['res_seq'], seg_id)
+        if key not in [s['key'] for s in segments[seg_id]]:
+            segments[seg_id].append({'key': key, 'first_idx': idx})
+    
+    # Track which residues we've added H to
+    h_added = set()
+    
+    # Process all original atoms in order
+    for idx, atom in residue_data:
+        chain = atom['chain']
+        res_seq = atom['res_seq']
+        seg_id = atom['segment_id']
+        key = (chain, res_seq, seg_id)
+        
+        # Write the current atom
+        output_lines.append(format_atom_line(
+            current_serial, atom['name'], atom['residue'],
+            atom['chain'], atom['res_seq'], atom['coords'],
+            atom['occupancy'], atom['temp_factor'], 
+            atom['element'] if atom['element'] else atom['name'][0]
+        ))
+        current_serial += 1
+        
+        # If this is an N atom and we haven't added H yet for this residue
+        if atom['name'] == 'N' and key not in h_added:
+            res_atoms = residue_lookup[key]
+            
+            # Skip proline (PRO) residues - they don't have backbone H
+            if atom['residue'] == 'PRO':
+                continue
+            
+            # Check if we have necessary atoms (N, CA, C)
+            if 'CA' in res_atoms:
+                h_added.add(key)
+                
+                # Find if this is the first residue in the segment
+                segment_residues = [s['key'] for s in segments[seg_id]]
+                is_first_in_segment = (key == segment_residues[0])
+                
+                c_coord = None
+                if not is_first_in_segment:
+                    # Try to use previous residue's C atom
+                    res_index = segment_residues.index(key)
+                    if res_index > 0:
+                        prev_key = segment_residues[res_index - 1]
+                        if prev_key in residue_lookup and 'C' in residue_lookup[prev_key]:
+                            c_coord = residue_lookup[prev_key]['C']['coords']
+                
+                # If no previous C or first residue, use current residue's C
+                if c_coord is None and 'C' in res_atoms:
+                    c_coord = res_atoms['C']['coords']
+                
+                # Calculate and add H atom
+                if c_coord is not None:
+                    h_coord = calculate_h_position(
+                        atom['coords'],
+                        res_atoms['CA']['coords'],
+                        c_coord
+                    )
+                    
+                    output_lines.append(format_atom_line(
+                        current_serial, 'H', atom['residue'],
+                        atom['chain'], atom['res_seq'], h_coord,
+                        atom['occupancy'], atom['temp_factor'], 'H'
+                    ))
+                    current_serial += 1
+    
+    # Write output file
+    with open(output_file, 'w') as f:
+        f.writelines(output_lines)
+    
+    print(f"Added backbone hydrogen atoms. Output saved to {output_file}")
 
 def prepare_run_script(origin_script, new_script, alignment_file):
     new_section = f"""
@@ -438,7 +651,7 @@ Example:
     parser.add_argument('--output', '-o', type=str, default='conf.pdb', help='Output filename for final structure if hyres true')
     parser.add_argument('--terminal', '-t', type=str, default='neutral', help='If hyres true, Charged status of terminus: neutral, charged, NT, and CT')
     parser.add_argument('--work-dir', '-w', type=str, default='.', help='Working directory for input/output files (default: current directory)')
-    parser.add_argument('--hyres', action='store_true', help='Convert to HyRes model after building')
+    parser.add_argument('--nohyres', action='store_true', help='if convert to HyRes model after building, default true')
     parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose logging output')
     parser.add_argument('--version', action='version', version='AmyloidFibrilBuilder 1.0.0')
     
@@ -493,12 +706,10 @@ Example:
         logger.info("=" * 70)
         
         # Convert to HyRes model
-        if args.hyres:
-            ## add Hydrogen using pdbfixer
+        if not args.nohyres:
+            ## add backbone hydrogen
             tmp_file = f"{args.pdb_id}_fill_addH.pdb"
-            fixer = pdbfixer.PDBFixer(filename='fill.B99990001.pdb')
-            fixer.addMissingHydrogens(7.0)
-            PDBFile.writeFile(fixer.topology, fixer.positions, open(tmp_file, 'w'), keepIds=True)
+            add_backbone_hydrogen('fill.B99990001.pdb', tmp_file)
             ## convert2cg
             Convert2CG.at2cg(pdb_in=tmp_file, pdb_out=args.output, terminal=args.terminal, cleanup=True)
             ## add restraint to run script
