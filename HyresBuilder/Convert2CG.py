@@ -96,7 +96,6 @@ def at2hyres(pdb_in, pdb_out):
     """
     # Parse PDB file into residues
     residues = {}
-    current_resid = None
     atom_count = 0
     
     with open(pdb_in, 'r') as f:
@@ -116,6 +115,8 @@ def at2hyres(pdb_in, pdb_out):
                 name = 'H'
             elif name in ['O', 'OT1']:
                 name = 'O'
+            elif name in ['OT2']:
+                continue
             elif name.startswith('H') and name not in ['HN', 'HT1', 'H']:
                 continue
             
@@ -134,6 +135,7 @@ def at2hyres(pdb_in, pdb_out):
                 'segid': line[72:76].strip() if len(line) > 72 else ''
             }
 
+    print(residues)
     num_residues = len(residues)
     print(f"Processing {atom_count} atoms / {num_residues} residues")
 
@@ -149,24 +151,12 @@ def at2hyres(pdb_in, pdb_out):
                       'GLN', 'GLU', 'CYS', 'SER', 'THR', 'PRO']
     
     sc_mapping = {
-        'LYS': [['CB', 'HB1', 'HB2', 'CG', 'HG1', 'HG2', 'CD', 'HD1', 'HD2'],
-                ['CE', 'HE1', 'HE2', 'NZ', 'HZ1', 'HZ2', 'HZ3']],
-        'ARG': [['CB', 'HB1', 'HB2', 'CG', 'HG1', 'HG2', 'CD', 'HD1', 'HD2'],
-                ['NE', 'HE', 'CZ', 'NH1', 'HH11', 'HH12', 'NH2', 'HH21', 'HH22']],
-        'HIS': [['CB', 'HB1', 'HB2', 'CG'],
-                ['CD2', 'HD2', 'NE2'],
-                ['ND1', 'HD1', 'CE1', 'HE1']],
-        'PHE': [['CB', 'HB1', 'HB2', 'CG', 'CD1', 'HD1'],
-                ['CD2', 'HD2', 'CE2', 'HE2'],
-                ['CE1', 'HE1', 'CZ', 'HZ']],
-        'TYR': [['CB', 'HB1', 'HB2', 'CG', 'CD1', 'HD1'],
-                ['CD2', 'HD2', 'CE2', 'HE2'],
-                ['CE1', 'HE1', 'CZ', 'OH', 'HH']],
-        'TRP': [['CB', 'HB1', 'HB2', 'CG'],
-                ['CD1', 'HD1', 'NE1', 'HE1'],
-                ['CD2', 'CE2'],
-                ['CZ2', 'HZ2', 'CH2', 'HH2'],
-                ['CE3', 'HE3', 'CZ3', 'HZ3']]
+        'LYS': [['CB', 'CG', 'CD'], ['CE', 'NZ']],
+        'ARG': [['CB', 'CG', 'CD'], ['NE', 'CZ', 'NH1', 'NH2']],
+        'HIS': [['CB', 'CG'], ['CD2', 'NE2'], ['ND1', 'CE1']],
+        'PHE': [['CB', 'CG', 'CD1'], ['CD2', 'CE2'], ['CE1', 'CZ']],
+        'TYR': [['CB', 'CG', 'CD1'], ['CD2', 'CE2'], ['CE1', 'CZ', 'OH']],
+        'TRP': [['CB', 'CG'], ['CD1', 'NE1'], ['CD2', 'CE2'], ['CZ2', 'CH2'], ['CE3', 'CZ3']]
     }
     
     bb_atoms = ['CA', 'C', 'O', 'N', 'H']
