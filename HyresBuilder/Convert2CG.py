@@ -112,9 +112,9 @@ def at2hyres(pdb_in, pdb_out):
             
             atom_idx = len(residues[resid]) + 1
             name = line[12:16].strip()
-            if name in ['HN', 'HT1']:
+            if name in ['HN', 'HT1', 'H']:
                 name = 'H'
-            elif name == 'OT1':
+            elif name in ['O', 'OT1']:
                 name = 'O'
             elif name.startswith('H'):
                 continue
