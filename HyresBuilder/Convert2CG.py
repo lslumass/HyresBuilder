@@ -208,7 +208,7 @@ def at2hyres(pdb_in, pdb_out):
             for atom in res.values():
                 if atom['name'] in bb_atoms_1:
                     atom_serial += 1
-                    f.write(f"{atom['record']:4s}  {atom_serial:5d} {new_name:2s}   "
+                    f.write(f"{atom['record']:4s}  {atom_serial:5d} {atom['name']:2s}   "
                            f"{resname:3s} {atom['chain']}{int(atom['resid']):4d}    "
                            f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
                            f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
