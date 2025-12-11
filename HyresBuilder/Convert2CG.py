@@ -115,10 +115,10 @@ def at2hyres(pdb_in, pdb_out):
                 name = 'H'
             elif name in ['O', 'OT1']:
                 name = 'O'
-            elif name in ['OT2']:
-                continue
-            elif name.startswith('H') and name not in ['HN', 'HT1', 'H']:
-                continue
+            #elif name in ['OT2', 'OXT']:
+            #    continue
+            #elif name.startswith('H') and name not in ['HN', 'HT1', 'H']:
+            #    continue
             
             residues[resid][atom_idx] = {
                 'record': line[:4].strip(),
