@@ -4,14 +4,12 @@ This package is built for the simulation of HyRes protein and iConRNA (iConDNA l
 1. Construct HyRes peptide structure from sequence or convert atomistic structure into HyRes model;   
 2. Construct iConRNA model from sequence or convert atomistic structure into iConRNA model;   
 3. Set up HyRes and/or iConRNA force fields;   
-4. Backmap CG structures to all-atom ones.   
-
 
 ## Dependencies:
 1. [OpenMM](https://openmm.org/)
 2. [CHARMM-GUI](https://www.charmm-gui.org/) (registration required)
-3. [psfgen-python](https://psfgen.robinbetz.com/) (install through "conda install -c conda-forge psfgen", python < 3.10)
-4. basis: numpy, numba, MDAnalysis, Biopython
+3. [psfgen-python](https://psfgen.robinbetz.com/) (install through "conda install -c conda-forge psfgen")
+4. basis: numpy, numba, MDAnalysis
 
 ## Installation: 
 1. git clone https://github.com/lslumass/HyresBuilder.git   
@@ -21,70 +19,94 @@ This package is built for the simulation of HyRes protein and iConRNA (iConDNA l
 
 ## Prepare PDB file:   
 ### A. Construct HyRes peptides structure from sequence   
-Please follow the [examples](examples) for details of the script and sequence files.   
-
-1. for a single idp:      
-`python simple_example.py tdp-43-lcd.seq tdp-43_hyres.pdb`     
-2. for a set of idps:   
-To quickly build a series of peptides, one can use:   
-`python bactch_example.py idps.seq`   
-
-### B. Convert atomistic structure into HyRes model
-Follow the detailed steps [here](./scripts/at2hyres/README.md)   
-
-### C. Construct iConRNA coil strand from sequence
-Follow the example [build_CG_RNA.py](./examples/build_CG_RNA.py)
-`python build_CG_RNA.py out.pdb sequence`
-
-### D. Convert atomistic RNA structure into iConRNA model
-Follow the detailed steps [here](./scripts/at2iCon/README.md)
-
-## Prepare PSF file:  
-[psfgen_latest.py](./scripts/psfgen_latest.py) is used to generate psf file for all kinds of scenarios.   
+1. from command line, use ```hyresbuilder```:   
 ```
-usage: psfgen_latest.py [-h] [-d MODEL] -i INPUT_PDB_FILES [INPUT_PDB_FILES ...] -o OUTPUT_PSF_FILE [-n NUM_OF_CHAINS [NUM_OF_CHAINS ...]]
-                        [-m MOLECULE_TYPE [MOLECULE_TYPE ...]] [-t {neutral,charged,NT,CT}]
+usage: hyresbuilder [-h] name sequence
 
-generate PSF for Hyres systems
+Build a peptide chain from sequence: hyresbuilder name sequence, output: name.pdb.
+
+positional arguments:
+  name        pdb file name, output will be name.pdb. default: hyres.pdb
+  sequence    Amino acid sequence (single-letter codes, e.g., ACDEFG)
+
+options:
+  -h, --help  show this help message and exit
+```
+2. from script, use module of ```HyresBuilder.build_peptide```:
+```
+from HyresBuilder import HyresBuilder
+HyresBuilder.build_peptide("name", "the sequence")
+```
+then name.pdb will be created.   
+
+### B. Construct iConRNA coil strand from sequence
+1. from comman line, use ```rnabuilder```:   
+```
+usage: rnabuilder [-h] name seq
+
+RNABuilder: build iConRNA from sequence
+
+positional arguments:
+  name        protein name, output: name.pdb
+  seq         sequence in one-letter
+
+options:
+  -h, --help  show this help message and exit
+```
+2. from script, use ```RNABuilder.build```:   
+```
+from HyresBuilder import RNABuilder
+RNABuilder.build("name", "sequence")
+```
+
+### C. Convert atomistic structure into HyRes model
+1. from command line, use ```convert2cg```:   
+```
+usage: convert2cg [-h] [--terminal TERMINAL] aa cg
+
+Convert2CG: All-atom to HyRes/iConRNA converting
+
+positional arguments:
+  aa                    Input PDB file
+  cg                    Output PDB file
 
 options:
   -h, --help            show this help message and exit
-  -d MODEL, --model MODEL
-                        simulated system: protein, RNA, or mix (default: mix)
-  -i INPUT_PDB_FILES [INPUT_PDB_FILES ...], --input_pdb_files INPUT_PDB_FILES [INPUT_PDB_FILES ...]
-                        Hyres PDB file(s), it should be the pdb of monomer (default: None)
-  -o OUTPUT_PSF_FILE, --output_psf_file OUTPUT_PSF_FILE
-                        output name/path for Hyres PSF (default: None)
-  -n NUM_OF_CHAINS [NUM_OF_CHAINS ...], --num_of_chains NUM_OF_CHAINS [NUM_OF_CHAINS ...]
-                        Number of copies for each pdb; it should have the same length as the given pdb list specified in the '-i' argument (default: [1])
-  -m MOLECULE_TYPE [MOLECULE_TYPE ...], --molecule_type MOLECULE_TYPE [MOLECULE_TYPE ...]
-                        select from 'P', 'R', 'D', 'C' for protein, RNA, DNA, complex, respectively (default: ['P'])
-  -t {neutral,charged,NT,CT}, --ter {neutral,charged,NT,CT}
-                        Terminal charged status (choose from ['neutral', 'charged', 'NT', 'CT']) (default: neutral)
+  --terminal TERMINAL, -t TERMINAL
+                        Charge status of terminus: neutral, charged, NT, CT
 ```
-**arguments:**
+**Note:** ternimal is for setting the charged status of peptides   
+
+2. from script, use the module of ```Convert2CG.at2cg```:   
 ```
--d model: use "protein" for HyRes_GPU model; "RNA" for iConRNA model; 'mix' for the latest Hyres_iCon integration
--t ter: Terminal charged status for peptides. 'neutral' for neutral; 'charged' for charged N/C-terminus; 'NT' for charged N-terminus but neutral C-terminus; 'CT' for charged C-terminus but neutral N-terminus.
+from HyresBuilder import Convert2CG
+Convert2CG.at2cg(AA_pdb, CG_pdb, terminal="neutral")
 ```
-**Here are some examples:**
-1. generate PSF for a single-chain protein
+3. psf file will be automatically created!   
+
+## Prepare PSF file:  
+**Note:** It's better to have different chain ID for adjacent chain ID in pdb file.   
+1. If converted using "Convert2CG" (Part C), psf file will be automatically created.   
+2. Create psf from CG PDB:   
+**from command line, use ```genpsf```:**     
 ```
-python psfgen_latest.py -i protein.pdb -o protein.psf
-python psfgen_latest.py -i protein.pdb -o protein.psf -ter charged
+usage: genpsf [-h] [-t {neutral,charged,NT,CT,positive}] pdb psf
+
+generate PSF for Hyres/iCon systems
+
+positional arguments:
+  pdb                   CG PDB file(s)
+  psf                   output name/path for PSF
+
+options:
+  -h, --help            show this help message and exit
+  -t {neutral,charged,NT,CT,positive}, --ter {neutral,charged,NT,CT,positive}
+                        Terminal charged status (choose from ['neutral', 'charged', 'NT', 'CT', 'positive']) (default: neutral)
 ```
-2. generate PSF for a multi-chain protein
+**from script, use ```GenPsf.genpsf```:**   
 ```
-python psfgen_latest.py -i complex.pdb -n 1 -m C -o complex.psf
-```
-3. generate PSF for LLPS simulation of one kind of protein
-```
-python psfgen_latest.py -i chainA.pdb -n 100 -o llps.psf
-```
-4. generate PSF for LLPS simulation of multiple kinds of protein
-```
-# 20 copies of chain A + 30 copies of chain B
-python psfgen_latest.py -i chainA.pdb chainB.pdb -n 20 30 -m P P -o llps.psf   
+from HyresBuilder import GenPsf
+GenPsf.genpsf("input_pdb", "output_psf", terminal="neutral")
 ```
 
 ## Run simulation:
