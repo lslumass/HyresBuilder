@@ -86,6 +86,7 @@ Convert2CG.at2cg(AA_pdb, CG_pdb, terminal="neutral")
 
 ## Prepare PSF file:  
 **Note:** It's better to have different chain ID for adjacent chain ID in pdb file.   
+```changechains``` in packmol is usefull shen preparing phase separation simulation, follow [packmol.inp](./examples/packmol.inp) for an example.   
 1. If converted using "Convert2CG" (Part C), psf file will be automatically created.   
 2. Create psf from CG PDB:   
 **from command line, use ```genpsf```:**     
