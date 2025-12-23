@@ -72,11 +72,11 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  --hydrogen            add hydrogen (HN only), default False
+  --hydrogen            add backbone amide hydrogen (HN only), default False
   --terminal TERMINAL, -t TERMINAL
                         Charge status of terminus: neutral, charged, NT, CT
 ```
-**Note:** if your pdb doesn't have amide hydrogen (H-N), use --hydrogen to add   
+**Note:** if your pdb doesn't have backbone amide hydrogen (H-N), use ```--hydrogen``` to add   
 **Note:** ternimal is for setting the charged status of peptides   
 **Warning:** make sure no duplicated chainID or segID for adjacent chains in pdb file    
 
