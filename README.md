@@ -62,7 +62,7 @@ RNABuilder.build("name", "sequence")
 ### C. Convert atomistic structure into HyRes model
 1. from command line, use ```convert2cg```:   
 ```
-usage: convert2cg [-h] [--terminal TERMINAL] aa cg
+usage: convert2cg [-h] [--hydrogen] [--terminal TERMINAL] aa cg
 
 Convert2CG: All-atom to HyRes/iConRNA converting
 
@@ -72,10 +72,13 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
+  --hydrogen            add hydrogen (HN only), default False
   --terminal TERMINAL, -t TERMINAL
                         Charge status of terminus: neutral, charged, NT, CT
 ```
+**Note:** if your pdb doesn't have amide hydrogen (H-N), use --hydrogen to add   
 **Note:** ternimal is for setting the charged status of peptides   
+**Warning:** make sure no duplicated chainID or segID for adjacent chains in pdb file    
 
 2. from script, use the module of ```Convert2CG.at2cg```:   
 ```
