@@ -1071,11 +1071,16 @@ P1S      P1Y      -0.1500      4.7761
 P1T      P1T      -0.1500      5.2462
 P1T      P1Y      -0.1500      5.0755
 
-!# Arg-polar interactions
+!# Arg/Lys-polar interactions
 QdR      P1S      -0.1500      4.8600
 QdR      P1T      -0.1500      5.1594
-QdR      P4Q      -0.1500      5.4271
-QdR      P5N      -0.1500      5.1911
+QdR      P4Q      -0.2900      5.4271
+QdR      P5N      -0.2900      5.1911
+
+QdK      P1S      -0.1500      4.8600
+QdK      P1T      -0.1500      5.1594
+QdK      P4Q      -0.1500      5.4271
+QdK      P5N      -0.1500      5.1911
 
 !# cation-pi interactions
 QdR      QdR      -1.2000      5.0726
