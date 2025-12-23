@@ -712,7 +712,7 @@ def main():
     )
     parser.add_argument('aa', help='Input PDB file')
     parser.add_argument('cg', help='Output PDB file')
-    parser.add_argument('--hydrogen', action='store_true', help='add hydrogen (HN only), default False')
+    parser.add_argument('--hydrogen', action='store_true', help='add backbone amide hydrogen (H-N only), default False')
     parser.add_argument('--terminal', '-t', type=str, default='neutral', 
                        help='Charge status of terminus: neutral, charged, NT, CT')
     
