@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "HyresBuilder"
+dynamic = ["version"]
+authors = [
+    {name = "Shanlong Li", email = "shanlongli@umass.edu"}
+]
+description = "Prepare HyRes protein and iConRNA simulation"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Intended Audience :: Science/Research",
+]
+dependencies = [
+    "psfgen",
+    "MDAnalysis>=2.0.0",
+    "numpy>=1.19.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "coverage",
+    "pytest-cov",
+    "collective.checkdocs",
+    "pygments",
+    "MDAnalysis>=2.0.0",
+    "numpy>=1.19.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/lslumass/HyresBuilder"
+Download = "https://github.com/lslumass/HyresBuilder/releases"
+
+[project.scripts]
+convert2cg = "HyresBuilder.Convert2CG:main"
+hyresbuilder = "HyresBuilder.HyresBuilder:main"
+rnabuilder = "HyresBuilder.RNABuilder:main"
+genpsf = "HyresBuilder.GenPsf:main"
+
+[tool.setuptools]
+packages = ["HyresBuilder"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+HyresBuilder = ["forcefield/*.inp"]
+
+[tool.setuptools.dynamic]
+version = {attr = "HyresBuilder.__version__"}
