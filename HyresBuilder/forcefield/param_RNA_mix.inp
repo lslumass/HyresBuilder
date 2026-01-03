@@ -137,44 +137,22 @@ MG       0.00     -0.10000      3.0000   0.00     -0.10000     3.0000 !!
 NBFIX
 !                 Emin         Rmin
 !                 (kcal/mol)   (A)
-RP     MG        -1.30000      5.0000
-RS1    RS1       -0.09922      4.5652           !necessary, do not delete
+RP        MG        -1.30000      5.0000
+RS1       RS1       -0.09922      4.5652           !necessary, do not delete
 
 ! for pairing 
-RA3    RU2       -0.12000      3.5000
-RG3    RC2       -0.12000      3.5000
-RG4    RC3       -0.10000      3.8000
-RA4    RU3       -0.10000      4.0000
+RA3       RU2       -0.12000       3.5000
+RG3       RC2       -0.12000       3.5000
+RG4       RC3       -0.10000       3.8000
+RA4       RU3       -0.10000       4.0000
 
-!! for ARG/LYS-base and PHE/TYR-base
-!RA1    QdR       -0.35000      4.5000
-!RA1    QdK       -0.25000      4.5000
-!RA1    A1F       -0.90000      4.5000
-!RA1    A1Y       -1.00000      4.5000
-!
-!RG1    QdR       -0.35000      4.5000
-!RG1    QdK       -0.25000      4.5000
-!RG1    A1F       -0.90000      4.5000
-!RG1    A1Y       -1.00000      4.5000
-!
-!RC1    QdR       -0.33000      4.5000
-!RC1    A1F       -0.90000      4.5000
-!RC1    A1Y       -0.90000      4.5000
-!
-!RU1    QdR       -0.33000      4.5000
-!RU1    A1F       -0.90000      4.5000
-!RU1    A1Y       -0.90000      4.5000
-!
-!! for protein backbone and RNA HB acceptors
-!RP       H       -0.22000      2.8000
-!RS2      H       -0.22000      2.5000
-!RA3      H       -0.22000      2.5000
-!RA4      H       -0.22000      2.5000
-!RG3      H       -0.22000      2.5000
-!RG4      H       -0.22000      2.5000
-!RC2      H       -0.22000      2.5000
-!RC3      H       -0.22000      2.5000
-!RU2      H       -0.22000      2.5000
-!RU3      H       -0.22000      2.5000
+!# ARG/LYS-base cation-pi interaction (ref: https://doi.org/10.1016/j.compbiolchem.2013.08.005)
+QdR       RA1       -0.50000       4.5000
+QdR       RG1       -0.60000       4.5000
+QdR       RU1       -0.35000       4.5000
+
+QdK       RA1       -0.40000       4.5000
+QdK       RG1       -0.35000       4.5000
+
 
 END
