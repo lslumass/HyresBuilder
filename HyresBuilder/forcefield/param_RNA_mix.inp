@@ -147,12 +147,12 @@ RG4       RC3       -0.10000       3.8000
 RA4       RU3       -0.10000       4.0000
 
 !# ARG/LYS-base cation-pi interaction (ref: https://doi.org/10.1016/j.compbiolchem.2013.08.005)
-QdR       RA1       -0.50000       4.5000
-QdR       RG1       -0.60000       4.5000
-QdR       RU1       -0.35000       4.5000
+QdR       RA1       -0.45000       4.5000
+QdR       RG1       -0.55000       4.5000
+QdR       RU1       -0.30000       4.5000
 
-QdK       RA1       -0.40000       4.5000
-QdK       RG1       -0.35000       4.5000
+QdK       RA1       -0.37000       4.5000
+QdK       RG1       -0.30000       4.5000
 
 
 END
