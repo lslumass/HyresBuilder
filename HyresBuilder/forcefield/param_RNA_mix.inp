@@ -146,13 +146,53 @@ RG3       RC2       -0.12000       3.5000
 RG4       RC3       -0.10000       3.8000
 RA4       RU3       -0.10000       4.0000
 
-!# ARG/LYS-base cation-pi interaction (ref: https://doi.org/10.1016/j.compbiolchem.2013.08.005)
-QdR       RA1       -0.45000       4.5000
-QdR       RG1       -0.55000       4.5000
-QdR       RU1       -0.30000       4.5000
+!# Aromatic-base pi-pi interactions
+A1F       RA1       -0.83000       4.5000
+A1F       RG1       -0.83000       4.5000
+A1F       RC1       -0.77000       4.5000
+A1F       RU1       -0.81000       4.5000
 
-QdK       RA1       -0.37000       4.5000
-QdK       RG1       -0.30000       4.5000
+A1Y       RA1       -0.91000       4.5000
+A1Y       RG1       -1.01000       4.5000
+A1Y       RC1       -0.69000       4.5000
+A1Y       RU1       -0.91000       4.5000
 
+A2W       RA1       -0.91000       4.5000
+A2W       RG1       -1.01000       4.5000
+A2W       RC1       -0.69000       4.5000
+A2W       RU1       -0.91000       4.5000
+
+!# ARG/LYS-base cation-pi interactions
+QdR       RA1       -0.13000       4.5000
+QdR       RG1       -0.43000       4.5000
+QdR       RC1       -0.38000       4.5000
+QdR       RU1       -0.09000       4.5000
+
+!# QdK       RA1    --- too weak, IGNORE ---
+QdK       RG1       -0.22000       4.5000
+QdK       RC1       -0.27000       4.5000
+QdK       RU1       -0.17000       4.5000
+
+!# Gln/Asn-base interactions
+P4Q       RA1       -0.11000       4.5000
+P4Q       RG1       -0.45000       4.5000
+P4Q       RC1       -0.45000       4.5000
+P4Q       RU1       -0.41000       4.5000
+
+P5N       RA1       -0.41000       4.5000
+P5N       RG1       -0.44000       4.5000
+P5N       RC1       -0.34000       4.5000
+P5N       RU1       -0.25000       4.5000
+
+!# Asp/Glu-base interactions
+QaD       RA1       -0.09000       4.5000
+QaD       RG1       -0.26000       4.5000
+QaD       RC1       -0.31000       4.5000
+QaD       RU1       -0.21000       4.5000
+
+QaE       RA1       -0.19000       4.5000
+QaE       RG1       -0.43000       4.5000
+!# QaE       RC1    --- too weak, IGNORE ---
+QaE       RU1       -0.10000       4.5000
 
 END
