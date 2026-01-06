@@ -14,7 +14,7 @@ This package is built for the simulation of HyRes protein and iConRNA (iConDNA l
 ## Installation: 
 1. git clone https://github.com/lslumass/HyresBuilder.git   
 2. cd into the download folder   
-3. python setup.py install   
+3. pip install .   
 
 
 ## Prepare PDB file:   
