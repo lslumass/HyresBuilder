@@ -1,0 +1,47 @@
+# 1     2       pmf (kcal/mol)      ##ref: https://doi.org/10.1101/2025.10.27.684844
+Arg     Tyr     -4.42
+Arg     Phe     -3.35
+Lys     Tyr     -2.04
+Lys     Phe     -2.02
+Tyr     Tyr     -3.55
+Phe     Phe     -2.98
+
+Tyr     ADE     -6.07
+Tyr     GUA     -6.75
+Tyr     CYT     -4.63
+Tyr     URA     -6.08
+
+Phe     ADE     -5.57
+Phe     GUA     -5.58
+Phe     CYT     -5.18
+Phe     URA     -5.40
+
+Lys     ADE     -0.17
+Lys     GUA     -1.50
+Lys     CYT     -1.81
+Lys     URA     -1.16
+
+Arg     ADE     -0.87
+Arg     GUA     -2.85
+Arg     CYT     -2.53
+Arg     URA     -0.63
+
+Asp     ADE     -0.63
+Asp     GUA     -1.73
+Asp     CYT     -2.06
+Asp     URA     -1.41
+
+Glu     ADE     -1.24
+Glu     GUA     -2.87
+Glu     CYT     -0.36
+Glu     URA     -0.66
+
+GLn     ADE     -0.77
+GLn     GUA     -3.00
+GLn     CYT     -3.01
+GLn     URA     -2.51
+
+Asn     ADE     -2.74
+Asn     GUA     -2.94
+Asn     CYT     -2.30
+Asn     URA     -1.67
