@@ -14,7 +14,7 @@ This package is built for the simulation of HyRes protein and iConRNA (iConDNA l
 ## Installation: 
 1. git clone https://github.com/lslumass/HyresBuilder.git   
 2. cd into the download folder   
-3. python setup.py install   
+3. pip install .   
 
 
 ## Prepare PDB file:   
@@ -117,12 +117,10 @@ GenPsf.genpsf("input_pdb", "output_psf", terminal="neutral")
 ## Run simulation:
 [run_latest.py](./scripts/run_latest.py) is used for running simulation. 
 ```
-usage: run_latest.py [-h] [-d MODEL] [-c PDB] [-p PSF] [-o OUT] [-t TEMP] [-b BOX [BOX ...]] [-s SALT] [-e ENS] [-m MG]
+usage: run_latest.py [-h] [-c PDB] [-p PSF] [-o OUT] [-t TEMP] [-b BOX [BOX ...]] [-s SALT] [-e ENS] [-m MG]
 
 options:
   -h, --help            show this help message and exit
-  -d MODEL, --model MODEL
-                        simulated system: protein, RNA, or mix
   -c PDB, --pdb PDB     pdb file, default is conf.pdb
   -p PSF, --psf PSF     psf file, default is conf.psf
   -o OUT, --out OUT     the prefix name for the output files, including xtc, pdb, log, chk
