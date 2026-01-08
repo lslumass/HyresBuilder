@@ -9,16 +9,16 @@ from .rG4sFF import *
 
 def load_ff(model):
     if model == 'Protein':
-        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_hyres_mix.inp")
-        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_hyres_mix.inp")
+        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_hyres.inp")
+        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_hyres.inp")
     elif model == 'RNA':
-        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_RNA_mix.inp")
-        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_RNA_mix.inp")
+        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_RNA.inp")
+        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_RNA.inp")
     elif model == 'DNA':
-        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_DNA_mix.inp")
-        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_DNA_mix.inp")
+        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_DNA.inp")
+        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_DNA.inp")
     elif model == 'rG4s':
-        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_RNA_mix.inp")
+        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_RNA.inp")
         path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_rG4s.inp")
     elif model == 'ATP':
         path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_ATP.inp")

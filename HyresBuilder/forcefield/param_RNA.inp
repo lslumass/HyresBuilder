@@ -1,133 +1,198 @@
 
-* parameter file for iConRNA model
-* based on Tetramer
+* parameter file for HyRes_iConRNA mix model
 *  
 * date: Jan 8, 15:12 by Shanlong Li
 * Latest: Feb 14, 2024
 
 BOND
-!
-!V(bond) = Kb(b - b0)**2
-!
-!Kb: kcal/mole/A**2
-!b0: A
-!
-!atom type Kb          b0
-!
 !bonds in backbone
-BP    BC1    15.0      3.65
-BC1   BC2   100.0      2.32
-BC2   N1C   150.0      1.93   ! C2-NA for A/G
-BC2   NCC   150.0      2.53   ! C2-NA for C/U
+RP    RS1   100.0      3.85
+RS1   RS2   100.0      2.32
+RS2   RA1   150.0      1.93   ! C2-NA for A
+RS2   RG1   150.0      1.93   ! C2-NA for G
+RS2   RC1   150.0      2.53   ! C2-NA for C
+RS2   RU1   150.0      2.53   ! C2-NA for U
 !bonds in base A
-N1C   CNC   200.0      1.63   ! A/G: NA-NB
-N1C   N2C   200.0      2.40   ! A: NA-ND
-CNC   NCN   120.0      3.06   ! A: NB-NC
-NCN   N2C   200.0      2.72   ! A: NC-ND
+RA1   RA2   200.0      1.63   ! A: NA-NB
+RA1   RA4   200.0      2.40   ! A: NA-ND
+RA2   RA3   120.0      3.06   ! A: NB-NC
+RA3   RA4   200.0      2.72   ! A: NC-ND
 !bonds in base G
-N1C   NCN   130.0      3.05   ! G: NA-ND
-CNC   OCN   130.0      3.05   ! G: NB-NC
-OCN   NCN   150.0      2.90   ! G: NC-ND
+RG1   RG2   200.0      1.63   ! G: NA-NB
+RG1   RG4   130.0      3.05   ! G: NA-ND
+RG2   RG3   130.0      3.05   ! G: NB-NC
+RG3   RG4   150.0      2.90   ! G: NC-ND
 !bonds in base C
-NCC   NCN   200.0      2.48   ! C: NA-NB
-NCN   CO    120.0      2.95   ! C: NB-NC
-NCC   CO    180.0      2.70   ! C/U: NB-NC
+RC1   RC2   200.0      2.48   ! C: NA-NB
+RC1   RC3   180.0      2.70   ! C: NA-NC
+RC2   RC3   120.0      2.95   ! C: NB-NC
 !bonds in base U
-NCC   OCN   250.0      2.49   ! U: NA-NB
-OCN   CO    150.0      2.99   ! U: NB-NC
-
-!## for polyphosphate
-BP    BP     40.6      2.70   ! P-P
+RU1   RU2   250.0      2.49   ! U: NA-NB
+RU1   RU3   180.0      2.70   ! U: NA-NC
+RU2   RU3   150.0      2.99   ! U: NB-NC
 
 
 THETAS
 !angles in backbone
-BC1   BP    BC1    2.0     105.0
-BP    BC1   BP     4.0     105.0
-BP    BC1   BC2    4.0     112.0
-BC1   BC2   BP    10.0      55.0
-BC1   BC2   N1C    4.0     136.0  ! C1-C2-NA for A/G
-BC1   BC2   NCC    5.0     115.0  ! C1-C2-NA for C/U
-BC2   N1C   CNC   25.0     127.0  ! C2-NA-NB for A/G
-BC2   N1C   N2C   25.0     117.0  ! C2-NA-ND for A
-BC2   N1C   NCN   20.0     116.0  ! C2-NA-ND for G
-BC2   NCC   CO    25.0      59.0  ! C2-NA-NC for C/U
+RS1   RP    RS1   10.0     105.0
+RP    RS1   RP    10.0      95.0
+RP    RS1   RS2    8.0     112.0
+RS1   RS2   RP    20.0      55.0
+RS1   RS2   RA1    8.0     136.0  ! C1-C2-NA for A
+RS1   RS2   RG1    8.0     136.0  ! C1-C2-NA for G
+RS1   RS2   RC1   10.0     115.0  ! C1-C2-NA for C
+RS1   RS2   RU1   10.0     115.0  ! C1-C2-NA for U
+RS2   RA1   RA2   70.0     127.0  ! C2-NA-NB for A
+RS2   RG1   RG2   70.0     127.0  ! C2-NA-NB for G
+RS2   RA1   RA4   50.0     117.0  ! C2-NA-ND for A
+RS2   RG1   RG4   40.0     116.0  ! C2-NA-ND for G
+RS2   RC1   RC3   90.0      59.0  ! C2-NA-NC for C
+RS2   RU1   RU3   90.0      59.0  ! C2-NA-NC for U
 ! internal angle for A:
-N1C   CNC   NCN   25.0      90.0  !  NA-NB-NC
-CNC   NCN   N2C   25.0      73.0  !  NB-NC-ND
-NCN   N2C   N1C   25.0      86.0  !  NC-ND-NA
+RA1   RA2   RA3   40.0      88.0  !  NA-NB-NC
+RA2   RA3   RA4   40.0      72.0  !  NB-NC-ND
+RA3   RA4   RA1   40.0      84.0  !  NC-ND-NA
 ! internal angle for G:
-N1C   CNC   OCN   25.0      90.0  !  NA-NB-NC
-CNC   OCN   NCN   25.0      84.0  !  NB-NC-ND
-OCN   NCN   N1C   25.0      72.0  !  NC-ND-NA
-
-!## for polyphosphate
-BP    BP     BP    50.0    99.0   ! P-P-P
+RG1   RG2   RG3   40.0      88.0  !  NA-NB-NC
+RG2   RG3   RG4   40.0      83.0  !  NB-NC-ND
+RG3   RG4   RG1   40.0      72.0  !  NC-ND-NA
 
 
 PHI
 !phi in backbone
-BP    BC1   BC2   N1C     58.0    1  -165.0    ! P-C1-C2-NA for A/G    increase from 8.0 to 58.0 due to the stacking and pairing
-BP    BC1   BC2   NCC     55.0    1   180.0    ! P-C1-C2-NA for C/U    increase from 5.0 to 55.0 due to the stacking and pairing
-BC1   BC2   N1C   CNC     55.0    1   165.0    ! C1-C2-NA-NB for A/G   increase from 5.0 to 55.0 due to the stacking and pairing
-BC1   BC2   NCC   CO      55.0    1     0.0    !                       increase from 5.0 to 55.0 due to the stacking and pairing 
+RS1   RP    RS1   RP       0.2    1   -20.0
+RS1   RP    RS1   RS2      0.2    1  -120.0
+! A/G
+RP    RS1   RS2   RA1     58.0    1  -160.0    ! P-C1-C2-NA for A 
+RP    RS1   RS2   RG1     58.0    1  -165.0    ! P-C1-C2-NA for G   
+RS1    RS2   RA1   RA2    55.0    1   160.0
+RS1    RS2   RG1   RG2    55.0    1   165.0
+!RS1   RS2   RA1   RA2     35.0    1    90.0
+!RS1   RS2   RA1   RA2     30.0    2  -165.0
+!RS1   RS2   RG1   RG2     35.0    1    90.0
+!RS1   RS2   RG1   RG2     30.0    2  -165.0
 
-BC1   BP    BC1   BP       0.0    1   -20.0
-!phi in A/G
-N1C   CNC   N2C   NCN     80.0    1     0.0
-N1C   CNC   NCN   N2C     50.0    1   180.0
-N1C   CNC   NCN   OCN     50.0    1     0.0
-N1C   CNC   OCN   NCN     80.0    1   180.0
+! C/U
+RP    RS1   RS2   RC1     55.0    1  -165.0    ! P-C1-C2-NA for C  
+RP    RS1   RS2   RU1     55.0    1  -165.0    ! P-C1-C2-NA for U 
 
-!## for polyphosphate
-BP    BP    BP    BP       0.5    1     0.0   ! P-P-P-P
+RS1   RS2   RC1   RC3     55.0    1   -15.0    !      
+RS1   RS2   RU1   RU3     55.0    1   -15.0    !                
+
+!phi in A
+RS2   RA1   RA2   RA3     80.0    1     0.0   !C2-NA-NB-NC
+RA1   RA2   RA4   RA3     80.0    1     0.0   !NA-NB-ND-NC
+RA1   RA2   RA3   RA4     50.0    1   180.0   !NA-NB-NC-ND
+!phi in G
+RS2   RG1   RG2   RG3     80.0    1     0.0   !C2-NA-NB-NC
+RG1   RG2   RG4   RG3     80.0    1     0.0   !NA-NB-ND-NC
+RG1   RG2   RG3   RG4     50.0    1   180.0   !NA-NB-NC-ND
 
 
 IMPHI
-BC1   BP    BP    BC2     15.0    0    29.0
+RS1   RP    RP    RS2     15.0    0    29.0
 !NA-C2-NB-ND for A
-N1C   BC2   CNC   N2C     40.0    0     0.0
+RA1   RS2   RA2   RA4     40.0    0     0.0
 
 !NA-C2-NB-ND for G
-N1C   BC2   CNC   NCN     20.0    0     0.0
+RG1   RS2   RG2   RG4     40.0    0     0.0
 
 !NA-C2-NB-NC for C
-NCC   BC2   NCN   CO      20.0    0  -180.0
+RC1   RS2   RC2   RC3     40.0    0  -180.0
 
 !NA-C2-NB-NC for U
-NCC   BC2   OCN   CO      20.0    0  -180.0
+RU1   RS2   RU2   RU3     40.0    0  -180.0
 
 
-NONBONDED  NBXMOD 3  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
-     CUTNB 16.0  CTOFNB 15.0  CTONNB 11.  EPS 1.0  E14FAC 0.4  WMIN 1.5 
+NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
+     CUTNB 12.0  CTOFNB 12.0  CTONNB 11.0
 
 !                 Emin         Rmin/2
 !                 (kcal/mol)   (A)
-BP       0.00     -0.11583      2.4340   0.00     -0.11583     2.4340 !!                         2.4340 !
-BC1      0.00     -0.09922      2.2826   0.00     -0.09922     2.2826 !!                         2.2826 !
-BC2      0.00     -0.13244      2.2826   0.00     -0.13244     2.2826 !!                         2.2826 !
-N1C      0.00     -0.11583      1.6954   0.00     -0.11583     1.6954 !!                         1.9949 !
-CNC      0.00     -0.13244      1.7309   0.00     -0.13244     1.7309 !!                         2.2566 !
-NCN      0.00     -0.14905      2.0089   0.00     -0.14905     2.0089 !!                         2.2321 !
-N2C      0.00     -0.11583      1.8215   0.00     -0.11583     1.8215 !!                         2.0239 !
-OCN      0.00     -0.14905      1.9241   0.00     -0.14905     1.9241 !!                         2.1379 !
-NCC      0.00     -0.11583      2.0452   0.00     -0.11583     2.0452 !!                         2.2724 !
-CO       0.00     -0.09922      1.7170   0.00     -0.09922     1.7170 !!                         1.9078 !
-MG       0.00     -0.10000      3.0000   0.00     -0.10000     3.0000 !!
+!# backbone
+RP       0.00     -0.05193      2.4340   0.00     -0.05193     2.4340 !!                         2.4340 !
+RS1      0.00     -0.09922      2.2826   0.00     -0.09922     2.2826 !!                         2.2826 !
+RS2      0.00     -0.07731      2.2826   0.00     -0.07731     2.2826 !!                         2.2826 !
+!# ADE
+RA1      0.00     -0.10193      1.8954   0.00     -0.10193     1.8954 !!                         1.9949 !
+RA2      0.00     -0.11655      1.9309   0.00     -0.11655     1.9309 !!                         2.2566 !
+RA3      0.00     -0.13116      2.0089   0.00     -0.13116     2.0089 !!                         2.2321 !
+RA4      0.00     -0.10193      1.8215   0.00     -0.10193     1.8215 !!                         2.0239 !
+!# GUA
+RG1      0.00     -0.10193      1.8954   0.00     -0.10193     1.8954 !!                         1.9949 !
+RG2      0.00     -0.11655      1.9309   0.00     -0.11655     1.9309 !!                         2.2566 !
+RG3      0.00     -0.13116      1.9241   0.00     -0.13116     1.9241 !!                         2.1379 !
+RG4      0.00     -0.13116      2.0089   0.00     -0.13116     2.0089 !!                         2.2321 !
+!# CYT
+RC1      0.00     -0.10193      2.0452   0.00     -0.10193     2.0452 !!                         2.2724 !
+RC2      0.00     -0.13116      2.0089   0.00     -0.13116     2.0089 !!                         2.2321 !
+RC3      0.00     -0.08731      1.7170   0.00     -0.08731     1.7170 !!                         1.9078 !
+!# URA
+RU1      0.00     -0.10193      2.0452   0.00     -0.10193     2.0452 !!                         2.2724 !
+RU2      0.00     -0.13116      1.9241   0.00     -0.13116     1.9241 !!                         2.1379 !
+RU3      0.00     -0.08731      1.7170   0.00     -0.08731     1.7170 !!                         1.9078 !
+!# others
+MG       0.00     -0.05000      3.0000   0.00     -0.05000     3.0000 !!
 
 NBFIX
 !                 Emin         Rmin
 !                 (kcal/mol)   (A)
-BP     MG        -0.50000      5.0000
-BC1    BC1       -0.09922      4.5652           !necessary, do not delete
+RP        MG        -1.30000       5.0000
+RS1       RS1       -0.09922       4.5652           !necessary, do not delete
 
 ! for pairing 
-NCN    OCN       -0.14905      3.2000
-NCN    CO        -0.12414      3.8000
-N2C    CO        -0.10753      4.0000
+RA3       RU2       -0.12000       3.5000
+RG3       RC2       -0.12000       3.5000
+RG4       RC3       -0.10000       3.8000
+RA4       RU3       -0.10000       4.0000
 
-HBOND AEXP 10 REXP 12 HAEX 4 AAEX 2   NOACCEPTORS  HBNOEXCLUSIONS  ALL  -
-   CUTHB 6.0 CTOFHB 5.0 CTONHB 4.0  CUTHA 100.0  CTOFHA 90.0  CTONHA 90.0
+!# Aromatic-base pi-pi interactions
+A1F       RA1       -0.83000       4.5000
+A1F       RG1       -0.83000       4.5000
+A1F       RC1       -0.77000       4.5000
+A1F       RU1       -0.81000       4.5000
 
+A1Y       RA1       -0.91000       4.5000
+A1Y       RG1       -1.01000       4.5000
+A1Y       RC1       -0.69000       4.5000
+A1Y       RU1       -0.91000       4.5000
+
+A2W       RA1       -0.91000       4.5000
+A2W       RG1       -1.01000       4.5000
+A2W       RC1       -0.69000       4.5000
+A2W       RU1       -0.91000       4.5000
+
+!# ARG/LYS-base cation-pi interactions
+QdR       RA1       -0.13000       4.5000
+QdR       RG1       -0.43000       4.5000
+QdR       RC1       -0.38000       4.5000
+QdR       RU1       -0.09000       4.5000
+
+!# QdK       RA1    --- too weak, IGNORE ---
+QdK       RG1       -0.22000       4.5000
+QdK       RC1       -0.27000       4.5000
+QdK       RU1       -0.17000       4.5000
+
+!# Gln/Asn-base interactions
+P4Q       RA1       -0.11000       4.5000
+P4Q       RG1       -0.45000       4.5000
+P4Q       RC1       -0.45000       4.5000
+P4Q       RU1       -0.41000       4.5000
+
+P5N       RA1       -0.41000       4.5000
+P5N       RG1       -0.44000       4.5000
+P5N       RC1       -0.34000       4.5000
+P5N       RU1       -0.25000       4.5000
+
+!# Asp/Glu-base interactions
+QaD       RA1       -0.09000       4.5000
+QaD       RG1       -0.26000       4.5000
+QaD       RC1       -0.31000       4.5000
+QaD       RU1       -0.21000       4.5000
+
+QaE       RA1       -0.19000       4.5000
+QaE       RG1       -0.43000       4.5000
+!# QaE       RC1    --- too weak, IGNORE ---
+QaE       RU1       -0.10000       4.5000
 
 END
