@@ -195,16 +195,4 @@ QaE       RG1       -0.43000       4.5000
 !# QaE       RC1    --- too weak, IGNORE ---
 QaE       RU1       -0.10000       4.5000
 
-!# for interactions between peptide backbone and RNA polar beads
-RP        N         -0.08000       3.8000
-RS2       N         -0.08000       3.5000
-RA3       N         -0.08000       3.5000
-RA4       N         -0.08000       3.5000
-RG3       N         -0.08000       3.5000
-RG4       N         -0.08000       3.5000
-RC2       N         -0.08000       3.5000
-RC3       N         -0.08000       3.5000
-RU2       N         -0.08000       3.5000
-RU3       N         -0.08000       3.5000
-
 END
