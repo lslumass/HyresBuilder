@@ -114,7 +114,5 @@ options:
 **Simple examples:**
 1. simulate single chain in non-periodic system under 150 mM NaCl at 298 K:   
 ```python run_latest.py -c conf.pdb -p conf.psf -o test -t 298 -e non -s 150```
-2. simulate RNA chain with 5 mM MgCl2 in a 10 nm cubic box at 298 K:   
-```python run_latest.py -c conf.pdb -p conf.psf -o test -t 298 -e NVT -b 10 -s 150 -m 5```
-3. slab simulation of condensate at 15x15x50 nm rectangle box:   
+2. slab simulation of condensate at 15x15x50 nm rectangle box:   
 ```python run_latest.py -c conf.pdb -p conf.psf -o test -t 298 -e NVT -b 15 15 50 -s 150```
