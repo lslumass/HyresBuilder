@@ -1,9 +1,8 @@
 # HyresBuilder: for running HyRes and iCon simulation.   
-This package is built for the simulation of HyRes protein and iConRNA (iConDNA later) simulation.    
+This package is built for the simulation of HyRes protein simulation.    
 **Main functions:**
-1. Construct HyRes peptide structure from sequence or convert atomistic structure into HyRes model;   
-2. Construct iConRNA model from sequence or convert atomistic structure into iConRNA model;   
-3. Set up HyRes and/or iConRNA force fields;   
+1. Construct HyRes peptide structure from sequence or convert atomistic structure into HyRes model; 
+3. Set up HyRes force field;   
 
 ## Dependencies:
 1. [OpenMM](https://openmm.org/)
@@ -12,7 +11,7 @@ This package is built for the simulation of HyRes protein and iConRNA (iConDNA l
 4. basis: numpy, numba, MDAnalysis
 
 ## Installation: 
-1. git clone https://github.com/lslumass/HyresBuilder.git   
+1. git clone -b hyres https://github.com/lslumass/HyresBuilder.git   
 2. cd into the download folder   
 3. pip install .   
 
@@ -39,32 +38,12 @@ HyresBuilder.build_peptide("name", "the sequence")
 ```
 then name.pdb will be created.   
 
-### B. Construct iConRNA coil strand from sequence
-1. from comman line, use ```rnabuilder```:   
-```
-usage: rnabuilder [-h] name seq
-
-RNABuilder: build iConRNA from sequence
-
-positional arguments:
-  name        protein name, output: name.pdb
-  seq         sequence in one-letter
-
-options:
-  -h, --help  show this help message and exit
-```
-2. from script, use ```RNABuilder.build```:   
-```
-from HyresBuilder import RNABuilder
-RNABuilder.build("name", "sequence")
-```
-
-### C. Convert atomistic structure into HyRes model
+### B. Convert atomistic structure into HyRes model
 1. from command line, use ```convert2cg```:   
 ```
 usage: convert2cg [-h] [--hydrogen] [--terminal TERMINAL] aa cg
 
-Convert2CG: All-atom to HyRes/iConRNA converting
+Convert2CG: All-atom to HyRes converting
 
 positional arguments:
   aa                    Input PDB file
@@ -137,5 +116,5 @@ options:
 ```python run_latest.py -c conf.pdb -p conf.psf -o test -t 298 -e non -s 150```
 2. simulate RNA chain with 5 mM MgCl2 in a 10 nm cubic box at 298 K:   
 ```python run_latest.py -c conf.pdb -p conf.psf -o test -t 298 -e NVT -b 10 -s 150 -m 5```
-3. slab simulation of condensate at 15*15*50 nm rectangle box:   
+3. slab simulation of condensate at 15x15x50 nm rectangle box:   
 ```python run_latest.py -c conf.pdb -p conf.psf -o test -t 298 -e NVT -b 15 15 50 -s 150```
