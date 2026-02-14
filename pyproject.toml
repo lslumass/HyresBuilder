@@ -47,6 +47,7 @@ convert2cg = "HyresBuilder.Convert2CG:main"
 hyresbuilder = "HyresBuilder.HyresBuilder:main"
 rnabuilder = "HyresBuilder.RNABuilder:main"
 genpsf = "HyresBuilder.GenPsf:main"
+mutate = "HyresBuilder.Mutator:main"
 
 [tool.setuptools]
 packages = ["HyresBuilder"]
