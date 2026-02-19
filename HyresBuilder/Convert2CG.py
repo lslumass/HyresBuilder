@@ -1,4 +1,4 @@
-from collections import defaultdict, deque
+from collections import defaultdict
 from pathlib import Path
 import numpy as np
 import os
@@ -114,7 +114,6 @@ def add_backbone_hydrogen(pdb_file, output_file):
     """
 
     def parse_atom_line(line):
-        """Parse a PDB ATOM line and extract relevant information."""
         atom_serial = parse_serial_field(line[6:11])
         atom_name = line[12:16].strip()
         residue_name = line[17:20].strip()
@@ -141,7 +140,6 @@ def add_backbone_hydrogen(pdb_file, output_file):
 
     def format_atom_line(serial, atom_name, residue_name, chain_id, residue_seq,
                          coords, occupancy="1.00", temp_factor="0.00", element="H"):
-        """Format an ATOM line in PDB format."""
         serial_str = encode_serial(serial)
         resseq_str = encode_resseq(residue_seq)
         atom_field = atom_name.rjust(4)
@@ -152,7 +150,6 @@ def add_backbone_hydrogen(pdb_file, output_file):
         )
 
     def calculate_h_position(n_coord, ca_coord, c_prev_coord):
-        """Compute an idealized backbone amide hydrogen position."""
         v_cn = n_coord - c_prev_coord
         v_cn /= np.linalg.norm(v_cn)
         v_nca = ca_coord - n_coord
@@ -273,7 +270,6 @@ def add_backbone_hydrogen(pdb_file, output_file):
 # --------------------------------------------------------------------------- #
 
 def split_chains(pdb):
-    """Split PDB file into separate chains and identify their types."""
     aas = {"ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
            "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"}
     rnas = {"ADE", "GUA", "CYT", "URA"}
@@ -370,7 +366,6 @@ def split_chains(pdb):
 # --------------------------------------------------------------------------- #
 
 def set_terminus(gen, segid, terminal):
-    """Set the charge status of protein termini."""
     if not segid.startswith("P"):
         return
     resids = gen.get_resids(segid)
@@ -396,9 +391,6 @@ def set_terminus(gen, segid, terminal):
 # --------------------------------------------------------------------------- #
 
 def at2hyres(pdb_in, pdb_out):
-    """
-    Convert all-atom protein to HyRes CG PDB.
-    """
     residues = {}
     atom_count = 0
 
@@ -530,9 +522,6 @@ def at2hyres(pdb_in, pdb_out):
 # --------------------------------------------------------------------------- #
 
 def at2icon(pdb_in, pdb_out):
-    """
-    Convert all-atom RNA to iConRNA PDB.
-    """
     atoms = []
     with open(pdb_in, 'r') as fh:
         for line in fh:
@@ -640,108 +629,69 @@ def at2icon(pdb_in, pdb_out):
 
 
 # --------------------------------------------------------------------------- #
-#  Post-process CG PDB: reuse original AA serials/resids
+#  Post-process CG PDB: reuse original atom serials
 # --------------------------------------------------------------------------- #
 
-def remap_to_original_indices(cg_pdb: str, aa_pdb: str, output_pdb: str | None = None) -> str:
+def remap_atom_serials(cg_pdb: str, reference_pdb: str, output_pdb: str | None = None) -> str:
     """
-    Replace psfgen's atom serials/residue IDs with those from the original
-    all-atom PDB. Each CG residue takes the first serials of its parent residue.
+    Replace psfgen's atom serial numbers with the first N atom serials from
+    the reference all-atom PDB. Residue numbering is left untouched.
     """
     if output_pdb is None:
         output_pdb = cg_pdb
 
-    aa_residues = []
-    current_key = None
-
-    with open(aa_pdb) as fh:
+    ref_serials = []
+    with open(reference_pdb) as fh:
         for line in fh:
-            if not line.startswith(('ATOM', 'HETATM')):
-                continue
-            resname = line[17:20].strip()
-            chain = line[21]
-            segid = line[72:76] if len(line) >= 76 else "    "
-            resseq_field = line[22:26]
-            icode = line[26] if len(line) > 26 else " "
-            key = (segid, chain, resname, resseq_field, icode)
+            if line.startswith(('ATOM', 'HETATM')):
+                ref_serials.append(parse_serial_field(line[6:11]))
 
-            if key != current_key:
-                resseq_int = parse_resseq_field(resseq_field)
-                aa_residues.append({
-                    "key": key,
-                    "resseq_int": resseq_int,
-                    "icode": icode if icode.strip() else " ",
-                    "serials": []
-                })
-                current_key = key
+    if not ref_serials:
+        raise ValueError(f"No ATOM/HETATM records found in reference PDB '{reference_pdb}'.")
 
-            aa_residues[-1]["serials"].append(parse_serial_field(line[6:11]))
-
-    if not aa_residues:
-        raise ValueError(f"No ATOM/HETATM records in reference PDB '{aa_pdb}'")
-
-    remapped_lines = []
-    aa_index = 0
-    serial_queue: deque[int] = deque()
+    ref_iter = iter(ref_serials)
+    rewritten = []
+    used = 0
     last_serial_str = None
-    previous_token = None
 
     with open(cg_pdb) as fh:
         for line in fh:
             record = line[:6].strip()
-            if record in {"ATOM", "HETATM"}:
-                chain = line[21]
-                segid = line[72:76] if len(line) >= 76 else "    "
-                token = (segid, chain, line[17:27])
-                if token != previous_token:
-                    if aa_index >= len(aa_residues):
-                        raise ValueError("CG PDB has more residues than AA reference.")
-                    current_residue = aa_residues[aa_index]
-                    serial_queue = deque(current_residue["serials"])
-                    aa_index += 1
-                    previous_token = token
 
-                if not serial_queue:
+            if record in ("ATOM", "HETATM"):
+                try:
+                    serial_val = next(ref_iter)
+                except StopIteration:
                     raise ValueError(
-                        f"Reference residue {current_residue['key']} "
-                        "does not provide enough atom serials."
+                        "Reference PDB does not contain enough atom serials to cover the CG PDB."
                     )
-
-                serial_val = serial_queue.popleft()
                 serial_str = encode_serial(serial_val)
-                resseq_str = encode_resseq(current_residue["resseq_int"])
-                icode_char = current_residue["icode"]
 
                 line_chars = list(line.rstrip('\n'))
                 if len(line_chars) < 80:
                     line_chars.extend([' '] * (80 - len(line_chars)))
-
                 line_chars[6:11] = list(serial_str)
-                line_chars[22:26] = list(resseq_str)
-                line_chars[26] = icode_char
 
-                new_line = ''.join(line_chars).rstrip() + '\n'
-                remapped_lines.append(new_line)
+                rewritten.append(''.join(line_chars).rstrip() + '\n')
                 last_serial_str = serial_str
+                used += 1
 
-            elif record == "ANISOU":
-                if last_serial_str is None:
-                    raise ValueError("ANISOU record encountered before any ATOM record.")
+            elif record == "ANISOU" and last_serial_str is not None:
                 line_chars = list(line.rstrip('\n'))
                 if len(line_chars) < 80:
                     line_chars.extend([' '] * (80 - len(line_chars)))
                 line_chars[6:11] = list(last_serial_str)
-                remapped_lines.append(''.join(line_chars).rstrip() + '\n')
-
+                rewritten.append(''.join(line_chars).rstrip() + '\n')
             else:
-                remapped_lines.append(line)
+                rewritten.append(line)
 
-    if aa_index != len(aa_residues):
-        print(
-            f"[remap warning] Only {aa_index} of {len(aa_residues)} AA residues matched."
-        )
+    Path(output_pdb).write_text(''.join(rewritten))
 
-    Path(output_pdb).write_text(''.join(remapped_lines))
+    if used < len(ref_serials):
+        print(f"[remap] Used {used} of {len(ref_serials)} atom serials from {reference_pdb}.")
+    else:
+        print(f"[remap] All atom serials from {reference_pdb} were consumed.")
+
     return output_pdb
 
 
@@ -749,7 +699,7 @@ def remap_to_original_indices(cg_pdb: str, aa_pdb: str, output_pdb: str | None =
 #  Driver: AA → CG (HyRes / iConRNA)
 # --------------------------------------------------------------------------- #
 
-def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
+def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, reference_pdb=None):
     """
     Convert all-atom PDB to CG PDB (HyRes for protein or iConRNA for RNA).
     """
@@ -788,8 +738,8 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
     gen.write_psf(filename=psf_file)
     print(f"PSF file written to {psf_file}")
 
-    # Post-process the PDB to reuse original atom/residue numbering
-    remap_to_original_indices(pdb_out, pdb_in)
+    ref_path = reference_pdb or pdb_in
+    remap_atom_serials(pdb_out, ref_path)
 
     if cleanup:
         for file in os.listdir():
@@ -821,9 +771,9 @@ def main():
 
     if args.hydrogen:
         pdb_addH = add_backbone_hydrogen(args.aa, f'{args.aa[:-4]}_addH.pdb')
-        at2cg(pdb_addH, args.cg, terminal=args.terminal)
+        at2cg(pdb_addH, args.cg, terminal=args.terminal, reference_pdb=args.aa)
     else:
-        at2cg(args.aa, args.cg, terminal=args.terminal)
+        at2cg(args.aa, args.cg, terminal=args.terminal, reference_pdb=args.aa)
 
 
 if __name__ == '__main__':
