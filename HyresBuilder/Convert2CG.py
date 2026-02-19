@@ -61,10 +61,63 @@ def add_backbone_hydrogen(pdb_file, output_file):
             'line': line
         }
     
-    def format_atom_line(serial, atom_name, residue_name, chain_id, residue_seq, 
-                        coords, occupancy="1.00", temp_factor="0.00", element="H"):
+    def encode_serial(n):
+        """Encode integer to hybrid-36 format for PDB serial number field (5 chars)."""
+        if n < 100000:
+            return f"{n:5d}"
+
+        n -= 100000
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+        if n < 26 * (36**4):  # uppercase range
+            result = []
+            for _ in range(4):
+                n, remainder = divmod(n, 36)
+                result.append(chars[remainder])
+            result.append(chr(ord('A') + n))
+            return ''.join(reversed(result))
+
+        n -= 26 * (36**4)  # lowercase range
+        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
+        result = []
+        for _ in range(4):
+            n, remainder = divmod(n, 36)
+            result.append(chars_lower[remainder])
+        result.append(chr(ord('a') + n))
+        return ''.join(reversed(result))
+
+
+    def encode_resseq(n):
+        """Encode integer to hybrid-36 format for residue sequence field (4 chars)."""
+        if n < 10000:
+            return f"{n:4d}"
+
+        n -= 10000
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+        if n < 26 * (36**3):
+            result = []
+            for _ in range(3):
+                n, remainder = divmod(n, 36)
+                result.append(chars[remainder])
+            result.append(chr(ord('A') + n))
+            return ''.join(reversed(result))
+
+        n -= 26 * (36**3)
+        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
+        result = []
+        for _ in range(3):
+            n, remainder = divmod(n, 36)
+            result.append(chars_lower[remainder])
+        result.append(chr(ord('a') + n))
+        return ''.join(reversed(result))
+
+    def format_atom_line(serial, atom_name, residue_name, chain_id, residue_seq,
+                         coords, occupancy="1.00", temp_factor="0.00", element="H"):
         """Format an ATOM line in PDB format."""
-        return (f"ATOM  {serial:5d}  {atom_name:3s} {residue_name:3s} {chain_id}{residue_seq:4d}    "
+        serial_str = encode_serial(serial)
+        resseq_str = encode_resseq(residue_seq)
+        return (f"ATOM  {serial_str}  {atom_name:3s} {residue_name:3s} {chain_id}{resseq_str}    "
                 f"{coords[0]:8.3f}{coords[1]:8.3f}{coords[2]:8.3f}{occupancy:>6s}{temp_factor:>6s}"
                 f"          {element:>2s}\n")
     
