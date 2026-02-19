@@ -291,6 +291,7 @@ def add_backbone_hydrogen(pdb_file, output_file):
     print(f"Added backbone hydrogen atoms. Output saved to {output_file}")
     return output_file
 
+
 def split_chains(pdb):
     """Split PDB file into separate chains and identify their types."""
     aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
@@ -441,6 +442,32 @@ def at2hyres(pdb_in, pdb_out):
     pdb_out : str
         Output HyRes CG PDB file
     """
+    
+    def encode_serial(n):
+        """Encode integer to hybrid-36 format for PDB serial number field (5 chars)."""
+        if n < 100000:
+            return f"{n:5d}"
+
+        n -= 100000
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+        if n < 26 * (36**4):  # uppercase range
+            result = []
+            for _ in range(4):
+                n, remainder = divmod(n, 36)
+                result.append(chars[remainder])
+            result.append(chr(ord('A') + n))
+            return ''.join(reversed(result))
+
+        n -= 26 * (36**4)  # lowercase range
+        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
+        result = []
+        for _ in range(4):
+            n, remainder = divmod(n, 36)
+            result.append(chars_lower[remainder])
+        result.append(chr(ord('a') + n))
+        return ''.join(reversed(result))
+    
     # Parse PDB file into residues
     residues = {}
     atom_count = 0
@@ -544,7 +571,8 @@ def at2hyres(pdb_in, pdb_out):
             for atom in res.values():
                 if atom['name'] in bb_atoms_1:
                     atom_serial += 1
-                    f.write(f"{atom['record']:4s}  {atom_serial:5d} {atom['name']:2s}   "
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"{atom['record']:4s}  {serial_str} {atom['name']:2s}   "
                            f"{resname:3s} {atom['chain']}{int(atom['resid']):4d}    "
                            f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
                            f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
@@ -553,7 +581,8 @@ def at2hyres(pdb_in, pdb_out):
             bead_names = ['CB', 'CC', 'CD', 'CE', 'CF']
             for i, center in enumerate(sc_centers):
                 atom_serial += 1
-                f.write(f"{first_atom['record']:4s}  {atom_serial:5d} {bead_names[i]:2s}   "
+                serial_str = encode_serial(atom_serial)
+                f.write(f"{first_atom['record']:4s}  {serial_str} {bead_names[i]:2s}   "
                        f"{resname:3s} {first_atom['chain']}{int(first_atom['resid']):4d}    "
                        f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
                        f"{first_atom['occ']:6.2f}{first_atom['bfac']:6.2f}      "
@@ -563,7 +592,8 @@ def at2hyres(pdb_in, pdb_out):
             for atom in res.values():
                 if atom['name'] in bb_atoms_2:
                     atom_serial += 1
-                    f.write(f"{atom['record']:4s}  {atom_serial:5d} {atom['name']:2s}   "
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"{atom['record']:4s}  {serial_str} {atom['name']:2s}   "
                            f"{resname:3s} {atom['chain']}{int(atom['resid']):4d}    "
                            f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
                            f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
@@ -584,6 +614,32 @@ def at2icon(pdb_in, pdb_out):
     pdb_out : str
         Output iConRNA PDB file
     """
+    
+    def encode_serial(n):
+        """Encode integer to hybrid-36 format for PDB serial number field (5 chars)."""
+        if n < 100000:
+            return f"{n:5d}"
+
+        n -= 100000
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+        if n < 26 * (36**4):  # uppercase range
+            result = []
+            for _ in range(4):
+                n, remainder = divmod(n, 36)
+                result.append(chars[remainder])
+            result.append(chr(ord('A') + n))
+            return ''.join(reversed(result))
+
+        n -= 26 * (36**4)  # lowercase range
+        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
+        result = []
+        for _ in range(4):
+            n, remainder = divmod(n, 36)
+            result.append(chars_lower[remainder])
+        result.append(chr(ord('a') + n))
+        return ''.join(reversed(result))
+    
     # Parse PDB file
     atoms = []
     with open(pdb_in, 'r') as f:
@@ -661,7 +717,8 @@ def at2icon(pdb_in, pdb_out):
                     coords = np.array([[a['x'], a['y'], a['z']] for a in p_atoms])
                     center = coords.mean(axis=0)
                     atom_serial += 1
-                    f.write(f"ATOM  {atom_serial:5d}  P   {resname:3s} {chain}{resid:4d}    "
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"ATOM  {serial_str}  P   {resname:3s} {chain}{resid:4d}    "
                            f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
                            f"  1.00  0.00      {segid:4s}\n")
                 
@@ -671,7 +728,8 @@ def at2icon(pdb_in, pdb_out):
                     coords = np.array([[a['x'], a['y'], a['z']] for a in c1_atoms])
                     center = coords.mean(axis=0)
                     atom_serial += 1
-                    f.write(f"ATOM  {atom_serial:5d}  C1  {resname:3s} {chain}{resid:4d}    "
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"ATOM  {serial_str}  C1  {resname:3s} {chain}{resid:4d}    "
                            f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
                            f"  1.00  0.00      {segid:4s}\n")
                 
@@ -681,7 +739,8 @@ def at2icon(pdb_in, pdb_out):
                     coords = np.array([[a['x'], a['y'], a['z']] for a in c2_atoms])
                     center = coords.mean(axis=0)
                     atom_serial += 1
-                    f.write(f"ATOM  {atom_serial:5d}  C2  {resname:3s} {chain}{resid:4d}    "
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"ATOM  {serial_str}  C2  {resname:3s} {chain}{resid:4d}    "
                            f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
                            f"  1.00  0.00      {segid:4s}\n")
                 
@@ -693,7 +752,8 @@ def at2icon(pdb_in, pdb_out):
                             coords = np.array([[a['x'], a['y'], a['z']] for a in base_atoms])
                             center = coords.mean(axis=0)
                             atom_serial += 1
-                            f.write(f"ATOM  {atom_serial:5d}  {bead_name:2s}  {resname:3s} "
+                            serial_str = encode_serial(atom_serial)
+                            f.write(f"ATOM  {serial_str}  {bead_name:2s}  {resname:3s} "
                                    f"{chain}{resid:4d}    "
                                    f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
                                    f"  1.00  0.00      {segid:4s}\n")
