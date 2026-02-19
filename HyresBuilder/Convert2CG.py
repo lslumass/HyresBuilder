@@ -20,7 +20,23 @@ def add_backbone_hydrogen(pdb_file, output_file):
     
     def parse_atom_line(line):
         """Parse a PDB ATOM line and extract relevant information."""
-        atom_serial = int(line[6:11].strip())
+        def parse_serial(s):
+            """Handle both decimal and hybrid-36/hex encoded serial numbers."""
+            s = s.strip()
+            try:
+                return int(s)
+            except ValueError:
+                # Try hexadecimal (used when serial > 99999)
+                try:
+                    return int(s, 16)
+                except ValueError:
+                    # Full hybrid-36: uppercase letters start at 100000, lowercase at 1316736
+                    if s[0].isupper():
+                        return (ord(s[0]) - ord('A')) * 36**4 + int(s[1:], 36) + 100000
+                    else:
+                        return (ord(s[0]) - ord('a')) * 36**4 + int(s[1:], 36) + 1316736
+                    
+        atom_serial = parse_serial(line[6:11])
         atom_name = line[12:16].strip()
         residue_name = line[17:20].strip()
         chain_id = line[21]
