@@ -5,6 +5,92 @@ import warnings
 from .utils import load_ff
 
 
+def encode_serial(n):
+    """Encode integer to hybrid-36 format for PDB serial number field (5 chars)."""
+    if n < 100000:
+        return f"{n:5d}"
+    
+    # For n >= 100000, use hybrid-36 encoding
+    n -= 100000
+    
+    if n < 2176782336:  # Total range for uppercase letters
+        # Use base-36 with uppercase
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        
+        # Determine the leading character (A-Z)
+        leading_char_index = n // (36**4)
+        leading_char = chr(ord('A') + leading_char_index)
+        
+        # Get the remaining 4 digits in base-36
+        remainder = n % (36**4)
+        
+        result = []
+        for _ in range(4):
+            remainder, digit = divmod(remainder, 36)
+            result.append(chars[digit])
+        
+        return leading_char + ''.join(reversed(result))
+    
+    # If still larger, use lowercase (rarely needed)
+    n -= 2176782336
+    chars = '0123456789abcdefghijklmnopqrstuvwxyz'
+    
+    leading_char_index = n // (36**4)
+    leading_char = chr(ord('a') + leading_char_index)
+    
+    remainder = n % (36**4)
+    
+    result = []
+    for _ in range(4):
+        remainder, digit = divmod(remainder, 36)
+        result.append(chars[digit])
+    
+    return leading_char + ''.join(reversed(result))
+
+
+def encode_resseq(n):
+    """Encode integer to hybrid-36 format for residue sequence field (4 chars)."""
+    if n < 10000:
+        return f"{n:4d}"
+    
+    # For n >= 10000, use hybrid-36 encoding
+    n -= 10000
+    
+    if n < 1679616:  # Total range for uppercase letters
+        # Use base-36 with uppercase
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        
+        # Determine the leading character (A-Z)
+        leading_char_index = n // (36**3)
+        leading_char = chr(ord('A') + leading_char_index)
+        
+        # Get the remaining 3 digits in base-36
+        remainder = n % (36**3)
+        
+        result = []
+        for _ in range(3):
+            remainder, digit = divmod(remainder, 36)
+            result.append(chars[digit])
+        
+        return leading_char + ''.join(reversed(result))
+    
+    # If still larger, use lowercase
+    n -= 1679616
+    chars = '0123456789abcdefghijklmnopqrstuvwxyz'
+    
+    leading_char_index = n // (36**3)
+    leading_char = chr(ord('a') + leading_char_index)
+    
+    remainder = n % (36**3)
+    
+    result = []
+    for _ in range(3):
+        remainder, digit = divmod(remainder, 36)
+        result.append(chars[digit])
+    
+    return leading_char + ''.join(reversed(result))
+
+
 def add_backbone_hydrogen(pdb_file, output_file):
     """
     Add backbone hydrogen atoms (H) to peptide chains in a PDB file.
@@ -60,57 +146,6 @@ def add_backbone_hydrogen(pdb_file, output_file):
             'element': element,
             'line': line
         }
-    
-    def encode_serial(n):
-        """Encode integer to hybrid-36 format for PDB serial number field (5 chars)."""
-        if n < 100000:
-            return f"{n:5d}"
-
-        n -= 100000
-        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-
-        if n < 26 * (36**4):  # uppercase range
-            result = []
-            for _ in range(4):
-                n, remainder = divmod(n, 36)
-                result.append(chars[remainder])
-            result.append(chr(ord('A') + n))
-            return ''.join(reversed(result))
-
-        n -= 26 * (36**4)  # lowercase range
-        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
-        result = []
-        for _ in range(4):
-            n, remainder = divmod(n, 36)
-            result.append(chars_lower[remainder])
-        result.append(chr(ord('a') + n))
-        return ''.join(reversed(result))
-
-
-    def encode_resseq(n):
-        """Encode integer to hybrid-36 format for residue sequence field (4 chars)."""
-        if n < 10000:
-            return f"{n:4d}"
-
-        n -= 10000
-        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-
-        if n < 26 * (36**3):
-            result = []
-            for _ in range(3):
-                n, remainder = divmod(n, 36)
-                result.append(chars[remainder])
-            result.append(chr(ord('A') + n))
-            return ''.join(reversed(result))
-
-        n -= 26 * (36**3)
-        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
-        result = []
-        for _ in range(3):
-            n, remainder = divmod(n, 36)
-            result.append(chars_lower[remainder])
-        result.append(chr(ord('a') + n))
-        return ''.join(reversed(result))
 
     def format_atom_line(serial, atom_name, residue_name, chain_id, residue_seq,
                          coords, occupancy="1.00", temp_factor="0.00", element="H"):
@@ -443,31 +478,6 @@ def at2hyres(pdb_in, pdb_out):
         Output HyRes CG PDB file
     """
     
-    def encode_serial(n):
-        """Encode integer to hybrid-36 format for PDB serial number field (5 chars)."""
-        if n < 100000:
-            return f"{n:5d}"
-
-        n -= 100000
-        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-
-        if n < 26 * (36**4):  # uppercase range
-            result = []
-            for _ in range(4):
-                n, remainder = divmod(n, 36)
-                result.append(chars[remainder])
-            result.append(chr(ord('A') + n))
-            return ''.join(reversed(result))
-
-        n -= 26 * (36**4)  # lowercase range
-        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
-        result = []
-        for _ in range(4):
-            n, remainder = divmod(n, 36)
-            result.append(chars_lower[remainder])
-        result.append(chr(ord('a') + n))
-        return ''.join(reversed(result))
-    
     # Parse PDB file into residues
     residues = {}
     atom_count = 0
@@ -615,31 +625,6 @@ def at2icon(pdb_in, pdb_out):
         Output iConRNA PDB file
     """
     
-    def encode_serial(n):
-        """Encode integer to hybrid-36 format for PDB serial number field (5 chars)."""
-        if n < 100000:
-            return f"{n:5d}"
-
-        n -= 100000
-        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-
-        if n < 26 * (36**4):  # uppercase range
-            result = []
-            for _ in range(4):
-                n, remainder = divmod(n, 36)
-                result.append(chars[remainder])
-            result.append(chr(ord('A') + n))
-            return ''.join(reversed(result))
-
-        n -= 26 * (36**4)  # lowercase range
-        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
-        result = []
-        for _ in range(4):
-            n, remainder = divmod(n, 36)
-            result.append(chars_lower[remainder])
-        result.append(chr(ord('a') + n))
-        return ''.join(reversed(result))
-    
     # Parse PDB file
     atoms = []
     with open(pdb_in, 'r') as f:
@@ -677,7 +662,7 @@ def at2icon(pdb_in, pdb_out):
             ('NA', ['N9', 'C4']),
             ('NB', ['C8', 'H8', 'N7', 'C5']),
             ('NC', ['C6', 'N1', 'N6', 'H61', 'H62']),
-            ('ND', ['C2', 'H2', 'N3'])
+('ND', ['C2', 'H2', 'N3'])
         ],
         'GUA': [
             ('NA', ['N9', 'C4']),
