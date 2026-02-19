@@ -139,3 +139,10 @@ options:
 ```python run_latest.py -c conf.pdb -p conf.psf -o test -t 298 -e NVT -b 10 -s 150 -m 5```
 3. slab simulation of condensate at 15*15*50 nm rectangle box:   
 ```python run_latest.py -c conf.pdb -p conf.psf -o test -t 298 -e NVT -b 15 15 50 -s 150```
+
+
+## Banchmark:    
+**platform:** OpenMM 8.2, GTX 2080Ti   
+1. [monomer](./examples/benchmark_system/monomer/) system (800 beads): 13 us/day    
+2. [GY23](./examples/benchmark_system/LLPS2) LLPS system (29K beads): 1.5 us/day   
+3. [LAF1-RGG](./examples/benchmark_system/LLPS1/) LLPS system (105K beads): 550 ns/day   
