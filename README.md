@@ -146,3 +146,8 @@ options:
 1. [monomer](./examples/benchmark_system/monomer/) system (800 beads): 13 us/day    
 2. [GY23](./examples/benchmark_system/LLPS2) LLPS system (29K beads): 1.5 us/day   
 3. [LAF1-RGG](./examples/benchmark_system/LLPS1/) LLPS system (105K beads): 550 ns/day   
+
+**@ L40S:**
+1. TDP43 (90K beads): 1.9 us/day   
+2. EWSLCD (160K beads): 1.1 us/day   
+
