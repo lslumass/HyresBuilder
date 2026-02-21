@@ -300,6 +300,9 @@ def split_chains(pdb):
     dnas = ["DAD", "DGU", "DCY", "DTH"]
     counts = {'P': 0, 'R': 0, 'D': 0}
 
+    # HIS names
+    HISs = ['HSD', 'HSE', 'HSP', 'HID', 'HIE', 'HIP']
+
     def get_type(resname):
         if resname in aas:
             return 'P'
@@ -373,6 +376,8 @@ def split_chains(pdb):
                 chain_id = line[21].strip()
                 segid = line[72:76].strip()
                 resname = line[17:20].strip()
+                if resname in HISs:
+                    resname = 'HIS'
                 
                 # Select the identifier to use
                 identifier = chain_id if use_chain_id else segid
