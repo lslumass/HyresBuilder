@@ -550,6 +550,8 @@ def at2hyres(pdb_in, pdb_out):
             elif resname in single_bead_sc:
                 # Collect all non-backbone atoms as single sidechain bead
                 sc_beads = [[atom['name'] for atom in res.values() if atom['name'] not in bb_atoms]]
+            elif resname in ['HSD', 'HSE', 'HSP', 'HID', 'HIE', 'HIP']:
+                resname = 'HIS'
             elif resname != 'GLY':
                 print(f"Error: Unknown residue type {resname}")
                 exit(1)
