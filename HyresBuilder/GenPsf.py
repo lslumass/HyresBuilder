@@ -82,7 +82,7 @@ def genpsf(pdb_in, psf_out, terminal):
     gen.read_topology(RNA_topology)
     gen.read_topology(protein_topology)
 
-    counts = {'P': 0, 'R': 0, 'D': 0, 'M': 0, 'C': 0}
+    counts = {'P': 1, 'R': 1, 'D': 1, 'M': 1, 'C': 1}
     types = split_chains(pdb_in)
     for i, t in enumerate(types):
         if t in ["P", "R", "D"]:
