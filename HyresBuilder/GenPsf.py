@@ -72,6 +72,19 @@ def set_terminus(gen, segid, charge_status):
             print("Error: Only 'neutral', 'charged', 'NT', and 'CT' charge status are supported.")
             exit(1)
 
+def encode_segid(n: int) -> str:
+    """Encode segment number n into a 3-char hybrid-36 segid (e.g. 000, a00)."""
+    BASE36     = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    LEAD_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    if not 0 <= n <= 68391:
+        raise ValueError(f"n={n} out of range [0, 68391]")
+    if n < 1000:
+        return f"{n:03d}"
+    n -= 1000
+    lead = LEAD_CHARS[n // 1296]
+    rem  = n % 1296
+    return f"{lead}{BASE36[rem // 36]}{BASE36[rem % 36]}"
+
 def genpsf(pdb_in, psf_out, terminal):
     # load topology files
     RNA_topology, _ = utils.load_ff('RNA')
@@ -90,7 +103,7 @@ def genpsf(pdb_in, psf_out, terminal):
         else:
             tmp_pdb = f"psfgentmp_{t}.pdb"
 
-        segid = f"{t}{counts[t]:03d}"
+        segid = f"{t}{encode_segid(counts[t])}"
         counts[t] += 1
         if t == 'P':
             gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False)
