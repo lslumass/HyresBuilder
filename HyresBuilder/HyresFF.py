@@ -310,7 +310,7 @@ def buildSystem(psf, system, ffs, modification=None):
             print(pairGU.getNumAcceptors(), pairGU.getNumDonors(), 'GU')
 
     # further modification defined in running scripts
-    if modification:
+    if callable(modification):
         modification(system)
     # 8. Delete the NonbondedForce and HarmonicAngleForce
     system.removeForce(nbforce_index)

@@ -164,7 +164,7 @@ def setup(params, modification=None):
 
     # 6. construct force field
     print('\n################## build system ###################')
-    system = buildSystem(psf, system, ffs, modification)
+    system = buildSystem(psf, system, ffs, modification=modification)
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
