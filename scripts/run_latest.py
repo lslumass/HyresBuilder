@@ -46,10 +46,10 @@ params.gpu_id = "0"                                             # gpu_id used fo
 ### set up system and simulation
 """
 utils.setup(params, modification)
-modification: custom function
+modification: custom function object
 if further modify the OpenMM system, define all the changes as one function
 example:
-    def mod():
+    def mod(system):
         system.addForce(customforce)
     util.setup(params, modification=mod)
 """
