@@ -312,6 +312,7 @@ def buildSystem(psf, system, ffs, modification=None):
     # further modification defined in running scripts
     if callable(modification):
         modification(system)
+        
     # 8. Delete the NonbondedForce and HarmonicAngleForce
     system.removeForce(nbforce_index)
     system.removeForce(hmangle_index)
