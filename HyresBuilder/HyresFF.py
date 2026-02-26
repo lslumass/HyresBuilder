@@ -12,7 +12,7 @@ import numpy as np
 
 
 
-def buildSystem(psf, system, ffs):
+def buildSystem(psf, system, ffs, modification=None):
     """
     Constructs a mixed protein-RNA force field system.
     
@@ -23,6 +23,7 @@ def buildSystem(psf, system, ffs):
             - dh: Debye-Huckel screening length
             - lmd: Lambda parameter for charge-charge interactions
             - er: Relative dielectric constant
+        modification: custome defined function for further modifying system
     
     Returns:
         Modified OpenMM system with mixed protein-RNA force field
@@ -308,7 +309,9 @@ def buildSystem(psf, system, ffs):
             system.addForce(pairGU)
             print(pairGU.getNumAcceptors(), pairGU.getNumDonors(), 'GU')
 
-   
+    # further modification defined in running scripts
+    if modification:
+        modification
     # 8. Delete the NonbondedForce and HarmonicAngleForce
     system.removeForce(nbforce_index)
     system.removeForce(hmangle_index)

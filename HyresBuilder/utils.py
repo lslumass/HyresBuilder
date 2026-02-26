@@ -72,21 +72,10 @@ def cal_dh(c_ion, T):
 #    dh = 0.304/np.sqrt(c_ion)   # Debye-Huckel screening length in nm at room temperature
 #    return dh*unit.nanometer
 
-def setup(args, dt, er_ref=60,  pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
+def setup(params, modification=None):
     """
     Set up the simulation system with given parameters.
-    Parameters:
-    -----------
-    args: argparse.Namespace
-        The command line arguments containing simulation parameters.
-    dt: float
-        The time step for the integrator.
-    pressure: unit.Quantity
-        The pressure for the MonteCarloBarostat (default is 1 atm).
-    friction: unit.Quantity
-        The friction coefficient for the Langevin integrator (default is 0.1 / ps).
-    gpu_id: str
-        The GPU device index to use (default is "0").
+    modification: custom function for modify the system
     Returns:
     --------
     system: openmm.System
@@ -97,12 +86,18 @@ def setup(args, dt, er_ref=60,  pressure=1*unit.atmosphere, friction=0.1/unit.pi
 
     print('\n################## set up simulation parameters ###################')
     # 1. input parameters
-    pdb_file = args.pdb
-    psf_file = args.psf
-    T = args.temp
-    c_ion = args.salt/1000.0                                   # concentration of ions in M
-    c_Mg = args.Mg                                           # concentration of Mg in mM
-    ensemble = args.ens
+    pdb_file = params.pdb
+    psf_file = params.psf
+    T = params.temp
+    c_ion = params.salt/1000.0                                   # concentration of ions in M
+    c_Mg = params.Mg                                           # concentration of Mg in mM
+    ensemble = params.ens
+
+    dt = params.dt
+    er_ref = params.er_ref
+    pressure = params.pressure
+    friction = params.friction
+    gpu_id = params.gpu_id
     
     # 2. set pbc and box vector
     if ensemble == 'non' and c_Mg != 0.0:
@@ -110,12 +105,12 @@ def setup(args, dt, er_ref=60,  pressure=1*unit.atmosphere, friction=0.1/unit.pi
         exit(1)
     if ensemble in ['NPT', 'NVT']:
         # pbc box length
-        if len(args.box) == 1:
-            lx, ly, lz = args.box[0], args.box[0], args.box[0]
-        elif len(args.box) == 3:
-            lx = args.box[0]
-            ly = args.box[1]
-            lz = args.box[2]
+        if len(params.box) == 1:
+            lx, ly, lz = params.box[0], params.box[0], params.box[0]
+        elif len(params.box) == 3:
+            lx = params.box[0]
+            ly = params.box[1]
+            lz = params.box[2]
         else:
             print("Error: You must provide either one or three values for box.")
             exit(1)
@@ -169,7 +164,7 @@ def setup(args, dt, er_ref=60,  pressure=1*unit.atmosphere, friction=0.1/unit.pi
 
     # 6. construct force field
     print('\n################## build system ###################')
-    system = buildSystem(psf, system, ffs)
+    system = buildSystem(psf, system, ffs, modification)
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')

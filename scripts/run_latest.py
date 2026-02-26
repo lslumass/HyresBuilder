@@ -24,8 +24,8 @@ parser.add_argument('-b', "--box", nargs='+', type=float, help="box dimensions i
 parser.add_argument('-s', "--salt", default=150.0, type=float, help="salt concentration in mM, default is 150.0 mM")
 parser.add_argument('-e', "--ens", default='NVT', type=str, help="simulation ensemble, NPT, NVT, or non, non is for non-periodic system")
 parser.add_argument('-m', "--Mg", default=0.0, type=float, help="Mg2+ concentration in mM")
-args = parser.parse_args()
-out = args.out
+params = parser.parse_args()
+out = params.out
 
 # simulation parameters
 dt_equil = 0.001*unit.picoseconds		                        # time step for equilibration, for bad configuration, use 0.0001 ps
@@ -35,15 +35,25 @@ equil_step = 10000                                              # equilibration 
 log_freq = 1250                                                 # 10 ps: frequency of log file
 traj_freq = 5000                                                # 40 ps: frequency of trajectory file
 pdb_freq = 12500000                                             # 100 ns: frequence of dpd_traj file
-chk_freq = 125000                                              # 1 ns: frequence of checkpoint file
-pressure = 1*unit.atmosphere                                    # pressure in NPT
-friction = 0.1/unit.picosecond                                  # friction coefficient in Langevin
+chk_freq = 125000                                               # 1 ns: frequence of checkpoint file
+
+params.dt = dt_equil
+params.pressure = 1*unit.atmosphere                             # pressure in NPT
+params.friction = 0.1/unit.picosecond                           # friction coefficient in Langevin
+params.er_ref = 60.0                                            # dielectric constant
+params.gpu_id = "0"                                             # gpu_id used for simulation
 
 ### set up system and simulation
-# utils.setup(model, parser, params, dt, pressure, friction, gpu_id)
-# model: select from 'protein', 'RNA', 'mix'
-# default set: pressure = 1*unit.atmosphere, friction = 0.1/unit.picosecond, gpu_id = "0"
-system, sim = utils.setup(args=args, dt=dt_equil)
+"""
+utils.setup(params, modification)
+modification: custom function
+if further modify the OpenMM system, define all the changes as one function
+example:
+    def mod():
+        system.addForce(customforce)
+    util.setup(params, modification=mod)
+"""
+system, sim = utils.setup(params)
 
 """
 if further modify the system, add this line below:
