@@ -1,0 +1,17 @@
+SEQRES   1 A    3  MET GLY MET
+CRYST1    0.000    0.000    0.000  90.00  90.00  90.00 P 1           1
+ATOM      1  C   MET A  70       1.520   0.000   0.000  1.00  0.00           C
+ATOM      2  O   MET A  70       2.165   0.803  -0.673  1.00  0.00           O
+ATOM      3  N   GLY A  71       2.116  -0.911   0.764  1.00  0.00           N
+ATOM      4  H   GLY A  71       1.558  -1.528   1.282  1.00  0.00           H
+ATOM      5  CA  GLY A  71       3.561  -1.002   0.841  1.00  0.00           C
+ATOM      6  C   GLY A  71       4.061  -2.364   0.386  1.00  0.00           C
+ATOM      7  O   GLY A  71       5.077  -2.482  -0.298  1.00  0.00           O
+ATOM      8  N   MET A  72       3.346  -3.419   0.765  1.00  0.00           N
+ATOM      9  H   MET A  72       2.545  -3.272   1.310  1.00  0.00           H
+TER      10      MET A  72
+CONECT    1    2    3
+CONECT    2    1
+CONECT    8    9    6
+CONECT    9    8
+END
