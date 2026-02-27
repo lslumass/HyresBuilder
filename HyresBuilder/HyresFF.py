@@ -14,7 +14,7 @@ import numpy as np
 
 def buildSystem(psf, system, ffs, modification=None):
     """
-    Constructs a mixed protein-RNA force field system.
+    Constructs a protein and/or RNA force field.
     
     Args:
         psf: PSF file containing topology information
@@ -26,12 +26,12 @@ def buildSystem(psf, system, ffs, modification=None):
         modification: custome defined function for further modifying system
     
     Returns:
-        Modified OpenMM system with mixed protein-RNA force field
+        Modified OpenMM system with protein and/or RNA force field
     
     Raises:
         ValueError: If required parameters or forces are missing
     """
-    print('\n################# constructe the protein-RNA mixed force field ####################')
+    print('\n################# constructe HyRes and/or iConRNA force field ####################')
     top = psf.topology
     
     # 1. Validate force field parameters
