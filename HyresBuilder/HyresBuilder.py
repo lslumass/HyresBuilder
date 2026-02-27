@@ -615,11 +615,12 @@ def build_peptide(name, sequence, random_conf=True):
     for i, aa in enumerate(sequence):
         # Randomly pick between base and alternate conformation
         alt = aa + '0'
-        res_key = random.choice([aa, alt]) if (random_conf and alt in AMINO_ACID_STRUCTURES) else aa
-#        if random_conf and alt in AMINO_ACID_STRUCTURES and (i + 1) % 6 == 0:
-#            res_key = alt
-#        else:
-#            res_key = aa
+#        res_key = random.choice([aa, alt]) if (random_conf and alt in AMINO_ACID_STRUCTURES) else aa
+        if random_conf and alt in AMINO_ACID_STRUCTURES and (i + 1) % 6 == 0:
+            res_key = random.choice([aa, alt]) if (random_conf and alt in AMINO_ACID_STRUCTURES) else aa
+            #res_key = alt
+        else:
+            res_key = aa
         
         if aa not in AMINO_ACID_STRUCTURES:
             raise ValueError(f"Amino acid '{aa}' not found in structure database")
