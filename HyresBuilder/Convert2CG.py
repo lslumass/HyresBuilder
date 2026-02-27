@@ -769,75 +769,6 @@ def at2icon(pdb_in, pdb_out):
     
     print(f'At2iCon conversion done, output written to {pdb_out}')
 
-
-def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
-    """
-    Convert all-atom PDB to CG PDB (HyRes for protein or iConRNA for RNA).
-    
-    Parameters:
-    -----------
-    pdb_in : str
-        Input all-atom PDB file
-    pdb_out : str
-        Output CG PDB file
-    terminal : str
-        Charge status of protein terminus: 'neutral', 'charged', 'NT', 'CT'
-    cleanup : bool
-        Whether to clean up temporary files
-    
-    Returns:
-    --------
-    tuple : (pdb_file, psf_file)
-    """
-    # Load topology files
-    RNA_topology, _ = load_ff('RNA')
-    protein_topology, _ = load_ff('Protein')
-    
-    # Set up psfgen
-    gen = PsfGen()
-    gen.read_topology(RNA_topology)
-    gen.read_topology(protein_topology)
-    
-    # Split chains and convert
-    types, segids = split_chains(pdb_in)
-    
-    for i, (mol_type, segid) in enumerate(zip(types, segids)):
-        tmp_pdb = f"aa2cgtmp_{i}_aa.pdb"
-        tmp_cg_pdb = f"aa2cgtmp_{i}_cg.pdb"
-        
-        if mol_type == 'P':
-            at2hyres(tmp_pdb, tmp_cg_pdb)
-            gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False)
-            gen.read_coords(segid=segid, filename=tmp_cg_pdb)
-        elif mol_type == 'R':
-            at2icon(tmp_pdb, tmp_cg_pdb)
-            gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, 
-                          auto_angles=False, auto_dihedrals=False)
-            gen.read_coords(segid=segid, filename=tmp_cg_pdb)
-        else:
-            raise ValueError(f"Unsupported molecule type: {mol_type}")
-    
-    # Write PDB file
-    gen.write_pdb(pdb_out)
-    print(f"Conversion done, output written to {pdb_out}")
-    
-    # Set terminus charge status
-    for segid in gen.get_segids():
-        set_terminus(gen, segid, terminal)
-    
-    # Write PSF file
-    psf_file = f'{pdb_out[:-4]}.psf'
-    gen.write_psf(filename=psf_file)
-    print(f"PSF file written to {psf_file}")
-    
-    # Clean up temporary files
-    if cleanup:
-        for file in os.listdir():
-            if file.startswith("aa2cgtmp_") and file.endswith(".pdb"):
-                os.remove(file)
-    
-    return pdb_out, psf_file
-
 def fix_pdb_serial(pdb_file, output_file=None):
     """
     Fix PDB files where atom serial numbers exceed 99999 and have been written
@@ -906,6 +837,79 @@ def fix_pdb_serial(pdb_file, output_file=None):
     print(f"Fixed serial numbers for {serial} atoms. Output saved to {output_file}")
     return output_file
 
+def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
+    """
+    Convert all-atom PDB to CG PDB (HyRes for protein or iConRNA for RNA).
+    
+    Parameters:
+    -----------
+    pdb_in : str
+        Input all-atom PDB file
+    pdb_out : str
+        Output CG PDB file
+    terminal : str
+        Charge status of protein terminus: 'neutral', 'charged', 'NT', 'CT'
+    cleanup : bool
+        Whether to clean up temporary files
+    
+    Returns:
+    --------
+    tuple : (pdb_file, psf_file)
+    """
+    # Load topology files
+    RNA_topology, _ = load_ff('RNA')
+    protein_topology, _ = load_ff('Protein')
+    
+    # Set up psfgen
+    gen = PsfGen()
+    gen.read_topology(RNA_topology)
+    gen.read_topology(protein_topology)
+    
+    # Split chains and convert
+    types, segids = split_chains(pdb_in)
+    
+    for i, (mol_type, segid) in enumerate(zip(types, segids)):
+        tmp_pdb = f"aa2cgtmp_{i}_aa.pdb"
+        tmp_cg_pdb = f"aa2cgtmp_{i}_cg.pdb"
+        
+        if mol_type == 'P':
+            at2hyres(tmp_pdb, tmp_cg_pdb)
+            gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False)
+            gen.read_coords(segid=segid, filename=tmp_cg_pdb)
+        elif mol_type == 'R':
+            at2icon(tmp_pdb, tmp_cg_pdb)
+            gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, 
+                          auto_angles=False, auto_dihedrals=False)
+            gen.read_coords(segid=segid, filename=tmp_cg_pdb)
+        else:
+            raise ValueError(f"Unsupported molecule type: {mol_type}")
+    
+    # Write PDB file
+    gen.write_pdb(pdb_out)
+    print(f"Conversion done, output written to {pdb_out}")
+    
+    # Set terminus charge status
+    for segid in gen.get_segids():
+        set_terminus(gen, segid, terminal)
+    
+    # Write PSF file
+    psf_file = f'{pdb_out[:-4]}.psf'
+    gen.write_psf(filename=psf_file)
+    print(f"PSF file written to {psf_file}")
+    
+    # Clean up temporary files
+    if cleanup:
+        for file in os.listdir():
+            if file.startswith("aa2cgtmp_") and file.endswith(".pdb"):
+                os.remove(file)
+    
+    # psfgen-python cannot encode serial numbers > 99999; it writes '******'
+    # for those atoms. Re-number every ATOM/HETATM record sequentially using
+    # hybrid-36 so the output PDB is always valid.
+    fix_pdb_serial(pdb_out, pdb_out)
+
+    return pdb_out, psf_file
+
 def main():
     """Command-line interface for Convert2CG."""
     import argparse
@@ -929,10 +933,7 @@ def main():
     else:
         pdb_out, psf_file = at2cg(args.aa, args.cg, terminal=args.terminal)
 
-    # psfgen-python cannot encode serial numbers > 99999; it writes '******'
-    # for those atoms. Re-number every ATOM/HETATM record sequentially using
-    # hybrid-36 so the output PDB is always valid.
-    fix_pdb_serial(pdb_out, pdb_out)
+    print(f'Done! {pdb_out}, {pdb_psf} for CG simulation.')
 
 if __name__ == '__main__':
     main()
