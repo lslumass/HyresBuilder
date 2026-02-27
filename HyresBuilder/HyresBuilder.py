@@ -616,7 +616,7 @@ def build_peptide(name, sequence, random_conf=True):
         # Randomly pick between base and alternate conformation
         alt = aa + '0'
 #        res_key = random.choice([aa, alt]) if (random_conf and alt in AMINO_ACID_STRUCTURES) else aa
-        if random_conf and alt in AMINO_ACID_STRUCTURES and (i + 1) % 6 == 0:
+        if random_conf and alt in AMINO_ACID_STRUCTURES and (i + 1) % 4 == 0:
             res_key = random.choice([aa, alt]) if (random_conf and alt in AMINO_ACID_STRUCTURES) else aa
             #res_key = alt
         else:
