@@ -838,28 +838,101 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
     
     return pdb_out, psf_file
 
+def fix_pdb_serial(pdb_file, output_file=None):
+    """
+    Fix PDB files where atom serial numbers exceed 99999 and have been written
+    as '******' by psfgen-python. Re-numbers all ATOM/HETATM records sequentially
+    using hybrid-36 encoding so serial numbers beyond 99999 are represented as
+    base-36 alphanumeric strings (A0000–Z9999, then a0000–z9999).
+
+    Parameters:
+    -----------
+    pdb_file : str
+        Path to the input PDB file containing '******' serial fields.
+    output_file : str, optional
+        Path to the output fixed PDB file.
+        If None, the input file is overwritten in-place.
+
+    Returns:
+    --------
+    str : Path to the fixed PDB file.
+    """
+
+    def _encode_serial(n):
+        """Encode integer to hybrid-36 format for PDB serial number field (5 chars)."""
+        if n < 100000:
+            return f"{n:5d}"
+
+        n -= 100000
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+        if n < 26 * (36 ** 4):          # uppercase range: A0000 – Z9ZZZ
+            result = []
+            for _ in range(4):
+                n, remainder = divmod(n, 36)
+                result.append(chars[remainder])
+            result.append(chr(ord('A') + n))
+            return ''.join(reversed(result))
+
+        n -= 26 * (36 ** 4)              # lowercase range: a0000 – z9ZZZ
+        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
+        result = []
+        for _ in range(4):
+            n, remainder = divmod(n, 36)
+            result.append(chars_lower[remainder])
+        result.append(chr(ord('a') + n))
+        return ''.join(reversed(result))
+
+    if output_file is None:
+        output_file = pdb_file
+
+    fixed_lines = []
+    serial = 0
+
+    with open(pdb_file, 'r') as f:
+        lines = f.readlines()
+
+    for line in lines:
+        if line.startswith(('ATOM  ', 'HETATM')):
+            serial += 1
+            # Replace columns 6–11 (0-indexed) with re-encoded serial.
+            # Fixes both '******' entries and any truncated numeric serials.
+            line = line[:6] + _encode_serial(serial) + line[11:]
+        fixed_lines.append(line)
+
+    with open(output_file, 'w') as f:
+        f.writelines(fixed_lines)
+
+    print(f"Fixed serial numbers for {serial} atoms. Output saved to {output_file}")
+    return output_file
 
 def main():
     """Command-line interface for Convert2CG."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(
         description='Convert2CG: All-atom to HyRes/iConRNA converting'
     )
     parser.add_argument('aa', help='Input PDB file')
     parser.add_argument('cg', help='Output PDB file')
-    parser.add_argument('--hydrogen', action='store_true', help='add backbone amide hydrogen (H-N only), default False')
-    parser.add_argument('--terminal', '-t', type=str, default='neutral', 
-                       help='Charge status of terminus: neutral, charged, NT, CT')
-    
+    parser.add_argument('--hydrogen', action='store_true',
+                        help='add backbone amide hydrogen (H-N only), default False')
+    parser.add_argument('--terminal', '-t', type=str, default='neutral',
+                        help='Charge status of terminus: neutral, charged, NT, CT')
+
     args = parser.parse_args()
     warnings.filterwarnings('ignore', category=UserWarning)
+
     if args.hydrogen:
         pdb_addH = add_backbone_hydrogen(args.aa, f'{args.aa[:-4]}_addH.pdb')
-        at2cg(pdb_addH, args.cg, terminal=args.terminal)
+        pdb_out, psf_file = at2cg(pdb_addH, args.cg, terminal=args.terminal)
     else:
-        at2cg(args.aa, args.cg, terminal=args.terminal)
+        pdb_out, psf_file = at2cg(args.aa, args.cg, terminal=args.terminal)
 
+    # psfgen-python cannot encode serial numbers > 99999; it writes '******'
+    # for those atoms. Re-number every ATOM/HETATM record sequentially using
+    # hybrid-36 so the output PDB is always valid.
+    fix_pdb_serial(pdb_out, pdb_out)
 
 if __name__ == '__main__':
     main()
