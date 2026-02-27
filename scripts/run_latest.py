@@ -1,5 +1,6 @@
 """
 Date: Sep 29, 2025
+Modified: Feb 26, 2026
 Latest running script for HyRes and iConRNA simulation
 Aauthor: Shanlong Li
 email: shanlongli@umass.edu
