@@ -606,7 +606,7 @@ def write_pdb(atoms, filename):
             f.write(line)
         f.write("END\n")
 
-def build_peptide(name, sequence):
+def build_peptide(name, sequence, random_conf=True):
     output_file = f"{name}.pdb"
     all_atoms = []
     atom_counter = 1
@@ -615,8 +615,8 @@ def build_peptide(name, sequence):
     for i, aa in enumerate(sequence):
         # Randomly pick between base and alternate conformation
         alt = aa + '0'
-        res_key = random.choice([aa, alt]) if alt in AMINO_ACID_STRUCTURES else aa
-
+        res_key = random.choice([aa, alt]) if (random_conf and alt in AMINO_ACID_STRUCTURES) else aa
+        
         if aa not in AMINO_ACID_STRUCTURES:
             raise ValueError(f"Amino acid '{aa}' not found in structure database")
 
@@ -657,13 +657,15 @@ def main():
                         help='pdb file name, output will be name.pdb. default: hyres.pdb')
     parser.add_argument('sequence', type=str,
                         help='Amino acid sequence (single-letter codes, e.g., ACDEFG)')
+    parser.add_argument('--linear', action='store_true',
+                        help='Build linear chain using base conformation only')
     
     args = parser.parse_args()
     name = args.name
     sequence = args.sequence.upper()
     
     # Build peptide
-    build_peptide(name, sequence)
+    build_peptide(name, sequence, random_conf=not args.linear)
 
 if __name__ == "__main__":
     main()
