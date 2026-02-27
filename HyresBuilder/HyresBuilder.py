@@ -646,7 +646,17 @@ def build_peptide(name, sequence, random_conf=True):
                 atom_counter += 1
             all_atoms.extend(atoms)
 
+    # Find the first CA coords
+    first_CA = next(a['coords'] for a in all_atoms if a['name'] == 'CA')
+
+    # Translate all atoms so first CA is at (-900, -900, -900)
+    offset = np.array([-900.0, 900.0, 900.0]) - first_CA
+    for atom in all_atoms:
+        atom['coords'] += offset
+
+    # Write PDB file
     write_pdb(all_atoms, output_file)
+
     print(f"Peptide chain built: {len(sequence)} residues, {len(all_atoms)} atoms")
     print(f"Output written to: {output_file}")
 
