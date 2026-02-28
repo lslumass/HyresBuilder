@@ -152,3 +152,5 @@ options:
 1. TDP43 (90K beads): 1.9 us/day   
 2. EWSLCD (160K beads): 1.1 us/day   
 3. 0N4R Tau fibril (230K beads): 750 ns/day
+
+<img src="./examples/benchmark_system/benchmark.png" height="300"/>
