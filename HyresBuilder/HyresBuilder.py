@@ -606,44 +606,84 @@ def write_pdb(atoms, filename):
             f.write(line)
         f.write("END\n")
 
-def build_peptide(name, sequence, random_conf=True):
+def detect_clashes(all_atoms, threshold=4.5):
+    """Fast clash detection using CA atoms only. Threshold hardcoded to 3.8 Å."""
+    ca_atoms = [a for a in all_atoms if a['name'] == 'CA']
+    coords = np.array([a['coords'] for a in ca_atoms])
+    diff = coords[:, None, :] - coords[None, :, :]
+    dist = np.sqrt((diff ** 2).sum(axis=-1))
+    np.fill_diagonal(dist, np.inf)
+    idx = np.arange(len(dist) - 1)
+    dist[idx, idx + 1] = np.inf
+    dist[idx + 1, idx] = np.inf
+
+    ii, jj = np.where((dist < threshold) & (dist > 0))
+    clashes = [(i, j) for i, j in zip(ii, jj) if i < j]
+
+    if clashes:
+        print(f"  {len(clashes)} CA clashes detected (< {threshold} Å):")
+        for i, j in clashes:
+            a1, a2 = ca_atoms[i], ca_atoms[j]
+            print(f"    {a1['res_name']}{a1['res_num']}-CA vs "
+                  f"{a2['res_name']}{a2['res_num']}-CA: {dist[i,j]:.2f} Å")
+    return clashes
+
+def build_peptide(name, sequence, random_conf=True, check_clash=False, max_retries=10):
     output_file = f"{name}.pdb"
-    all_atoms = []
-    atom_counter = 1
-    ref = None
 
-    for i, aa in enumerate(sequence):
-        # Randomly pick between base and alternate conformation
-        alt = aa + '0'
-        if random_conf and alt in AMINO_ACID_STRUCTURES and (i + 1) % 6 == 0:
-            res_key = alt
-        else:
-            res_key = aa
-        
-        if aa not in AMINO_ACID_STRUCTURES:
-            raise ValueError(f"Amino acid '{aa}' not found in structure database")
+    for attempt in range(1, max_retries + 1):
+        all_atoms = []
+        atom_counter = 1
+        ref = None
 
-        if i == 0:
-            res0 = get_amino_acid(res_key)  # <-- use res_key
-            ref = res0
-            atoms = [{'index': a['index'], 'name': a['name'],
-                    'coords': a['coords'].copy()} for a in res0[2:-2]]
-            for atom in atoms:
-                atom['res_num'] = i + 1
-                atom['res_name'] = AA_THREE_LETTER.get(aa, aa)
-                atom['global_index'] = atom_counter
-                atom_counter += 1
-            all_atoms.extend(atoms)
-        else:
-            ref, new_res = align_residues(ref, sequence[i-1], res_key)  # <-- use res_key
-            atoms = [{'index': a['index'], 'name': a['name'],
-                    'coords': a['coords'].copy()} for a in new_res]
-            for atom in atoms:
-                atom['res_num'] = i + 1
-                atom['res_name'] = AA_THREE_LETTER.get(aa, aa)
-                atom['global_index'] = atom_counter
-                atom_counter += 1
-            all_atoms.extend(atoms)
+        for i, aa in enumerate(sequence):
+            alt = aa + '0'
+            if random_conf and alt in AMINO_ACID_STRUCTURES and (i + 1) % 4 == 0:
+                res_key = random.choice([aa, alt])
+            else:
+                res_key = aa
+
+            if aa not in AMINO_ACID_STRUCTURES:
+                raise ValueError(f"Amino acid '{aa}' not found in structure database")
+
+            if i == 0:
+                res0 = get_amino_acid(res_key)
+                ref = res0
+                atoms = [{'index': a['index'], 'name': a['name'],
+                        'coords': a['coords'].copy()} for a in res0[2:-2]]
+                for atom in atoms:
+                    atom['res_num'] = i + 1
+                    atom['res_name'] = AA_THREE_LETTER.get(aa, aa)
+                    atom['global_index'] = atom_counter
+                    atom_counter += 1
+                all_atoms.extend(atoms)
+            else:
+                ref, new_res = align_residues(ref, sequence[i-1], res_key)
+                atoms = [{'index': a['index'], 'name': a['name'],
+                        'coords': a['coords'].copy()} for a in new_res]
+                for atom in atoms:
+                    atom['res_num'] = i + 1
+                    atom['res_name'] = AA_THREE_LETTER.get(aa, aa)
+                    atom['global_index'] = atom_counter
+                    atom_counter += 1
+                all_atoms.extend(atoms)
+
+        # Translate so first CA is at (5000, 5000, 5000)
+        first_CA = next(a['coords'] for a in all_atoms if a['name'] == 'CA')
+        offset = np.array([5000.0, 5000.0, 5000.0]) - first_CA
+        for atom in all_atoms:
+            atom['coords'] += offset
+
+        # Clash check
+        if not random_conf or not check_clash:
+            break
+        print(f"Attempt {attempt}/{max_retries}:")
+        clashes = detect_clashes(all_atoms)
+        if not clashes:
+            print("  No clashes, build successful.")
+            break
+        if attempt == max_retries:
+            print(f"Warning: could not resolve clashes after {max_retries} attempts, writing anyway.")
 
     write_pdb(all_atoms, output_file)
     print(f"Peptide chain built: {len(sequence)} residues, {len(all_atoms)} atoms")
@@ -662,13 +702,15 @@ def main():
                         help='Amino acid sequence (single-letter codes, e.g., ACDEFG)')
     parser.add_argument('--linear', action='store_true',
                         help='Build linear chain using base conformation only')
-    
+    parser.add_argument('--check-clash', action='store_true', default=False,
+                        help='Check for CA clashes and rebuild if found (default: False)')
+
     args = parser.parse_args()
     name = args.name
     sequence = args.sequence.upper()
     
     # Build peptide
-    build_peptide(name, sequence, random_conf=not args.linear)
+    build_peptide(name, sequence, random_conf=not args.linear, check_clash=args.check_clash)
 
 if __name__ == "__main__":
     main()
