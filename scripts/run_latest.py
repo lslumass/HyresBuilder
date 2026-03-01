@@ -2,7 +2,7 @@
 Date: Sep 29, 2025
 Modified: Feb 26, 2026
 Latest running script for HyRes and iConRNA simulation
-Aauthor: Shanlong Li
+Author: Shanlong Li
 email: shanlongli@umass.edu
 """
 
@@ -29,14 +29,14 @@ params = parser.parse_args()
 out = params.out
 
 # simulation parameters
-dt_equil = 0.001*unit.picoseconds		                        # time step for equilibration, for bad configuration, use 0.0001 ps
+dt_equil = 0.001*unit.picoseconds		                      # time step for equilibration, for bad configuration, use 0.0001 ps
 dt_prod = 0.008*unit.picoseconds                                # time step for production simulation
 prod_step = 250000000                                           # production steps
 equil_step = 10000                                              # equilibration steps
-log_freq = 1250                                                 # 10 ps: frequency of log file
-traj_freq = 5000                                                # 40 ps: frequency of trajectory file
-pdb_freq = 12500000                                             # 100 ns: frequence of dpd_traj file
-chk_freq = 125000                                               # 1 ns: frequence of checkpoint file
+log_freq = 1250                                                 # frequency of log file
+traj_freq = 5000                                                # frequency of trajectory file
+pdb_freq = 12500000                                             # frequency of dpd_traj file
+chk_freq = 125000                                               # frequence of checkpoint file
 
 params.dt = dt_equil
 params.pressure = 1*unit.atmosphere                             # pressure in NPT
