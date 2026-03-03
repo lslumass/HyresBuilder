@@ -90,6 +90,40 @@ def posre_amyloid(system, pdb, alignment_file):
     # add position restraint
     posres_CAs(system, pdb, grp)
 
+def freeze_amyloid(system, pdb, alignment_file):
+    """
+    system: openmm.System
+    pdb: openmm.app.PDBFile
+    alignment_file: alignment.ali when build fibril
+
+    set atom mass as 0.0 in the fibril core region
+    """
+    with open(alignment_file, 'r') as f:
+        lines = f.readlines()
+    blocks = [index for index, line in enumerate(lines) if line.startswith('>')]
+    b1, b2 = blocks[:2]
+    #nchains = b2 - b1 -3        # count the number of chains based on the lines in alignment.ali
+    missings = lines[b1+2:b2-1]     # get all the sequences for each chain, "-" for missing residue
+
+    chains = list(pdb.topology.chains())
+    if len(chains) != len(missings):
+        print(f"Unconsistent chain number! Found {len(chains)} in pdb file, but {len(missings)} in alignment.ali")
+        exit(1)
+    # get the CA index for un-missing residues
+    grp = []
+    for chain, sequence in zip(chains, missings):
+        residues = list(chain.residues())
+        nres = len(residues)
+        seq = sequence[:nres]
+        ca = None
+        for res, s in zip(residues, seq):
+            if s != '-':
+                for atom in res.atoms():
+                    system.setParticleMass(atom.index, 0.0*unit.amu)
+
+#def freeze_residues(system, pdb, residue_list):
+
+
 def comres_xyz(system, pdb, groups):
     """
     system: openmm.System
