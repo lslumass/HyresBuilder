@@ -20,7 +20,23 @@ def add_backbone_hydrogen(pdb_file, output_file):
     
     def parse_atom_line(line):
         """Parse a PDB ATOM line and extract relevant information."""
-        atom_serial = int(line[6:11].strip())
+        def parse_serial(s):
+            """Handle both decimal and hybrid-36/hex encoded serial numbers."""
+            s = s.strip()
+            try:
+                return int(s)
+            except ValueError:
+                # Try hexadecimal (used when serial > 99999)
+                try:
+                    return int(s, 16)
+                except ValueError:
+                    # Full hybrid-36: uppercase letters start at 100000, lowercase at 1316736
+                    if s[0].isupper():
+                        return (ord(s[0]) - ord('A')) * 36**4 + int(s[1:], 36) + 100000
+                    else:
+                        return (ord(s[0]) - ord('a')) * 36**4 + int(s[1:], 36) + 1316736
+                    
+        atom_serial = parse_serial(line[6:11])
         atom_name = line[12:16].strip()
         residue_name = line[17:20].strip()
         chain_id = line[21]
@@ -45,10 +61,63 @@ def add_backbone_hydrogen(pdb_file, output_file):
             'line': line
         }
     
-    def format_atom_line(serial, atom_name, residue_name, chain_id, residue_seq, 
-                        coords, occupancy="1.00", temp_factor="0.00", element="H"):
+    def encode_serial(n):
+        """Encode integer to hybrid-36 format for PDB serial number field (5 chars)."""
+        if n < 100000:
+            return f"{n:5d}"
+
+        n -= 100000
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+        if n < 26 * (36**4):  # uppercase range
+            result = []
+            for _ in range(4):
+                n, remainder = divmod(n, 36)
+                result.append(chars[remainder])
+            result.append(chr(ord('A') + n))
+            return ''.join(reversed(result))
+
+        n -= 26 * (36**4)  # lowercase range
+        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
+        result = []
+        for _ in range(4):
+            n, remainder = divmod(n, 36)
+            result.append(chars_lower[remainder])
+        result.append(chr(ord('a') + n))
+        return ''.join(reversed(result))
+
+
+    def encode_resseq(n):
+        """Encode integer to hybrid-36 format for residue sequence field (4 chars)."""
+        if n < 10000:
+            return f"{n:4d}"
+
+        n -= 10000
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+        if n < 26 * (36**3):
+            result = []
+            for _ in range(3):
+                n, remainder = divmod(n, 36)
+                result.append(chars[remainder])
+            result.append(chr(ord('A') + n))
+            return ''.join(reversed(result))
+
+        n -= 26 * (36**3)
+        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
+        result = []
+        for _ in range(3):
+            n, remainder = divmod(n, 36)
+            result.append(chars_lower[remainder])
+        result.append(chr(ord('a') + n))
+        return ''.join(reversed(result))
+
+    def format_atom_line(serial, atom_name, residue_name, chain_id, residue_seq,
+                         coords, occupancy="1.00", temp_factor="0.00", element="H"):
         """Format an ATOM line in PDB format."""
-        return (f"ATOM  {serial:5d}  {atom_name:3s} {residue_name:3s} {chain_id}{residue_seq:4d}    "
+        serial_str = encode_serial(serial)
+        resseq_str = encode_resseq(residue_seq)
+        return (f"ATOM  {serial_str}  {atom_name:3s} {residue_name:3s} {chain_id}{resseq_str}    "
                 f"{coords[0]:8.3f}{coords[1]:8.3f}{coords[2]:8.3f}{occupancy:>6s}{temp_factor:>6s}"
                 f"          {element:>2s}\n")
     
@@ -222,6 +291,7 @@ def add_backbone_hydrogen(pdb_file, output_file):
     print(f"Added backbone hydrogen atoms. Output saved to {output_file}")
     return output_file
 
+
 def split_chains(pdb):
     """Split PDB file into separate chains and identify their types."""
     aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
@@ -229,6 +299,9 @@ def split_chains(pdb):
     rnas = ["ADE", "GUA", "CYT", "URA"]
     dnas = ["DAD", "DGU", "DCY", "DTH"]
     counts = {'P': 0, 'R': 0, 'D': 0}
+
+    # HIS names
+    HISs = ['HSD', 'HSE', 'HSP', 'HID', 'HIE', 'HIP']
 
     def get_type(resname):
         if resname in aas:
@@ -303,6 +376,8 @@ def split_chains(pdb):
                 chain_id = line[21].strip()
                 segid = line[72:76].strip()
                 resname = line[17:20].strip()
+                if resname in HISs:
+                    resname = 'HIS'
                 
                 # Select the identifier to use
                 identifier = chain_id if use_chain_id else segid
@@ -372,6 +447,32 @@ def at2hyres(pdb_in, pdb_out):
     pdb_out : str
         Output HyRes CG PDB file
     """
+    
+    def encode_serial(n):
+        """Encode integer to hybrid-36 format for PDB serial number field (5 chars)."""
+        if n < 100000:
+            return f"{n:5d}"
+
+        n -= 100000
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+        if n < 26 * (36**4):  # uppercase range
+            result = []
+            for _ in range(4):
+                n, remainder = divmod(n, 36)
+                result.append(chars[remainder])
+            result.append(chr(ord('A') + n))
+            return ''.join(reversed(result))
+
+        n -= 26 * (36**4)  # lowercase range
+        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
+        result = []
+        for _ in range(4):
+            n, remainder = divmod(n, 36)
+            result.append(chars_lower[remainder])
+        result.append(chr(ord('a') + n))
+        return ''.join(reversed(result))
+    
     # Parse PDB file into residues
     residues = {}
     atom_count = 0
@@ -454,6 +555,8 @@ def at2hyres(pdb_in, pdb_out):
             elif resname in single_bead_sc:
                 # Collect all non-backbone atoms as single sidechain bead
                 sc_beads = [[atom['name'] for atom in res.values() if atom['name'] not in bb_atoms]]
+            elif resname in ['HSD', 'HSE', 'HSP', 'HID', 'HIE', 'HIP']:
+                resname = 'HIS'
             elif resname != 'GLY':
                 print(f"Error: Unknown residue type {resname}")
                 exit(1)
@@ -475,7 +578,8 @@ def at2hyres(pdb_in, pdb_out):
             for atom in res.values():
                 if atom['name'] in bb_atoms_1:
                     atom_serial += 1
-                    f.write(f"{atom['record']:4s}  {atom_serial:5d} {atom['name']:2s}   "
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"{atom['record']:4s}  {serial_str} {atom['name']:2s}   "
                            f"{resname:3s} {atom['chain']}{int(atom['resid']):4d}    "
                            f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
                            f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
@@ -484,7 +588,8 @@ def at2hyres(pdb_in, pdb_out):
             bead_names = ['CB', 'CC', 'CD', 'CE', 'CF']
             for i, center in enumerate(sc_centers):
                 atom_serial += 1
-                f.write(f"{first_atom['record']:4s}  {atom_serial:5d} {bead_names[i]:2s}   "
+                serial_str = encode_serial(atom_serial)
+                f.write(f"{first_atom['record']:4s}  {serial_str} {bead_names[i]:2s}   "
                        f"{resname:3s} {first_atom['chain']}{int(first_atom['resid']):4d}    "
                        f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
                        f"{first_atom['occ']:6.2f}{first_atom['bfac']:6.2f}      "
@@ -494,7 +599,8 @@ def at2hyres(pdb_in, pdb_out):
             for atom in res.values():
                 if atom['name'] in bb_atoms_2:
                     atom_serial += 1
-                    f.write(f"{atom['record']:4s}  {atom_serial:5d} {atom['name']:2s}   "
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"{atom['record']:4s}  {serial_str} {atom['name']:2s}   "
                            f"{resname:3s} {atom['chain']}{int(atom['resid']):4d}    "
                            f"{atom['x']:8.3f}{atom['y']:8.3f}{atom['z']:8.3f}"
                            f"{atom['occ']:6.2f}{atom['bfac']:6.2f}      {atom['segid']:4s}\n")
@@ -515,6 +621,32 @@ def at2icon(pdb_in, pdb_out):
     pdb_out : str
         Output iConRNA PDB file
     """
+    
+    def encode_serial(n):
+        """Encode integer to hybrid-36 format for PDB serial number field (5 chars)."""
+        if n < 100000:
+            return f"{n:5d}"
+
+        n -= 100000
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+        if n < 26 * (36**4):  # uppercase range
+            result = []
+            for _ in range(4):
+                n, remainder = divmod(n, 36)
+                result.append(chars[remainder])
+            result.append(chr(ord('A') + n))
+            return ''.join(reversed(result))
+
+        n -= 26 * (36**4)  # lowercase range
+        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
+        result = []
+        for _ in range(4):
+            n, remainder = divmod(n, 36)
+            result.append(chars_lower[remainder])
+        result.append(chr(ord('a') + n))
+        return ''.join(reversed(result))
+    
     # Parse PDB file
     atoms = []
     with open(pdb_in, 'r') as f:
@@ -592,7 +724,8 @@ def at2icon(pdb_in, pdb_out):
                     coords = np.array([[a['x'], a['y'], a['z']] for a in p_atoms])
                     center = coords.mean(axis=0)
                     atom_serial += 1
-                    f.write(f"ATOM  {atom_serial:5d}  P   {resname:3s} {chain}{resid:4d}    "
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"ATOM  {serial_str}  P   {resname:3s} {chain}{resid:4d}    "
                            f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
                            f"  1.00  0.00      {segid:4s}\n")
                 
@@ -602,7 +735,8 @@ def at2icon(pdb_in, pdb_out):
                     coords = np.array([[a['x'], a['y'], a['z']] for a in c1_atoms])
                     center = coords.mean(axis=0)
                     atom_serial += 1
-                    f.write(f"ATOM  {atom_serial:5d}  C1  {resname:3s} {chain}{resid:4d}    "
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"ATOM  {serial_str}  C1  {resname:3s} {chain}{resid:4d}    "
                            f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
                            f"  1.00  0.00      {segid:4s}\n")
                 
@@ -612,7 +746,8 @@ def at2icon(pdb_in, pdb_out):
                     coords = np.array([[a['x'], a['y'], a['z']] for a in c2_atoms])
                     center = coords.mean(axis=0)
                     atom_serial += 1
-                    f.write(f"ATOM  {atom_serial:5d}  C2  {resname:3s} {chain}{resid:4d}    "
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"ATOM  {serial_str}  C2  {resname:3s} {chain}{resid:4d}    "
                            f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
                            f"  1.00  0.00      {segid:4s}\n")
                 
@@ -624,7 +759,8 @@ def at2icon(pdb_in, pdb_out):
                             coords = np.array([[a['x'], a['y'], a['z']] for a in base_atoms])
                             center = coords.mean(axis=0)
                             atom_serial += 1
-                            f.write(f"ATOM  {atom_serial:5d}  {bead_name:2s}  {resname:3s} "
+                            serial_str = encode_serial(atom_serial)
+                            f.write(f"ATOM  {serial_str}  {bead_name:2s}  {resname:3s} "
                                    f"{chain}{resid:4d}    "
                                    f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
                                    f"  1.00  0.00      {segid:4s}\n")
@@ -633,6 +769,73 @@ def at2icon(pdb_in, pdb_out):
     
     print(f'At2iCon conversion done, output written to {pdb_out}')
 
+def fix_pdb_serial(pdb_file, output_file=None):
+    """
+    Fix PDB files where atom serial numbers exceed 99999 and have been written
+    as '******' by psfgen-python. Re-numbers all ATOM/HETATM records sequentially
+    using hybrid-36 encoding so serial numbers beyond 99999 are represented as
+    base-36 alphanumeric strings (A0000–Z9999, then a0000–z9999).
+
+    Parameters:
+    -----------
+    pdb_file : str
+        Path to the input PDB file containing '******' serial fields.
+    output_file : str, optional
+        Path to the output fixed PDB file.
+        If None, the input file is overwritten in-place.
+
+    Returns:
+    --------
+    str : Path to the fixed PDB file.
+    """
+
+    def _encode_serial(n):
+        """Encode integer to hybrid-36 format for PDB serial number field (5 chars)."""
+        if n < 100000:
+            return f"{n:5d}"
+
+        n -= 100000
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+        if n < 26 * (36 ** 4):          # uppercase range: A0000 – Z9ZZZ
+            result = []
+            for _ in range(4):
+                n, remainder = divmod(n, 36)
+                result.append(chars[remainder])
+            result.append(chr(ord('A') + n))
+            return ''.join(reversed(result))
+
+        n -= 26 * (36 ** 4)              # lowercase range: a0000 – z9ZZZ
+        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
+        result = []
+        for _ in range(4):
+            n, remainder = divmod(n, 36)
+            result.append(chars_lower[remainder])
+        result.append(chr(ord('a') + n))
+        return ''.join(reversed(result))
+
+    if output_file is None:
+        output_file = pdb_file
+
+    fixed_lines = []
+    serial = 0
+
+    with open(pdb_file, 'r') as f:
+        lines = f.readlines()
+
+    for line in lines:
+        if line.startswith(('ATOM  ', 'HETATM')):
+            serial += 1
+            # Replace columns 6–11 (0-indexed) with re-encoded serial.
+            # Fixes both '******' entries and any truncated numeric serials.
+            line = line[:6] + _encode_serial(serial) + line[11:]
+        fixed_lines.append(line)
+
+    with open(output_file, 'w') as f:
+        f.writelines(fixed_lines)
+
+    print(f"Fixed serial numbers for {serial} atoms. Output saved to {output_file}")
+    return output_file
 
 def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
     """
@@ -700,30 +903,37 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
             if file.startswith("aa2cgtmp_") and file.endswith(".pdb"):
                 os.remove(file)
     
-    return pdb_out, psf_file
+    # psfgen-python cannot encode serial numbers > 99999; it writes '******'
+    # for those atoms. Re-number every ATOM/HETATM record sequentially using
+    # hybrid-36 so the output PDB is always valid.
+    fix_pdb_serial(pdb_out, pdb_out)
 
+    return pdb_out, psf_file
 
 def main():
     """Command-line interface for Convert2CG."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(
         description='Convert2CG: All-atom to HyRes/iConRNA converting'
     )
     parser.add_argument('aa', help='Input PDB file')
     parser.add_argument('cg', help='Output PDB file')
-    parser.add_argument('--hydrogen', action='store_true', help='add backbone amide hydrogen (H-N only), default False')
-    parser.add_argument('--terminal', '-t', type=str, default='neutral', 
-                       help='Charge status of terminus: neutral, charged, NT, CT')
-    
+    parser.add_argument('--hydrogen', action='store_true',
+                        help='add backbone amide hydrogen (H-N only), default False')
+    parser.add_argument('--terminal', '-t', type=str, default='neutral',
+                        help='Charge status of terminus: neutral, charged, NT, CT')
+
     args = parser.parse_args()
     warnings.filterwarnings('ignore', category=UserWarning)
+
     if args.hydrogen:
         pdb_addH = add_backbone_hydrogen(args.aa, f'{args.aa[:-4]}_addH.pdb')
-        at2cg(pdb_addH, args.cg, terminal=args.terminal)
+        pdb_out, psf_file = at2cg(pdb_addH, args.cg, terminal=args.terminal)
     else:
-        at2cg(args.aa, args.cg, terminal=args.terminal)
+        pdb_out, psf_file = at2cg(args.aa, args.cg, terminal=args.terminal)
 
+    print(f'Done! {pdb_out}, {pdb_psf} for CG simulation.')
 
 if __name__ == '__main__':
     main()
