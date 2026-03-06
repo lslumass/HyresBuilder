@@ -929,11 +929,9 @@ def main():
 
     if args.hydrogen:
         pdb_addH = add_backbone_hydrogen(args.aa, f'{args.aa[:-4]}_addH.pdb')
-        pdb_out, psf_file = at2cg(pdb_addH, args.cg, terminal=args.terminal)
+        at2cg(pdb_addH, args.cg, terminal=args.terminal)
     else:
-        pdb_out, psf_file = at2cg(args.aa, args.cg, terminal=args.terminal)
-
-    print(f'Done! {pdb_out}, {pdb_psf} for CG simulation.')
+        at2cg(args.aa, args.cg, terminal=args.terminal)
 
 if __name__ == '__main__':
     main()
