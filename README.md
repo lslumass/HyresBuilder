@@ -19,11 +19,11 @@ This package is built for the simulation of HyRes protein and iConRNA (iConDNA l
 
 ## Prepare PDB file:   
 ### A. Construct HyRes peptides structure from sequence   
-1. from command line, use ```hyresbuilder```:   
+1. from command line, use ```pepbuilder```:   
 ```
-usage: hyresbuilder [-h] name sequence
+usage: pepbuilder [-h] name sequence
 
-Build a peptide chain from sequence: hyresbuilder name sequence, output: name.pdb.
+Build a peptide chain from sequence: pepbuilder name sequence, output: name.pdb.
 
 positional arguments:
   name        pdb file name, output will be name.pdb. default: hyres.pdb
@@ -32,10 +32,10 @@ positional arguments:
 options:
   -h, --help  show this help message and exit
 ```
-2. from script, use module of ```HyresBuilder.build_peptide```:
+2. from script, use module of ```PeptideBuilder.build_peptide```:
 ```
-from HyresBuilder import HyresBuilder
-HyresBuilder.build_peptide("name", "the sequence")
+from HyresBuilder import PeptideBuilder
+PeptideBuilder.build_peptide("name", "the sequence")
 ```
 then name.pdb will be created.   
 
@@ -137,7 +137,7 @@ options:
 ```python run_latest.py -c conf.pdb -p conf.psf -o test -t 298 -e non -s 150```
 2. simulate RNA chain with 5 mM MgCl2 in a 10 nm cubic box at 298 K:   
 ```python run_latest.py -c conf.pdb -p conf.psf -o test -t 298 -e NVT -b 10 -s 150 -m 5```
-3. slab simulation of condensate at 15*15*50 nm rectangle box:   
+3. slab simulation of condensate at 15x15x50 nm rectangle box:   
 ```python run_latest.py -c conf.pdb -p conf.psf -o test -t 298 -e NVT -b 15 15 50 -s 150```
 
 

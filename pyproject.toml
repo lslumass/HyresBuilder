@@ -44,7 +44,7 @@ Download = "https://github.com/lslumass/HyresBuilder/releases"
 
 [project.scripts]
 convert2cg = "HyresBuilder.Convert2CG:main"
-hyresbuilder = "HyresBuilder.HyresBuilder:main"
+pepbuilder = "HyresBuilder.PeptideBuilder:main"
 rnabuilder = "HyresBuilder.RNABuilder:main"
 genpsf = "HyresBuilder.GenPsf:main"
 mutate = "HyresBuilder.Mutator:main"
