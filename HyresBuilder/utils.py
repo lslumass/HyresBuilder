@@ -130,7 +130,9 @@ def setup(params, modification=None):
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     # Mg-P interaction
     lmd = nMg2lmd(c_Mg, T, RNA='rA')
-    print(f'er: {er}, dh: {dh}, lmd: {lmd}')
+    print(f"dielectric constant: er = {er:.2f}")
+    print(f"Debye screening length: dh = {dh:.2f}")
+    print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
     ffs = {
         'temp': T,                                                  # Temperature
         'lmd': lmd,                                                  # Charge scaling factor of P-
