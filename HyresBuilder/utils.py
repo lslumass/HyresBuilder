@@ -131,7 +131,7 @@ def setup(params, modification=None):
     # Mg-P interaction
     lmd = nMg2lmd(c_Mg, T, RNA='rA')
     print(f"dielectric constant: er = {er:.2f}")
-    print(f"Debye screening length: dh = {dh:.2f}")
+    print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
     print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
     ffs = {
         'temp': T,                                                  # Temperature
