@@ -173,7 +173,7 @@ def setup(params, modification=None):
 
     # 6. construct force field
     system = buildSystem(psf, system, ffs, modification=modification)
-    print("HyresFF.buildSystem for customed force field")
+    print("HyresFF.buildSystem for custom force field")
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
