@@ -1,5 +1,5 @@
 """
-simple version of adding restraints
+additional restraints
 Date: Oct 23, 2025
 Author: Shanlong Li
 """
@@ -11,10 +11,16 @@ from openmm import *
 
 def posres_CA(system, pdb, residue_list=None, limited_range=None):
     """
-    system: openmm.System
-    pdb: openmm.app.PDBFile
-    residue_list: list of residue index to be restrained
-    limited_range: tuple defined the index range of CA for restraint
+    CA positional resitraints based on resid list.
+
+    Args:
+        system: openmm.System
+        pdb: openmm.app.PDBFile, PDBFile(pdb_file)
+        residue_list: list of residue index to be restrained
+        limited_range: tuple defined the index range of CA for restraint
+    
+    Returns:
+        no returns, system will be modified.
     """
     # add restraint
     ### set position restraints CA atoms
@@ -39,9 +45,15 @@ def posres_CA(system, pdb, residue_list=None, limited_range=None):
 
 def posres_CAs(system, pdb, grp):
     """
-    system: openmm.System
-    pdb: openmm.app.PDBFile
-    grp: list of atom index of CA
+    CA positional restraints based on atom index.
+
+    Args:
+        system: openmm.System
+        pdb: openmm.app.PDBFile, PDBFile(pdb_file)
+        grp: list of atom index of CA
+
+    Returns:
+        no return, system will be modified.
     """
     # add restraint
     ### set position restraints CA atoms
@@ -58,9 +70,15 @@ def posres_CAs(system, pdb, grp):
 
 def posre_amyloid(system, pdb, alignment_file):
     """
-    system: openmm.System
-    pdb: openmm.app.PDBFile
-    alignment_file: alignment.ali when build fibril
+    Specific restraints for amyloid.
+
+    Args:
+        system: openmm.System
+        pdb: openmm.app.PDBFile, PDBFile(pdb_file)
+        alignment_file: alignment.ali when build fibril
+    
+    Returns:
+        no return, system will be modified
     """
     with open(alignment_file, 'r') as f:
         lines = f.readlines()
@@ -92,11 +110,15 @@ def posre_amyloid(system, pdb, alignment_file):
 
 def freeze_amyloid(system, pdb, alignment_file):
     """
-    system: openmm.System
-    pdb: openmm.app.PDBFile
-    alignment_file: alignment.ali when build fibril
+    Freeze amyloid through set atom mass of fibril core to zero.
 
-    set atom mass as 0.0 in the fibril core region
+    Args:
+        system: openmm.System
+        pdb: openmm.app.PDBFile, PDBFile(pdb_file)
+        alignment_file: alignment.ali when build fibril
+
+    Returns:
+        no return, system will be modified.
     """
     with open(alignment_file, 'r') as f:
         lines = f.readlines()
@@ -126,9 +148,15 @@ def freeze_amyloid(system, pdb, alignment_file):
 
 def comres_xyz(system, pdb, groups):
     """
-    system: openmm.System
-    pdb: openmm.app.PDBFile
-    groups: list of atom index for com
+    Center of mass (COM) restraints at xyz dimensions.
+
+    Args:
+        system: openmm.System
+        pdb: openmm.app.PDBFile, PDBFile(pdb_file)
+        groups: list of atom index for com
+
+    Returns:
+        no return, add new force to system
     """
     # add COM restraint
     cds = pdb.getPositions(asNumpy=True)
@@ -157,9 +185,15 @@ def comres_xyz(system, pdb, groups):
 
 def comres_yz(system, pdb, groups):
     """
-    system: openmm.System
-    pdb: openmm.app.PDBFile
-    groups: list of atom index for com
+    Center of mass (COM) restraints at yz dimensions.
+
+    Args:
+        system: openmm.System
+        pdb: openmm.app.PDBFile, PDBFile(pdb_file)
+        groups: list of atom index for com
+
+    Returns:
+        no return, add new force to system
     """
     # add COM restraint
     cds = pdb.getPositions(asNumpy=True)

@@ -11,6 +11,25 @@ import numpy as np
 
 ###### for RNA System with A-U/G-C/G-G pairs ######
 def rG4sSystem(psf, system, ffs):
+    """
+    Construct force field for rG4s.
+    
+    Args:
+        psf: PSF file containing topology information
+        system: OpenMM system object
+        ffs: Force field parameters dictionary containing:
+            - dh: Debye-Huckel screening length
+            - lmd: Lambda parameter for charge-charge interactions
+            - er: Relative dielectric constant
+        modification: custome defined function for further modifying system
+    
+    Returns:
+        Modified OpenMM system with protein and/or RNA force field
+    
+    Raises:
+        ValueError: If required parameters or forces are missing
+    """
+
     top = psf.topology
     # 2) constructe the force field
     print('\n################# constructe the protein-RNA mixed force field ####################')

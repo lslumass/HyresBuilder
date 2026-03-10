@@ -10,4 +10,5 @@ HyresBuilder documentation
    :maxdepth: 2
 
    quickstart
+   citation
    api

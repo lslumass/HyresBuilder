@@ -438,14 +438,11 @@ def set_terminus(gen, segid, terminal):
 
 def at2hyres(pdb_in, pdb_out):
     """
-    Convert all-atom protein to HyRes CG PDB.
+    Convert all-atom protein to HyRes CG pdb.
     
-    Parameters:
-    -----------
-    pdb_in : str
-        Input all-atom PDB file
-    pdb_out : str
-        Output HyRes CG PDB file
+    Args:
+        pdb_in : str, input all-atom PDB file
+        pdb_out : str, output HyRes CG PDB file
     """
     
     def encode_serial(n):
@@ -614,12 +611,9 @@ def at2icon(pdb_in, pdb_out):
     """
     Convert all-atom RNA to iConRNA PDB.
     
-    Parameters:
-    -----------
-    pdb_in : str
-        Input all-atom PDB file
-    pdb_out : str
-        Output iConRNA PDB file
+    Args:
+        pdb_in : str, Input all-atom PDB file
+        pdb_out : str, Output iConRNA PDB file
     """
     
     def encode_serial(n):
@@ -841,20 +835,14 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
     """
     Convert all-atom PDB to CG PDB (HyRes for protein or iConRNA for RNA).
     
-    Parameters:
-    -----------
-    pdb_in : str
-        Input all-atom PDB file
-    pdb_out : str
-        Output CG PDB file
-    terminal : str
-        Charge status of protein terminus: 'neutral', 'charged', 'NT', 'CT'
-    cleanup : bool
-        Whether to clean up temporary files
+    Args:
+        pdb_in : str, Input all-atom PDB file
+        pdb_out : str, Output CG PDB file
+        terminal : str, Charge status of protein terminus: 'neutral', 'charged', 'NT', 'CT'
+        cleanup : bool, Whether to clean up temporary files
     
     Returns:
-    --------
-    tuple : (pdb_file, psf_file)
+        tuple : (pdb_file, psf_file)
     """
     # Load topology files
     RNA_topology, _ = load_ff('RNA')

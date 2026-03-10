@@ -1,6 +1,7 @@
 """
-HyRes Protein Builder Module
-Build HyRes protein structures from amino acid sequences.
+Build HyRes protein pdb from amino acid sequences.   
+Authors: Shanlong Li   
+Date: Mar 10, 2026
 """
 
 import numpy as np
@@ -629,6 +630,47 @@ def detect_clashes(all_atoms, threshold=4.5):
     return clashes
 
 def build_peptide(name, sequence, random_conf=True, check_clash=False, max_retries=10):
+    """
+    Build a coarse-grained HyRes protein PDB from a single-letter amino acid sequence.
+
+    Residues are placed sequentially by aligning each new residue's backbone onto the
+    previous one via the Kabsch algorithm. Every 4th residue can be drawn from an
+    alternate rotamer conformation (suffix '0' entries in AMINO_ACID_STRUCTURES) when
+    random_conf is enabled, introducing conformational variation into the chain.
+    The finished chain is translated so that the first CA sits at (5000, 5000, 5000) Å.
+
+    Args:
+        name        (str):  Stem of the output file. The PDB is written to '<name>.pdb'.
+        sequence    (str):  Amino acid sequence as single-letter codes (e.g. 'ACDEFGHIKL').
+                            All characters must have entries in AMINO_ACID_STRUCTURES.
+        random_conf (bool): If True, randomly sample an alternate rotamer conformation
+                            for every 4th residue to avoid extended-chain artefacts.
+                            Default: True.
+        check_clash (bool): If True (and random_conf is True), run a CA-only clash check
+                            after each build attempt and retry with a new random seed if
+                            clashes are found. Has no effect when random_conf is False.
+                            Default: False.
+        max_retries (int):  Maximum number of rebuild attempts when check_clash is True.
+                            If clashes persist after all attempts the structure is written
+                            anyway with a warning. Default: 10.
+
+    Returns:
+        None. Writes a PDB file to '<name>.pdb' in the current working directory.
+
+    Raises:
+        ValueError: If any single-letter code in sequence is absent from
+                    AMINO_ACID_STRUCTURES.
+
+    Examples:
+        >>> # Basic build with default random conformations
+        >>> build_peptide('myprotein', 'ACDEFGHIKLM')
+
+        >>> # Fully extended/linear chain
+        >>> build_peptide('linear', 'ACDEFGHIKLM', random_conf=False)
+
+        >>> # Random conformations with clash checking, up to 20 retries
+        >>> build_peptide('folded', 'ACDEFGHIKLM', check_clash=True, max_retries=20)
+    """
     output_file = f"{name}.pdb"
 
     for attempt in range(1, max_retries + 1):

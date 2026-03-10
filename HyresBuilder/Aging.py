@@ -12,11 +12,15 @@ from openmm import *
 
 def inRegisterHB(system, top, res_list, age=1.0):
     """
-    hydrogen bonds between same residues only for in-Register beta sheets
-    Parameters:
-    system: openmm system object
-    res_list: list of residue indices for in-Register beta sheets
-    age: aging stength as HB force strength
+    Hydrogen bonds between same residues only for in-Register beta sheets.
+
+    Args:
+        system: openmm system object
+        res_list: list of residue indices for in-Register beta sheets
+        age: aging stength as HB force strength
+    
+    Returns:
+        openmm system
     """
     #for force in system.getForces():
     #    if force.getName() == "NonbondedForce":
