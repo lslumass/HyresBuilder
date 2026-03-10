@@ -8,12 +8,6 @@ HyresBuilder documentation
 
 .. toctree::
    :maxdepth: 2
-   :caption: Getting Started:
 
    quickstart
-
-.. toctree::
-   :maxdepth: 2
-   :caption: API Reference:
-
    api
