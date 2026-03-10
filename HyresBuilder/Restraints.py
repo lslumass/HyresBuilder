@@ -357,8 +357,7 @@ def domain_3D_restraint(system, pdb_ref, domain_ranges, Kcons=400, cutoff=1.2):
     reference PDB are added as HarmonicBondForce bonds, preserving the native
     geometry of each folded region throughout the simulation.
 
-    Bond potential:
-        U = 0.5 * Kcons * (r - r0)^2
+    Bond potential: U = 0.5 * Kcons * (r - r0)^2
     where r0 is the distance between the pair in the reference PDB.
 
     Args:
