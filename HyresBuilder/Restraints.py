@@ -106,8 +106,7 @@ def positional_restraint(system, indx_pos_Kcons_list):
     Apply per-atom positional (harmonic) restraints to an OpenMM system.
 
     Each atom is restrained to an arbitrary reference position using a
-    periodic-distance harmonic potential:
-        U = kp * periodicdistance(x, y, z, x0, y0, z0)^2
+    periodic-distance harmonic potential: U = kp * periodicdistance(x, y, z, x0, y0, z0)^2
 
     Using periodicdistance ensures the restraint works correctly under
     periodic boundary conditions.
@@ -150,8 +149,7 @@ def bb_positional_restraint(system, pdb_ref, Kcons=400):
 
     Reference positions are taken directly from the provided PDB file.
     A single global force constant is shared across all restrained atoms.
-    The harmonic potential uses periodicdistance for PBC compatibility:
-        U = kp * periodicdistance(x, y, z, x0, y0, z0)^2
+    The harmonic potential uses periodicdistance for PBC compatibility: U = kp * periodicdistance(x, y, z, x0, y0, z0)^2
 
     Args:
         system  (openmm.System): OpenMM System object to modify.
@@ -190,8 +188,7 @@ def CA_positional_restraint(system, pdb_file, domain):
 
     Only CA atoms identified as part of secondary structure elements (helices
     or strands) by identify_folded_CA_idx are restrained. Uses a standard
-    harmonic potential (not periodic-distance):
-        U = k * ((x-x0)^2 + (y-y0)^2 + (z-z0)^2)
+    harmonic potential (not periodic-distance): U = k * ((x-x0)^2 + (y-y0)^2 + (z-z0)^2)
 
     Force constant is hardcoded to 400 kJ/mol/nm².
 
@@ -228,11 +225,10 @@ def COM_positional_restraint(system, group_indices_pos_kcons):
     Apply positional restraints on the center of mass (COM) of atom groups.
 
     Each group's COM is harmonically restrained to a reference position using
-    OpenMM's CustomCentroidBondForce with periodic-distance:
-        U = kp * periodicdistance(x, y, z, x0, y0, z0)^2
+    OpenMM's CustomCentroidBondForce with periodic-distance: U = kp * periodicdistance(x, y, z, x0, y0, z0)^2
 
     Args:
-        system                  (openmm.System): OpenMM System object to modify.
+        system (openmm.System): OpenMM System object to modify.
         group_indices_pos_kcons (list of tuples): Each tuple contains:
             - group_idx  (array-like): Atom indices forming the group.
             - ref_pos    (array-like): Reference COM position (x0, y0, z0) in nanometers.
