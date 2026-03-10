@@ -1,3 +1,7 @@
+"""
+| Convert all-atom structure to CG structure.
+"""
+
 from psfgen import PsfGen
 import numpy as np
 import os

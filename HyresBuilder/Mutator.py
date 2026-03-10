@@ -1,7 +1,7 @@
 """
-Performe mutations/modifications on a PDB file.   
-Authors: Shanlong Li   
-Date: Feb 14, 2026   
+| Performe mutations/modifications on a PDB file.   
+| Authors: Shanlong Li   
+| Date: Feb 14, 2026   
 """
 
 from psfgen import PsfGen
