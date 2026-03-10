@@ -153,6 +153,10 @@ def setup(params, modification=None):
     pdb = PDBFile(pdb_file)
     psf = CharmmPsfFile(psf_file)
     top = psf.topology
+    print(f"coordinate file: {pdb_file}")
+    print(f"topology file: {psf_file}")
+
+    print('\n################## create system ###################')
     if ensemble == 'non':
         system = psf.createSystem(params, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,
                                   nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
@@ -163,10 +167,13 @@ def setup(params, modification=None):
         system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds,
                                   nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
         system.setDefaultPeriodicBoxVectors(a, b, c)
+    
+    print(f"nonbonded cutoff: {cutoff}")
+    print(f"switch distance: {d_switch}")
 
     # 6. construct force field
-    print('\n################## build system ###################')
     system = buildSystem(psf, system, ffs, modification=modification)
+    print("HyresFF.buildSystem for customed force field")
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
