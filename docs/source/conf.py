@@ -1,5 +1,6 @@
 import os
 import sys
+from unittest.mock import MagicMock
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -7,6 +8,20 @@ import sys
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+
+MOCK_MODULES = [
+    'psfgen',
+    'openmm',
+    'openmm.app',
+    'openmm.unit',
+    'mdtraj',
+    'numpy',
+    'numpy.linalg',
+    'pkg_resources',
+]
+for mod in MOCK_MODULES:
+    sys.modules[mod] = MagicMock()
+
 
 sys.path.insert(0, os.path.abspath('../..'))
 
