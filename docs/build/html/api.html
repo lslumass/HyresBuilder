@@ -1,0 +1,769 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Reference &mdash; HyresBuilder latest documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=c6e86fd7"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="HyresBuilder documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            HyresBuilder
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.PeptideBuilder.align_residues"><code class="docutils literal notranslate"><span class="pre">align_residues()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.PeptideBuilder.build_peptide"><code class="docutils literal notranslate"><span class="pre">build_peptide()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.PeptideBuilder.detect_clashes"><code class="docutils literal notranslate"><span class="pre">detect_clashes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.PeptideBuilder.get_amino_acid"><code class="docutils literal notranslate"><span class="pre">get_amino_acid()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.PeptideBuilder.get_coords"><code class="docutils literal notranslate"><span class="pre">get_coords()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.PeptideBuilder.get_from_ref"><code class="docutils literal notranslate"><span class="pre">get_from_ref()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.PeptideBuilder.kabsch"><code class="docutils literal notranslate"><span class="pre">kabsch()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.PeptideBuilder.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.PeptideBuilder.write_pdb"><code class="docutils literal notranslate"><span class="pre">write_pdb()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.RNABuilder.build"><code class="docutils literal notranslate"><span class="pre">build()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.RNABuilder.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.RNABuilder.printcg"><code class="docutils literal notranslate"><span class="pre">printcg()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.RNABuilder.read_map"><code class="docutils literal notranslate"><span class="pre">read_map()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.RNABuilder.transform"><code class="docutils literal notranslate"><span class="pre">transform()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Convert2CG.add_backbone_hydrogen"><code class="docutils literal notranslate"><span class="pre">add_backbone_hydrogen()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Convert2CG.at2cg"><code class="docutils literal notranslate"><span class="pre">at2cg()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Convert2CG.at2hyres"><code class="docutils literal notranslate"><span class="pre">at2hyres()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Convert2CG.at2icon"><code class="docutils literal notranslate"><span class="pre">at2icon()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Convert2CG.fix_pdb_serial"><code class="docutils literal notranslate"><span class="pre">fix_pdb_serial()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Convert2CG.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Convert2CG.set_terminus"><code class="docutils literal notranslate"><span class="pre">set_terminus()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Convert2CG.split_chains"><code class="docutils literal notranslate"><span class="pre">split_chains()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.GenPsf.encode_segid"><code class="docutils literal notranslate"><span class="pre">encode_segid()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.GenPsf.genpsf"><code class="docutils literal notranslate"><span class="pre">genpsf()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.GenPsf.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.GenPsf.set_terminus"><code class="docutils literal notranslate"><span class="pre">set_terminus()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.GenPsf.split_chains"><code class="docutils literal notranslate"><span class="pre">split_chains()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.HyresFF.buildSystem"><code class="docutils literal notranslate"><span class="pre">buildSystem()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Mutator.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Mutator.mut"><code class="docutils literal notranslate"><span class="pre">mut()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.utils.cal_dh"><code class="docutils literal notranslate"><span class="pre">cal_dh()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.utils.cal_er"><code class="docutils literal notranslate"><span class="pre">cal_er()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.utils.load_ff"><code class="docutils literal notranslate"><span class="pre">load_ff()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.utils.nMg2lmd"><code class="docutils literal notranslate"><span class="pre">nMg2lmd()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.utils.rG4s_setup"><code class="docutils literal notranslate"><span class="pre">rG4s_setup()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.utils.setup"><code class="docutils literal notranslate"><span class="pre">setup()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.utils.setup2"><code class="docutils literal notranslate"><span class="pre">setup2()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Restraints.CA_positional_restraint"><code class="docutils literal notranslate"><span class="pre">CA_positional_restraint()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Restraints.COM_positional_restraint"><code class="docutils literal notranslate"><span class="pre">COM_positional_restraint()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Restraints.COM_relative_restraint"><code class="docutils literal notranslate"><span class="pre">COM_relative_restraint()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Restraints.bb_positional_restraint"><code class="docutils literal notranslate"><span class="pre">bb_positional_restraint()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Restraints.domain_3D_restraint"><code class="docutils literal notranslate"><span class="pre">domain_3D_restraint()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Restraints.get_COM"><code class="docutils literal notranslate"><span class="pre">get_COM()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Restraints.get_atom_indices_coordinates"><code class="docutils literal notranslate"><span class="pre">get_atom_indices_coordinates()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Restraints.identify_folded_CA_idx"><code class="docutils literal notranslate"><span class="pre">identify_folded_CA_idx()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Restraints.positional_restraint"><code class="docutils literal notranslate"><span class="pre">positional_restraint()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.addRestraints.comres_xyz"><code class="docutils literal notranslate"><span class="pre">comres_xyz()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.addRestraints.comres_yz"><code class="docutils literal notranslate"><span class="pre">comres_yz()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.addRestraints.freeze_amyloid"><code class="docutils literal notranslate"><span class="pre">freeze_amyloid()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.addRestraints.posre_amyloid"><code class="docutils literal notranslate"><span class="pre">posre_amyloid()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.addRestraints.posres_CA"><code class="docutils literal notranslate"><span class="pre">posres_CA()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.addRestraints.posres_CAs"><code class="docutils literal notranslate"><span class="pre">posres_CAs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#HyresBuilder.Aging.inRegisterHB"><code class="docutils literal notranslate"><span class="pre">inRegisterHB()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">HyresBuilder</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API Reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-HyresBuilder">
+<span id="api-reference"></span><h1>API Reference<a class="headerlink" href="#module-HyresBuilder" title="Link to this heading"></a></h1>
+<p>HyResBuilder is for preparing HyRes protein model and iConRNA model.</p>
+<p>Main Functions:
+- build HyRes and/or iConRNA force field
+- convert all-atom structures to CG ones
+- construct CG model from sequence</p>
+<p id="module-HyresBuilder.PeptideBuilder">HyRes Protein Builder Module
+Build HyRes protein structures from amino acid sequences.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.PeptideBuilder.align_residues">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.PeptideBuilder.</span></span><span class="sig-name descname"><span class="pre">align_residues</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resA_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resB_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/PeptideBuilder.html#align_residues"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.PeptideBuilder.align_residues" title="Link to this definition"></a></dt>
+<dd><p>Align residue B to residue A using backbone atoms.
+Handles Proline: skips H/H+ if either residue is ‘P’.
+Returns list of dicts for B atoms (excluding alignment atoms).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.PeptideBuilder.build_peptide">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.PeptideBuilder.</span></span><span class="sig-name descname"><span class="pre">build_peptide</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_clash</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/PeptideBuilder.html#build_peptide"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.PeptideBuilder.build_peptide" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.PeptideBuilder.detect_clashes">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.PeptideBuilder.</span></span><span class="sig-name descname"><span class="pre">detect_clashes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_atoms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/PeptideBuilder.html#detect_clashes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.PeptideBuilder.detect_clashes" title="Link to this definition"></a></dt>
+<dd><p>Fast clash detection using CA atoms only. Threshold hardcoded to 3.8 Å.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.PeptideBuilder.get_amino_acid">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.PeptideBuilder.</span></span><span class="sig-name descname"><span class="pre">get_amino_acid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">code</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/PeptideBuilder.html#get_amino_acid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.PeptideBuilder.get_amino_acid" title="Link to this definition"></a></dt>
+<dd><p>Get amino acid structure by single-letter code.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.PeptideBuilder.get_coords">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.PeptideBuilder.</span></span><span class="sig-name descname"><span class="pre">get_coords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">res_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atom_names</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/PeptideBuilder.html#get_coords"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.PeptideBuilder.get_coords" title="Link to this definition"></a></dt>
+<dd><p>Extract coordinates from AMINO_ACID_STRUCTURES.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.PeptideBuilder.get_from_ref">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.PeptideBuilder.</span></span><span class="sig-name descname"><span class="pre">get_from_ref</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atom_names</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/PeptideBuilder.html#get_from_ref"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.PeptideBuilder.get_from_ref" title="Link to this definition"></a></dt>
+<dd><p>Extract coordinates from reference residue.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.PeptideBuilder.kabsch">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.PeptideBuilder.</span></span><span class="sig-name descname"><span class="pre">kabsch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">P</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Q</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/PeptideBuilder.html#kabsch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.PeptideBuilder.kabsch" title="Link to this definition"></a></dt>
+<dd><p>Compute optimal rotation R and translation t using Kabsch algorithm.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.PeptideBuilder.main">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.PeptideBuilder.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/PeptideBuilder.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.PeptideBuilder.main" title="Link to this definition"></a></dt>
+<dd><p>Command-line interface to build peptide from sequence.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.PeptideBuilder.write_pdb">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.PeptideBuilder.</span></span><span class="sig-name descname"><span class="pre">write_pdb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atoms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/PeptideBuilder.html#write_pdb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.PeptideBuilder.write_pdb" title="Link to this definition"></a></dt>
+<dd><p>Write atoms to PDB file.</p>
+</dd></dl>
+
+<p id="module-HyresBuilder.RNABuilder">this package is used to generate CG_RNA model
+Athour: Shanlong Li
+Date: Nov 13, 2023</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.RNABuilder.build">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.RNABuilder.</span></span><span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/RNABuilder.html#build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.RNABuilder.build" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.RNABuilder.main">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.RNABuilder.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/RNABuilder.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.RNABuilder.main" title="Link to this definition"></a></dt>
+<dd><p>Command-line interface</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.RNABuilder.printcg">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.RNABuilder.</span></span><span class="sig-name descname"><span class="pre">printcg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atoms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/RNABuilder.html#printcg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.RNABuilder.printcg" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.RNABuilder.read_map">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.RNABuilder.</span></span><span class="sig-name descname"><span class="pre">read_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seq</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/RNABuilder.html#read_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.RNABuilder.read_map" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.RNABuilder.transform">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.RNABuilder.</span></span><span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atoms</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/RNABuilder.html#transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.RNABuilder.transform" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function" id="module-HyresBuilder.Convert2CG">
+<dt class="sig sig-object py" id="HyresBuilder.Convert2CG.add_backbone_hydrogen">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Convert2CG.</span></span><span class="sig-name descname"><span class="pre">add_backbone_hydrogen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Convert2CG.html#add_backbone_hydrogen"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Convert2CG.add_backbone_hydrogen" title="Link to this definition"></a></dt>
+<dd><p>Add backbone hydrogen atoms (H) to peptide chains in a PDB file.
+Preserves all original atoms (backbone and side chains).</p>
+<section id="parameters">
+<h2>Parameters:<a class="headerlink" href="#parameters" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>pdb_file<span class="classifier">str</span></dt><dd><p>Path to input PDB file</p>
+</dd>
+<dt>output_file<span class="classifier">str</span></dt><dd><p>Path to output PDB file with added H atoms</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Convert2CG.at2cg">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Convert2CG.</span></span><span class="sig-name descname"><span class="pre">at2cg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'neutral'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cleanup</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Convert2CG.html#at2cg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Convert2CG.at2cg" title="Link to this definition"></a></dt>
+<dd><p>Convert all-atom PDB to CG PDB (HyRes for protein or iConRNA for RNA).</p>
+<section id="id1">
+<h2>Parameters:<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>pdb_in<span class="classifier">str</span></dt><dd><p>Input all-atom PDB file</p>
+</dd>
+<dt>pdb_out<span class="classifier">str</span></dt><dd><p>Output CG PDB file</p>
+</dd>
+<dt>terminal<span class="classifier">str</span></dt><dd><p>Charge status of protein terminus: ‘neutral’, ‘charged’, ‘NT’, ‘CT’</p>
+</dd>
+<dt>cleanup<span class="classifier">bool</span></dt><dd><p>Whether to clean up temporary files</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h2>Returns:<a class="headerlink" href="#returns" title="Link to this heading"></a></h2>
+<p>tuple : (pdb_file, psf_file)</p>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Convert2CG.at2hyres">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Convert2CG.</span></span><span class="sig-name descname"><span class="pre">at2hyres</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb_out</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Convert2CG.html#at2hyres"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Convert2CG.at2hyres" title="Link to this definition"></a></dt>
+<dd><p>Convert all-atom protein to HyRes CG PDB.</p>
+<section id="id2">
+<h2>Parameters:<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>pdb_in<span class="classifier">str</span></dt><dd><p>Input all-atom PDB file</p>
+</dd>
+<dt>pdb_out<span class="classifier">str</span></dt><dd><p>Output HyRes CG PDB file</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Convert2CG.at2icon">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Convert2CG.</span></span><span class="sig-name descname"><span class="pre">at2icon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb_out</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Convert2CG.html#at2icon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Convert2CG.at2icon" title="Link to this definition"></a></dt>
+<dd><p>Convert all-atom RNA to iConRNA PDB.</p>
+<section id="id3">
+<h2>Parameters:<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>pdb_in<span class="classifier">str</span></dt><dd><p>Input all-atom PDB file</p>
+</dd>
+<dt>pdb_out<span class="classifier">str</span></dt><dd><p>Output iConRNA PDB file</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Convert2CG.fix_pdb_serial">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Convert2CG.</span></span><span class="sig-name descname"><span class="pre">fix_pdb_serial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Convert2CG.html#fix_pdb_serial"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Convert2CG.fix_pdb_serial" title="Link to this definition"></a></dt>
+<dd><p>Fix PDB files where atom serial numbers exceed 99999 and have been written
+as ‘<strong>**</strong>’ by psfgen-python. Re-numbers all ATOM/HETATM records sequentially
+using hybrid-36 encoding so serial numbers beyond 99999 are represented as
+base-36 alphanumeric strings (A0000–Z9999, then a0000–z9999).</p>
+<section id="id4">
+<h2>Parameters:<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>pdb_file<span class="classifier">str</span></dt><dd><p>Path to the input PDB file containing ‘<strong>**</strong>’ serial fields.</p>
+</dd>
+<dt>output_file<span class="classifier">str, optional</span></dt><dd><p>Path to the output fixed PDB file.
+If None, the input file is overwritten in-place.</p>
+</dd>
+</dl>
+</section>
+<section id="id5">
+<h2>Returns:<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>str : Path to the fixed PDB file.</p>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Convert2CG.main">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Convert2CG.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Convert2CG.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Convert2CG.main" title="Link to this definition"></a></dt>
+<dd><p>Command-line interface for Convert2CG.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Convert2CG.set_terminus">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Convert2CG.</span></span><span class="sig-name descname"><span class="pre">set_terminus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Convert2CG.html#set_terminus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Convert2CG.set_terminus" title="Link to this definition"></a></dt>
+<dd><p>Set the charge status of protein terminus.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Convert2CG.split_chains">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Convert2CG.</span></span><span class="sig-name descname"><span class="pre">split_chains</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Convert2CG.html#split_chains"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Convert2CG.split_chains" title="Link to this definition"></a></dt>
+<dd><p>Split PDB file into separate chains and identify their types.</p>
+</dd></dl>
+
+<dl class="py function" id="module-HyresBuilder.GenPsf">
+<dt class="sig sig-object py" id="HyresBuilder.GenPsf.encode_segid">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.GenPsf.</span></span><span class="sig-name descname"><span class="pre">encode_segid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/HyresBuilder/GenPsf.html#encode_segid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.GenPsf.encode_segid" title="Link to this definition"></a></dt>
+<dd><p>Encode segment number n into a 3-char hybrid-36 segid (e.g. 000, a00).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.GenPsf.genpsf">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.GenPsf.</span></span><span class="sig-name descname"><span class="pre">genpsf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psf_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/GenPsf.html#genpsf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.GenPsf.genpsf" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.GenPsf.main">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.GenPsf.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/GenPsf.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.GenPsf.main" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.GenPsf.set_terminus">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.GenPsf.</span></span><span class="sig-name descname"><span class="pre">set_terminus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge_status</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/GenPsf.html#set_terminus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.GenPsf.set_terminus" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.GenPsf.split_chains">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.GenPsf.</span></span><span class="sig-name descname"><span class="pre">split_chains</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/GenPsf.html#split_chains"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.GenPsf.split_chains" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<p id="module-HyresBuilder.HyresFF">This package is used to constructe Hyres Force Field, iConRNA force field
+Athours: Shanlong Li, Xiping Gong, Yumeng Zhang
+Date: Mar 9, 2024
+Modified: Sep 29, 2025</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.HyresFF.buildSystem">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.HyresFF.</span></span><span class="sig-name descname"><span class="pre">buildSystem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">psf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ffs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modification</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/HyresFF.html#buildSystem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.HyresFF.buildSystem" title="Link to this definition"></a></dt>
+<dd><p>Constructs a protein and/or RNA force field.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>psf</strong> – PSF file containing topology information</p></li>
+<li><p><strong>system</strong> – OpenMM system object</p></li>
+<li><p><strong>ffs</strong> – Force field parameters dictionary containing:
+- dh: Debye-Huckel screening length
+- lmd: Lambda parameter for charge-charge interactions
+- er: Relative dielectric constant</p></li>
+<li><p><strong>modification</strong> – custome defined function for further modifying system</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Modified OpenMM system with protein and/or RNA force field</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If required parameters or forces are missing</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-HyresBuilder.Mutator">Mutator: module used to do mutations and PTMs
+input:</p>
+<blockquote>
+<div><p>inpdb: pdb file, single chain of protein or RNA
+sites: mutation sites
+mutations: mutation type</p>
+</div></blockquote>
+<dl class="simple">
+<dt>output:</dt><dd><p>outpdb: new pdb file after mutation</p>
+</dd>
+</dl>
+<p>Authors: Shanlong Li
+Date: Feb 14, 2026</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Mutator.main">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Mutator.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Mutator.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Mutator.main" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Mutator.mut">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Mutator.</span></span><span class="sig-name descname"><span class="pre">mut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sites</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segid</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Mutator.html#mut"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Mutator.mut" title="Link to this definition"></a></dt>
+<dd><p>Perform mutations on a PDB file using psfgen</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pdb_in</strong> (<em>str</em>) – Input PDB file path</p></li>
+<li><p><strong>pdb_out</strong> (<em>str</em>) – Output PDB file path</p></li>
+<li><p><strong>sites</strong> (<em>list</em>) – List of residue numbers to mutate</p></li>
+<li><p><strong>mutations</strong> (<em>list</em>) – List of mutation types (3-letter codes)</p></li>
+<li><p><strong>segid</strong> (<em>str</em>) – Segment ID (P001 for Protein, R001 for RNA)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function" id="module-HyresBuilder.utils">
+<dt class="sig sig-object py" id="HyresBuilder.utils.cal_dh">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.utils.</span></span><span class="sig-name descname"><span class="pre">cal_dh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">c_ion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/utils.html#cal_dh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.utils.cal_dh" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.utils.cal_er">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.utils.</span></span><span class="sig-name descname"><span class="pre">cal_er</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/utils.html#cal_er"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.utils.cal_er" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.utils.load_ff">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.utils.</span></span><span class="sig-name descname"><span class="pre">load_ff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/utils.html#load_ff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.utils.load_ff" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.utils.nMg2lmd">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.utils.</span></span><span class="sig-name descname"><span class="pre">nMg2lmd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cMg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">RNA</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rA'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/utils.html#nMg2lmd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.utils.nMg2lmd" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.utils.rG4s_setup">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.utils.</span></span><span class="sig-name descname"><span class="pre">rG4s_setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pressure=Quantity(value=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit=atmosphere)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">friction=Quantity(value=0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit=/picosecond)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gpu_id='0'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/utils.html#rG4s_setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.utils.rG4s_setup" title="Link to this definition"></a></dt>
+<dd><p>Set up the rG4s simulation system with given parameters.
+Parameters:
+———–
+args: argparse.Namespace</p>
+<blockquote>
+<div><p>The command line arguments containing simulation parameters.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>dt: float</dt><dd><p>The time step for the integrator.</p>
+</dd>
+<dt>pressure: unit.Quantity</dt><dd><p>The pressure for the MonteCarloBarostat (default is 1 atm).</p>
+</dd>
+<dt>friction: unit.Quantity</dt><dd><p>The friction coefficient for the Langevin integrator (default is 0.1 / ps).</p>
+</dd>
+<dt>gpu_id: str</dt><dd><p>The GPU device index to use (default is “0”).</p>
+</dd>
+</dl>
+<section id="id6">
+<h2>Returns:<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>system: openmm.System</dt><dd><p>The constructed OpenMM system.</p>
+</dd>
+<dt>sim: openmm.app.Simulation</dt><dd><p>The OpenMM simulation object.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.utils.setup">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.utils.</span></span><span class="sig-name descname"><span class="pre">setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modification</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/utils.html#setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.utils.setup" title="Link to this definition"></a></dt>
+<dd><p>Set up the simulation system with given parameters.
+modification: custom function for modify the system
+Returns:
+——–
+system: openmm.System</p>
+<blockquote>
+<div><p>The constructed OpenMM system.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>sim: openmm.app.Simulation</dt><dd><p>The OpenMM simulation object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.utils.setup2">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.utils.</span></span><span class="sig-name descname"><span class="pre">setup2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmd=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pressure=Quantity(value=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit=atmosphere)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">friction=Quantity(value=0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit=/picosecond)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gpu_id='0'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/utils.html#setup2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.utils.setup2" title="Link to this definition"></a></dt>
+<dd><p>Set up the simulation system with given parameters.
+Parameters:
+———–
+args: argparse.Namespace</p>
+<blockquote>
+<div><p>The command line arguments containing simulation parameters.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>dt: float</dt><dd><p>The time step for the integrator.</p>
+</dd>
+<dt>pressure: unit.Quantity</dt><dd><p>The pressure for the MonteCarloBarostat (default is 1 atm).</p>
+</dd>
+<dt>friction: unit.Quantity</dt><dd><p>The friction coefficient for the Langevin integrator (default is 0.1 / ps).</p>
+</dd>
+<dt>gpu_id: str</dt><dd><p>The GPU device index to use (default is “0”).</p>
+</dd>
+</dl>
+<section id="id7">
+<h2>Returns:<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>system: openmm.System</dt><dd><p>The constructed OpenMM system.</p>
+</dd>
+<dt>sim: openmm.app.Simulation</dt><dd><p>The OpenMM simulation object.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<p id="module-HyresBuilder.Restraints">This script is to help set up restraints in Hyres model
+Athour: Jian Huang
+Date: Nov 12, 2024
+Modified: Nov 12, 2024</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Restraints.CA_positional_restraint">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Restraints.</span></span><span class="sig-name descname"><span class="pre">CA_positional_restraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Restraints.html#CA_positional_restraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Restraints.CA_positional_restraint" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Restraints.COM_positional_restraint">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Restraints.</span></span><span class="sig-name descname"><span class="pre">COM_positional_restraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_indices_pos_kcons</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Restraints.html#COM_positional_restraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Restraints.COM_positional_restraint" title="Link to this definition"></a></dt>
+<dd><p>system: omm system
+group_indices_pos: list of tuples</p>
+<blockquote>
+<div><dl class="simple">
+<dt>example: [((1,2,3,4), (x0, y0, z0), 400), …]</dt><dd><p>1,2,3,4 are the atom indices of the group;
+x0, y0, z0 are the x y z coordinates of reference COM position
+400 is the K constant (unit: kj/mol/nm**2)</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>return: omm system</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Restraints.COM_relative_restraint">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Restraints.</span></span><span class="sig-name descname"><span class="pre">COM_relative_restraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups_dist_Kcons_list</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Restraints.html#COM_relative_restraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Restraints.COM_relative_restraint" title="Link to this definition"></a></dt>
+<dd><dl>
+<dt>Apply distance restraint between two atom groups</dt><dd><p>system: omm system
+groups_dist_Kcons_list: (list of tuples)</p>
+<blockquote>
+<div><dl class="simple">
+<dt>example: [((1,2,3), (4,5,6), 10.0, 400), …]</dt><dd><p>(1,2,3): atom indices of atom group1
+(4,5,6): atom indices of atom group2
+1.0: reference distance, unit of nanometer
+400: K constant, kj/mol/nm**2</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd>
+</dl>
+<p># add restraints
+print(“add restraints”)
+u = mda.Universe(parser.parse_args().psf, parser.parse_args().pdb)
+sel = u.select_atoms(‘segid PA0’)
+cas = u.select_atoms(‘segid PA0 and name CA’)
+run = DSSP(sel).run()
+result = run.results.dssp[0]</p>
+<p>strcutre_CA = []
+for ca, s in zip(cas, result):</p>
+<blockquote>
+<div><dl class="simple">
+<dt>if s in [‘E’, ‘H’]:</dt><dd><p>strcutre_CA.append(ca.index)</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>pos_restraint = CustomExternalForce(‘kg*((x-x0)^2 + (y-y0)^2 +(z-z0)^2);’)
+pos_restraint.addGlobalParameter(‘kg’, 400*kilojoules_per_mole/unit.nanometer)
+pos_restraint.addPerParticleParameter(‘x0’)
+pos_restraint.addPerParticleParameter(‘y0’)
+pos_restraint.addPerParticleParameter(‘z0’)
+crds = u.atoms.positions/10
+for atom in strcutre_CA:</p>
+<blockquote>
+<div><p>pos = crds[atom]
+pos_restraint.addParticle(atom, pos)</p>
+</div></blockquote>
+<p>system.addForce(pos_restraint)</p>
+<p>sim.context.reinitialize(preserveState=True)</p>
+<blockquote>
+<div><blockquote>
+<div><p>restrain distance between atom group 1 and atom group 2 to be 10 Angstrome using Kcons=400 kj/mol/nm**2</p>
+</div></blockquote>
+<p>return omm system</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Restraints.bb_positional_restraint">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Restraints.</span></span><span class="sig-name descname"><span class="pre">bb_positional_restraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb_ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Kcons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">400</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Restraints.html#bb_positional_restraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Restraints.bb_positional_restraint" title="Link to this definition"></a></dt>
+<dd><p>add backbone restraints, given a reference PDB
+arguments:
+system: omm system object
+pdb_ref: pdb file path
+Kcons: (float) K constant. kj/mol/nm**2</p>
+<p>Return: system</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Restraints.domain_3D_restraint">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Restraints.</span></span><span class="sig-name descname"><span class="pre">domain_3D_restraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb_ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain_ranges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Kcons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">400</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Restraints.html#domain_3D_restraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Restraints.domain_3D_restraint" title="Link to this definition"></a></dt>
+<dd><p>system: omm system
+domain_ranges: a list of tuples, and each tuple defines one domain range:</p>
+<blockquote>
+<div><p>(‘chain_id’), (starting_resid, ending_resid))
+example: [(‘A’, (1,50)), (‘B’, (75, 200)), …]</p>
+<blockquote>
+<div><p># two domains: resid 1-50 of chain A and resid 75-200 of chain B</p>
+</div></blockquote>
+</div></blockquote>
+<p>Kcons_internal: (float) K constant for harmonic restraint. default unit: kj/mol/nm**2
+cutoff: cutoff distance, unit: nanometer
+return omm system</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Restraints.get_COM">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Restraints.</span></span><span class="sig-name descname"><span class="pre">get_COM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Restraints.html#get_COM"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Restraints.get_COM" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Restraints.get_atom_indices_coordinates">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Restraints.</span></span><span class="sig-name descname"><span class="pre">get_atom_indices_coordinates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Restraints.html#get_atom_indices_coordinates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Restraints.get_atom_indices_coordinates" title="Link to this definition"></a></dt>
+<dd><p>pdb: pdb file
+selection: mdtraj selection syntax (ref: <a class="reference external" href="https://mdtraj.org/1.9.4/atom_selection.html">https://mdtraj.org/1.9.4/atom_selection.html</a>)</p>
+<blockquote>
+<div><dl class="simple">
+<dt>of note, if your ‘selection’ has chainid, you need to use the chainid from PDB file.</dt><dd><p>chainid in mdtraj is forced to be numbered as 0, 1, 2, …
+here, instead of using those sequential integers for chainid, we override it with the
+original chain id from PDB file.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Restraints.identify_folded_CA_idx">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Restraints.</span></span><span class="sig-name descname"><span class="pre">identify_folded_CA_idx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Restraints.html#identify_folded_CA_idx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Restraints.identify_folded_CA_idx" title="Link to this definition"></a></dt>
+<dd><p>pdb: mdtraj object
+domain:</p>
+<blockquote>
+<div><p>example: (‘A’, (1, 50))</p>
+</div></blockquote>
+<p>return: CA atom indices for the folded region</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Restraints.positional_restraint">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Restraints.</span></span><span class="sig-name descname"><span class="pre">positional_restraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indx_pos_Kcons_list</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Restraints.html#positional_restraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Restraints.positional_restraint" title="Link to this definition"></a></dt>
+<dd><dl>
+<dt>indx_pos_list: list of tuples. Each tuple has two elements, the first one being the atom index,</dt><dd><p>the second one being the 3D coordinate (x, y, z) as the reference position</p>
+<dl class="simple">
+<dt>example: [(1, (10.0, 12.0, 13.0), 400), (10, (20.0, 23.5, 5.6), 400), …]</dt><dd><p>restraint the atom with index 1 to be at (10.0, 12.0, 13.0) with Kcons=400 kj/mol/nm**2; and
+restraint the atom with index 10 to be at (20.0, 23.5, 5.6) with Kcons=400 kj/mol/nm**2</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-HyresBuilder.addRestraints">simple version of adding restraints
+Date: Oct 23, 2025
+Author: Shanlong Li</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.addRestraints.comres_xyz">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.addRestraints.</span></span><span class="sig-name descname"><span class="pre">comres_xyz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/addRestraints.html#comres_xyz"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.addRestraints.comres_xyz" title="Link to this definition"></a></dt>
+<dd><p>system: openmm.System
+pdb: openmm.app.PDBFile
+groups: list of atom index for com</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.addRestraints.comres_yz">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.addRestraints.</span></span><span class="sig-name descname"><span class="pre">comres_yz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/addRestraints.html#comres_yz"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.addRestraints.comres_yz" title="Link to this definition"></a></dt>
+<dd><p>system: openmm.System
+pdb: openmm.app.PDBFile
+groups: list of atom index for com</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.addRestraints.freeze_amyloid">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.addRestraints.</span></span><span class="sig-name descname"><span class="pre">freeze_amyloid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignment_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/addRestraints.html#freeze_amyloid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.addRestraints.freeze_amyloid" title="Link to this definition"></a></dt>
+<dd><p>system: openmm.System
+pdb: openmm.app.PDBFile
+alignment_file: alignment.ali when build fibril</p>
+<p>set atom mass as 0.0 in the fibril core region</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.addRestraints.posre_amyloid">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.addRestraints.</span></span><span class="sig-name descname"><span class="pre">posre_amyloid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignment_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/addRestraints.html#posre_amyloid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.addRestraints.posre_amyloid" title="Link to this definition"></a></dt>
+<dd><p>system: openmm.System
+pdb: openmm.app.PDBFile
+alignment_file: alignment.ali when build fibril</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.addRestraints.posres_CA">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.addRestraints.</span></span><span class="sig-name descname"><span class="pre">posres_CA</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residue_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limited_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/addRestraints.html#posres_CA"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.addRestraints.posres_CA" title="Link to this definition"></a></dt>
+<dd><p>system: openmm.System
+pdb: openmm.app.PDBFile
+residue_list: list of residue index to be restrained
+limited_range: tuple defined the index range of CA for restraint</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.addRestraints.posres_CAs">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.addRestraints.</span></span><span class="sig-name descname"><span class="pre">posres_CAs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/addRestraints.html#posres_CAs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.addRestraints.posres_CAs" title="Link to this definition"></a></dt>
+<dd><p>system: openmm.System
+pdb: openmm.app.PDBFile
+grp: list of atom index of CA</p>
+</dd></dl>
+
+<p id="module-HyresBuilder.Aging">define specific interactions for aging simulations
+Date: Nov-07-2025
+Authors: Shanlong Li</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="HyresBuilder.Aging.inRegisterHB">
+<span class="sig-prename descclassname"><span class="pre">HyresBuilder.Aging.</span></span><span class="sig-name descname"><span class="pre">inRegisterHB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">age</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/HyresBuilder/Aging.html#inRegisterHB"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#HyresBuilder.Aging.inRegisterHB" title="Link to this definition"></a></dt>
+<dd><p>hydrogen bonds between same residues only for in-Register beta sheets
+Parameters:
+system: openmm system object
+res_list: list of residue indices for in-Register beta sheets
+age: aging stength as HB force strength</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="HyresBuilder documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shanlong Li, Jian Huang, Yumeng Zhang, Jianhan Chen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

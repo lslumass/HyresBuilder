@@ -35,8 +35,8 @@ prod_step = 250000000                                           # production ste
 equil_step = 10000                                              # equilibration steps
 log_freq = 1250                                                 # frequency of log file
 traj_freq = 5000                                                # frequency of trajectory file
-pdb_freq = 12500000                                             # frequency of dpd_traj file
-chk_freq = 125000                                               # frequence of checkpoint file
+pdb_freq = 12500000                                             # frequency of pdb_traj file
+chk_freq = 125000                                               # frequency of checkpoint file
 
 params.dt = dt_equil
 params.pressure = 1*unit.atmosphere                             # pressure in NPT

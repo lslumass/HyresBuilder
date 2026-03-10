@@ -130,7 +130,9 @@ def setup(params, modification=None):
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     # Mg-P interaction
     lmd = nMg2lmd(c_Mg, T, RNA='rA')
-    print(f'er: {er}, dh: {dh}, lmd: {lmd}')
+    print(f"dielectric constant: er = {er:.2f}")
+    print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
+    print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
     ffs = {
         'temp': T,                                                  # Temperature
         'lmd': lmd,                                                  # Charge scaling factor of P-
@@ -151,6 +153,10 @@ def setup(params, modification=None):
     pdb = PDBFile(pdb_file)
     psf = CharmmPsfFile(psf_file)
     top = psf.topology
+    print(f"coordinate file: {pdb_file}")
+    print(f"topology file: {psf_file}")
+
+    print('\n################## create system ###################')
     if ensemble == 'non':
         system = psf.createSystem(params, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,
                                   nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
@@ -161,10 +167,13 @@ def setup(params, modification=None):
         system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds,
                                   nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
         system.setDefaultPeriodicBoxVectors(a, b, c)
+    
+    print(f"nonbonded cutoff: {cutoff}")
+    print(f"switch distance: {d_switch}")
 
     # 6. construct force field
-    print('\n################## build system ###################')
     system = buildSystem(psf, system, ffs, modification=modification)
+    print("HyresFF.buildSystem for custom force field")
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')

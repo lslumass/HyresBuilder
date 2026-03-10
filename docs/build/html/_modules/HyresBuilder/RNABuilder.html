@@ -1,0 +1,223 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HyresBuilder.RNABuilder &mdash; HyresBuilder latest documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=c6e86fd7"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            HyresBuilder
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">HyresBuilder</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">HyresBuilder.RNABuilder</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for HyresBuilder.RNABuilder</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">this package is used to generate CG_RNA model</span>
+<span class="sd">Athour: Shanlong Li</span>
+<span class="sd">Date: Nov 13, 2023</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+
+<span class="n">maps</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,</span>  <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.129</span><span class="p">,</span> <span class="mf">8.827</span><span class="p">,</span> <span class="mf">16.666</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;C1&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.005</span><span class="p">,</span> <span class="mf">8.261</span><span class="p">,</span> <span class="mf">15.960</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;C2&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.464</span><span class="p">,</span> <span class="mf">6.345</span><span class="p">,</span> <span class="mf">14.718</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;NA&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.566</span><span class="p">,</span> <span class="mf">4.736</span><span class="p">,</span> <span class="mf">14.629</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;NB&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.574</span><span class="p">,</span> <span class="mf">3.674</span><span class="p">,</span> <span class="mf">14.575</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="s1">&#39;NC&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.722</span><span class="p">,</span> <span class="mf">1.355</span><span class="p">,</span> <span class="mf">14.212</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="s1">&#39;ND&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.098</span><span class="p">,</span> <span class="mf">2.343</span><span class="p">,</span> <span class="mf">14.218</span><span class="p">)</span>
+    <span class="p">],</span>
+    <span class="s1">&#39;G&#39;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,</span>  <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.129</span><span class="p">,</span> <span class="mf">8.827</span><span class="p">,</span> <span class="mf">16.666</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;C1&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.005</span><span class="p">,</span> <span class="mf">8.261</span><span class="p">,</span> <span class="mf">15.960</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;C2&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.464</span><span class="p">,</span> <span class="mf">6.345</span><span class="p">,</span> <span class="mf">14.718</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;NA&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.566</span><span class="p">,</span> <span class="mf">4.736</span><span class="p">,</span> <span class="mf">14.629</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;NB&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.574</span><span class="p">,</span> <span class="mf">3.674</span><span class="p">,</span> <span class="mf">14.575</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="s1">&#39;NC&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.722</span><span class="p">,</span> <span class="mf">1.355</span><span class="p">,</span> <span class="mf">14.212</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="s1">&#39;ND&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.098</span><span class="p">,</span> <span class="mf">2.343</span><span class="p">,</span> <span class="mf">14.218</span><span class="p">)</span>
+    <span class="p">],</span>
+    <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,</span>  <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.442</span><span class="p">,</span>  <span class="mf">6.919</span><span class="p">,</span> <span class="mf">19.337</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;C1&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">8.224</span><span class="p">,</span>  <span class="mf">4.298</span><span class="p">,</span> <span class="mf">18.261</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;C2&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">7.482</span><span class="p">,</span>  <span class="mf">2.312</span><span class="p">,</span> <span class="mf">17.284</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;NA&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.016</span><span class="p">,</span>  <span class="mf">2.586</span><span class="p">,</span> <span class="mf">17.726</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;NB&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.505</span><span class="p">,</span>  <span class="mf">0.658</span><span class="p">,</span> <span class="mf">17.600</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="s1">&#39;NC&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">6.020</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.162</span><span class="p">,</span> <span class="mf">17.143</span><span class="p">)</span>
+    <span class="p">],</span>
+    <span class="s1">&#39;U&#39;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,</span>  <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.442</span><span class="p">,</span>  <span class="mf">6.919</span><span class="p">,</span> <span class="mf">19.337</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;C1&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">8.224</span><span class="p">,</span>  <span class="mf">4.298</span><span class="p">,</span> <span class="mf">18.261</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;C2&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">7.482</span><span class="p">,</span>  <span class="mf">2.312</span><span class="p">,</span> <span class="mf">17.284</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;NA&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.016</span><span class="p">,</span>  <span class="mf">2.586</span><span class="p">,</span> <span class="mf">17.726</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;NB&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.505</span><span class="p">,</span>  <span class="mf">0.658</span><span class="p">,</span> <span class="mf">17.600</span><span class="p">),</span>
+        <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="s1">&#39;NC&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">6.020</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.162</span><span class="p">,</span> <span class="mf">17.143</span><span class="p">)</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+
+<div class="viewcode-block" id="printcg">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.RNABuilder.printcg">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">printcg</span><span class="p">(</span><span class="n">atoms</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">atoms</span><span class="p">:</span>
+        <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">  </span><span class="si">{:5d}</span><span class="s1"> </span><span class="si">{:&gt;2}</span><span class="s1">   </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}{:4d}</span><span class="s1">    </span><span class="si">{:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}</span><span class="s1">      </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">atom</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span><span class="n">atom</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="n">atom</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span><span class="n">atom</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="p">[</span><span class="mi">5</span><span class="p">]),</span><span class="n">atom</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span><span class="n">atom</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span><span class="n">atom</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span><span class="n">atom</span><span class="p">[</span><span class="mi">9</span><span class="p">],</span><span class="n">atom</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="n">atom</span><span class="p">[</span><span class="mi">11</span><span class="p">]))</span></div>
+
+
+<div class="viewcode-block" id="read_map">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.RNABuilder.read_map">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_map</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
+    <span class="n">atoms</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">nos</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="s1">&#39;ADE&#39;</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span><span class="p">:</span> <span class="s1">&#39;GUA&#39;</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="s1">&#39;CYT&#39;</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span><span class="p">:</span> <span class="s1">&#39;URA&#39;</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">rx</span><span class="p">,</span> <span class="n">ry</span><span class="p">,</span> <span class="n">rz</span> <span class="ow">in</span> <span class="n">maps</span><span class="p">[</span><span class="n">seq</span><span class="p">]:</span>
+        <span class="n">atom</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ATOM&#39;</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">nos</span><span class="p">[</span><span class="n">seq</span><span class="p">],</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">rx</span><span class="p">,</span> <span class="n">ry</span><span class="p">,</span> <span class="n">rz</span><span class="p">,</span> <span class="mf">1.00</span><span class="p">,</span> <span class="mf">0.00</span><span class="p">,</span> <span class="s1">&#39;RNA&#39;</span><span class="p">]</span>
+        <span class="n">atoms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">atoms</span></div>
+
+
+<div class="viewcode-block" id="transform">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.RNABuilder.transform">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">atoms</span><span class="p">):</span>
+    <span class="n">refx</span><span class="p">,</span> <span class="n">refy</span><span class="p">,</span> <span class="n">refz</span> <span class="o">=</span> <span class="n">ref</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ref</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ref</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">Px</span><span class="p">,</span> <span class="n">Py</span><span class="p">,</span> <span class="n">Pz</span> <span class="o">=</span> <span class="n">atoms</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">6</span><span class="p">],</span> <span class="n">atoms</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">7</span><span class="p">],</span> <span class="n">atoms</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">8</span><span class="p">]</span>
+    <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">,</span> <span class="n">dz</span> <span class="o">=</span> <span class="n">Px</span><span class="o">-</span><span class="n">refx</span><span class="p">,</span> <span class="n">Py</span><span class="o">-</span><span class="n">refy</span><span class="p">,</span> <span class="n">Pz</span><span class="o">-</span><span class="n">refz</span>
+    <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">atoms</span><span class="p">:</span>
+        <span class="n">atom</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">-=</span> <span class="n">dx</span>
+        <span class="n">atom</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">-=</span> <span class="n">dy</span>
+        <span class="n">atom</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">-=</span> <span class="n">dz</span>
+    <span class="k">return</span> <span class="n">atoms</span></div>
+
+
+<div class="viewcode-block" id="build">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.RNABuilder.build">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">sequence</span><span class="p">):</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">.pdb&#39;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;REMARK  iConRNA&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;REMARK  CREATE BY RNABUILDER/SHANLONG LI&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;REMARK  Ref: S. Li and J. Chen, PNAS, 2025, 122, e2504583122.&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;REMARK  SEQUENCE: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sequence</span><span class="p">),</span> <span class="n">file</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="p">[</span><span class="mf">9000.0</span><span class="p">,</span> <span class="mf">9000.0</span><span class="p">,</span> <span class="mf">9000.0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">sequence</span><span class="p">:</span>
+            <span class="n">atoms</span> <span class="o">=</span> <span class="n">read_map</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">atoms</span><span class="p">:</span>
+                <span class="n">atom</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">idx</span>
+                <span class="n">atom</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">+=</span> <span class="n">res</span>
+            <span class="n">atoms</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">atoms</span><span class="p">)</span>
+            <span class="n">ref</span> <span class="o">=</span> <span class="p">[</span><span class="n">atoms</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">6</span><span class="p">],</span> <span class="n">atoms</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">7</span><span class="p">],</span> <span class="n">atoms</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">8</span><span class="p">]</span> <span class="o">+</span> <span class="mf">3.63</span><span class="p">]</span>
+            <span class="n">idx</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">atoms</span><span class="p">)</span>
+            <span class="n">res</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">printcg</span><span class="p">(</span><span class="n">atoms</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;END&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">f</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.RNABuilder.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Command-line interface&quot;&quot;&quot;</span>
+    
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;RNABuilder: build iConRNA from sequence&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;protein name, output: name.pdb&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;seq&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;sequence in one-letter&#39;</span><span class="p">)</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="n">build</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">seq</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RNA structure saved to </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.pdb&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shanlong Li, Jian Huang, Yumeng Zhang, Jianhan Chen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

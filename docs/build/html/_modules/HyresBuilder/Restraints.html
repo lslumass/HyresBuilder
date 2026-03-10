@@ -1,0 +1,411 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HyresBuilder.Restraints &mdash; HyresBuilder latest documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=c6e86fd7"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            HyresBuilder
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">HyresBuilder</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">HyresBuilder.Restraints</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for HyresBuilder.Restraints</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This script is to help set up restraints in Hyres model</span>
+<span class="sd">Athour: Jian Huang</span>
+<span class="sd">Date: Nov 12, 2024</span>
+<span class="sd">Modified: Nov 12, 2024</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">openmm.app</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openmm</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mdtraj</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">md</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">combinations</span>
+
+<span class="c1"># helper function to get atom indices for a give pdb</span>
+<div class="viewcode-block" id="get_atom_indices_coordinates">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Restraints.get_atom_indices_coordinates">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_atom_indices_coordinates</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="n">selection</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    pdb: pdb file</span>
+<span class="sd">    selection: mdtraj selection syntax (ref: https://mdtraj.org/1.9.4/atom_selection.html)</span>
+<span class="sd">        of note, if your &#39;selection&#39; has chainid, you need to use the chainid from PDB file.</span>
+<span class="sd">            chainid in mdtraj is forced to be numbered as 0, 1, 2, ...</span>
+<span class="sd">            here, instead of using those sequential integers for chainid, we override it with the </span>
+<span class="sd">            original chain id from PDB file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pdb_md</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">load_pdb</span><span class="p">(</span><span class="n">pdb</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s1">&#39;chainid&#39;</span> <span class="ow">in</span> <span class="n">selection</span><span class="p">:</span>
+        <span class="n">chainid_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">chain</span><span class="o">.</span><span class="n">chain_id</span><span class="p">:</span> <span class="n">chain</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">chain</span> <span class="ow">in</span> <span class="n">pdb_md</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">chains</span><span class="p">}</span>
+
+        <span class="n">new_str</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">substring</span> <span class="ow">in</span> <span class="n">selection</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;and&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s1">&#39;chainid&#39;</span> <span class="ow">in</span> <span class="n">substring</span><span class="p">:</span>
+                <span class="n">chainid_list</span> <span class="o">=</span> <span class="n">substring</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;chainid&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="n">new_chainid_str</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">chainid_dict</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">chainid_list</span><span class="p">])</span>
+                <span class="n">final_str</span> <span class="o">=</span> <span class="s1">&#39;chainid &#39;</span> <span class="o">+</span> <span class="n">new_chainid_str</span>
+                <span class="n">new_str</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">final_str</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_str</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">substring</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="n">new_selection</span> <span class="o">=</span> <span class="s1">&#39; and &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">new_str</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">new_selection</span> <span class="o">=</span> <span class="n">selection</span>
+    
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">pdb_md</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">new_selection</span><span class="p">)</span>
+    <span class="n">coordinates</span> <span class="o">=</span> <span class="n">pdb_md</span><span class="o">.</span><span class="n">xyz</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="k">return</span> <span class="n">indices</span><span class="p">,</span> <span class="n">coordinates</span> </div>
+
+
+<span class="c1"># Get the center of mass of a selection</span>
+<div class="viewcode-block" id="get_COM">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Restraints.get_COM">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_COM</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="n">selection</span><span class="p">):</span>
+    <span class="n">pdb_md</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">load_pdb</span><span class="p">(</span><span class="n">pdb</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s1">&#39;chainid&#39;</span> <span class="ow">in</span> <span class="n">selection</span><span class="p">:</span>
+        <span class="n">chainid_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">chain</span><span class="o">.</span><span class="n">chain_id</span><span class="p">:</span> <span class="n">chain</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">chain</span> <span class="ow">in</span> <span class="n">pdb_md</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">chains</span><span class="p">}</span>
+        <span class="c1"># print(chainid_dict)</span>
+
+        <span class="n">new_str</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">substring</span> <span class="ow">in</span> <span class="n">selection</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;and&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s1">&#39;chainid&#39;</span> <span class="ow">in</span> <span class="n">substring</span><span class="p">:</span>
+                <span class="n">chainid_list</span> <span class="o">=</span> <span class="n">substring</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;chainid&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="n">new_chainid_str</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">chainid_dict</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">chainid_list</span><span class="p">])</span>
+                <span class="n">final_str</span> <span class="o">=</span> <span class="s1">&#39;chainid &#39;</span> <span class="o">+</span> <span class="n">new_chainid_str</span>
+                <span class="n">new_str</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">final_str</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_str</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">substring</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="n">new_selection</span> <span class="o">=</span> <span class="s1">&#39; and &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">new_str</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">new_selection</span> <span class="o">=</span> <span class="n">selection</span>
+    <span class="c1"># print(new_selection)</span>
+    <span class="n">com</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">compute_center_of_mass</span><span class="p">(</span><span class="n">pdb_md</span><span class="p">,</span> <span class="n">new_selection</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">com</span></div>
+
+
+<span class="c1"># Positional restraints</span>
+<div class="viewcode-block" id="positional_restraint">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Restraints.positional_restraint">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">positional_restraint</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">indx_pos_Kcons_list</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    indx_pos_list: list of tuples. Each tuple has two elements, the first one being the atom index,</span>
+<span class="sd">        the second one being the 3D coordinate (x, y, z) as the reference position</span>
+<span class="sd">        </span>
+<span class="sd">        example: [(1, (10.0, 12.0, 13.0), 400), (10, (20.0, 23.5, 5.6), 400), ...]</span>
+<span class="sd">            restraint the atom with index 1 to be at (10.0, 12.0, 13.0) with Kcons=400 kj/mol/nm**2; and </span>
+<span class="sd">            restraint the atom with index 10 to be at (20.0, 23.5, 5.6) with Kcons=400 kj/mol/nm**2</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># omm positional restraints</span>
+    <span class="n">pos_restraint</span> <span class="o">=</span> <span class="n">CustomExternalForce</span><span class="p">(</span><span class="s1">&#39;kp*periodicdistance(x, y, z, x0, y0, z0)^2&#39;</span><span class="p">)</span>
+    <span class="n">pos_restraint</span><span class="o">.</span><span class="n">addPerParticleParameter</span><span class="p">(</span><span class="s1">&#39;kp&#39;</span><span class="p">)</span>
+    <span class="n">pos_restraint</span><span class="o">.</span><span class="n">addPerParticleParameter</span><span class="p">(</span><span class="s1">&#39;x0&#39;</span><span class="p">)</span>
+    <span class="n">pos_restraint</span><span class="o">.</span><span class="n">addPerParticleParameter</span><span class="p">(</span><span class="s1">&#39;y0&#39;</span><span class="p">)</span>
+    <span class="n">pos_restraint</span><span class="o">.</span><span class="n">addPerParticleParameter</span><span class="p">(</span><span class="s1">&#39;z0&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">Kcons</span> <span class="ow">in</span> <span class="n">indx_pos_Kcons_list</span><span class="p">:</span>
+        <span class="c1"># add unit to Kcons</span>
+        <span class="n">Kcons_wU</span> <span class="o">=</span> <span class="n">Kcons</span> <span class="o">*</span> <span class="n">unit</span><span class="o">.</span><span class="n">kilojoule_per_mole</span><span class="o">/</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometers</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">pos_restraint</span><span class="o">.</span><span class="n">addParticle</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="p">[</span><span class="n">Kcons_wU</span><span class="p">,</span> <span class="o">*</span><span class="n">pos</span><span class="p">])</span>
+    <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">pos_restraint</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">system</span></div>
+
+
+<div class="viewcode-block" id="bb_positional_restraint">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Restraints.bb_positional_restraint">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">bb_positional_restraint</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">pdb_ref</span><span class="p">,</span> <span class="n">Kcons</span><span class="o">=</span><span class="mi">400</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    add backbone restraints, given a reference PDB</span>
+<span class="sd">    arguments:</span>
+<span class="sd">    system: omm system object</span>
+<span class="sd">    pdb_ref: pdb file path</span>
+<span class="sd">    Kcons: (float) K constant. kj/mol/nm**2</span>
+
+<span class="sd">    Return: system</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Load pdb</span>
+    <span class="n">pdb_init</span> <span class="o">=</span> <span class="n">PDBFile</span><span class="p">(</span><span class="n">pdb_ref</span><span class="p">)</span>
+
+    <span class="c1"># add unit to Kcons</span>
+    <span class="n">Kcons_wU</span> <span class="o">=</span> <span class="n">Kcons</span> <span class="o">*</span> <span class="n">unit</span><span class="o">.</span><span class="n">kilojoule_per_mole</span><span class="o">/</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometers</span><span class="o">**</span><span class="mi">2</span>
+    
+    <span class="c1"># omm positional restraints</span>
+    <span class="n">pos_restraint</span> <span class="o">=</span> <span class="n">CustomExternalForce</span><span class="p">(</span><span class="s1">&#39;kp*periodicdistance(x, y, z, x0, y0, z0)^2&#39;</span><span class="p">)</span>
+    <span class="n">pos_restraint</span><span class="o">.</span><span class="n">addGlobalParameter</span><span class="p">(</span><span class="s1">&#39;kp&#39;</span><span class="p">,</span> <span class="n">Kcons_wU</span><span class="p">)</span>
+    <span class="n">pos_restraint</span><span class="o">.</span><span class="n">addPerParticleParameter</span><span class="p">(</span><span class="s1">&#39;x0&#39;</span><span class="p">)</span>
+    <span class="n">pos_restraint</span><span class="o">.</span><span class="n">addPerParticleParameter</span><span class="p">(</span><span class="s1">&#39;y0&#39;</span><span class="p">)</span>
+    <span class="n">pos_restraint</span><span class="o">.</span><span class="n">addPerParticleParameter</span><span class="p">(</span><span class="s1">&#39;z0&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">pdb_init</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">residues</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">atoms</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">[</span> <span class="s1">&#39;CA&#39;</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="s1">&#39;O&#39;</span><span class="p">]:</span>
+                <span class="n">pos_restraint</span><span class="o">.</span><span class="n">addParticle</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">pdb_init</span><span class="o">.</span><span class="n">positions</span><span class="p">[</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">])</span>
+    <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">pos_restraint</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">system</span></div>
+
+
+<div class="viewcode-block" id="CA_positional_restraint">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Restraints.CA_positional_restraint">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">CA_positional_restraint</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">pdb_file</span><span class="p">,</span> <span class="n">domain</span><span class="p">):</span>
+    <span class="n">pdb_tmp</span> <span class="o">=</span> <span class="n">PDBFile</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">)</span>
+    <span class="n">CA_pos_restraint</span> <span class="o">=</span> <span class="n">CustomExternalForce</span><span class="p">(</span><span class="s1">&#39;k*((x-x0)^2+(y-y0)^2+(z-z0)^2)&#39;</span><span class="p">)</span>
+    <span class="n">CA_pos_restraint</span><span class="o">.</span><span class="n">addGlobalParameter</span><span class="p">(</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="mf">400.0</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">kilojoule_per_mole</span><span class="o">/</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometers</span><span class="o">/</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometers</span><span class="p">)</span>
+    <span class="n">CA_pos_restraint</span><span class="o">.</span><span class="n">addPerParticleParameter</span><span class="p">(</span><span class="s1">&#39;x0&#39;</span><span class="p">)</span>
+    <span class="n">CA_pos_restraint</span><span class="o">.</span><span class="n">addPerParticleParameter</span><span class="p">(</span><span class="s1">&#39;y0&#39;</span><span class="p">)</span>
+    <span class="n">CA_pos_restraint</span><span class="o">.</span><span class="n">addPerParticleParameter</span><span class="p">(</span><span class="s1">&#39;z0&#39;</span><span class="p">)</span>
+
+    <span class="n">md_pdb</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">load_pdb</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">)</span>
+    <span class="n">CA_list</span> <span class="o">=</span> <span class="n">identify_folded_CA_idx</span><span class="p">(</span><span class="n">md_pdb</span><span class="p">,</span> <span class="n">domain</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ca</span> <span class="ow">in</span> <span class="n">CA_list</span><span class="p">:</span>
+        <span class="n">CA_pos_restraint</span><span class="o">.</span><span class="n">addParticle</span><span class="p">(</span><span class="n">ca</span><span class="p">,</span> <span class="n">pdb_tmp</span><span class="o">.</span><span class="n">positions</span><span class="p">[</span><span class="n">ca</span><span class="p">])</span>
+    <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">CA_pos_restraint</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">system</span></div>
+
+
+<span class="c1"># Center of mass positional restraints</span>
+<div class="viewcode-block" id="COM_positional_restraint">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Restraints.COM_positional_restraint">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">COM_positional_restraint</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">group_indices_pos_kcons</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    system: omm system</span>
+<span class="sd">    group_indices_pos: list of tuples</span>
+<span class="sd">        example: [((1,2,3,4), (x0, y0, z0), 400), ...]</span>
+<span class="sd">            1,2,3,4 are the atom indices of the group; </span>
+<span class="sd">            x0, y0, z0 are the x y z coordinates of reference COM position</span>
+<span class="sd">            400 is the K constant (unit: kj/mol/nm**2) </span>
+<span class="sd">    return: omm system    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># omm positional restraints</span>
+    <span class="n">com_pos_restraint</span> <span class="o">=</span> <span class="n">CustomCentroidBondForce</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;kp*periodicdistance(x, y, z, x0, y0, z0)^2&#39;</span><span class="p">)</span>
+    <span class="n">com_pos_restraint</span><span class="o">.</span><span class="n">addPerBondParameter</span><span class="p">(</span><span class="s1">&#39;kp&#39;</span><span class="p">)</span>
+    <span class="n">com_pos_restraint</span><span class="o">.</span><span class="n">addPerBondParameter</span><span class="p">(</span><span class="s1">&#39;x0&#39;</span><span class="p">)</span>
+    <span class="n">com_pos_restraint</span><span class="o">.</span><span class="n">addPerBondParameter</span><span class="p">(</span><span class="s1">&#39;y0&#39;</span><span class="p">)</span>
+    <span class="n">com_pos_restraint</span><span class="o">.</span><span class="n">addPerBondParameter</span><span class="p">(</span><span class="s1">&#39;z0&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">group_idx</span><span class="p">,</span> <span class="n">ref_pos</span><span class="p">,</span> <span class="n">Kcons</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">group_indices_pos_kcons</span><span class="p">):</span>
+        <span class="n">Kcons_wU</span> <span class="o">=</span> <span class="n">Kcons</span> <span class="o">*</span> <span class="n">unit</span><span class="o">.</span><span class="n">kilojoule_per_mole</span><span class="o">/</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometers</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">com_pos_restraint</span><span class="o">.</span><span class="n">addGroup</span><span class="p">(</span><span class="n">group_idx</span><span class="p">)</span>
+        <span class="n">com_pos_restraint</span><span class="o">.</span><span class="n">addBond</span><span class="p">([</span><span class="n">idx</span><span class="p">,</span> <span class="p">],</span> <span class="p">[</span><span class="n">Kcons_wU</span><span class="p">,</span> <span class="o">*</span><span class="n">ref_pos</span><span class="p">])</span>
+    <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">com_pos_restraint</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">system</span></div>
+
+
+<span class="c1"># Center of mass distance restraints</span>
+<div class="viewcode-block" id="COM_relative_restraint">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Restraints.COM_relative_restraint">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">COM_relative_restraint</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">groups_dist_Kcons_list</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Apply distance restraint between two atom groups</span>
+<span class="sd">    system: omm system</span>
+<span class="sd">    groups_dist_Kcons_list: (list of tuples)</span>
+<span class="sd">        example: [((1,2,3), (4,5,6), 10.0, 400), ...]</span>
+<span class="sd">            (1,2,3): atom indices of atom group1</span>
+<span class="sd">            (4,5,6): atom indices of atom group2</span>
+<span class="sd">            1.0: reference distance, unit of nanometer</span>
+<span class="sd">            400: K constant, kj/mol/nm**2</span>
+<span class="sd"># add restraints</span>
+<span class="sd">print(&quot;add restraints&quot;)</span>
+<span class="sd">u = mda.Universe(parser.parse_args().psf, parser.parse_args().pdb)</span>
+<span class="sd">sel = u.select_atoms(&#39;segid PA0&#39;)</span>
+<span class="sd">cas = u.select_atoms(&#39;segid PA0 and name CA&#39;)</span>
+<span class="sd">run = DSSP(sel).run()</span>
+<span class="sd">result = run.results.dssp[0]</span>
+
+<span class="sd">strcutre_CA = []</span>
+<span class="sd">for ca, s in zip(cas, result):</span>
+<span class="sd">    if s in [&#39;E&#39;, &#39;H&#39;]:</span>
+<span class="sd">        strcutre_CA.append(ca.index)</span>
+
+<span class="sd">pos_restraint = CustomExternalForce(&#39;kg*((x-x0)^2 + (y-y0)^2 +(z-z0)^2);&#39;)</span>
+<span class="sd">pos_restraint.addGlobalParameter(&#39;kg&#39;, 400*kilojoules_per_mole/unit.nanometer)</span>
+<span class="sd">pos_restraint.addPerParticleParameter(&#39;x0&#39;)</span>
+<span class="sd">pos_restraint.addPerParticleParameter(&#39;y0&#39;)</span>
+<span class="sd">pos_restraint.addPerParticleParameter(&#39;z0&#39;)</span>
+<span class="sd">crds = u.atoms.positions/10</span>
+<span class="sd">for atom in strcutre_CA:</span>
+<span class="sd">    pos = crds[atom]</span>
+<span class="sd">    pos_restraint.addParticle(atom, pos)</span>
+<span class="sd">system.addForce(pos_restraint)</span>
+
+<span class="sd">sim.context.reinitialize(preserveState=True)</span>
+
+<span class="sd">            restrain distance between atom group 1 and atom group 2 to be 10 Angstrome using Kcons=400 kj/mol/nm**2</span>
+
+<span class="sd">    return omm system     </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">COM_force</span> <span class="o">=</span> <span class="n">CustomCentroidBondForce</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;0.5*kp*( (distance(g1, g2)-d0 )^2)&quot;</span><span class="p">)</span>
+    <span class="n">COM_force</span><span class="o">.</span><span class="n">addPerBondParameter</span><span class="p">(</span><span class="s1">&#39;kp&#39;</span><span class="p">)</span>  <span class="c1"># Force constant</span>
+    <span class="n">COM_force</span><span class="o">.</span><span class="n">addPerBondParameter</span><span class="p">(</span><span class="s1">&#39;d0&#39;</span><span class="p">)</span>  <span class="c1"># restrain distance</span>
+
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">group1</span><span class="p">,</span><span class="n">group2</span><span class="p">,</span><span class="n">dist</span><span class="p">,</span><span class="n">Kcons</span> <span class="ow">in</span> <span class="n">groups_dist_Kcons_list</span><span class="p">:</span>
+        <span class="n">Kcons_wU</span> <span class="o">=</span> <span class="n">Kcons</span> <span class="o">*</span> <span class="n">unit</span><span class="o">.</span><span class="n">kilojoule_per_mole</span><span class="o">/</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometers</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">target_dist</span> <span class="o">=</span> <span class="n">dist</span> <span class="o">*</span> <span class="n">unit</span><span class="o">.</span><span class="n">nanometers</span>
+        <span class="n">COM_force</span><span class="o">.</span><span class="n">addGroup</span><span class="p">(</span><span class="n">group1</span><span class="p">)</span>  <span class="c1"># Group 1</span>
+        <span class="n">COM_force</span><span class="o">.</span><span class="n">addGroup</span><span class="p">(</span><span class="n">group2</span><span class="p">)</span>  <span class="c1"># Group 2</span>
+        <span class="n">COM_force</span><span class="o">.</span><span class="n">addBond</span><span class="p">([</span><span class="n">i</span><span class="p">,</span>  <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="n">Kcons_wU</span><span class="p">,</span> <span class="n">target_dist</span><span class="p">])</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">2</span>
+    <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">COM_force</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">system</span></div>
+
+
+<span class="c1"># Identify regions with secondary structure</span>
+<div class="viewcode-block" id="identify_folded_CA_idx">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Restraints.identify_folded_CA_idx">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">identify_folded_CA_idx</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="n">domain</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    pdb: mdtraj object</span>
+<span class="sd">    domain: </span>
+<span class="sd">        example: (&#39;A&#39;, (1, 50))</span>
+<span class="sd">    return: CA atom indices for the folded region</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># get chainid dict</span>
+    <span class="n">chainid_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">chain</span><span class="o">.</span><span class="n">chain_id</span><span class="p">:</span> <span class="n">chain</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">chain</span> <span class="ow">in</span> <span class="n">pdb</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">chains</span><span class="p">}</span>
+
+    <span class="c1"># get starting residue index and ending residue index from domain definition</span>
+    <span class="n">chainid</span><span class="p">,</span> <span class="p">(</span><span class="n">starting_resid</span><span class="p">,</span> <span class="n">ending_resid</span><span class="p">)</span> <span class="o">=</span> <span class="n">domain</span>
+
+    <span class="c1"># make sure the given chain id is included in the PDB file</span>
+    <span class="k">assert</span> <span class="n">chainid</span> <span class="ow">in</span> <span class="n">chainid_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="sa">f</span><span class="s2">&quot;chain ID &#39;</span><span class="si">{</span><span class="n">chainid</span><span class="si">}</span><span class="s2">&#39; given in the domain definition does not exist!&quot;</span>
+
+    <span class="c1"># select domain</span>
+    <span class="n">selection</span> <span class="o">=</span> <span class="s2">&quot;chainid </span><span class="si">%s</span><span class="s2"> and residue </span><span class="si">%s</span><span class="s2"> to </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">chainid_dict</span><span class="p">[</span><span class="n">chainid</span><span class="p">],</span> <span class="n">starting_resid</span><span class="p">,</span> <span class="n">ending_resid</span><span class="p">)</span>
+    <span class="n">selected_domain</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">atom_slice</span><span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">selection</span><span class="p">))</span>
+    <span class="n">dssp</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">compute_dssp</span><span class="p">(</span><span class="n">selected_domain</span><span class="p">,</span> <span class="n">simplified</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">folded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">dssp</span><span class="o">!=</span><span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">resid</span> <span class="o">=</span> <span class="p">[</span><span class="n">selected_domain</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">residue</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span><span class="o">.</span><span class="n">resSeq</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">folded</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="mi">1</span> <span class="p">]</span>
+    <span class="n">folded_CA_idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">pdb</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;chainid </span><span class="si">%s</span><span class="s2"> and residue </span><span class="si">%s</span><span class="s2"> and name CA &quot;</span> <span class="o">%</span> \
+                                         <span class="p">(</span><span class="n">chainid_dict</span><span class="p">[</span><span class="n">chainid</span><span class="p">],</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="p">)</span> <span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">resid</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">folded_CA_idx</span></div>
+
+
+<span class="c1"># Domain restraints</span>
+<div class="viewcode-block" id="domain_3D_restraint">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Restraints.domain_3D_restraint">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">domain_3D_restraint</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">pdb_ref</span><span class="p">,</span> <span class="n">domain_ranges</span><span class="p">,</span> <span class="n">Kcons</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mf">1.2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    system: omm system</span>
+<span class="sd">    domain_ranges: a list of tuples, and each tuple defines one domain range:</span>
+<span class="sd">        (&#39;chain_id&#39;), (starting_resid, ending_resid))</span>
+<span class="sd">        example: [(&#39;A&#39;, (1,50)), (&#39;B&#39;, (75, 200)), ...] </span>
+<span class="sd">            # two domains: resid 1-50 of chain A and resid 75-200 of chain B</span>
+<span class="sd">    Kcons_internal: (float) K constant for harmonic restraint. default unit: kj/mol/nm**2</span>
+<span class="sd">    cutoff: cutoff distance, unit: nanometer</span>
+<span class="sd">    return omm system</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">internal_force</span> <span class="o">=</span> <span class="n">HarmonicBondForce</span><span class="p">()</span>
+    <span class="n">Kcons_internal</span> <span class="o">=</span> <span class="n">Kcons</span> <span class="o">*</span> <span class="n">unit</span><span class="o">.</span><span class="n">kilojoule_per_mole</span><span class="o">/</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometers</span><span class="o">**</span><span class="mi">2</span>
+
+    <span class="c1"># load pdb to mdtraj</span>
+    <span class="n">pdb_md</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">load_pdb</span><span class="p">(</span><span class="n">pdb_ref</span><span class="p">)</span>
+
+    <span class="c1"># find all pairs</span>
+    <span class="n">pairs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">domain</span> <span class="ow">in</span> <span class="n">domain_ranges</span><span class="p">:</span>
+        <span class="c1"># get C-alpha atom indices of folder region</span>
+        <span class="n">folded_CA_idx</span> <span class="o">=</span> <span class="n">identify_folded_CA_idx</span><span class="p">(</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb_md</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">)</span>
+        <span class="n">pairs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">combinations</span><span class="p">(</span><span class="n">folded_CA_idx</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+    
+        <span class="n">pairs_num</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">pairs</span><span class="p">:</span>
+            <span class="n">r1</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">pdb_md</span><span class="o">.</span><span class="n">xyz</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]),:])</span>
+            <span class="n">r2</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">pdb_md</span><span class="o">.</span><span class="n">xyz</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="mi">1</span><span class="p">]),:])</span>
+            <span class="c1"># dist0=np.sqrt((r1[0]-r2[0])**2+(r1[1]-r2[1])**2+(r1[2]-r2[2])**2)</span>
+            <span class="n">dist0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">r1</span><span class="o">-</span><span class="n">r2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">dist0</span> <span class="o">&lt;</span> <span class="mf">1.2</span><span class="p">:</span>
+                <span class="n">pairs_num</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">internal_force</span><span class="o">.</span><span class="n">addBond</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">dist0</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometers</span><span class="p">,</span> <span class="n">Kcons_internal</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of internal pairs of domain </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">pairs_num</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">internal_force</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">system</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shanlong Li, Jian Huang, Yumeng Zhang, Jianhan Chen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
