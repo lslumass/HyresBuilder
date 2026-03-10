@@ -1,7 +1,7 @@
 """
-additional restraints
-Date: Oct 23, 2025
-Author: Shanlong Li
+| additional restraints
+| Date: Oct 23, 2025
+| Author: Shanlong Li
 """
 
 from openmm.unit import *
