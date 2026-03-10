@@ -1,7 +1,7 @@
 """
-This function is used to constructe iConRNA force field for rG4s 
-Athours: Shanlong Li
-Date: Dec 1, 2024
+| This function is used to constructe iConRNA force field for rG4s 
+| Athours: Shanlong Li
+| Date: Dec 1, 2024
 """
 
 from openmm.unit import *

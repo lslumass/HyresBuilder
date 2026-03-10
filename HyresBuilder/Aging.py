@@ -1,7 +1,7 @@
 """
-define specific interactions for aging simulations
-Date: Nov-07-2025
-Authors: Shanlong Li
+| Define specific interactions for aging simulations
+| Date: Nov-07-2025
+| Authors: Shanlong Li
 """
 
 

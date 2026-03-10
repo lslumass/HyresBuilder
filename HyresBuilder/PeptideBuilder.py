@@ -1,7 +1,7 @@
 """
-Build HyRes protein pdb from amino acid sequences.   
-Authors: Shanlong Li   
-Date: Mar 10, 2026
+| Build HyRes protein pdb from amino acid sequences.   
+| Authors: Shanlong Li   
+| Date: Mar 10, 2026
 """
 
 import numpy as np

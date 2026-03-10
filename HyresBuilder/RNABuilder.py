@@ -1,7 +1,7 @@
 """
-This module is used to generate CG_RNA model.   
-Athour: Shanlong Li   
-Date: Nov 13, 2023   
+| This module is used to generate CG_RNA model.   
+| Athour: Shanlong Li   
+| Date: Nov 13, 2023   
 """
 
 import sys

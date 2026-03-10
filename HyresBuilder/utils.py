@@ -1,3 +1,7 @@
+"""
+| This module is used to load force field files and set up simulation.
+"""
+
 import pkg_resources as pkg_res
 from openmm.unit import *
 from openmm.app import *
