@@ -20,16 +20,16 @@ def load_ff(model):
 
     Args:
         model (str): Force field model type. Supported values:
-            * 'Protein' : HyRes protein force field (top_hyres_mix / param_hyres_mix)
-            * 'RNA'     : HyRes RNA force field     (top_RNA_mix  / param_RNA_mix)
-            * 'DNA'     : HyRes DNA force field     (top_DNA_mix  / param_DNA_mix)
-            * 'rG4s'    : RNA G-quadruplex model, uses RNA topology with a dedicated parameter file (param_rG4s)
-            * 'ATP'     : ATP force field            (top_ATP      / param_ATP)
+            - ``'Protein'`` : HyRes protein force field (top_hyres_mix / param_hyres_mix)
+            - ``'RNA'    `` : HyRes RNA force field     (top_RNA_mix  / param_RNA_mix)
+            - ``'DNA'    `` : HyRes DNA force field     (top_DNA_mix  / param_DNA_mix)
+            - ``'rG4s'   `` : RNA G-quadruplex model, uses RNA topology with a dedicated parameter file (param_rG4s)
+            - ``'ATP'    `` : ATP force field            (top_ATP      / param_ATP)
 
     Returns:
         tuple[str, str]:
-            * top_inp   (str): Absolute path to the CHARMM topology (.inp) file.
-            * param_inp (str): Absolute path to the CHARMM parameter (.inp) file.
+            - top_inp   (str): Absolute path to the CHARMM topology (.inp) file.
+            - param_inp (str): Absolute path to the CHARMM parameter (.inp) file.
 
     Raises:
         SystemExit: If an unsupported model name is provided.
@@ -118,24 +118,24 @@ def setup(params, modification=None):
 
     Args:
         params (argparse.Namespace or equivalent): Object with the following attributes:
-            * pdb       (str):            Path to the input PDB coordinate file.
-            * psf       (str):            Path to the CHARMM PSF topology file.
-            * temp      (float):          Simulation temperature in Kelvin.
-            * salt      (float):          Monovalent salt concentration in mM (converted to M internally).
-            * Mg        (float):          Mg²⁺ concentration in mM.
-            * ens       (str):            Ensemble type: 'NPT', 'NVT', or 'non' (non-periodic).
-            * dt        (unit.Quantity):  Integration time step.
-            * er_ref    (float):          Reference dielectric constant used to scale the temperature-dependent er.
-            * pressure  (unit.Quantity):  Pressure for NPT barostat.
-            * friction  (unit.Quantity):  Friction coefficient for the Langevin integrator.
-            * gpu_id    (str):            CUDA device index (e.g. '0').
-            * box       (list[float]):    PBC box dimensions in nm. Provide one value for a cubic box or three values [lx, ly, lz] for an orthorhombic box.
+            - ``pdb``       (str):            Path to the input PDB coordinate file.
+            - ``psf``       (str):            Path to the CHARMM PSF topology file.
+            - ``temp``      (float):          Simulation temperature in Kelvin.
+            - ``salt``      (float):          Monovalent salt concentration in mM (converted to M internally).
+            - ``Mg``        (float):          Mg²⁺ concentration in mM.
+            - ``ens``       (str):            Ensemble type: 'NPT', 'NVT', or 'non' (non-periodic).
+            - ``dt``        (unit.Quantity):  Integration time step.
+            - ``er_ref``    (float):          Reference dielectric constant used to scale the temperature-dependent er.
+            - ``pressure``  (unit.Quantity):  Pressure for NPT barostat.
+            - ``friction``  (unit.Quantity):  Friction coefficient for the Langevin integrator.
+            - ``gpu_id``    (str):            CUDA device index (e.g. '0').
+            - ``box``       (list[float]):    PBC box dimensions in nm. Provide one value for a cubic box or three values [lx, ly, lz] for an orthorhombic box.
         modification (callable, optional): A user-supplied function passed directly to HyresFF.buildSystem for custom force field modifications. Default: None.
 
     Returns:
         tuple:
-            * system (openmm.System):          The fully constructed OpenMM System.
-            * sim    (openmm.app.Simulation):  The initialized Simulation object with positions and velocities set.
+            - system (openmm.System):          The fully constructed OpenMM System.
+            - sim    (openmm.app.Simulation):  The initialized Simulation object with positions and velocities set.
 
     Raises:
         SystemExit: If an unsupported ensemble type is provided, if a Mg²⁺ concentration is specified for a non-periodic system, or if an invalid box dimension list is given.
