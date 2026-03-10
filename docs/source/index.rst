@@ -18,7 +18,7 @@ HyresBuilder documentation
 ----
 
 .. list-table::
-   :widths: 60 100
+   :widths: 70 100
    :align: center
    
    * - .. figure:: _static/hyres.png
