@@ -1,5 +1,5 @@
 Restraints
-=============
+==========
 
 .. automodule:: HyresBuilder.Restraints
    :members:
