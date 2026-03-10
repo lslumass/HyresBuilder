@@ -1,0 +1,429 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HyresBuilder.HyresFF &mdash; HyresBuilder latest documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=c6e86fd7"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            HyresBuilder
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">HyresBuilder</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">HyresBuilder.HyresFF</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for HyresBuilder.HyresFF</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This package is used to constructe Hyres Force Field, iConRNA force field</span>
+<span class="sd">Athours: Shanlong Li, Xiping Gong, Yumeng Zhang</span>
+<span class="sd">Date: Mar 9, 2024</span>
+<span class="sd">Modified: Sep 29, 2025 </span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">openmm.unit</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openmm.app</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openmm</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+
+<div class="viewcode-block" id="buildSystem">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.HyresFF.buildSystem">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">buildSystem</span><span class="p">(</span><span class="n">psf</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">ffs</span><span class="p">,</span> <span class="n">modification</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Constructs a protein and/or RNA force field.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        psf: PSF file containing topology information</span>
+<span class="sd">        system: OpenMM system object</span>
+<span class="sd">        ffs: Force field parameters dictionary containing:</span>
+<span class="sd">            - dh: Debye-Huckel screening length</span>
+<span class="sd">            - lmd: Lambda parameter for charge-charge interactions</span>
+<span class="sd">            - er: Relative dielectric constant</span>
+<span class="sd">        modification: custome defined function for further modifying system</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Modified OpenMM system with protein and/or RNA force field</span>
+<span class="sd">    </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If required parameters or forces are missing</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">################# constructe HyRes and/or iConRNA force field ####################&#39;</span><span class="p">)</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="n">psf</span><span class="o">.</span><span class="n">topology</span>
+    
+    <span class="c1"># 1. Validate force field parameters</span>
+    <span class="n">required_params</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;dh&#39;</span><span class="p">,</span> <span class="s1">&#39;lmd&#39;</span><span class="p">,</span> <span class="s1">&#39;er&#39;</span><span class="p">]</span>
+    <span class="n">missing_params</span> <span class="o">=</span> <span class="p">[</span><span class="n">param</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">required_params</span> <span class="k">if</span> <span class="n">param</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ffs</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">missing_params</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing required force field parameters: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing_params</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># 2. Get forces, bondlist, and atom names</span>
+    <span class="c1"># get forces</span>
+    <span class="k">for</span> <span class="n">force_index</span><span class="p">,</span> <span class="n">force</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">getForces</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">force</span><span class="o">.</span><span class="n">getName</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;NonbondedForce&quot;</span><span class="p">:</span>
+            <span class="n">nbforce</span> <span class="o">=</span> <span class="n">force</span>
+            <span class="n">nbforce_index</span> <span class="o">=</span> <span class="n">force_index</span>
+        <span class="k">elif</span> <span class="n">force</span><span class="o">.</span><span class="n">getName</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;HarmonicAngleForce&quot;</span><span class="p">:</span>
+            <span class="n">hmangle</span> <span class="o">=</span> <span class="n">force</span>
+            <span class="n">hmangle_index</span> <span class="o">=</span> <span class="n">force_index</span>
+        <span class="k">elif</span> <span class="n">force</span><span class="o">.</span><span class="n">getName</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;PeriodicTorsionForce&quot;</span><span class="p">:</span>
+            <span class="n">dihedral</span> <span class="o">=</span> <span class="n">force</span>
+            <span class="n">dihedral_index</span> <span class="o">=</span> <span class="n">force_index</span>
+        <span class="k">elif</span> <span class="n">force</span><span class="o">.</span><span class="n">getName</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;CustomNonbondedForce&quot;</span><span class="p">:</span>
+            <span class="n">nbfix</span> <span class="o">=</span> <span class="n">force</span>
+            <span class="n">force</span><span class="o">.</span><span class="n">setName</span><span class="p">(</span><span class="s1">&#39;LJ Force w/ NBFIX&#39;</span><span class="p">)</span>
+
+    <span class="c1"># get bondlist</span>
+    <span class="n">bondlist</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">bond</span> <span class="ow">in</span> <span class="n">top</span><span class="o">.</span><span class="n">bonds</span><span class="p">():</span>
+        <span class="n">bondlist</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">bond</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">bond</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">])</span>
+    <span class="c1">#get all atom name</span>
+    <span class="n">atoms</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">residues</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">psf</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">atoms</span><span class="p">():</span>
+        <span class="n">atoms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">residues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    
+    <span class="c1"># 3 Replace HarmonicAngle with Restricted Bending (ReB) potential</span>
+    <span class="n">ReB</span> <span class="o">=</span> <span class="n">CustomAngleForce</span><span class="p">(</span><span class="s2">&quot;0.5*kt*(theta-theta0)^2/(sin(theta)^kReB);&quot;</span><span class="p">)</span>
+    <span class="n">ReB</span><span class="o">.</span><span class="n">setName</span><span class="p">(</span><span class="s1">&#39;ReBAngleForce&#39;</span><span class="p">)</span>
+    <span class="n">ReB</span><span class="o">.</span><span class="n">addPerAngleParameter</span><span class="p">(</span><span class="s2">&quot;theta0&quot;</span><span class="p">)</span>
+    <span class="n">ReB</span><span class="o">.</span><span class="n">addPerAngleParameter</span><span class="p">(</span><span class="s2">&quot;kt&quot;</span><span class="p">)</span>
+    <span class="n">ReB</span><span class="o">.</span><span class="n">addPerAngleParameter</span><span class="p">(</span><span class="s2">&quot;kReB&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">angle_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">hmangle</span><span class="o">.</span><span class="n">getNumAngles</span><span class="p">()):</span>
+        <span class="n">ang</span> <span class="o">=</span> <span class="n">hmangle</span><span class="o">.</span><span class="n">getAngleParameters</span><span class="p">(</span><span class="n">angle_idx</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">atoms</span><span class="p">[</span><span class="n">ang</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="s1">&#39;C1&#39;</span><span class="p">,</span> <span class="s1">&#39;C2&#39;</span><span class="p">,</span> <span class="s1">&#39;NA&#39;</span><span class="p">,</span> <span class="s1">&#39;NB&#39;</span><span class="p">,</span> <span class="s1">&#39;NC&#39;</span><span class="p">,</span> <span class="s1">&#39;ND&#39;</span><span class="p">]:</span>
+            <span class="n">ReB</span><span class="o">.</span><span class="n">addAngle</span><span class="p">(</span><span class="n">ang</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ang</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ang</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="n">ang</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">ang</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">atoms</span><span class="p">[</span><span class="n">ang</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">==</span> <span class="s1">&#39;CA&#39;</span> <span class="ow">and</span> <span class="n">atoms</span><span class="p">[</span><span class="n">ang</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">==</span> <span class="s1">&#39;CB&#39;</span><span class="p">:</span>
+            <span class="n">ReB</span><span class="o">.</span><span class="n">addAngle</span><span class="p">(</span><span class="n">ang</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ang</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ang</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="n">ang</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">ang</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ReB</span><span class="o">.</span><span class="n">addAngle</span><span class="p">(</span><span class="n">ang</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ang</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ang</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="n">ang</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">ang</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">ReB</span><span class="p">)</span>
+
+    <span class="c1"># 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce</span>
+    <span class="n">dh</span> <span class="o">=</span> <span class="n">ffs</span><span class="p">[</span><span class="s1">&#39;dh&#39;</span><span class="p">]</span>
+    <span class="n">lmd</span> <span class="o">=</span> <span class="n">ffs</span><span class="p">[</span><span class="s1">&#39;lmd&#39;</span><span class="p">]</span>
+    <span class="n">er</span> <span class="o">=</span> <span class="n">ffs</span><span class="p">[</span><span class="s1">&#39;er&#39;</span><span class="p">]</span>
+    <span class="c1"># add custom nonbondedforce: CNBForce, here only charge-charge interactions</span>
+    <span class="n">formula</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;138.935456/er*charge1*charge2/r*exp(-r/dh)*kpmg;</span>
+<span class="s2">                dh=</span><span class="si">{</span><span class="n">dh</span><span class="o">.</span><span class="n">value_in_unit</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span><span class="p">)</span><span class="si">}</span><span class="s2">; er=</span><span class="si">{</span><span class="n">er</span><span class="si">}</span><span class="s2">; kpmg=select(lb1+lb2,1,lmd); lmd=</span><span class="si">{</span><span class="n">lmd</span><span class="si">}</span>
+<span class="s2">              &quot;&quot;&quot;</span>
+    <span class="n">CNBForce</span> <span class="o">=</span> <span class="n">CustomNonbondedForce</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
+    <span class="n">CNBForce</span><span class="o">.</span><span class="n">setName</span><span class="p">(</span><span class="s2">&quot;DH_ElecForce&quot;</span><span class="p">)</span>
+    <span class="n">CNBForce</span><span class="o">.</span><span class="n">setNonbondedMethod</span><span class="p">(</span><span class="n">nbforce</span><span class="o">.</span><span class="n">getNonbondedMethod</span><span class="p">())</span>
+    <span class="n">CNBForce</span><span class="o">.</span><span class="n">setUseSwitchingFunction</span><span class="p">(</span><span class="n">use</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">CNBForce</span><span class="o">.</span><span class="n">setCutoffDistance</span><span class="p">(</span><span class="mf">1.8</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometers</span><span class="p">)</span>
+    <span class="n">CNBForce</span><span class="o">.</span><span class="n">setSwitchingDistance</span><span class="p">(</span><span class="mf">1.6</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometers</span><span class="p">)</span>
+    <span class="n">CNBForce</span><span class="o">.</span><span class="n">addPerParticleParameter</span><span class="p">(</span><span class="s1">&#39;charge&#39;</span><span class="p">)</span>
+    <span class="n">CNBForce</span><span class="o">.</span><span class="n">addPerParticleParameter</span><span class="p">(</span><span class="s1">&#39;lb&#39;</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nbforce</span><span class="o">.</span><span class="n">getNumParticles</span><span class="p">()):</span>
+        <span class="n">particle</span> <span class="o">=</span> <span class="n">nbforce</span><span class="o">.</span><span class="n">getParticleParameters</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">atoms</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span>
+            <span class="n">lb</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">atoms</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;MG&#39;</span><span class="p">:</span>
+            <span class="n">lb</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lb</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">perP</span> <span class="o">=</span> <span class="p">[</span><span class="n">particle</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lb</span><span class="p">]</span>
+        <span class="n">CNBForce</span><span class="o">.</span><span class="n">addParticle</span><span class="p">(</span><span class="n">perP</span><span class="p">)</span>
+    
+    <span class="n">CNBForce</span><span class="o">.</span><span class="n">createExclusionsFromBonds</span><span class="p">(</span><span class="n">bondlist</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">CNBForce</span><span class="p">)</span>
+
+    <span class="c1"># 5 Add 1-4 nonbonded interaction through custombondforece</span>
+    <span class="n">formula</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;(4.0*epsilon*six*(six-1.0)+(138.935456/er*charge)/r*exp(-r/dh));</span>
+<span class="s2">              six=(sigma/r)^6; er=</span><span class="si">{</span><span class="n">er</span><span class="si">}</span><span class="s2">; dh=</span><span class="si">{</span><span class="n">dh</span><span class="o">.</span><span class="n">value_in_unit</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span><span class="p">)</span><span class="si">}</span>
+<span class="s2">              &quot;&quot;&quot;</span>
+    <span class="n">Force14</span> <span class="o">=</span> <span class="n">CustomBondForce</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
+    <span class="n">Force14</span><span class="o">.</span><span class="n">setName</span><span class="p">(</span><span class="s1">&#39;1-4 interaction&#39;</span><span class="p">)</span>
+    <span class="n">Force14</span><span class="o">.</span><span class="n">addPerBondParameter</span><span class="p">(</span><span class="s1">&#39;charge&#39;</span><span class="p">)</span>
+    <span class="n">Force14</span><span class="o">.</span><span class="n">addPerBondParameter</span><span class="p">(</span><span class="s1">&#39;sigma&#39;</span><span class="p">)</span>
+    <span class="n">Force14</span><span class="o">.</span><span class="n">addPerBondParameter</span><span class="p">(</span><span class="s1">&#39;epsilon&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nbforce</span><span class="o">.</span><span class="n">getNumExceptions</span><span class="p">()):</span>
+        <span class="n">ex</span> <span class="o">=</span> <span class="n">nbforce</span><span class="o">.</span><span class="n">getExceptionParameters</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+        <span class="n">Force14</span><span class="o">.</span><span class="n">addBond</span><span class="p">(</span><span class="n">ex</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ex</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="n">ex</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">ex</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">ex</span><span class="p">[</span><span class="mi">4</span><span class="p">]])</span>
+    <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">Force14</span><span class="p">)</span>
+
+    <span class="c1"># 6. Add the Custom hydrogen bond force for protein backbone</span>
+    <span class="n">Ns</span><span class="p">,</span> <span class="n">Hs</span><span class="p">,</span> <span class="n">Os</span><span class="p">,</span> <span class="n">Cs</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">psf</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">atoms</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;N&quot;</span> <span class="ow">and</span> <span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">&#39;PRO&#39;</span><span class="p">:</span>
+            <span class="n">Ns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;H&quot;</span><span class="p">:</span>
+            <span class="n">Hs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;O&quot;</span><span class="p">:</span>
+            <span class="n">Os</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;C&quot;</span><span class="p">:</span>
+            <span class="n">Cs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+    
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Ns</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">sigma_hb</span> <span class="o">=</span> <span class="mf">0.29</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span>
+        <span class="n">eps_hb</span> <span class="o">=</span> <span class="mf">2.2</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">kilocalorie_per_mole</span>
+        <span class="n">formula</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;epsilon*(5*(sigma/r)^12-6*(sigma/r)^10)*step(cos3)*cos3;</span>
+<span class="s2">                r=distance(a1,d1); cos3=-cos(phi)^3; phi=angle(a1,d2,d1);</span>
+<span class="s2">                sigma = </span><span class="si">{</span><span class="n">sigma_hb</span><span class="o">.</span><span class="n">value_in_unit</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span><span class="p">)</span><span class="si">}</span><span class="s2">; epsilon = </span><span class="si">{</span><span class="n">eps_hb</span><span class="o">.</span><span class="n">value_in_unit</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">kilojoule_per_mole</span><span class="p">)</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+        <span class="n">HBforce</span> <span class="o">=</span> <span class="n">CustomHbondForce</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
+        <span class="n">HBforce</span><span class="o">.</span><span class="n">setName</span><span class="p">(</span><span class="s1">&#39;N-H--O HBForce&#39;</span><span class="p">)</span>
+        <span class="n">HBforce</span><span class="o">.</span><span class="n">setNonbondedMethod</span><span class="p">(</span><span class="n">nbforce</span><span class="o">.</span><span class="n">getNonbondedMethod</span><span class="p">())</span>
+        <span class="n">HBforce</span><span class="o">.</span><span class="n">setCutoffDistance</span><span class="p">(</span><span class="mf">0.45</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometers</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Hs</span><span class="p">)):</span>
+            <span class="n">HBforce</span><span class="o">.</span><span class="n">addDonor</span><span class="p">(</span><span class="n">Ns</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">Hs</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">HBforce</span><span class="o">.</span><span class="n">addAcceptor</span><span class="p">(</span><span class="n">Os</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">HBforce</span><span class="o">.</span><span class="n">getNumAcceptors</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">HBforce</span><span class="o">.</span><span class="n">getNumDonors</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">HBforce</span><span class="p">)</span>
+
+    <span class="c1"># 7. Base stacking and pairing</span>
+    <span class="n">eps_base</span> <span class="o">=</span> <span class="mf">3.4</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">kilocalorie_per_mole</span>
+    <span class="c1"># relative strength of base pairing and stacking</span>
+    <span class="n">scales</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;AA&#39;</span><span class="p">:</span><span class="mf">1.0</span><span class="p">,</span> <span class="s1">&#39;AG&#39;</span><span class="p">:</span><span class="mf">1.0</span><span class="p">,</span> <span class="s1">&#39;AC&#39;</span><span class="p">:</span><span class="mf">0.8</span><span class="p">,</span> <span class="s1">&#39;AU&#39;</span><span class="p">:</span><span class="mf">0.8</span><span class="p">,</span> <span class="s1">&#39;GA&#39;</span><span class="p">:</span><span class="mf">1.1</span><span class="p">,</span> <span class="s1">&#39;GG&#39;</span><span class="p">:</span><span class="mf">1.1</span><span class="p">,</span> <span class="s1">&#39;GC&#39;</span><span class="p">:</span><span class="mf">0.8</span><span class="p">,</span> <span class="s1">&#39;GU&#39;</span><span class="p">:</span><span class="mf">0.8</span><span class="p">,</span>       <span class="c1"># stacking</span>
+              <span class="s1">&#39;CA&#39;</span><span class="p">:</span><span class="mf">0.6</span><span class="p">,</span> <span class="s1">&#39;CG&#39;</span><span class="p">:</span><span class="mf">0.6</span><span class="p">,</span> <span class="s1">&#39;CC&#39;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;CU&#39;</span><span class="p">:</span><span class="mf">0.4</span><span class="p">,</span> <span class="s1">&#39;UA&#39;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;UG&#39;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;UC&#39;</span><span class="p">:</span><span class="mf">0.4</span><span class="p">,</span> <span class="s1">&#39;UU&#39;</span><span class="p">:</span><span class="mf">0.1</span><span class="p">,</span>       <span class="c1"># stacking</span>
+              <span class="s1">&#39;A-U&#39;</span><span class="p">:</span><span class="mf">0.89</span><span class="p">,</span> <span class="s1">&#39;C-G&#39;</span><span class="p">:</span><span class="mf">1.14</span><span class="p">,</span> <span class="s1">&#39;G-U&#39;</span><span class="p">:</span><span class="mf">0.76</span><span class="p">,</span> <span class="s1">&#39;general&#39;</span><span class="p">:</span><span class="mf">0.76</span><span class="p">}</span>   <span class="c1"># pairing</span>
+    <span class="c1"># optimal stacking distance</span>
+    <span class="n">r0s</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;AA&#39;</span><span class="p">:</span><span class="mf">0.35</span><span class="p">,</span> <span class="s1">&#39;AG&#39;</span><span class="p">:</span><span class="mf">0.35</span><span class="p">,</span> <span class="s1">&#39;GA&#39;</span><span class="p">:</span><span class="mf">0.35</span><span class="p">,</span> <span class="s1">&#39;GG&#39;</span><span class="p">:</span><span class="mf">0.35</span><span class="p">,</span> <span class="s1">&#39;AC&#39;</span><span class="p">:</span><span class="mf">0.38</span><span class="p">,</span> <span class="s1">&#39;AU&#39;</span><span class="p">:</span><span class="mf">0.38</span><span class="p">,</span> <span class="s1">&#39;GC&#39;</span><span class="p">:</span><span class="mf">0.38</span><span class="p">,</span> <span class="s1">&#39;GU&#39;</span><span class="p">:</span><span class="mf">0.38</span><span class="p">,</span>
+           <span class="s1">&#39;CA&#39;</span><span class="p">:</span><span class="mf">0.40</span><span class="p">,</span> <span class="s1">&#39;CG&#39;</span><span class="p">:</span><span class="mf">0.40</span><span class="p">,</span> <span class="s1">&#39;UA&#39;</span><span class="p">:</span><span class="mf">0.40</span><span class="p">,</span> <span class="s1">&#39;UG&#39;</span><span class="p">:</span><span class="mf">0.40</span><span class="p">,</span> <span class="s1">&#39;CC&#39;</span><span class="p">:</span><span class="mf">0.43</span><span class="p">,</span> <span class="s1">&#39;CU&#39;</span><span class="p">:</span><span class="mf">0.43</span><span class="p">,</span> <span class="s1">&#39;UC&#39;</span><span class="p">:</span><span class="mf">0.43</span><span class="p">,</span> <span class="s1">&#39;UU&#39;</span><span class="p">:</span><span class="mf">0.43</span><span class="p">}</span>
+
+    <span class="c1"># get all the groups of bases</span>
+    <span class="n">grps</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">psf</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">atoms</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;NA&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span><span class="p">]:</span>
+                <span class="n">grps</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="p">[</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">]])</span>
+                <span class="n">grps</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="p">[</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="o">+</span><span class="mi">3</span><span class="p">]])</span>
+            <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span><span class="p">]:</span>
+                <span class="n">grps</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="p">[</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="o">+</span><span class="mi">2</span><span class="p">]])</span>
+                <span class="n">grps</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="p">[</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="o">+</span><span class="mi">2</span><span class="p">]])</span>
+    
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">grps</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># base stacking</span>
+        <span class="n">fstack</span> <span class="o">=</span> <span class="n">CustomCentroidBondForce</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;eps_stack*(5*(r0/r)^12-6.0*(r0/r)^10); r=distance(g1, g2);&#39;</span><span class="p">)</span>
+        <span class="n">fstack</span><span class="o">.</span><span class="n">setName</span><span class="p">(</span><span class="s1">&#39;StackingForce&#39;</span><span class="p">)</span>
+        <span class="n">fstack</span><span class="o">.</span><span class="n">addPerBondParameter</span><span class="p">(</span><span class="s1">&#39;eps_stack&#39;</span><span class="p">)</span>
+        <span class="n">fstack</span><span class="o">.</span><span class="n">addPerBondParameter</span><span class="p">(</span><span class="s1">&#39;r0&#39;</span><span class="p">)</span>
+        <span class="c1"># add all group</span>
+        <span class="k">for</span> <span class="n">grp</span> <span class="ow">in</span> <span class="n">grps</span><span class="p">:</span>
+            <span class="n">fstack</span><span class="o">.</span><span class="n">addGroup</span><span class="p">(</span><span class="n">grp</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="c1"># get the stacking pairs</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">grps</span><span class="p">)</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">grps</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">grps</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">pij</span> <span class="o">=</span> <span class="n">grps</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">grps</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">fstack</span><span class="o">.</span><span class="n">addBond</span><span class="p">([</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="n">scales</span><span class="p">[</span><span class="n">pij</span><span class="p">]</span><span class="o">*</span><span class="n">eps_base</span><span class="p">,</span> <span class="n">r0s</span><span class="p">[</span><span class="n">pij</span><span class="p">]</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometers</span><span class="p">])</span> 
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;    add &#39;</span><span class="p">,</span> <span class="n">fstack</span><span class="o">.</span><span class="n">getNumBonds</span><span class="p">(),</span> <span class="s1">&#39;stacking pairs&#39;</span><span class="p">)</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">fstack</span><span class="p">)</span>
+
+        <span class="c1"># base pairing</span>
+        <span class="n">a_b</span><span class="p">,</span> <span class="n">a_c</span><span class="p">,</span> <span class="n">a_d</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">g_b</span><span class="p">,</span> <span class="n">g_c</span><span class="p">,</span> <span class="n">g_d</span><span class="p">,</span> <span class="n">g_a</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">c_a</span><span class="p">,</span> <span class="n">c_b</span><span class="p">,</span> <span class="n">c_c</span><span class="p">,</span> <span class="n">u_a</span><span class="p">,</span> <span class="n">u_b</span><span class="p">,</span> <span class="n">u_c</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">a_p</span><span class="p">,</span> <span class="n">g_p</span><span class="p">,</span> <span class="n">c_p</span><span class="p">,</span> <span class="n">u_p</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">num_A</span><span class="p">,</span> <span class="n">num_G</span><span class="p">,</span> <span class="n">num_C</span><span class="p">,</span> <span class="n">num_U</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">psf</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">atoms</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;A&#39;</span><span class="p">:</span>
+                <span class="n">num_A</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;NC&#39;</span><span class="p">:</span>
+                    <span class="n">a_c</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;NB&#39;</span><span class="p">:</span>
+                    <span class="n">a_b</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;ND&#39;</span><span class="p">:</span>
+                    <span class="n">a_d</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span>
+                    <span class="n">a_p</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;G&#39;</span><span class="p">:</span>
+                <span class="n">num_G</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;NC&#39;</span><span class="p">:</span>
+                    <span class="n">g_c</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;NB&#39;</span><span class="p">:</span>
+                    <span class="n">g_b</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;ND&#39;</span><span class="p">:</span>
+                    <span class="n">g_d</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;NA&#39;</span><span class="p">:</span>
+                    <span class="n">g_a</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;U&#39;</span><span class="p">:</span>
+                <span class="n">num_U</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;NA&#39;</span><span class="p">:</span>
+                    <span class="n">u_a</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;NB&#39;</span><span class="p">:</span>
+                    <span class="n">u_b</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;NC&#39;</span><span class="p">:</span>
+                    <span class="n">u_c</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span>
+                    <span class="n">u_p</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span>
+                <span class="n">num_C</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;NA&#39;</span><span class="p">:</span>
+                    <span class="n">c_a</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;NB&#39;</span><span class="p">:</span>
+                    <span class="n">c_b</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;NC&#39;</span><span class="p">:</span>
+                    <span class="n">c_c</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">atom</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span>
+                    <span class="n">c_p</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+
+        <span class="c1"># add A-U pair through CustomHbondForce</span>
+        <span class="n">eps_AU</span> <span class="o">=</span> <span class="n">eps_base</span><span class="o">*</span><span class="n">scales</span><span class="p">[</span><span class="s1">&#39;A-U&#39;</span><span class="p">]</span>
+        <span class="n">r_au</span> <span class="o">=</span> <span class="mf">0.35</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span>
+        <span class="n">r_au2</span> <span class="o">=</span> <span class="mf">0.40</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span>
+
+        <span class="k">if</span> <span class="n">num_A</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">num_U</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">formula</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;eps_AU*(5.0*(r_au/r)^12-6.0*(r_au/r)^10 + 5.0*(r_au2/r2)^12-6.0*(r_au2/r2)^10)*step_phi;</span>
+<span class="s2">                      r=distance(a1,d1); r2=distance(a3,d2); step_phi=step(cos_phi)*cos_phi; cos_phi=-cos(phi)^5; phi=angle(d1,a1,a2);</span>
+<span class="s2">                      eps_AU=</span><span class="si">{</span><span class="n">eps_AU</span><span class="o">.</span><span class="n">value_in_unit</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">kilojoule_per_mole</span><span class="p">)</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">                      r_au=</span><span class="si">{</span><span class="n">r_au</span><span class="o">.</span><span class="n">value_in_unit</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span><span class="p">)</span><span class="si">}</span><span class="s2">; r_au2=</span><span class="si">{</span><span class="n">r_au2</span><span class="o">.</span><span class="n">value_in_unit</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span><span class="p">)</span><span class="si">}</span>
+<span class="s2">                      &quot;&quot;&quot;</span>
+            <span class="n">pairAU</span> <span class="o">=</span> <span class="n">CustomHbondForce</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
+            <span class="n">pairAU</span><span class="o">.</span><span class="n">setName</span><span class="p">(</span><span class="s1">&#39;AUpairForce&#39;</span><span class="p">)</span>
+            <span class="n">pairAU</span><span class="o">.</span><span class="n">setNonbondedMethod</span><span class="p">(</span><span class="n">nbforce</span><span class="o">.</span><span class="n">getNonbondedMethod</span><span class="p">())</span>
+            <span class="n">pairAU</span><span class="o">.</span><span class="n">setCutoffDistance</span><span class="p">(</span><span class="mf">0.65</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a_c</span><span class="p">)):</span>
+                <span class="n">pairAU</span><span class="o">.</span><span class="n">addAcceptor</span><span class="p">(</span><span class="n">a_c</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">a_b</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">a_d</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">u_b</span><span class="p">)):</span>
+                <span class="n">pairAU</span><span class="o">.</span><span class="n">addDonor</span><span class="p">(</span><span class="n">u_b</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">u_c</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">u_a</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">pairAU</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">pairAU</span><span class="o">.</span><span class="n">getNumAcceptors</span><span class="p">(),</span> <span class="n">pairAU</span><span class="o">.</span><span class="n">getNumDonors</span><span class="p">(),</span> <span class="s1">&#39;AU&#39;</span><span class="p">)</span>
+
+        <span class="c1"># add C-G pair through CustomHbondForce</span>
+        <span class="n">eps_CG</span> <span class="o">=</span> <span class="n">eps_base</span><span class="o">*</span><span class="n">scales</span><span class="p">[</span><span class="s1">&#39;C-G&#39;</span><span class="p">]</span>
+        <span class="n">r_cg</span> <span class="o">=</span> <span class="mf">0.35</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span>
+        <span class="n">r_cg2</span> <span class="o">=</span> <span class="mf">0.38</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span>
+
+        <span class="k">if</span> <span class="n">num_C</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">num_G</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">formula</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;eps_CG*(5.0*(r_cg/r)^12-6.0*(r_cg/r)^10 + 5.0*(r_cg2/r2)^12-6.0*(r_cg2/r2)^10)*step_phi;</span>
+<span class="s2">                      r=distance(a1,d1); r2=distance(a3,d2); step_phi=step(cos_phi)*cos_phi; cos_phi=-cos(phi)^5; phi=angle(d1,a1,a2);</span>
+<span class="s2">                      eps_CG=</span><span class="si">{</span><span class="n">eps_CG</span><span class="o">.</span><span class="n">value_in_unit</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">kilojoule_per_mole</span><span class="p">)</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">                      r_cg=</span><span class="si">{</span><span class="n">r_cg</span><span class="o">.</span><span class="n">value_in_unit</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span><span class="p">)</span><span class="si">}</span><span class="s2">; r_cg2=</span><span class="si">{</span><span class="n">r_cg2</span><span class="o">.</span><span class="n">value_in_unit</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span><span class="p">)</span><span class="si">}</span>
+<span class="s2">                      &quot;&quot;&quot;</span>
+            <span class="n">pairCG</span> <span class="o">=</span> <span class="n">CustomHbondForce</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
+            <span class="n">pairCG</span><span class="o">.</span><span class="n">setName</span><span class="p">(</span><span class="s1">&#39;CGpairForce&#39;</span><span class="p">)</span>
+            <span class="n">pairCG</span><span class="o">.</span><span class="n">setNonbondedMethod</span><span class="p">(</span><span class="n">nbforce</span><span class="o">.</span><span class="n">getNonbondedMethod</span><span class="p">())</span>
+            <span class="n">pairCG</span><span class="o">.</span><span class="n">setCutoffDistance</span><span class="p">(</span><span class="mf">0.65</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">g_c</span><span class="p">)):</span>
+                <span class="n">pairCG</span><span class="o">.</span><span class="n">addAcceptor</span><span class="p">(</span><span class="n">g_c</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">g_b</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">g_d</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c_b</span><span class="p">)):</span>
+                <span class="n">pairCG</span><span class="o">.</span><span class="n">addDonor</span><span class="p">(</span><span class="n">c_b</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">c_c</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">c_a</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">pairCG</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">pairCG</span><span class="o">.</span><span class="n">getNumAcceptors</span><span class="p">(),</span> <span class="n">pairCG</span><span class="o">.</span><span class="n">getNumDonors</span><span class="p">(),</span> <span class="s1">&#39;CG&#39;</span><span class="p">)</span>
+
+        <span class="c1"># add G-U pair through CustomHbondForce</span>
+        <span class="n">eps_GU</span> <span class="o">=</span> <span class="n">eps_base</span><span class="o">*</span><span class="n">scales</span><span class="p">[</span><span class="s1">&#39;G-U&#39;</span><span class="p">]</span>
+        <span class="n">r_gu</span> <span class="o">=</span> <span class="mf">0.35</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span>
+
+        <span class="k">if</span> <span class="n">num_G</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">num_U</span> <span class="o">!=</span><span class="mi">0</span><span class="p">:</span>
+            <span class="n">formula</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;eps_GU*(5.0*(r_gu/r)^12-6.0*(r_gu/r)^10)*step_phi; r=distance(a1,d1);</span>
+<span class="s2">                        step_phi=step(cos_phi)*cos_phi; cos_phi=-cos(phi)^5; phi=angle(d1,a1,a2);</span>
+<span class="s2">                        eps_GU=</span><span class="si">{</span><span class="n">eps_GU</span><span class="o">.</span><span class="n">value_in_unit</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">kilojoule_per_mole</span><span class="p">)</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">                        r_gu=</span><span class="si">{</span><span class="n">r_gu</span><span class="o">.</span><span class="n">value_in_unit</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span><span class="p">)</span><span class="si">}</span>
+<span class="s2">                      &quot;&quot;&quot;</span>
+            <span class="n">pairGU</span> <span class="o">=</span> <span class="n">CustomHbondForce</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
+            <span class="n">pairGU</span><span class="o">.</span><span class="n">setName</span><span class="p">(</span><span class="s1">&#39;GUpairForce&#39;</span><span class="p">)</span>
+            <span class="n">pairGU</span><span class="o">.</span><span class="n">setNonbondedMethod</span><span class="p">(</span><span class="n">nbforce</span><span class="o">.</span><span class="n">getNonbondedMethod</span><span class="p">())</span>
+            <span class="n">pairGU</span><span class="o">.</span><span class="n">setCutoffDistance</span><span class="p">(</span><span class="mf">0.65</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometers</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">g_c</span><span class="p">)):</span>
+                <span class="n">pairGU</span><span class="o">.</span><span class="n">addAcceptor</span><span class="p">(</span><span class="n">g_c</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">g_b</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">u_b</span><span class="p">)):</span>
+                <span class="n">pairGU</span><span class="o">.</span><span class="n">addDonor</span><span class="p">(</span><span class="n">u_b</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">pairGU</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">pairGU</span><span class="o">.</span><span class="n">getNumAcceptors</span><span class="p">(),</span> <span class="n">pairGU</span><span class="o">.</span><span class="n">getNumDonors</span><span class="p">(),</span> <span class="s1">&#39;GU&#39;</span><span class="p">)</span>
+
+    <span class="c1"># further modification defined in running scripts</span>
+    <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">modification</span><span class="p">):</span>
+        <span class="n">modification</span><span class="p">(</span><span class="n">system</span><span class="p">)</span>
+        
+    <span class="c1"># 8. Delete the NonbondedForce and HarmonicAngleForce</span>
+    <span class="n">system</span><span class="o">.</span><span class="n">removeForce</span><span class="p">(</span><span class="n">nbforce_index</span><span class="p">)</span>
+    <span class="n">system</span><span class="o">.</span><span class="n">removeForce</span><span class="p">(</span><span class="n">hmangle_index</span><span class="p">)</span>
+
+    <span class="c1"># 9. set unique ForceGroup id for each force</span>
+    <span class="n">forces</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">getForces</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">force</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">forces</span><span class="p">):</span>
+        <span class="n">force</span><span class="o">.</span><span class="n">setForceGroup</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">system</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shanlong Li, Jian Huang, Yumeng Zhang, Jianhan Chen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

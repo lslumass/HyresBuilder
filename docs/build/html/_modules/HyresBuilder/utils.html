@@ -1,0 +1,563 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HyresBuilder.utils &mdash; HyresBuilder latest documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=c6e86fd7"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            HyresBuilder
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">HyresBuilder</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">HyresBuilder.utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for HyresBuilder.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pkg_resources</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pkg_res</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openmm.unit</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openmm.app</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openmm</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.HyresFF</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.rG4sFF</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+
+
+<div class="viewcode-block" id="load_ff">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.utils.load_ff">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_ff</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;Protein&#39;</span><span class="p">:</span>
+        <span class="n">path1</span> <span class="o">=</span> <span class="n">pkg_res</span><span class="o">.</span><span class="n">resource_filename</span><span class="p">(</span><span class="s2">&quot;HyresBuilder&quot;</span><span class="p">,</span> <span class="s2">&quot;forcefield/top_hyres_mix.inp&quot;</span><span class="p">)</span>
+        <span class="n">path2</span> <span class="o">=</span> <span class="n">pkg_res</span><span class="o">.</span><span class="n">resource_filename</span><span class="p">(</span><span class="s2">&quot;HyresBuilder&quot;</span><span class="p">,</span> <span class="s2">&quot;forcefield/param_hyres_mix.inp&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;RNA&#39;</span><span class="p">:</span>
+        <span class="n">path1</span> <span class="o">=</span> <span class="n">pkg_res</span><span class="o">.</span><span class="n">resource_filename</span><span class="p">(</span><span class="s2">&quot;HyresBuilder&quot;</span><span class="p">,</span> <span class="s2">&quot;forcefield/top_RNA_mix.inp&quot;</span><span class="p">)</span>
+        <span class="n">path2</span> <span class="o">=</span> <span class="n">pkg_res</span><span class="o">.</span><span class="n">resource_filename</span><span class="p">(</span><span class="s2">&quot;HyresBuilder&quot;</span><span class="p">,</span> <span class="s2">&quot;forcefield/param_RNA_mix.inp&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;DNA&#39;</span><span class="p">:</span>
+        <span class="n">path1</span> <span class="o">=</span> <span class="n">pkg_res</span><span class="o">.</span><span class="n">resource_filename</span><span class="p">(</span><span class="s2">&quot;HyresBuilder&quot;</span><span class="p">,</span> <span class="s2">&quot;forcefield/top_DNA_mix.inp&quot;</span><span class="p">)</span>
+        <span class="n">path2</span> <span class="o">=</span> <span class="n">pkg_res</span><span class="o">.</span><span class="n">resource_filename</span><span class="p">(</span><span class="s2">&quot;HyresBuilder&quot;</span><span class="p">,</span> <span class="s2">&quot;forcefield/param_DNA_mix.inp&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;rG4s&#39;</span><span class="p">:</span>
+        <span class="n">path1</span> <span class="o">=</span> <span class="n">pkg_res</span><span class="o">.</span><span class="n">resource_filename</span><span class="p">(</span><span class="s2">&quot;HyresBuilder&quot;</span><span class="p">,</span> <span class="s2">&quot;forcefield/top_RNA_mix.inp&quot;</span><span class="p">)</span>
+        <span class="n">path2</span> <span class="o">=</span> <span class="n">pkg_res</span><span class="o">.</span><span class="n">resource_filename</span><span class="p">(</span><span class="s2">&quot;HyresBuilder&quot;</span><span class="p">,</span> <span class="s2">&quot;forcefield/param_rG4s.inp&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;ATP&#39;</span><span class="p">:</span>
+        <span class="n">path1</span> <span class="o">=</span> <span class="n">pkg_res</span><span class="o">.</span><span class="n">resource_filename</span><span class="p">(</span><span class="s2">&quot;HyresBuilder&quot;</span><span class="p">,</span> <span class="s2">&quot;forcefield/top_ATP.inp&quot;</span><span class="p">)</span>
+        <span class="n">path2</span> <span class="o">=</span> <span class="n">pkg_res</span><span class="o">.</span><span class="n">resource_filename</span><span class="p">(</span><span class="s2">&quot;HyresBuilder&quot;</span><span class="p">,</span> <span class="s2">&quot;forcefield/param_ATP.inp&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: The model type </span><span class="si">{}</span><span class="s2"> is not supported, only for Portein, RNA, DNA, and, ATP.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">top_inp</span><span class="p">,</span> <span class="n">param_inp</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path1</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">path2</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">top_inp</span><span class="p">,</span> <span class="n">param_inp</span></div>
+
+
+<div class="viewcode-block" id="nMg2lmd">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.utils.nMg2lmd">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">nMg2lmd</span><span class="p">(</span><span class="n">cMg</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">F</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">M</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">RNA</span><span class="o">=</span><span class="s1">&#39;rA&#39;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">RNA</span> <span class="o">==</span> <span class="s1">&#39;rA&#39;</span><span class="p">:</span>
+        <span class="n">F</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="mf">0.54</span><span class="p">,</span> <span class="mf">0.94</span><span class="p">,</span> <span class="mf">0.59</span>
+    <span class="k">elif</span> <span class="n">RNA</span> <span class="o">==</span> <span class="s1">&#39;rU&#39;</span><span class="p">:</span>
+        <span class="n">F</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="mf">0.48</span><span class="p">,</span> <span class="mf">1.31</span><span class="p">,</span> <span class="mf">0.85</span>
+    <span class="k">elif</span> <span class="n">RNA</span> <span class="o">==</span> <span class="s1">&#39;CAG&#39;</span><span class="p">:</span>
+        <span class="n">F</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="mf">0.53</span><span class="p">,</span> <span class="mf">0.68</span><span class="p">,</span> <span class="mf">0.28</span>
+    <span class="k">elif</span> <span class="n">RNA</span> <span class="o">==</span> <span class="s1">&#39;custom&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">M</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: Please give F_Mg, M_1/2, and n if the RNA is custom type&quot;</span><span class="p">)</span>
+            <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: Only rA, rU, CAG, and custom are supported RNA&quot;</span><span class="p">)</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">cMg</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="n">lmd</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">nMg</span> <span class="o">=</span> <span class="n">F</span><span class="o">*</span><span class="p">(</span><span class="n">cMg</span><span class="o">/</span><span class="n">M</span><span class="p">)</span><span class="o">**</span><span class="n">n</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="p">(</span><span class="n">cMg</span><span class="o">/</span><span class="n">M</span><span class="p">)</span><span class="o">**</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">nMg_T</span> <span class="o">=</span> <span class="n">nMg</span> <span class="o">+</span> <span class="mf">0.0012</span><span class="o">*</span><span class="p">(</span><span class="n">T</span><span class="o">-</span><span class="mi">273</span><span class="o">-</span><span class="mi">30</span><span class="p">)</span>
+        <span class="n">lmd</span> <span class="o">=</span> <span class="mf">1.265</span><span class="o">*</span><span class="p">(</span><span class="n">nMg_T</span><span class="o">/</span><span class="mf">0.172</span><span class="p">)</span><span class="o">**</span><span class="mf">0.625</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="p">(</span><span class="n">nMg_T</span><span class="o">/</span><span class="mf">0.172</span><span class="p">)</span><span class="o">**</span><span class="mf">0.625</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">lmd</span></div>
+
+
+<span class="c1"># calculate relative dielectric constant at temperature T in K</span>
+<div class="viewcode-block" id="cal_er">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.utils.cal_er">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cal_er</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
+    <span class="n">Td</span> <span class="o">=</span> <span class="n">T</span><span class="o">-</span><span class="mi">273</span>
+    <span class="n">er_t</span> <span class="o">=</span> <span class="mf">87.74</span><span class="o">-</span><span class="mf">0.4008</span><span class="o">*</span><span class="n">Td</span><span class="o">+</span><span class="mf">9.398</span><span class="o">*</span><span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">)</span><span class="o">*</span><span class="n">Td</span><span class="o">**</span><span class="mi">2</span><span class="o">-</span><span class="mf">1.41</span><span class="o">*</span><span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">)</span><span class="o">*</span><span class="n">Td</span><span class="o">**</span><span class="mi">3</span>
+    <span class="k">return</span> <span class="n">er_t</span></div>
+
+
+<span class="c1"># calculate Debye-Huckel screening length in nm</span>
+<div class="viewcode-block" id="cal_dh">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.utils.cal_dh">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cal_dh</span><span class="p">(</span><span class="n">c_ion</span><span class="p">,</span> <span class="n">T</span><span class="p">):</span>
+    <span class="n">NA</span> <span class="o">=</span> <span class="mf">6.02214076e23</span>          <span class="c1"># Avogadro&#39;s number</span>
+    <span class="n">er</span> <span class="o">=</span> <span class="n">cal_er</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
+    <span class="n">lB</span> <span class="o">=</span> <span class="mi">16710</span><span class="o">/</span><span class="p">(</span><span class="n">er</span><span class="o">*</span><span class="n">T</span><span class="p">)</span>          <span class="c1"># Bjerrum length in nm, 16710 = e^2/(4*pi*epsilon_0*k_B) in unit of nm*K</span>
+    <span class="n">dh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">8</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">lB</span><span class="o">*</span><span class="n">NA</span><span class="o">*</span><span class="mf">1e-24</span><span class="o">*</span><span class="n">c_ion</span><span class="p">))</span>   <span class="c1"># Debye-Huckel screening length in nm</span>
+    <span class="k">return</span> <span class="n">dh</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span></div>
+
+
+<span class="c1">#def cal_dh(c_ion):</span>
+<span class="c1">#    dh = 0.304/np.sqrt(c_ion)   # Debye-Huckel screening length in nm at room temperature</span>
+<span class="c1">#    return dh*unit.nanometer</span>
+
+<div class="viewcode-block" id="setup">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.utils.setup">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">modification</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set up the simulation system with given parameters.</span>
+<span class="sd">    modification: custom function for modify the system</span>
+<span class="sd">    Returns:</span>
+<span class="sd">    --------</span>
+<span class="sd">    system: openmm.System</span>
+<span class="sd">        The constructed OpenMM system.</span>
+<span class="sd">    sim: openmm.app.Simulation</span>
+<span class="sd">        The OpenMM simulation object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">################## set up simulation parameters ###################&#39;</span><span class="p">)</span>
+    <span class="c1"># 1. input parameters</span>
+    <span class="n">pdb_file</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pdb</span>
+    <span class="n">psf_file</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">psf</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">temp</span>
+    <span class="n">c_ion</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">salt</span><span class="o">/</span><span class="mf">1000.0</span>                                   <span class="c1"># concentration of ions in M</span>
+    <span class="n">c_Mg</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">Mg</span>                                           <span class="c1"># concentration of Mg in mM</span>
+    <span class="n">ensemble</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">ens</span>
+
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">dt</span>
+    <span class="n">er_ref</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">er_ref</span>
+    <span class="n">pressure</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pressure</span>
+    <span class="n">friction</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">friction</span>
+    <span class="n">gpu_id</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">gpu_id</span>
+    
+    <span class="c1"># 2. set pbc and box vector</span>
+    <span class="k">if</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s1">&#39;non&#39;</span> <span class="ow">and</span> <span class="n">c_Mg</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: Mg ion cannot be usde in non-periodic system.&quot;</span><span class="p">)</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ensemble</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;NPT&#39;</span><span class="p">,</span> <span class="s1">&#39;NVT&#39;</span><span class="p">]:</span>
+        <span class="c1"># pbc box length</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">box</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">lx</span><span class="p">,</span> <span class="n">ly</span><span class="p">,</span> <span class="n">lz</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">params</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">params</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">box</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">lx</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">ly</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">lz</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: You must provide either one or three values for box.&quot;</span><span class="p">)</span>
+            <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">Vec3</span><span class="p">(</span><span class="n">lx</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">Vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">ly</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">Vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">lz</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">ensemble</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;NPT&#39;</span><span class="p">,</span> <span class="s1">&#39;NVT&#39;</span><span class="p">,</span> <span class="s1">&#39;non&#39;</span><span class="p">]:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: The ensemble must be NPT, NVT or non. The input value is </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ensemble</span><span class="p">))</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="c1"># 3. force field parameters</span>
+    <span class="n">cutoff</span> <span class="o">=</span> <span class="mf">1.2</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span>                                 <span class="c1"># nonbonded cutoff</span>
+    <span class="n">d_switch</span> <span class="o">=</span> <span class="mf">1.1</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span>                               <span class="c1"># switch function starting distance</span>
+    <span class="n">temperature</span> <span class="o">=</span> <span class="n">T</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">kelvin</span> 
+    <span class="n">er_t</span> <span class="o">=</span> <span class="n">cal_er</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>                                                   <span class="c1"># relative electric constant</span>
+    <span class="n">er</span> <span class="o">=</span> <span class="n">er_t</span><span class="o">*</span><span class="n">er_ref</span><span class="o">/</span><span class="mf">77.6</span>
+    <span class="n">dh</span> <span class="o">=</span> <span class="n">cal_dh</span><span class="p">(</span><span class="n">c_ion</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span>                                            <span class="c1"># Debye-Huckel screening length in nm</span>
+    <span class="c1"># Mg-P interaction</span>
+    <span class="n">lmd</span> <span class="o">=</span> <span class="n">nMg2lmd</span><span class="p">(</span><span class="n">c_Mg</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">RNA</span><span class="o">=</span><span class="s1">&#39;rA&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;dielectric constant: er = </span><span class="si">{</span><span class="n">er</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Debye screening length: dh = </span><span class="si">{</span><span class="n">dh</span><span class="o">.</span><span class="n">value_in_unit</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometers</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> nm&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Mg-RNA interaction: lmd = </span><span class="si">{</span><span class="n">lmd</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">ffs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;temp&#39;</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span>                                                  <span class="c1"># Temperature</span>
+        <span class="s1">&#39;lmd&#39;</span><span class="p">:</span> <span class="n">lmd</span><span class="p">,</span>                                                  <span class="c1"># Charge scaling factor of P-</span>
+        <span class="s1">&#39;dh&#39;</span><span class="p">:</span> <span class="n">dh</span><span class="p">,</span>                                                  <span class="c1"># Debye Huckel screening length</span>
+        <span class="s1">&#39;ke&#39;</span><span class="p">:</span> <span class="mf">138.935456</span><span class="p">,</span>                                           <span class="c1"># Coulomb constant, ONE_4PI_EPS0</span>
+        <span class="s1">&#39;er&#39;</span><span class="p">:</span> <span class="n">er</span><span class="p">,</span>                                                  <span class="c1"># relative dielectric constant</span>
+    <span class="p">}</span>
+
+    <span class="c1"># 4. load force field files</span>
+    <span class="n">top_pro</span><span class="p">,</span> <span class="n">param_pro</span> <span class="o">=</span> <span class="n">load_ff</span><span class="p">(</span><span class="s1">&#39;Protein&#39;</span><span class="p">)</span>
+    <span class="n">top_RNA</span><span class="p">,</span> <span class="n">param_RNA</span> <span class="o">=</span> <span class="n">load_ff</span><span class="p">(</span><span class="s1">&#39;RNA&#39;</span><span class="p">)</span>
+    <span class="c1">#top_DNA, param_DNA = load_ff(&#39;DNA&#39;)</span>
+    <span class="c1">#top_ATP, param_ATP = load_ff(&#39;RNA&#39;)</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">CharmmParameterSet</span><span class="p">(</span><span class="n">top_RNA</span><span class="p">,</span> <span class="n">param_RNA</span><span class="p">,</span> <span class="n">top_pro</span><span class="p">,</span> <span class="n">param_pro</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">################## load coordinates and topology ###################&#39;</span><span class="p">)</span>
+    <span class="c1"># 5. import coordinates and topology form charmm pdb and psf</span>
+    <span class="n">pdb</span> <span class="o">=</span> <span class="n">PDBFile</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">)</span>
+    <span class="n">psf</span> <span class="o">=</span> <span class="n">CharmmPsfFile</span><span class="p">(</span><span class="n">psf_file</span><span class="p">)</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="n">psf</span><span class="o">.</span><span class="n">topology</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;coordinate file: </span><span class="si">{</span><span class="n">pdb_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;topology file: </span><span class="si">{</span><span class="n">psf_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">################## create system ###################&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s1">&#39;non&#39;</span><span class="p">:</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="n">psf</span><span class="o">.</span><span class="n">createSystem</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">nonbondedMethod</span><span class="o">=</span><span class="n">CutoffNonPeriodic</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">HBonds</span><span class="p">,</span>
+                                  <span class="n">nonbondedCutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">switchDistance</span><span class="o">=</span><span class="n">d_switch</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">psf</span><span class="o">.</span><span class="n">setBox</span><span class="p">(</span><span class="n">lx</span><span class="p">,</span> <span class="n">ly</span><span class="p">,</span> <span class="n">lz</span><span class="p">)</span>
+        <span class="n">top</span><span class="o">.</span><span class="n">setPeriodicBoxVectors</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
+        <span class="n">top</span><span class="o">.</span><span class="n">setUnitCellDimensions</span><span class="p">((</span><span class="n">lx</span><span class="p">,</span> <span class="n">ly</span><span class="p">,</span><span class="n">lz</span><span class="p">))</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="n">psf</span><span class="o">.</span><span class="n">createSystem</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">nonbondedMethod</span><span class="o">=</span><span class="n">CutoffPeriodic</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">HBonds</span><span class="p">,</span>
+                                  <span class="n">nonbondedCutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">switchDistance</span><span class="o">=</span><span class="n">d_switch</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">)</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">setDefaultPeriodicBoxVectors</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;nonbonded cutoff: </span><span class="si">{</span><span class="n">cutoff</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;switch distance: </span><span class="si">{</span><span class="n">d_switch</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 6. construct force field</span>
+    <span class="n">system</span> <span class="o">=</span> <span class="n">buildSystem</span><span class="p">(</span><span class="n">psf</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">ffs</span><span class="p">,</span> <span class="n">modification</span><span class="o">=</span><span class="n">modification</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;HyresFF.buildSystem for custom force field&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 7. set simulation</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">################### prepare simulation ####################&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s1">&#39;NPT&#39;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;This is a NPT system&#39;</span><span class="p">)</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">MonteCarloBarostat</span><span class="p">(</span><span class="n">pressure</span><span class="p">,</span> <span class="n">temperature</span><span class="p">,</span> <span class="mi">25</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s1">&#39;NVT&#39;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;This is a NVT system&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s1">&#39;non&#39;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;This is a non-periodic system&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: The ensemble must be NPT, NVT or non. The input value is </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ensemble</span><span class="p">))</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">integrator</span> <span class="o">=</span> <span class="n">LangevinMiddleIntegrator</span><span class="p">(</span><span class="n">temperature</span><span class="p">,</span> <span class="n">friction</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+    <span class="n">plat</span> <span class="o">=</span> <span class="n">Platform</span><span class="o">.</span><span class="n">getPlatformByName</span><span class="p">(</span><span class="s1">&#39;CUDA&#39;</span><span class="p">)</span>
+    <span class="n">prop</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Precision&#39;</span><span class="p">:</span> <span class="s1">&#39;mixed&#39;</span><span class="p">,</span> <span class="s1">&#39;DeviceIndex&#39;</span><span class="p">:</span> <span class="n">gpu_id</span><span class="p">}</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">Simulation</span><span class="p">(</span><span class="n">top</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">integrator</span><span class="p">,</span> <span class="n">plat</span><span class="p">,</span> <span class="n">prop</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">setPositions</span><span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">positions</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">setVelocitiesToTemperature</span><span class="p">(</span><span class="n">temperature</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Langevin, CUDA, </span><span class="si">{</span><span class="n">temperature</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">system</span><span class="p">,</span> <span class="n">sim</span></div>
+
+
+
+<div class="viewcode-block" id="setup2">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.utils.setup2">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">setup2</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">lmd</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mi">1</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">,</span> <span class="n">friction</span><span class="o">=</span><span class="mf">0.1</span><span class="o">/</span><span class="n">unit</span><span class="o">.</span><span class="n">picosecond</span><span class="p">,</span> <span class="n">gpu_id</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set up the simulation system with given parameters.</span>
+<span class="sd">    Parameters:</span>
+<span class="sd">    -----------</span>
+<span class="sd">    args: argparse.Namespace</span>
+<span class="sd">        The command line arguments containing simulation parameters.</span>
+<span class="sd">    dt: float</span>
+<span class="sd">        The time step for the integrator.</span>
+<span class="sd">    pressure: unit.Quantity</span>
+<span class="sd">        The pressure for the MonteCarloBarostat (default is 1 atm).</span>
+<span class="sd">    friction: unit.Quantity</span>
+<span class="sd">        The friction coefficient for the Langevin integrator (default is 0.1 / ps).</span>
+<span class="sd">    gpu_id: str</span>
+<span class="sd">        The GPU device index to use (default is &quot;0&quot;).</span>
+<span class="sd">    Returns:</span>
+<span class="sd">    --------</span>
+<span class="sd">    system: openmm.System</span>
+<span class="sd">        The constructed OpenMM system.</span>
+<span class="sd">    sim: openmm.app.Simulation</span>
+<span class="sd">        The OpenMM simulation object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">################## set up simulation parameters ###################&#39;</span><span class="p">)</span>
+    <span class="c1"># 1. input parameters</span>
+    <span class="n">pdb_file</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">pdb</span>
+    <span class="n">psf_file</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">psf</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">temp</span>
+    <span class="n">c_ion</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">salt</span><span class="o">/</span><span class="mf">1000.0</span>                                   <span class="c1"># concentration of ions in M</span>
+    <span class="n">c_Mg</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">Mg</span>                                           <span class="c1"># concentration of Mg in mM</span>
+    <span class="n">ensemble</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">ens</span>
+    
+    <span class="c1"># 2. set pbc and box vector</span>
+    <span class="k">if</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s1">&#39;non&#39;</span> <span class="ow">and</span> <span class="n">c_Mg</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: Mg ion cannot be usde in non-periodic system.&quot;</span><span class="p">)</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ensemble</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;NPT&#39;</span><span class="p">,</span> <span class="s1">&#39;NVT&#39;</span><span class="p">]:</span>
+        <span class="c1"># pbc box length</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">lx</span><span class="p">,</span> <span class="n">ly</span><span class="p">,</span> <span class="n">lz</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">lx</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">ly</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">lz</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: You must provide either one or three values for box.&quot;</span><span class="p">)</span>
+            <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">Vec3</span><span class="p">(</span><span class="n">lx</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">Vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">ly</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">Vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">lz</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">ensemble</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;NPT&#39;</span><span class="p">,</span> <span class="s1">&#39;NVT&#39;</span><span class="p">,</span> <span class="s1">&#39;non&#39;</span><span class="p">]:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: The ensemble must be NPT, NVT or non. The input value is </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ensemble</span><span class="p">))</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="c1"># 3. force field parameters</span>
+    <span class="n">cutoff</span> <span class="o">=</span> <span class="mf">1.2</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span>                                 <span class="c1"># nonbonded cutoff</span>
+    <span class="n">d_switch</span> <span class="o">=</span> <span class="mf">1.1</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span>                               <span class="c1"># switch function starting distance</span>
+    <span class="n">temperature</span> <span class="o">=</span> <span class="n">T</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">kelvin</span> 
+    <span class="n">er_t</span> <span class="o">=</span> <span class="n">cal_er</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>                                                   <span class="c1"># relative electric constant</span>
+    <span class="n">er</span> <span class="o">=</span> <span class="n">er_t</span><span class="o">*</span><span class="mf">60.0</span><span class="o">/</span><span class="mf">77.6</span>
+    <span class="n">dh</span> <span class="o">=</span> <span class="n">cal_dh</span><span class="p">(</span><span class="n">c_ion</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span>                                            <span class="c1"># Debye-Huckel screening length in nm</span>
+    <span class="c1"># Mg-P interaction</span>
+    <span class="n">lmd</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">Mg</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;er: </span><span class="si">{</span><span class="n">er</span><span class="si">}</span><span class="s1">, dh: </span><span class="si">{</span><span class="n">dh</span><span class="si">}</span><span class="s1">, lmd: </span><span class="si">{</span><span class="n">lmd</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">ffs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;temp&#39;</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span>                                                  <span class="c1"># Temperature</span>
+        <span class="s1">&#39;lmd&#39;</span><span class="p">:</span> <span class="n">lmd</span><span class="p">,</span>                                                  <span class="c1"># Charge scaling factor of P-</span>
+        <span class="s1">&#39;dh&#39;</span><span class="p">:</span> <span class="n">dh</span><span class="p">,</span>                                                  <span class="c1"># Debye Huckel screening length</span>
+        <span class="s1">&#39;ke&#39;</span><span class="p">:</span> <span class="mf">138.935456</span><span class="p">,</span>                                           <span class="c1"># Coulomb constant, ONE_4PI_EPS0</span>
+        <span class="s1">&#39;er&#39;</span><span class="p">:</span> <span class="n">er</span><span class="p">,</span>                                                  <span class="c1"># relative dielectric constant</span>
+    <span class="p">}</span>
+
+    <span class="c1"># 4. load force field files</span>
+    <span class="n">top_pro</span><span class="p">,</span> <span class="n">param_pro</span> <span class="o">=</span> <span class="n">load_ff</span><span class="p">(</span><span class="s1">&#39;Protein&#39;</span><span class="p">)</span>
+    <span class="n">top_RNA</span><span class="p">,</span> <span class="n">param_RNA</span> <span class="o">=</span> <span class="n">load_ff</span><span class="p">(</span><span class="s1">&#39;RNA&#39;</span><span class="p">)</span>
+    <span class="c1">#top_DNA, param_DNA = load_ff(&#39;DNA&#39;)</span>
+    <span class="c1">#top_ATP, param_ATP = load_ff(&#39;RNA&#39;)</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">CharmmParameterSet</span><span class="p">(</span><span class="n">top_RNA</span><span class="p">,</span> <span class="n">param_RNA</span><span class="p">,</span> <span class="n">top_pro</span><span class="p">,</span> <span class="n">param_pro</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">################## load coordinates and topology ###################&#39;</span><span class="p">)</span>
+    <span class="c1"># 5. import coordinates and topology form charmm pdb and psf</span>
+    <span class="n">pdb</span> <span class="o">=</span> <span class="n">PDBFile</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">)</span>
+    <span class="n">psf</span> <span class="o">=</span> <span class="n">CharmmPsfFile</span><span class="p">(</span><span class="n">psf_file</span><span class="p">)</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="n">psf</span><span class="o">.</span><span class="n">topology</span>
+    <span class="k">if</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s1">&#39;non&#39;</span><span class="p">:</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="n">psf</span><span class="o">.</span><span class="n">createSystem</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">nonbondedMethod</span><span class="o">=</span><span class="n">CutoffNonPeriodic</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">HBonds</span><span class="p">,</span>
+                                  <span class="n">nonbondedCutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">switchDistance</span><span class="o">=</span><span class="n">d_switch</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">psf</span><span class="o">.</span><span class="n">setBox</span><span class="p">(</span><span class="n">lx</span><span class="p">,</span> <span class="n">ly</span><span class="p">,</span> <span class="n">lz</span><span class="p">)</span>
+        <span class="n">top</span><span class="o">.</span><span class="n">setPeriodicBoxVectors</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
+        <span class="n">top</span><span class="o">.</span><span class="n">setUnitCellDimensions</span><span class="p">((</span><span class="n">lx</span><span class="p">,</span> <span class="n">ly</span><span class="p">,</span><span class="n">lz</span><span class="p">))</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="n">psf</span><span class="o">.</span><span class="n">createSystem</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">nonbondedMethod</span><span class="o">=</span><span class="n">CutoffPeriodic</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">HBonds</span><span class="p">,</span>
+                                  <span class="n">nonbondedCutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">switchDistance</span><span class="o">=</span><span class="n">d_switch</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">)</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">setDefaultPeriodicBoxVectors</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+
+    <span class="c1"># 6. construct force field</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">################## build system ###################&#39;</span><span class="p">)</span>
+    <span class="n">system</span> <span class="o">=</span> <span class="n">buildSystem</span><span class="p">(</span><span class="n">psf</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">ffs</span><span class="p">)</span>
+
+    <span class="c1"># 7. set simulation</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">################### prepare simulation ####################&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s1">&#39;NPT&#39;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;This is a NPT system&#39;</span><span class="p">)</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">MonteCarloBarostat</span><span class="p">(</span><span class="n">pressure</span><span class="p">,</span> <span class="n">temperature</span><span class="p">,</span> <span class="mi">25</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s1">&#39;NVT&#39;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;This is a NVT system&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s1">&#39;non&#39;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;This is a non-periodic system&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: The ensemble must be NPT, NVT or non. The input value is </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ensemble</span><span class="p">))</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">integrator</span> <span class="o">=</span> <span class="n">LangevinMiddleIntegrator</span><span class="p">(</span><span class="n">temperature</span><span class="p">,</span> <span class="n">friction</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+    <span class="n">plat</span> <span class="o">=</span> <span class="n">Platform</span><span class="o">.</span><span class="n">getPlatformByName</span><span class="p">(</span><span class="s1">&#39;CUDA&#39;</span><span class="p">)</span>
+    <span class="n">prop</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Precision&#39;</span><span class="p">:</span> <span class="s1">&#39;mixed&#39;</span><span class="p">,</span> <span class="s1">&#39;DeviceIndex&#39;</span><span class="p">:</span> <span class="n">gpu_id</span><span class="p">}</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">Simulation</span><span class="p">(</span><span class="n">top</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">integrator</span><span class="p">,</span> <span class="n">plat</span><span class="p">,</span> <span class="n">prop</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">setPositions</span><span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">positions</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">setVelocitiesToTemperature</span><span class="p">(</span><span class="n">temperature</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Langevin, CUDA, </span><span class="si">{</span><span class="n">temperature</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">system</span><span class="p">,</span> <span class="n">sim</span></div>
+
+
+
+<div class="viewcode-block" id="rG4s_setup">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.utils.rG4s_setup">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rG4s_setup</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="mi">1</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">,</span> <span class="n">friction</span><span class="o">=</span><span class="mf">0.1</span><span class="o">/</span><span class="n">unit</span><span class="o">.</span><span class="n">picosecond</span><span class="p">,</span> <span class="n">gpu_id</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set up the rG4s simulation system with given parameters.</span>
+<span class="sd">    Parameters:</span>
+<span class="sd">    -----------</span>
+<span class="sd">    args: argparse.Namespace</span>
+<span class="sd">        The command line arguments containing simulation parameters.</span>
+<span class="sd">    dt: float</span>
+<span class="sd">        The time step for the integrator.</span>
+<span class="sd">    pressure: unit.Quantity</span>
+<span class="sd">        The pressure for the MonteCarloBarostat (default is 1 atm).</span>
+<span class="sd">    friction: unit.Quantity</span>
+<span class="sd">        The friction coefficient for the Langevin integrator (default is 0.1 / ps).</span>
+<span class="sd">    gpu_id: str</span>
+<span class="sd">        The GPU device index to use (default is &quot;0&quot;).</span>
+<span class="sd">    Returns:</span>
+<span class="sd">    --------</span>
+<span class="sd">    system: openmm.System</span>
+<span class="sd">        The constructed OpenMM system.</span>
+<span class="sd">    sim: openmm.app.Simulation</span>
+<span class="sd">        The OpenMM simulation object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">################## set up simulation parameters ###################&#39;</span><span class="p">)</span>
+    <span class="c1"># 1. input parameters</span>
+    <span class="n">pdb_file</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">pdb</span>
+    <span class="n">psf_file</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">psf</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">temp</span>
+    <span class="n">c_ion</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">salt</span><span class="o">/</span><span class="mf">1000.0</span>                                   <span class="c1"># concentration of ions in M</span>
+    <span class="n">c_Mg</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">Mg</span>                                           <span class="c1"># concentration of Mg in mM</span>
+    <span class="n">ensemble</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">ens</span>
+    
+    <span class="c1"># 2. set pbc and box vector</span>
+    <span class="k">if</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s1">&#39;non&#39;</span> <span class="ow">and</span> <span class="n">c_Mg</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: Mg ion cannot be usde in non-periodic system.&quot;</span><span class="p">)</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ensemble</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;NPT&#39;</span><span class="p">,</span> <span class="s1">&#39;NVT&#39;</span><span class="p">]:</span>
+        <span class="c1"># pbc box length</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">lx</span><span class="p">,</span> <span class="n">ly</span><span class="p">,</span> <span class="n">lz</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">lx</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">ly</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">lz</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">box</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: You must provide either one or three values for box.&quot;</span><span class="p">)</span>
+            <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">Vec3</span><span class="p">(</span><span class="n">lx</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">Vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">ly</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">Vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">lz</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">ensemble</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;NPT&#39;</span><span class="p">,</span> <span class="s1">&#39;NVT&#39;</span><span class="p">,</span> <span class="s1">&#39;non&#39;</span><span class="p">]:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: The ensemble must be NPT, NVT or non. The input value is </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ensemble</span><span class="p">))</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="c1"># 3. force field parameters</span>
+    <span class="n">cutoff</span> <span class="o">=</span> <span class="mf">1.2</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span>                                 <span class="c1"># nonbonded cutoff</span>
+    <span class="n">d_switch</span> <span class="o">=</span> <span class="mf">1.1</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">nanometer</span>                               <span class="c1"># switch function starting distance</span>
+    <span class="n">temperature</span> <span class="o">=</span> <span class="n">T</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">kelvin</span> 
+    <span class="n">er_t</span> <span class="o">=</span> <span class="n">cal_er</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>                                                   <span class="c1"># relative electric constant</span>
+    <span class="n">er</span> <span class="o">=</span> <span class="n">er_t</span><span class="o">*</span><span class="mf">60.0</span><span class="o">/</span><span class="mf">77.6</span>
+    <span class="n">dh</span> <span class="o">=</span> <span class="n">cal_dh</span><span class="p">(</span><span class="n">c_ion</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span>                                            <span class="c1"># Debye-Huckel screening length in nm</span>
+    <span class="c1"># Mg-P interaction</span>
+    <span class="n">lmd</span> <span class="o">=</span> <span class="n">nMg2lmd</span><span class="p">(</span><span class="n">c_Mg</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">RNA</span><span class="o">=</span><span class="s1">&#39;rA&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;er: </span><span class="si">{</span><span class="n">er</span><span class="si">}</span><span class="s1">, dh: </span><span class="si">{</span><span class="n">dh</span><span class="si">}</span><span class="s1">, lmd: </span><span class="si">{</span><span class="n">lmd</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">ffs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;temp&#39;</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span>                                                  <span class="c1"># Temperature</span>
+        <span class="s1">&#39;lmd&#39;</span><span class="p">:</span> <span class="n">lmd</span><span class="p">,</span>                                                  <span class="c1"># Charge scaling factor of P-</span>
+        <span class="s1">&#39;dh&#39;</span><span class="p">:</span> <span class="n">dh</span><span class="p">,</span>                                                  <span class="c1"># Debye Huckel screening length</span>
+        <span class="s1">&#39;ke&#39;</span><span class="p">:</span> <span class="mf">138.935456</span><span class="p">,</span>                                           <span class="c1"># Coulomb constant, ONE_4PI_EPS0</span>
+        <span class="s1">&#39;er&#39;</span><span class="p">:</span> <span class="n">er</span><span class="p">,</span>                                                  <span class="c1"># relative dielectric constant</span>
+        <span class="s1">&#39;ion_type&#39;</span><span class="p">:</span> <span class="n">args</span><span class="o">.</span><span class="n">ion</span><span class="o">*</span><span class="n">unit</span><span class="o">.</span><span class="n">kilocalorie_per_mole</span><span class="p">,</span>                                      <span class="c1"># ion type, K or Na</span>
+    <span class="p">}</span>
+
+    <span class="c1"># 4. load force field files</span>
+    <span class="n">top_RNA</span><span class="p">,</span> <span class="n">param_RNA</span> <span class="o">=</span> <span class="n">load_ff</span><span class="p">(</span><span class="s1">&#39;rG4s&#39;</span><span class="p">)</span>
+    <span class="n">top_pro</span><span class="p">,</span> <span class="n">param_pro</span> <span class="o">=</span> <span class="n">load_ff</span><span class="p">(</span><span class="s1">&#39;Protein&#39;</span><span class="p">)</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">CharmmParameterSet</span><span class="p">(</span><span class="n">top_RNA</span><span class="p">,</span> <span class="n">param_RNA</span><span class="p">,</span> <span class="n">top_pro</span><span class="p">,</span> <span class="n">param_pro</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">################## load coordinates and topology ###################&#39;</span><span class="p">)</span>
+    <span class="c1"># 5. import coordinates and topology form charmm pdb and psf</span>
+    <span class="n">pdb</span> <span class="o">=</span> <span class="n">PDBFile</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">)</span>
+    <span class="n">psf</span> <span class="o">=</span> <span class="n">CharmmPsfFile</span><span class="p">(</span><span class="n">psf_file</span><span class="p">)</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="n">psf</span><span class="o">.</span><span class="n">topology</span>
+    <span class="k">if</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s1">&#39;non&#39;</span><span class="p">:</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="n">psf</span><span class="o">.</span><span class="n">createSystem</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">nonbondedMethod</span><span class="o">=</span><span class="n">CutoffNonPeriodic</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">HBonds</span><span class="p">,</span>
+                                  <span class="n">nonbondedCutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">switchDistance</span><span class="o">=</span><span class="n">d_switch</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">psf</span><span class="o">.</span><span class="n">setBox</span><span class="p">(</span><span class="n">lx</span><span class="p">,</span> <span class="n">ly</span><span class="p">,</span> <span class="n">lz</span><span class="p">)</span>
+        <span class="n">top</span><span class="o">.</span><span class="n">setPeriodicBoxVectors</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
+        <span class="n">top</span><span class="o">.</span><span class="n">setUnitCellDimensions</span><span class="p">((</span><span class="n">lx</span><span class="p">,</span> <span class="n">ly</span><span class="p">,</span><span class="n">lz</span><span class="p">))</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="n">psf</span><span class="o">.</span><span class="n">createSystem</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">nonbondedMethod</span><span class="o">=</span><span class="n">CutoffPeriodic</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">HBonds</span><span class="p">,</span>
+                                  <span class="n">nonbondedCutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">switchDistance</span><span class="o">=</span><span class="n">d_switch</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">)</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">setDefaultPeriodicBoxVectors</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+
+    <span class="c1"># 6. construct force field</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">################## build system ###################&#39;</span><span class="p">)</span>
+    <span class="n">system</span> <span class="o">=</span> <span class="n">rG4sSystem</span><span class="p">(</span><span class="n">psf</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">ffs</span><span class="p">)</span>
+
+    <span class="c1"># 7. set simulation</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">################### prepare simulation ####################&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s1">&#39;NPT&#39;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;This is a NPT system&#39;</span><span class="p">)</span>
+        <span class="n">system</span><span class="o">.</span><span class="n">addForce</span><span class="p">(</span><span class="n">MonteCarloBarostat</span><span class="p">(</span><span class="n">pressure</span><span class="p">,</span> <span class="n">temperature</span><span class="p">,</span> <span class="mi">25</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s1">&#39;NVT&#39;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;This is a NVT system&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s1">&#39;non&#39;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;This is a non-periodic system&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: The ensemble must be NPT, NVT or non. The input value is </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ensemble</span><span class="p">))</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">integrator</span> <span class="o">=</span> <span class="n">LangevinMiddleIntegrator</span><span class="p">(</span><span class="n">temperature</span><span class="p">,</span> <span class="n">friction</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+    <span class="n">plat</span> <span class="o">=</span> <span class="n">Platform</span><span class="o">.</span><span class="n">getPlatformByName</span><span class="p">(</span><span class="s1">&#39;CUDA&#39;</span><span class="p">)</span>
+    <span class="n">prop</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Precision&#39;</span><span class="p">:</span> <span class="s1">&#39;mixed&#39;</span><span class="p">,</span> <span class="s1">&#39;DeviceIndex&#39;</span><span class="p">:</span> <span class="n">gpu_id</span><span class="p">}</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">Simulation</span><span class="p">(</span><span class="n">top</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">integrator</span><span class="p">,</span> <span class="n">plat</span><span class="p">,</span> <span class="n">prop</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">setPositions</span><span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">positions</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">setVelocitiesToTemperature</span><span class="p">(</span><span class="n">temperature</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Langevin, CUDA, </span><span class="si">{</span><span class="n">temperature</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">system</span><span class="p">,</span> <span class="n">sim</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shanlong Li, Jian Huang, Yumeng Zhang, Jianhan Chen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

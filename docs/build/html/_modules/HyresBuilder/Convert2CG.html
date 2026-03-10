@@ -1,0 +1,1062 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HyresBuilder.Convert2CG &mdash; HyresBuilder latest documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=c6e86fd7"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            HyresBuilder
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">HyresBuilder</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">HyresBuilder.Convert2CG</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for HyresBuilder.Convert2CG</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">psfgen</span><span class="w"> </span><span class="kn">import</span> <span class="n">PsfGen</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_ff</span>
+
+
+<div class="viewcode-block" id="add_backbone_hydrogen">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Convert2CG.add_backbone_hydrogen">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_backbone_hydrogen</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">,</span> <span class="n">output_file</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add backbone hydrogen atoms (H) to peptide chains in a PDB file.</span>
+<span class="sd">    Preserves all original atoms (backbone and side chains).</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">    -----------</span>
+<span class="sd">    pdb_file : str</span>
+<span class="sd">        Path to input PDB file</span>
+<span class="sd">    output_file : str</span>
+<span class="sd">        Path to output PDB file with added H atoms</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse_atom_line</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse a PDB ATOM line and extract relevant information.&quot;&quot;&quot;</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">parse_serial</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Handle both decimal and hybrid-36/hex encoded serial numbers.&quot;&quot;&quot;</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="c1"># Try hexadecimal (used when serial &gt; 99999)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="c1"># Full hybrid-36: uppercase letters start at 100000, lowercase at 1316736</span>
+                    <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
+                        <span class="k">return</span> <span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">))</span> <span class="o">*</span> <span class="mi">36</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="mi">36</span><span class="p">)</span> <span class="o">+</span> <span class="mi">100000</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">))</span> <span class="o">*</span> <span class="mi">36</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="mi">36</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1316736</span>
+                    
+        <span class="n">atom_serial</span> <span class="o">=</span> <span class="n">parse_serial</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">6</span><span class="p">:</span><span class="mi">11</span><span class="p">])</span>
+        <span class="n">atom_name</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">12</span><span class="p">:</span><span class="mi">16</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">residue_name</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">17</span><span class="p">:</span><span class="mi">20</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">chain_id</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">21</span><span class="p">]</span>
+        <span class="n">residue_seq</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">22</span><span class="p">:</span><span class="mi">26</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">30</span><span class="p">:</span><span class="mi">38</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">38</span><span class="p">:</span><span class="mi">46</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">46</span><span class="p">:</span><span class="mi">54</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="n">occupancy</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">54</span><span class="p">:</span><span class="mi">60</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">54</span> <span class="k">else</span> <span class="s2">&quot;1.00&quot;</span>
+        <span class="n">temp_factor</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">60</span><span class="p">:</span><span class="mi">66</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">60</span> <span class="k">else</span> <span class="s2">&quot;0.00&quot;</span>
+        <span class="n">element</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">76</span><span class="p">:</span><span class="mi">78</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">76</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;serial&#39;</span><span class="p">:</span> <span class="n">atom_serial</span><span class="p">,</span>
+            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">atom_name</span><span class="p">,</span>
+            <span class="s1">&#39;residue&#39;</span><span class="p">:</span> <span class="n">residue_name</span><span class="p">,</span>
+            <span class="s1">&#39;chain&#39;</span><span class="p">:</span> <span class="n">chain_id</span><span class="p">,</span>
+            <span class="s1">&#39;res_seq&#39;</span><span class="p">:</span> <span class="n">residue_seq</span><span class="p">,</span>
+            <span class="s1">&#39;coords&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">]),</span>
+            <span class="s1">&#39;occupancy&#39;</span><span class="p">:</span> <span class="n">occupancy</span><span class="p">,</span>
+            <span class="s1">&#39;temp_factor&#39;</span><span class="p">:</span> <span class="n">temp_factor</span><span class="p">,</span>
+            <span class="s1">&#39;element&#39;</span><span class="p">:</span> <span class="n">element</span><span class="p">,</span>
+            <span class="s1">&#39;line&#39;</span><span class="p">:</span> <span class="n">line</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">encode_serial</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encode integer to hybrid-36 format for PDB serial number field (5 chars).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">100000</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">5d</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">n</span> <span class="o">-=</span> <span class="mi">100000</span>
+        <span class="n">chars</span> <span class="o">=</span> <span class="s1">&#39;0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ&#39;</span>
+
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">26</span> <span class="o">*</span> <span class="p">(</span><span class="mi">36</span><span class="o">**</span><span class="mi">4</span><span class="p">):</span>  <span class="c1"># uppercase range</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+                <span class="n">n</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">36</span><span class="p">)</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chars</span><span class="p">[</span><span class="n">remainder</span><span class="p">])</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">n</span><span class="p">))</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+
+        <span class="n">n</span> <span class="o">-=</span> <span class="mi">26</span> <span class="o">*</span> <span class="p">(</span><span class="mi">36</span><span class="o">**</span><span class="mi">4</span><span class="p">)</span>  <span class="c1"># lowercase range</span>
+        <span class="n">chars_lower</span> <span class="o">=</span> <span class="s1">&#39;0123456789abcdefghijklmnopqrstuvwxyz&#39;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+            <span class="n">n</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">36</span><span class="p">)</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chars_lower</span><span class="p">[</span><span class="n">remainder</span><span class="p">])</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">n</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">encode_resseq</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encode integer to hybrid-36 format for residue sequence field (4 chars).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">10000</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">n</span> <span class="o">-=</span> <span class="mi">10000</span>
+        <span class="n">chars</span> <span class="o">=</span> <span class="s1">&#39;0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ&#39;</span>
+
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">26</span> <span class="o">*</span> <span class="p">(</span><span class="mi">36</span><span class="o">**</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+                <span class="n">n</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">36</span><span class="p">)</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chars</span><span class="p">[</span><span class="n">remainder</span><span class="p">])</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">n</span><span class="p">))</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+
+        <span class="n">n</span> <span class="o">-=</span> <span class="mi">26</span> <span class="o">*</span> <span class="p">(</span><span class="mi">36</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+        <span class="n">chars_lower</span> <span class="o">=</span> <span class="s1">&#39;0123456789abcdefghijklmnopqrstuvwxyz&#39;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">n</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">36</span><span class="p">)</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chars_lower</span><span class="p">[</span><span class="n">remainder</span><span class="p">])</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">n</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">format_atom_line</span><span class="p">(</span><span class="n">serial</span><span class="p">,</span> <span class="n">atom_name</span><span class="p">,</span> <span class="n">residue_name</span><span class="p">,</span> <span class="n">chain_id</span><span class="p">,</span> <span class="n">residue_seq</span><span class="p">,</span>
+                         <span class="n">coords</span><span class="p">,</span> <span class="n">occupancy</span><span class="o">=</span><span class="s2">&quot;1.00&quot;</span><span class="p">,</span> <span class="n">temp_factor</span><span class="o">=</span><span class="s2">&quot;0.00&quot;</span><span class="p">,</span> <span class="n">element</span><span class="o">=</span><span class="s2">&quot;H&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Format an ATOM line in PDB format.&quot;&quot;&quot;</span>
+        <span class="n">serial_str</span> <span class="o">=</span> <span class="n">encode_serial</span><span class="p">(</span><span class="n">serial</span><span class="p">)</span>
+        <span class="n">resseq_str</span> <span class="o">=</span> <span class="n">encode_resseq</span><span class="p">(</span><span class="n">residue_seq</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ATOM  </span><span class="si">{</span><span class="n">serial_str</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">atom_name</span><span class="si">:</span><span class="s2">3s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">residue_name</span><span class="si">:</span><span class="s2">3s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">chain_id</span><span class="si">}{</span><span class="n">resseq_str</span><span class="si">}</span><span class="s2">    &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">occupancy</span><span class="si">:</span><span class="s2">&gt;6s</span><span class="si">}{</span><span class="n">temp_factor</span><span class="si">:</span><span class="s2">&gt;6s</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;          </span><span class="si">{</span><span class="n">element</span><span class="si">:</span><span class="s2">&gt;2s</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_h_position</span><span class="p">(</span><span class="n">n_coord</span><span class="p">,</span> <span class="n">ca_coord</span><span class="p">,</span> <span class="n">c_prev_coord</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the position of backbone H atom bonded to N.</span>
+<span class="sd">        </span>
+<span class="sd">        The H is placed along the N-C(previous) direction with proper geometry:</span>
+<span class="sd">        - N-H bond length: 1.01 Å</span>
+<span class="sd">        - C-N-H angle: ~120° (sp2 hybridization)</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters:</span>
+<span class="sd">        -----------</span>
+<span class="sd">        n_coord : np.array</span>
+<span class="sd">            Coordinates of N atom</span>
+<span class="sd">        ca_coord : np.array</span>
+<span class="sd">            Coordinates of CA atom (current residue)</span>
+<span class="sd">        c_prev_coord : np.array</span>
+<span class="sd">            Coordinates of C atom from previous residue (or current for first residue)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Vector from C(prev) to N</span>
+        <span class="n">v_cn</span> <span class="o">=</span> <span class="n">n_coord</span> <span class="o">-</span> <span class="n">c_prev_coord</span>
+        <span class="n">v_cn</span> <span class="o">=</span> <span class="n">v_cn</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">v_cn</span><span class="p">)</span>
+        
+        <span class="c1"># Vector from N to CA</span>
+        <span class="n">v_nca</span> <span class="o">=</span> <span class="n">ca_coord</span> <span class="o">-</span> <span class="n">n_coord</span>
+        <span class="n">v_nca</span> <span class="o">=</span> <span class="n">v_nca</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">v_nca</span><span class="p">)</span>
+        
+        <span class="c1"># Bisector direction (for ideal geometry)</span>
+        <span class="c1"># The H should be opposite to the peptide bond direction</span>
+        <span class="c1"># but also considering the CA position</span>
+        <span class="n">bisector</span> <span class="o">=</span> <span class="n">v_cn</span> <span class="o">-</span> <span class="n">v_nca</span>
+        <span class="n">bisector</span> <span class="o">=</span> <span class="n">bisector</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">bisector</span><span class="p">)</span>
+        
+        <span class="c1"># N-H bond length (standard: 1.01 Å)</span>
+        <span class="n">nh_bond_length</span> <span class="o">=</span> <span class="mf">1.01</span>
+        
+        <span class="c1"># Position H atom</span>
+        <span class="n">h_coord</span> <span class="o">=</span> <span class="n">n_coord</span> <span class="o">+</span> <span class="n">bisector</span> <span class="o">*</span> <span class="n">nh_bond_length</span>
+        
+        <span class="k">return</span> <span class="n">h_coord</span>
+    
+    <span class="c1"># Read PDB file and store all lines</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+    
+    <span class="c1"># First pass: organize atoms by residue to find N, CA, C positions</span>
+    <span class="c1"># and detect chain segments</span>
+    <span class="n">residue_data</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># List of (line_idx, atom_dict) to maintain order</span>
+    <span class="n">residue_lookup</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># For quick lookup: (chain, res_seq, segment_id) -&gt; {atom_name: atom_dict}</span>
+    
+    <span class="n">current_segment_id</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">prev_chain</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">prev_res_seq</span> <span class="o">=</span> <span class="kc">None</span>
+    
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lines</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;ATOM&#39;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        
+        <span class="n">atom</span> <span class="o">=</span> <span class="n">parse_atom_line</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="n">chain</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">]</span>
+        <span class="n">res_seq</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;res_seq&#39;</span><span class="p">]</span>
+        
+        <span class="c1"># Detect chain break: different chain ID OR non-consecutive residue numbers</span>
+        <span class="n">is_new_segment</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">prev_chain</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">is_new_segment</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">chain</span> <span class="o">!=</span> <span class="n">prev_chain</span><span class="p">:</span>
+            <span class="n">is_new_segment</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="nb">abs</span><span class="p">(</span><span class="n">res_seq</span> <span class="o">-</span> <span class="n">prev_res_seq</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">is_new_segment</span> <span class="o">=</span> <span class="kc">True</span>
+        
+        <span class="k">if</span> <span class="n">is_new_segment</span> <span class="ow">and</span> <span class="n">prev_chain</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">current_segment_id</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="c1"># Store atom with its original line index and segment info</span>
+        <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;line_idx&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">idx</span>
+        <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;segment_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_segment_id</span>
+        <span class="n">residue_data</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">idx</span><span class="p">,</span> <span class="n">atom</span><span class="p">))</span>
+        
+        <span class="c1"># Also store in lookup dictionary</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">res_seq</span><span class="p">,</span> <span class="n">current_segment_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">residue_lookup</span><span class="p">:</span>
+            <span class="n">residue_lookup</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">residue_lookup</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">atom</span>
+        
+        <span class="n">prev_chain</span> <span class="o">=</span> <span class="n">chain</span>
+        <span class="n">prev_res_seq</span> <span class="o">=</span> <span class="n">res_seq</span>
+    
+    <span class="c1"># Second pass: build output with H atoms inserted after N atoms</span>
+    <span class="n">output_lines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">current_serial</span> <span class="o">=</span> <span class="mi">1</span>
+    
+    <span class="c1"># Group residues by segment</span>
+    <span class="n">segments</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">residue_data</span><span class="p">:</span>
+        <span class="n">seg_id</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;segment_id&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">seg_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
+            <span class="n">segments</span><span class="p">[</span><span class="n">seg_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">],</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;res_seq&#39;</span><span class="p">],</span> <span class="n">seg_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;key&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">[</span><span class="n">seg_id</span><span class="p">]]:</span>
+            <span class="n">segments</span><span class="p">[</span><span class="n">seg_id</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="n">key</span><span class="p">,</span> <span class="s1">&#39;first_idx&#39;</span><span class="p">:</span> <span class="n">idx</span><span class="p">})</span>
+    
+    <span class="c1"># Track which residues we&#39;ve added H to</span>
+    <span class="n">h_added</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    
+    <span class="c1"># Process all original atoms in order</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">residue_data</span><span class="p">:</span>
+        <span class="n">chain</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">]</span>
+        <span class="n">res_seq</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;res_seq&#39;</span><span class="p">]</span>
+        <span class="n">seg_id</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;segment_id&#39;</span><span class="p">]</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">res_seq</span><span class="p">,</span> <span class="n">seg_id</span><span class="p">)</span>
+        
+        <span class="c1"># Write the current atom</span>
+        <span class="n">output_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">format_atom_line</span><span class="p">(</span>
+            <span class="n">current_serial</span><span class="p">,</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;residue&#39;</span><span class="p">],</span>
+            <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">],</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;res_seq&#39;</span><span class="p">],</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;coords&#39;</span><span class="p">],</span>
+            <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;occupancy&#39;</span><span class="p">],</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;temp_factor&#39;</span><span class="p">],</span> 
+            <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;element&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;element&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">))</span>
+        <span class="n">current_serial</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="c1"># If this is an N atom and we haven&#39;t added H yet for this residue</span>
+        <span class="k">if</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;N&#39;</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">h_added</span><span class="p">:</span>
+            <span class="n">res_atoms</span> <span class="o">=</span> <span class="n">residue_lookup</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            
+            <span class="c1"># Skip proline (PRO) residues - they don&#39;t have backbone H</span>
+            <span class="k">if</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;residue&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;PRO&#39;</span><span class="p">:</span>
+                <span class="k">continue</span>
+            
+            <span class="c1"># Check if we have necessary atoms (N, CA, C)</span>
+            <span class="k">if</span> <span class="s1">&#39;CA&#39;</span> <span class="ow">in</span> <span class="n">res_atoms</span><span class="p">:</span>
+                <span class="n">h_added</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                
+                <span class="c1"># Find if this is the first residue in the segment</span>
+                <span class="n">segment_residues</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;key&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">[</span><span class="n">seg_id</span><span class="p">]]</span>
+                <span class="n">is_first_in_segment</span> <span class="o">=</span> <span class="p">(</span><span class="n">key</span> <span class="o">==</span> <span class="n">segment_residues</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                
+                <span class="n">c_coord</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">is_first_in_segment</span><span class="p">:</span>
+                    <span class="c1"># Try to use previous residue&#39;s C atom</span>
+                    <span class="n">res_index</span> <span class="o">=</span> <span class="n">segment_residues</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">res_index</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">prev_key</span> <span class="o">=</span> <span class="n">segment_residues</span><span class="p">[</span><span class="n">res_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">prev_key</span> <span class="ow">in</span> <span class="n">residue_lookup</span> <span class="ow">and</span> <span class="s1">&#39;C&#39;</span> <span class="ow">in</span> <span class="n">residue_lookup</span><span class="p">[</span><span class="n">prev_key</span><span class="p">]:</span>
+                            <span class="n">c_coord</span> <span class="o">=</span> <span class="n">residue_lookup</span><span class="p">[</span><span class="n">prev_key</span><span class="p">][</span><span class="s1">&#39;C&#39;</span><span class="p">][</span><span class="s1">&#39;coords&#39;</span><span class="p">]</span>
+                
+                <span class="c1"># If no previous C or first residue, use current residue&#39;s C</span>
+                <span class="k">if</span> <span class="n">c_coord</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;C&#39;</span> <span class="ow">in</span> <span class="n">res_atoms</span><span class="p">:</span>
+                    <span class="n">c_coord</span> <span class="o">=</span> <span class="n">res_atoms</span><span class="p">[</span><span class="s1">&#39;C&#39;</span><span class="p">][</span><span class="s1">&#39;coords&#39;</span><span class="p">]</span>
+                
+                <span class="c1"># Calculate and add H atom</span>
+                <span class="k">if</span> <span class="n">c_coord</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">h_coord</span> <span class="o">=</span> <span class="n">calculate_h_position</span><span class="p">(</span>
+                        <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;coords&#39;</span><span class="p">],</span>
+                        <span class="n">res_atoms</span><span class="p">[</span><span class="s1">&#39;CA&#39;</span><span class="p">][</span><span class="s1">&#39;coords&#39;</span><span class="p">],</span>
+                        <span class="n">c_coord</span>
+                    <span class="p">)</span>
+                    
+                    <span class="n">output_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">format_atom_line</span><span class="p">(</span>
+                        <span class="n">current_serial</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;residue&#39;</span><span class="p">],</span>
+                        <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">],</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;res_seq&#39;</span><span class="p">],</span> <span class="n">h_coord</span><span class="p">,</span>
+                        <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;occupancy&#39;</span><span class="p">],</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;temp_factor&#39;</span><span class="p">],</span> <span class="s1">&#39;H&#39;</span>
+                    <span class="p">))</span>
+                    <span class="n">current_serial</span> <span class="o">+=</span> <span class="mi">1</span>
+    
+    <span class="c1"># Write output file</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">writelines</span><span class="p">(</span><span class="n">output_lines</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Added backbone hydrogen atoms. Output saved to </span><span class="si">{</span><span class="n">output_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output_file</span></div>
+
+
+
+<div class="viewcode-block" id="split_chains">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Convert2CG.split_chains">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">split_chains</span><span class="p">(</span><span class="n">pdb</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split PDB file into separate chains and identify their types.&quot;&quot;&quot;</span>
+    <span class="n">aas</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ALA&quot;</span><span class="p">,</span> <span class="s2">&quot;ARG&quot;</span><span class="p">,</span> <span class="s2">&quot;ASN&quot;</span><span class="p">,</span> <span class="s2">&quot;ASP&quot;</span><span class="p">,</span> <span class="s2">&quot;CYS&quot;</span><span class="p">,</span> <span class="s2">&quot;GLN&quot;</span><span class="p">,</span> <span class="s2">&quot;GLU&quot;</span><span class="p">,</span> <span class="s2">&quot;GLY&quot;</span><span class="p">,</span> <span class="s2">&quot;HIS&quot;</span><span class="p">,</span> <span class="s2">&quot;ILE&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;LEU&quot;</span><span class="p">,</span> <span class="s2">&quot;LYS&quot;</span><span class="p">,</span> <span class="s2">&quot;MET&quot;</span><span class="p">,</span> <span class="s2">&quot;PHE&quot;</span><span class="p">,</span> <span class="s2">&quot;PRO&quot;</span><span class="p">,</span> <span class="s2">&quot;SER&quot;</span><span class="p">,</span> <span class="s2">&quot;THR&quot;</span><span class="p">,</span> <span class="s2">&quot;TRP&quot;</span><span class="p">,</span> <span class="s2">&quot;TYR&quot;</span><span class="p">,</span> <span class="s2">&quot;VAL&quot;</span><span class="p">]</span>
+    <span class="n">rnas</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ADE&quot;</span><span class="p">,</span> <span class="s2">&quot;GUA&quot;</span><span class="p">,</span> <span class="s2">&quot;CYT&quot;</span><span class="p">,</span> <span class="s2">&quot;URA&quot;</span><span class="p">]</span>
+    <span class="n">dnas</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;DAD&quot;</span><span class="p">,</span> <span class="s2">&quot;DGU&quot;</span><span class="p">,</span> <span class="s2">&quot;DCY&quot;</span><span class="p">,</span> <span class="s2">&quot;DTH&quot;</span><span class="p">]</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;R&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+    <span class="c1"># HIS names</span>
+    <span class="n">HISs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;HSD&#39;</span><span class="p">,</span> <span class="s1">&#39;HSE&#39;</span><span class="p">,</span> <span class="s1">&#39;HSP&#39;</span><span class="p">,</span> <span class="s1">&#39;HID&#39;</span><span class="p">,</span> <span class="s1">&#39;HIE&#39;</span><span class="p">,</span> <span class="s1">&#39;HIP&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_type</span><span class="p">(</span><span class="n">resname</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">resname</span> <span class="ow">in</span> <span class="n">aas</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;P&#39;</span>
+        <span class="k">elif</span> <span class="n">resname</span> <span class="ow">in</span> <span class="n">rnas</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;R&#39;</span>
+        <span class="k">elif</span> <span class="n">resname</span> <span class="ow">in</span> <span class="n">dnas</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;D&#39;</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># Variables to track current and previous chain identifiers</span>
+    <span class="n">current_chain_id</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">current_segid</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">prev_chain_id</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">prev_segid</span> <span class="o">=</span> <span class="kc">None</span>
+    
+    <span class="n">chain_atoms</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">chains</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">segids</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1"># First pass: check if chain_id and segid exist</span>
+    <span class="n">has_chain_id</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">has_segid</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;ATOM&#39;</span><span class="p">):</span>
+                <span class="n">chain_id</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">21</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">segid</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">72</span><span class="p">:</span><span class="mi">76</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">chain_id</span><span class="p">:</span>
+                    <span class="n">has_chain_id</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">if</span> <span class="n">segid</span><span class="p">:</span>
+                    <span class="n">has_segid</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">if</span> <span class="n">has_chain_id</span> <span class="ow">and</span> <span class="n">has_segid</span><span class="p">:</span>
+                    <span class="k">break</span>
+    
+    <span class="c1"># Determine which identifier to use</span>
+    <span class="k">if</span> <span class="n">has_chain_id</span> <span class="ow">and</span> <span class="n">has_segid</span><span class="p">:</span>
+        <span class="c1"># Check which one changes to determine usage</span>
+        <span class="n">chain_id_changes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">segid_changes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">prev_cid</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">prev_sid</span> <span class="o">=</span> <span class="kc">None</span>
+        
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;ATOM&#39;</span><span class="p">):</span>
+                    <span class="n">cid</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">21</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                    <span class="n">sid</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">72</span><span class="p">:</span><span class="mi">76</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                    
+                    <span class="k">if</span> <span class="n">prev_cid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">cid</span> <span class="o">!=</span> <span class="n">prev_cid</span><span class="p">:</span>
+                        <span class="n">chain_id_changes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">prev_sid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">sid</span> <span class="o">!=</span> <span class="n">prev_sid</span><span class="p">:</span>
+                        <span class="n">segid_changes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+                    
+                    <span class="n">prev_cid</span> <span class="o">=</span> <span class="n">cid</span>
+                    <span class="n">prev_sid</span> <span class="o">=</span> <span class="n">sid</span>
+        
+        <span class="c1"># Use chain_id if it changes but segid doesn&#39;t, or if they change together</span>
+        <span class="n">use_chain_id</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chain_id_changes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">segid_changes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">chain_id_changes</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">segid_changes</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">has_chain_id</span><span class="p">:</span>
+        <span class="n">use_chain_id</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">elif</span> <span class="n">has_segid</span><span class="p">:</span>
+        <span class="n">use_chain_id</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Neither chain_id nor segid found in PDB file&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Second pass: split chains based on the determined identifier</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;ATOM&#39;</span><span class="p">):</span>
+                <span class="n">chain_id</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">21</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">segid</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">72</span><span class="p">:</span><span class="mi">76</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">resname</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">17</span><span class="p">:</span><span class="mi">20</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">resname</span> <span class="ow">in</span> <span class="n">HISs</span><span class="p">:</span>
+                    <span class="n">resname</span> <span class="o">=</span> <span class="s1">&#39;HIS&#39;</span>
+                
+                <span class="c1"># Select the identifier to use</span>
+                <span class="n">identifier</span> <span class="o">=</span> <span class="n">chain_id</span> <span class="k">if</span> <span class="n">use_chain_id</span> <span class="k">else</span> <span class="n">segid</span>
+                
+                <span class="k">if</span> <span class="n">identifier</span> <span class="o">!=</span> <span class="p">(</span><span class="n">current_chain_id</span> <span class="k">if</span> <span class="n">use_chain_id</span> <span class="k">else</span> <span class="n">current_segid</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">chain_atoms</span><span class="p">:</span>
+                        <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chain_atoms</span><span class="p">)</span>
+                    
+                    <span class="k">if</span> <span class="n">use_chain_id</span><span class="p">:</span>
+                        <span class="n">current_chain_id</span> <span class="o">=</span> <span class="n">identifier</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">current_segid</span> <span class="o">=</span> <span class="n">identifier</span>
+                    
+                    <span class="n">mol_type</span> <span class="o">=</span> <span class="n">get_type</span><span class="p">(</span><span class="n">resname</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">mol_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unknown residue type: </span><span class="si">{</span><span class="n">resname</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="n">types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mol_type</span><span class="p">)</span>
+                    <span class="n">new_segid</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mol_type</span><span class="si">}{</span><span class="n">counts</span><span class="p">[</span><span class="n">mol_type</span><span class="p">]</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="n">counts</span><span class="p">[</span><span class="n">mol_type</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">segids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_segid</span><span class="p">)</span>
+                    <span class="n">chain_atoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">chain_atoms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">chain_atoms</span><span class="p">:</span>
+            <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chain_atoms</span><span class="p">)</span>
+
+    <span class="c1"># Save each chain to temporary file</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chain</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chains</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;aa2cgtmp_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">_aa.pdb&quot;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;END</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">types</span><span class="p">,</span> <span class="n">segids</span></div>
+
+
+
+<div class="viewcode-block" id="set_terminus">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Convert2CG.set_terminus">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_terminus</span><span class="p">(</span><span class="n">gen</span><span class="p">,</span> <span class="n">segid</span><span class="p">,</span> <span class="n">terminal</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the charge status of protein terminus.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">segid</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;P&quot;</span><span class="p">):</span>
+        <span class="k">return</span>
+        
+    <span class="n">resids</span> <span class="o">=</span> <span class="n">gen</span><span class="o">.</span><span class="n">get_resids</span><span class="p">(</span><span class="n">segid</span><span class="p">)</span>
+    <span class="n">nter</span><span class="p">,</span> <span class="n">cter</span> <span class="o">=</span> <span class="n">resids</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">resids</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    
+    <span class="k">if</span> <span class="n">terminal</span> <span class="o">==</span> <span class="s1">&#39;charged&#39;</span><span class="p">:</span>
+        <span class="n">gen</span><span class="o">.</span><span class="n">set_charge</span><span class="p">(</span><span class="n">segid</span><span class="p">,</span> <span class="n">nter</span><span class="p">,</span> <span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="mf">1.00</span><span class="p">)</span>
+        <span class="n">gen</span><span class="o">.</span><span class="n">set_charge</span><span class="p">(</span><span class="n">segid</span><span class="p">,</span> <span class="n">cter</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.00</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">terminal</span> <span class="o">==</span> <span class="s1">&#39;NT&#39;</span><span class="p">:</span>
+        <span class="n">gen</span><span class="o">.</span><span class="n">set_charge</span><span class="p">(</span><span class="n">segid</span><span class="p">,</span> <span class="n">nter</span><span class="p">,</span> <span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="mf">1.00</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">terminal</span> <span class="o">==</span> <span class="s1">&#39;CT&#39;</span><span class="p">:</span>
+        <span class="n">gen</span><span class="o">.</span><span class="n">set_charge</span><span class="p">(</span><span class="n">segid</span><span class="p">,</span> <span class="n">cter</span><span class="p">,</span> <span class="s2">&quot;O&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.00</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">terminal</span> <span class="o">==</span> <span class="s1">&#39;neutral&#39;</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Only &#39;neutral&#39;, &#39;charged&#39;, &#39;NT&#39;, and &#39;CT&#39; are supported.&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="at2hyres">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Convert2CG.at2hyres">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">at2hyres</span><span class="p">(</span><span class="n">pdb_in</span><span class="p">,</span> <span class="n">pdb_out</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert all-atom protein to HyRes CG PDB.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">    -----------</span>
+<span class="sd">    pdb_in : str</span>
+<span class="sd">        Input all-atom PDB file</span>
+<span class="sd">    pdb_out : str</span>
+<span class="sd">        Output HyRes CG PDB file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">encode_serial</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encode integer to hybrid-36 format for PDB serial number field (5 chars).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">100000</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">5d</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">n</span> <span class="o">-=</span> <span class="mi">100000</span>
+        <span class="n">chars</span> <span class="o">=</span> <span class="s1">&#39;0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ&#39;</span>
+
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">26</span> <span class="o">*</span> <span class="p">(</span><span class="mi">36</span><span class="o">**</span><span class="mi">4</span><span class="p">):</span>  <span class="c1"># uppercase range</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+                <span class="n">n</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">36</span><span class="p">)</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chars</span><span class="p">[</span><span class="n">remainder</span><span class="p">])</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">n</span><span class="p">))</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+
+        <span class="n">n</span> <span class="o">-=</span> <span class="mi">26</span> <span class="o">*</span> <span class="p">(</span><span class="mi">36</span><span class="o">**</span><span class="mi">4</span><span class="p">)</span>  <span class="c1"># lowercase range</span>
+        <span class="n">chars_lower</span> <span class="o">=</span> <span class="s1">&#39;0123456789abcdefghijklmnopqrstuvwxyz&#39;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+            <span class="n">n</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">36</span><span class="p">)</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chars_lower</span><span class="p">[</span><span class="n">remainder</span><span class="p">])</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">n</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+    
+    <span class="c1"># Parse PDB file into residues</span>
+    <span class="n">residues</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">atom_count</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pdb_in</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;ATOM&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+                
+            <span class="n">atom_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">resid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">22</span><span class="p">:</span><span class="mi">26</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+            
+            <span class="k">if</span> <span class="n">resid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">residues</span><span class="p">:</span>
+                <span class="n">residues</span><span class="p">[</span><span class="n">resid</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            
+            <span class="n">atom_idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">residues</span><span class="p">[</span><span class="n">resid</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">12</span><span class="p">:</span><span class="mi">16</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;HN&#39;</span><span class="p">,</span> <span class="s1">&#39;HT1&#39;</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span><span class="p">]:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;H&#39;</span>
+            <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;O&#39;</span><span class="p">,</span> <span class="s1">&#39;OT1&#39;</span><span class="p">]:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;O&#39;</span>
+            <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;OT2&#39;</span><span class="p">,</span> <span class="s1">&#39;OXT&#39;</span><span class="p">]:</span>
+                <span class="k">continue</span>
+            <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;H&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            
+            <span class="n">residues</span><span class="p">[</span><span class="n">resid</span><span class="p">][</span><span class="n">atom_idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;record&#39;</span><span class="p">:</span> <span class="n">line</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                <span class="s1">&#39;serial&#39;</span><span class="p">:</span> <span class="n">line</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">11</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+                <span class="s1">&#39;resname&#39;</span><span class="p">:</span> <span class="n">line</span><span class="p">[</span><span class="mi">17</span><span class="p">:</span><span class="mi">20</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                <span class="s1">&#39;chain&#39;</span><span class="p">:</span> <span class="n">line</span><span class="p">[</span><span class="mi">21</span><span class="p">],</span>
+                <span class="s1">&#39;resid&#39;</span><span class="p">:</span> <span class="n">line</span><span class="p">[</span><span class="mi">22</span><span class="p">:</span><span class="mi">26</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">30</span><span class="p">:</span><span class="mi">38</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()),</span>
+                <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">38</span><span class="p">:</span><span class="mi">46</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()),</span>
+                <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">46</span><span class="p">:</span><span class="mi">54</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()),</span>
+                <span class="s1">&#39;occ&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">54</span><span class="p">:</span><span class="mi">60</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="mi">54</span><span class="p">:</span><span class="mi">60</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">else</span> <span class="mf">1.00</span><span class="p">,</span>
+                <span class="s1">&#39;bfac&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">60</span><span class="p">:</span><span class="mi">66</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="mi">60</span><span class="p">:</span><span class="mi">66</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">else</span> <span class="mf">0.00</span><span class="p">,</span>
+                <span class="s1">&#39;segid&#39;</span><span class="p">:</span> <span class="n">line</span><span class="p">[</span><span class="mi">72</span><span class="p">:</span><span class="mi">76</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">72</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+            <span class="p">}</span>
+
+    <span class="n">num_residues</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">residues</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing </span><span class="si">{</span><span class="n">atom_count</span><span class="si">}</span><span class="s2"> atoms / </span><span class="si">{</span><span class="n">num_residues</span><span class="si">}</span><span class="s2"> residues&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Rename histidine variants to HIS</span>
+    <span class="k">for</span> <span class="n">resid</span> <span class="ow">in</span> <span class="n">residues</span><span class="p">:</span>
+        <span class="n">first_atom</span> <span class="o">=</span> <span class="n">residues</span><span class="p">[</span><span class="n">resid</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">first_atom</span><span class="p">[</span><span class="s1">&#39;resname&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;HSD&#39;</span><span class="p">,</span> <span class="s1">&#39;HSE&#39;</span><span class="p">,</span> <span class="s1">&#39;HSP&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">residues</span><span class="p">[</span><span class="n">resid</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;resname&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;HIS&#39;</span>
+
+    <span class="c1"># Mapping rules for residues</span>
+    <span class="n">single_bead_sc</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ALA&#39;</span><span class="p">,</span> <span class="s1">&#39;VAL&#39;</span><span class="p">,</span> <span class="s1">&#39;LEU&#39;</span><span class="p">,</span> <span class="s1">&#39;ILE&#39;</span><span class="p">,</span> <span class="s1">&#39;MET&#39;</span><span class="p">,</span> <span class="s1">&#39;ASN&#39;</span><span class="p">,</span> <span class="s1">&#39;ASP&#39;</span><span class="p">,</span> 
+                      <span class="s1">&#39;GLN&#39;</span><span class="p">,</span> <span class="s1">&#39;GLU&#39;</span><span class="p">,</span> <span class="s1">&#39;CYS&#39;</span><span class="p">,</span> <span class="s1">&#39;SER&#39;</span><span class="p">,</span> <span class="s1">&#39;THR&#39;</span><span class="p">,</span> <span class="s1">&#39;PRO&#39;</span><span class="p">]</span>
+    
+    <span class="n">sc_mapping</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;LYS&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="s1">&#39;CB&#39;</span><span class="p">,</span> <span class="s1">&#39;CG&#39;</span><span class="p">,</span> <span class="s1">&#39;CD&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;CE&#39;</span><span class="p">,</span> <span class="s1">&#39;NZ&#39;</span><span class="p">]],</span>
+        <span class="s1">&#39;ARG&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="s1">&#39;CB&#39;</span><span class="p">,</span> <span class="s1">&#39;CG&#39;</span><span class="p">,</span> <span class="s1">&#39;CD&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;NE&#39;</span><span class="p">,</span> <span class="s1">&#39;CZ&#39;</span><span class="p">,</span> <span class="s1">&#39;NH1&#39;</span><span class="p">,</span> <span class="s1">&#39;NH2&#39;</span><span class="p">]],</span>
+        <span class="s1">&#39;HIS&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="s1">&#39;CB&#39;</span><span class="p">,</span> <span class="s1">&#39;CG&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;CD2&#39;</span><span class="p">,</span> <span class="s1">&#39;NE2&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;ND1&#39;</span><span class="p">,</span> <span class="s1">&#39;CE1&#39;</span><span class="p">]],</span>
+        <span class="s1">&#39;PHE&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="s1">&#39;CB&#39;</span><span class="p">,</span> <span class="s1">&#39;CG&#39;</span><span class="p">,</span> <span class="s1">&#39;CD1&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;CD2&#39;</span><span class="p">,</span> <span class="s1">&#39;CE2&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;CE1&#39;</span><span class="p">,</span> <span class="s1">&#39;CZ&#39;</span><span class="p">]],</span>
+        <span class="s1">&#39;TYR&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="s1">&#39;CB&#39;</span><span class="p">,</span> <span class="s1">&#39;CG&#39;</span><span class="p">,</span> <span class="s1">&#39;CD1&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;CD2&#39;</span><span class="p">,</span> <span class="s1">&#39;CE2&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;CE1&#39;</span><span class="p">,</span> <span class="s1">&#39;CZ&#39;</span><span class="p">,</span> <span class="s1">&#39;OH&#39;</span><span class="p">]],</span>
+        <span class="s1">&#39;TRP&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="s1">&#39;CB&#39;</span><span class="p">,</span> <span class="s1">&#39;CG&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;CD1&#39;</span><span class="p">,</span> <span class="s1">&#39;NE1&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;CD2&#39;</span><span class="p">,</span> <span class="s1">&#39;CE2&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;CZ2&#39;</span><span class="p">,</span> <span class="s1">&#39;CH2&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;CE3&#39;</span><span class="p">,</span> <span class="s1">&#39;CZ3&#39;</span><span class="p">]]</span>
+    <span class="p">}</span>
+    
+    <span class="n">bb_atoms</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CA&#39;</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="s1">&#39;O&#39;</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span><span class="p">]</span>
+    <span class="n">bb_atoms_1</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CA&#39;</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span><span class="p">]</span>
+    <span class="n">bb_atoms_2</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="s1">&#39;O&#39;</span><span class="p">]</span>
+    
+    <span class="c1"># Write CG PDB</span>
+    <span class="n">atom_serial</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pdb_out</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">resid</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">residues</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">residues</span><span class="p">[</span><span class="n">resid</span><span class="p">]</span>
+            <span class="n">first_atom</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">resname</span> <span class="o">=</span> <span class="n">first_atom</span><span class="p">[</span><span class="s1">&#39;resname&#39;</span><span class="p">]</span>
+            
+            <span class="c1"># Get sidechain beads for this residue</span>
+            <span class="k">if</span> <span class="n">resname</span> <span class="ow">in</span> <span class="n">sc_mapping</span><span class="p">:</span>
+                <span class="n">sc_beads</span> <span class="o">=</span> <span class="n">sc_mapping</span><span class="p">[</span><span class="n">resname</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">resname</span> <span class="ow">in</span> <span class="n">single_bead_sc</span><span class="p">:</span>
+                <span class="c1"># Collect all non-backbone atoms as single sidechain bead</span>
+                <span class="n">sc_beads</span> <span class="o">=</span> <span class="p">[[</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bb_atoms</span><span class="p">]]</span>
+            <span class="k">elif</span> <span class="n">resname</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;HSD&#39;</span><span class="p">,</span> <span class="s1">&#39;HSE&#39;</span><span class="p">,</span> <span class="s1">&#39;HSP&#39;</span><span class="p">,</span> <span class="s1">&#39;HID&#39;</span><span class="p">,</span> <span class="s1">&#39;HIE&#39;</span><span class="p">,</span> <span class="s1">&#39;HIP&#39;</span><span class="p">]:</span>
+                <span class="n">resname</span> <span class="o">=</span> <span class="s1">&#39;HIS&#39;</span>
+            <span class="k">elif</span> <span class="n">resname</span> <span class="o">!=</span> <span class="s1">&#39;GLY&#39;</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error: Unknown residue type </span><span class="si">{</span><span class="n">resname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sc_beads</span> <span class="o">=</span> <span class="p">[]</span>
+            
+            <span class="c1"># Calculate sidechain bead centers</span>
+            <span class="n">sc_centers</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">bead_atoms</span> <span class="ow">in</span> <span class="n">sc_beads</span><span class="p">:</span>
+                <span class="n">coords</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">bead_atoms</span><span class="p">:</span>
+                        <span class="n">coords</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">],</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]])</span>
+                <span class="k">if</span> <span class="n">coords</span><span class="p">:</span>
+                    <span class="n">center</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">sc_centers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">center</span><span class="p">)</span>
+            
+            <span class="c1"># Write backbone atoms (first group)</span>
+            <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">bb_atoms_1</span><span class="p">:</span>
+                    <span class="n">atom_serial</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">serial_str</span> <span class="o">=</span> <span class="n">encode_serial</span><span class="p">(</span><span class="n">atom_serial</span><span class="p">)</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;record&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">4s</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">serial_str</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">2s</span><span class="si">}</span><span class="s2">   &quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">resname</span><span class="si">:</span><span class="s2">3s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">]</span><span class="si">}{</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;resid&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2">    &quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}</span><span class="s2">&quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;occ&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;bfac&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}</span><span class="s2">      </span><span class="si">{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;segid&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">4s</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># Write sidechain beads</span>
+            <span class="n">bead_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CB&#39;</span><span class="p">,</span> <span class="s1">&#39;CC&#39;</span><span class="p">,</span> <span class="s1">&#39;CD&#39;</span><span class="p">,</span> <span class="s1">&#39;CE&#39;</span><span class="p">,</span> <span class="s1">&#39;CF&#39;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">center</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sc_centers</span><span class="p">):</span>
+                <span class="n">atom_serial</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">serial_str</span> <span class="o">=</span> <span class="n">encode_serial</span><span class="p">(</span><span class="n">atom_serial</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">first_atom</span><span class="p">[</span><span class="s1">&#39;record&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">4s</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">serial_str</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">bead_names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">2s</span><span class="si">}</span><span class="s2">   &quot;</span>
+                       <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">resname</span><span class="si">:</span><span class="s2">3s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">first_atom</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">]</span><span class="si">}{</span><span class="nb">int</span><span class="p">(</span><span class="n">first_atom</span><span class="p">[</span><span class="s1">&#39;resid&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2">    &quot;</span>
+                       <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">center</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">center</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">center</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}</span><span class="s2">&quot;</span>
+                       <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">first_atom</span><span class="p">[</span><span class="s1">&#39;occ&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}{</span><span class="n">first_atom</span><span class="p">[</span><span class="s1">&#39;bfac&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}</span><span class="s2">      &quot;</span>
+                       <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">first_atom</span><span class="p">[</span><span class="s1">&#39;segid&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">4s</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># Write backbone C and O atoms (second group)</span>
+            <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">bb_atoms_2</span><span class="p">:</span>
+                    <span class="n">atom_serial</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">serial_str</span> <span class="o">=</span> <span class="n">encode_serial</span><span class="p">(</span><span class="n">atom_serial</span><span class="p">)</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;record&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">4s</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">serial_str</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">2s</span><span class="si">}</span><span class="s2">   &quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">resname</span><span class="si">:</span><span class="s2">3s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">]</span><span class="si">}{</span><span class="nb">int</span><span class="p">(</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;resid&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2">    &quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}</span><span class="s2">&quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;occ&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;bfac&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}</span><span class="s2">      </span><span class="si">{</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;segid&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">4s</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;END</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;At2Hyres conversion done, output written to </span><span class="si">{</span><span class="n">pdb_out</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="at2icon">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Convert2CG.at2icon">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">at2icon</span><span class="p">(</span><span class="n">pdb_in</span><span class="p">,</span> <span class="n">pdb_out</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert all-atom RNA to iConRNA PDB.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">    -----------</span>
+<span class="sd">    pdb_in : str</span>
+<span class="sd">        Input all-atom PDB file</span>
+<span class="sd">    pdb_out : str</span>
+<span class="sd">        Output iConRNA PDB file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">encode_serial</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encode integer to hybrid-36 format for PDB serial number field (5 chars).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">100000</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">5d</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">n</span> <span class="o">-=</span> <span class="mi">100000</span>
+        <span class="n">chars</span> <span class="o">=</span> <span class="s1">&#39;0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ&#39;</span>
+
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">26</span> <span class="o">*</span> <span class="p">(</span><span class="mi">36</span><span class="o">**</span><span class="mi">4</span><span class="p">):</span>  <span class="c1"># uppercase range</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+                <span class="n">n</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">36</span><span class="p">)</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chars</span><span class="p">[</span><span class="n">remainder</span><span class="p">])</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">n</span><span class="p">))</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+
+        <span class="n">n</span> <span class="o">-=</span> <span class="mi">26</span> <span class="o">*</span> <span class="p">(</span><span class="mi">36</span><span class="o">**</span><span class="mi">4</span><span class="p">)</span>  <span class="c1"># lowercase range</span>
+        <span class="n">chars_lower</span> <span class="o">=</span> <span class="s1">&#39;0123456789abcdefghijklmnopqrstuvwxyz&#39;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+            <span class="n">n</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">36</span><span class="p">)</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chars_lower</span><span class="p">[</span><span class="n">remainder</span><span class="p">])</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">n</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+    
+    <span class="c1"># Parse PDB file</span>
+    <span class="n">atoms</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pdb_in</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;ATOM&#39;</span><span class="p">):</span>
+                <span class="n">atoms</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">line</span><span class="p">[</span><span class="mi">12</span><span class="p">:</span><span class="mi">16</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                    <span class="s1">&#39;resname&#39;</span><span class="p">:</span> <span class="n">line</span><span class="p">[</span><span class="mi">17</span><span class="p">:</span><span class="mi">20</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                    <span class="s1">&#39;chain&#39;</span><span class="p">:</span> <span class="n">line</span><span class="p">[</span><span class="mi">21</span><span class="p">],</span>
+                    <span class="s1">&#39;resid&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">22</span><span class="p">:</span><span class="mi">26</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()),</span>
+                    <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">30</span><span class="p">:</span><span class="mi">38</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()),</span>
+                    <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">38</span><span class="p">:</span><span class="mi">46</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()),</span>
+                    <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">46</span><span class="p">:</span><span class="mi">54</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()),</span>
+                    <span class="s1">&#39;segid&#39;</span><span class="p">:</span> <span class="n">line</span><span class="p">[</span><span class="mi">72</span><span class="p">:</span><span class="mi">76</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">72</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+                <span class="p">})</span>
+    
+    <span class="c1"># Group by segment and residue</span>
+    <span class="n">segments</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">atoms</span><span class="p">:</span>
+        <span class="n">segid</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;segid&#39;</span><span class="p">]</span>
+        <span class="n">resid</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;resid&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">segid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
+            <span class="n">segments</span><span class="p">[</span><span class="n">segid</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">resid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">[</span><span class="n">segid</span><span class="p">]:</span>
+            <span class="n">segments</span><span class="p">[</span><span class="n">segid</span><span class="p">][</span><span class="n">resid</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;resname&#39;</span><span class="p">:</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;resname&#39;</span><span class="p">],</span> 
+                <span class="s1">&#39;chain&#39;</span><span class="p">:</span> <span class="n">atom</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">],</span> 
+                <span class="s1">&#39;atoms&#39;</span><span class="p">:</span> <span class="p">[]</span>
+            <span class="p">}</span>
+        <span class="n">segments</span><span class="p">[</span><span class="n">segid</span><span class="p">][</span><span class="n">resid</span><span class="p">][</span><span class="s1">&#39;atoms&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+    
+    <span class="c1"># Base bead mappings for each nucleotide</span>
+    <span class="n">base_mappings</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;ADE&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s1">&#39;NA&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;N9&#39;</span><span class="p">,</span> <span class="s1">&#39;C4&#39;</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s1">&#39;NB&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;C8&#39;</span><span class="p">,</span> <span class="s1">&#39;H8&#39;</span><span class="p">,</span> <span class="s1">&#39;N7&#39;</span><span class="p">,</span> <span class="s1">&#39;C5&#39;</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s1">&#39;NC&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;C6&#39;</span><span class="p">,</span> <span class="s1">&#39;N1&#39;</span><span class="p">,</span> <span class="s1">&#39;N6&#39;</span><span class="p">,</span> <span class="s1">&#39;H61&#39;</span><span class="p">,</span> <span class="s1">&#39;H62&#39;</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s1">&#39;ND&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;C2&#39;</span><span class="p">,</span> <span class="s1">&#39;H2&#39;</span><span class="p">,</span> <span class="s1">&#39;N3&#39;</span><span class="p">])</span>
+        <span class="p">],</span>
+        <span class="s1">&#39;GUA&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s1">&#39;NA&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;N9&#39;</span><span class="p">,</span> <span class="s1">&#39;C4&#39;</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s1">&#39;NB&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;C8&#39;</span><span class="p">,</span> <span class="s1">&#39;H8&#39;</span><span class="p">,</span> <span class="s1">&#39;N7&#39;</span><span class="p">,</span> <span class="s1">&#39;C5&#39;</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s1">&#39;NC&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;C6&#39;</span><span class="p">,</span> <span class="s1">&#39;N1&#39;</span><span class="p">,</span> <span class="s1">&#39;H1&#39;</span><span class="p">,</span> <span class="s1">&#39;O6&#39;</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s1">&#39;ND&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;C2&#39;</span><span class="p">,</span> <span class="s1">&#39;N2&#39;</span><span class="p">,</span> <span class="s1">&#39;H21&#39;</span><span class="p">,</span> <span class="s1">&#39;H22&#39;</span><span class="p">,</span> <span class="s1">&#39;N3&#39;</span><span class="p">])</span>
+        <span class="p">],</span>
+        <span class="s1">&#39;CYT&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s1">&#39;NA&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;N1&#39;</span><span class="p">,</span> <span class="s1">&#39;C5&#39;</span><span class="p">,</span> <span class="s1">&#39;H5&#39;</span><span class="p">,</span> <span class="s1">&#39;C6&#39;</span><span class="p">,</span> <span class="s1">&#39;H6&#39;</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s1">&#39;NB&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;C4&#39;</span><span class="p">,</span> <span class="s1">&#39;N4&#39;</span><span class="p">,</span> <span class="s1">&#39;H41&#39;</span><span class="p">,</span> <span class="s1">&#39;H42&#39;</span><span class="p">,</span> <span class="s1">&#39;N3&#39;</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s1">&#39;NC&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;C2&#39;</span><span class="p">,</span> <span class="s1">&#39;O2&#39;</span><span class="p">])</span>
+        <span class="p">],</span>
+        <span class="s1">&#39;URA&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s1">&#39;NA&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;N1&#39;</span><span class="p">,</span> <span class="s1">&#39;C5&#39;</span><span class="p">,</span> <span class="s1">&#39;H5&#39;</span><span class="p">,</span> <span class="s1">&#39;C6&#39;</span><span class="p">,</span> <span class="s1">&#39;H6&#39;</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s1">&#39;NB&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;C4&#39;</span><span class="p">,</span> <span class="s1">&#39;O4&#39;</span><span class="p">,</span> <span class="s1">&#39;N3&#39;</span><span class="p">,</span> <span class="s1">&#39;H3&#39;</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s1">&#39;NC&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;C2&#39;</span><span class="p">,</span> <span class="s1">&#39;O2&#39;</span><span class="p">])</span>
+        <span class="p">]</span>
+    <span class="p">}</span>
+    
+    <span class="n">atom_serial</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pdb_out</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">segid</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">segments</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">for</span> <span class="n">resid</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">segments</span><span class="p">[</span><span class="n">segid</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="n">res_data</span> <span class="o">=</span> <span class="n">segments</span><span class="p">[</span><span class="n">segid</span><span class="p">][</span><span class="n">resid</span><span class="p">]</span>
+                <span class="n">resname</span> <span class="o">=</span> <span class="n">res_data</span><span class="p">[</span><span class="s1">&#39;resname&#39;</span><span class="p">]</span>
+                <span class="n">chain</span> <span class="o">=</span> <span class="n">res_data</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">]</span>
+                <span class="n">res_atoms</span> <span class="o">=</span> <span class="n">res_data</span><span class="p">[</span><span class="s1">&#39;atoms&#39;</span><span class="p">]</span>
+                
+                <span class="c1"># P bead (phosphate group)</span>
+                <span class="n">p_atoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">res_atoms</span> <span class="k">if</span> <span class="n">a</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="s2">&quot;O1P&quot;</span><span class="p">,</span> <span class="s2">&quot;O2P&quot;</span><span class="p">,</span> <span class="s2">&quot;O5&#39;&quot;</span><span class="p">]]</span>
+                <span class="c1"># Add O3&#39; from previous residue</span>
+                <span class="k">if</span> <span class="n">resid</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">[</span><span class="n">segid</span><span class="p">]:</span>
+                    <span class="n">prev_atoms</span> <span class="o">=</span> <span class="n">segments</span><span class="p">[</span><span class="n">segid</span><span class="p">][</span><span class="n">resid</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="s1">&#39;atoms&#39;</span><span class="p">]</span>
+                    <span class="n">p_atoms</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">prev_atoms</span> <span class="k">if</span> <span class="n">a</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;O3&#39;&quot;</span><span class="p">])</span>
+                
+                <span class="k">if</span> <span class="n">p_atoms</span><span class="p">:</span>
+                    <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">a</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">p_atoms</span><span class="p">])</span>
+                    <span class="n">center</span> <span class="o">=</span> <span class="n">coords</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">atom_serial</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">serial_str</span> <span class="o">=</span> <span class="n">encode_serial</span><span class="p">(</span><span class="n">atom_serial</span><span class="p">)</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ATOM  </span><span class="si">{</span><span class="n">serial_str</span><span class="si">}</span><span class="s2">  P   </span><span class="si">{</span><span class="n">resname</span><span class="si">:</span><span class="s2">3s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">chain</span><span class="si">}{</span><span class="n">resid</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2">    &quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">center</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">center</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">center</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}</span><span class="s2">&quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;  1.00  0.00      </span><span class="si">{</span><span class="n">segid</span><span class="si">:</span><span class="s2">4s</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                
+                <span class="c1"># C1 bead (C4&#39; sugar)</span>
+                <span class="n">c1_atoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">res_atoms</span> <span class="k">if</span> <span class="n">a</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;C4&#39;&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">c1_atoms</span><span class="p">:</span>
+                    <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">a</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">c1_atoms</span><span class="p">])</span>
+                    <span class="n">center</span> <span class="o">=</span> <span class="n">coords</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">atom_serial</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">serial_str</span> <span class="o">=</span> <span class="n">encode_serial</span><span class="p">(</span><span class="n">atom_serial</span><span class="p">)</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ATOM  </span><span class="si">{</span><span class="n">serial_str</span><span class="si">}</span><span class="s2">  C1  </span><span class="si">{</span><span class="n">resname</span><span class="si">:</span><span class="s2">3s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">chain</span><span class="si">}{</span><span class="n">resid</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2">    &quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">center</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">center</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">center</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}</span><span class="s2">&quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;  1.00  0.00      </span><span class="si">{</span><span class="n">segid</span><span class="si">:</span><span class="s2">4s</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                
+                <span class="c1"># C2 bead (C1&#39; sugar)</span>
+                <span class="n">c2_atoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">res_atoms</span> <span class="k">if</span> <span class="n">a</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;C1&#39;&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">c2_atoms</span><span class="p">:</span>
+                    <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">a</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">c2_atoms</span><span class="p">])</span>
+                    <span class="n">center</span> <span class="o">=</span> <span class="n">coords</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">atom_serial</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">serial_str</span> <span class="o">=</span> <span class="n">encode_serial</span><span class="p">(</span><span class="n">atom_serial</span><span class="p">)</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ATOM  </span><span class="si">{</span><span class="n">serial_str</span><span class="si">}</span><span class="s2">  C2  </span><span class="si">{</span><span class="n">resname</span><span class="si">:</span><span class="s2">3s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">chain</span><span class="si">}{</span><span class="n">resid</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2">    &quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">center</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">center</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">center</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}</span><span class="s2">&quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;  1.00  0.00      </span><span class="si">{</span><span class="n">segid</span><span class="si">:</span><span class="s2">4s</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                
+                <span class="c1"># Base beads</span>
+                <span class="k">if</span> <span class="n">resname</span> <span class="ow">in</span> <span class="n">base_mappings</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">bead_name</span><span class="p">,</span> <span class="n">atom_names</span> <span class="ow">in</span> <span class="n">base_mappings</span><span class="p">[</span><span class="n">resname</span><span class="p">]:</span>
+                        <span class="n">base_atoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">res_atoms</span> <span class="k">if</span> <span class="n">a</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">atom_names</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">base_atoms</span><span class="p">:</span>
+                            <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">a</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">base_atoms</span><span class="p">])</span>
+                            <span class="n">center</span> <span class="o">=</span> <span class="n">coords</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                            <span class="n">atom_serial</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="n">serial_str</span> <span class="o">=</span> <span class="n">encode_serial</span><span class="p">(</span><span class="n">atom_serial</span><span class="p">)</span>
+                            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ATOM  </span><span class="si">{</span><span class="n">serial_str</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">bead_name</span><span class="si">:</span><span class="s2">2s</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">resname</span><span class="si">:</span><span class="s2">3s</span><span class="si">}</span><span class="s2"> &quot;</span>
+                                   <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">chain</span><span class="si">}{</span><span class="n">resid</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2">    &quot;</span>
+                                   <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">center</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">center</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}{</span><span class="n">center</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">:</span><span class="s2">8.3f</span><span class="si">}</span><span class="s2">&quot;</span>
+                                   <span class="sa">f</span><span class="s2">&quot;  1.00  0.00      </span><span class="si">{</span><span class="n">segid</span><span class="si">:</span><span class="s2">4s</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;END</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;At2iCon conversion done, output written to </span><span class="si">{</span><span class="n">pdb_out</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="fix_pdb_serial">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Convert2CG.fix_pdb_serial">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fix_pdb_serial</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fix PDB files where atom serial numbers exceed 99999 and have been written</span>
+<span class="sd">    as &#39;******&#39; by psfgen-python. Re-numbers all ATOM/HETATM records sequentially</span>
+<span class="sd">    using hybrid-36 encoding so serial numbers beyond 99999 are represented as</span>
+<span class="sd">    base-36 alphanumeric strings (A0000–Z9999, then a0000–z9999).</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">    -----------</span>
+<span class="sd">    pdb_file : str</span>
+<span class="sd">        Path to the input PDB file containing &#39;******&#39; serial fields.</span>
+<span class="sd">    output_file : str, optional</span>
+<span class="sd">        Path to the output fixed PDB file.</span>
+<span class="sd">        If None, the input file is overwritten in-place.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    --------</span>
+<span class="sd">    str : Path to the fixed PDB file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_encode_serial</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encode integer to hybrid-36 format for PDB serial number field (5 chars).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">100000</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">5d</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">n</span> <span class="o">-=</span> <span class="mi">100000</span>
+        <span class="n">chars</span> <span class="o">=</span> <span class="s1">&#39;0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ&#39;</span>
+
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">26</span> <span class="o">*</span> <span class="p">(</span><span class="mi">36</span> <span class="o">**</span> <span class="mi">4</span><span class="p">):</span>          <span class="c1"># uppercase range: A0000 – Z9ZZZ</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+                <span class="n">n</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">36</span><span class="p">)</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chars</span><span class="p">[</span><span class="n">remainder</span><span class="p">])</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">n</span><span class="p">))</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+
+        <span class="n">n</span> <span class="o">-=</span> <span class="mi">26</span> <span class="o">*</span> <span class="p">(</span><span class="mi">36</span> <span class="o">**</span> <span class="mi">4</span><span class="p">)</span>              <span class="c1"># lowercase range: a0000 – z9ZZZ</span>
+        <span class="n">chars_lower</span> <span class="o">=</span> <span class="s1">&#39;0123456789abcdefghijklmnopqrstuvwxyz&#39;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+            <span class="n">n</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">36</span><span class="p">)</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chars_lower</span><span class="p">[</span><span class="n">remainder</span><span class="p">])</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">n</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">output_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">output_file</span> <span class="o">=</span> <span class="n">pdb_file</span>
+
+    <span class="n">fixed_lines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">serial</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s1">&#39;ATOM  &#39;</span><span class="p">,</span> <span class="s1">&#39;HETATM&#39;</span><span class="p">)):</span>
+            <span class="n">serial</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="c1"># Replace columns 6–11 (0-indexed) with re-encoded serial.</span>
+            <span class="c1"># Fixes both &#39;******&#39; entries and any truncated numeric serials.</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[:</span><span class="mi">6</span><span class="p">]</span> <span class="o">+</span> <span class="n">_encode_serial</span><span class="p">(</span><span class="n">serial</span><span class="p">)</span> <span class="o">+</span> <span class="n">line</span><span class="p">[</span><span class="mi">11</span><span class="p">:]</span>
+        <span class="n">fixed_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">writelines</span><span class="p">(</span><span class="n">fixed_lines</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fixed serial numbers for </span><span class="si">{</span><span class="n">serial</span><span class="si">}</span><span class="s2"> atoms. Output saved to </span><span class="si">{</span><span class="n">output_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output_file</span></div>
+
+
+<div class="viewcode-block" id="at2cg">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Convert2CG.at2cg">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">at2cg</span><span class="p">(</span><span class="n">pdb_in</span><span class="p">,</span> <span class="n">pdb_out</span><span class="p">,</span> <span class="n">terminal</span><span class="o">=</span><span class="s1">&#39;neutral&#39;</span><span class="p">,</span> <span class="n">cleanup</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert all-atom PDB to CG PDB (HyRes for protein or iConRNA for RNA).</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">    -----------</span>
+<span class="sd">    pdb_in : str</span>
+<span class="sd">        Input all-atom PDB file</span>
+<span class="sd">    pdb_out : str</span>
+<span class="sd">        Output CG PDB file</span>
+<span class="sd">    terminal : str</span>
+<span class="sd">        Charge status of protein terminus: &#39;neutral&#39;, &#39;charged&#39;, &#39;NT&#39;, &#39;CT&#39;</span>
+<span class="sd">    cleanup : bool</span>
+<span class="sd">        Whether to clean up temporary files</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">    --------</span>
+<span class="sd">    tuple : (pdb_file, psf_file)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Load topology files</span>
+    <span class="n">RNA_topology</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">load_ff</span><span class="p">(</span><span class="s1">&#39;RNA&#39;</span><span class="p">)</span>
+    <span class="n">protein_topology</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">load_ff</span><span class="p">(</span><span class="s1">&#39;Protein&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Set up psfgen</span>
+    <span class="n">gen</span> <span class="o">=</span> <span class="n">PsfGen</span><span class="p">()</span>
+    <span class="n">gen</span><span class="o">.</span><span class="n">read_topology</span><span class="p">(</span><span class="n">RNA_topology</span><span class="p">)</span>
+    <span class="n">gen</span><span class="o">.</span><span class="n">read_topology</span><span class="p">(</span><span class="n">protein_topology</span><span class="p">)</span>
+    
+    <span class="c1"># Split chains and convert</span>
+    <span class="n">types</span><span class="p">,</span> <span class="n">segids</span> <span class="o">=</span> <span class="n">split_chains</span><span class="p">(</span><span class="n">pdb_in</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">mol_type</span><span class="p">,</span> <span class="n">segid</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">types</span><span class="p">,</span> <span class="n">segids</span><span class="p">)):</span>
+        <span class="n">tmp_pdb</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;aa2cgtmp_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">_aa.pdb&quot;</span>
+        <span class="n">tmp_cg_pdb</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;aa2cgtmp_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">_cg.pdb&quot;</span>
+        
+        <span class="k">if</span> <span class="n">mol_type</span> <span class="o">==</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span>
+            <span class="n">at2hyres</span><span class="p">(</span><span class="n">tmp_pdb</span><span class="p">,</span> <span class="n">tmp_cg_pdb</span><span class="p">)</span>
+            <span class="n">gen</span><span class="o">.</span><span class="n">add_segment</span><span class="p">(</span><span class="n">segid</span><span class="o">=</span><span class="n">segid</span><span class="p">,</span> <span class="n">pdbfile</span><span class="o">=</span><span class="n">tmp_cg_pdb</span><span class="p">,</span> <span class="n">auto_angles</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">gen</span><span class="o">.</span><span class="n">read_coords</span><span class="p">(</span><span class="n">segid</span><span class="o">=</span><span class="n">segid</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">tmp_cg_pdb</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">mol_type</span> <span class="o">==</span> <span class="s1">&#39;R&#39;</span><span class="p">:</span>
+            <span class="n">at2icon</span><span class="p">(</span><span class="n">tmp_pdb</span><span class="p">,</span> <span class="n">tmp_cg_pdb</span><span class="p">)</span>
+            <span class="n">gen</span><span class="o">.</span><span class="n">add_segment</span><span class="p">(</span><span class="n">segid</span><span class="o">=</span><span class="n">segid</span><span class="p">,</span> <span class="n">pdbfile</span><span class="o">=</span><span class="n">tmp_cg_pdb</span><span class="p">,</span> 
+                          <span class="n">auto_angles</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">auto_dihedrals</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">gen</span><span class="o">.</span><span class="n">read_coords</span><span class="p">(</span><span class="n">segid</span><span class="o">=</span><span class="n">segid</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">tmp_cg_pdb</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported molecule type: </span><span class="si">{</span><span class="n">mol_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Write PDB file</span>
+    <span class="n">gen</span><span class="o">.</span><span class="n">write_pdb</span><span class="p">(</span><span class="n">pdb_out</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Conversion done, output written to </span><span class="si">{</span><span class="n">pdb_out</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Set terminus charge status</span>
+    <span class="k">for</span> <span class="n">segid</span> <span class="ow">in</span> <span class="n">gen</span><span class="o">.</span><span class="n">get_segids</span><span class="p">():</span>
+        <span class="n">set_terminus</span><span class="p">(</span><span class="n">gen</span><span class="p">,</span> <span class="n">segid</span><span class="p">,</span> <span class="n">terminal</span><span class="p">)</span>
+    
+    <span class="c1"># Write PSF file</span>
+    <span class="n">psf_file</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">pdb_out</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s1">.psf&#39;</span>
+    <span class="n">gen</span><span class="o">.</span><span class="n">write_psf</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">psf_file</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PSF file written to </span><span class="si">{</span><span class="n">psf_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Clean up temporary files</span>
+    <span class="k">if</span> <span class="n">cleanup</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;aa2cgtmp_&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.pdb&quot;</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+    
+    <span class="c1"># psfgen-python cannot encode serial numbers &gt; 99999; it writes &#39;******&#39;</span>
+    <span class="c1"># for those atoms. Re-number every ATOM/HETATM record sequentially using</span>
+    <span class="c1"># hybrid-36 so the output PDB is always valid.</span>
+    <span class="n">fix_pdb_serial</span><span class="p">(</span><span class="n">pdb_out</span><span class="p">,</span> <span class="n">pdb_out</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pdb_out</span><span class="p">,</span> <span class="n">psf_file</span></div>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../api.html#HyresBuilder.Convert2CG.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Command-line interface for Convert2CG.&quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Convert2CG: All-atom to HyRes/iConRNA converting&#39;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;aa&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Input PDB file&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;cg&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Output PDB file&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--hydrogen&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;add backbone amide hydrogen (H-N only), default False&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--terminal&#39;</span><span class="p">,</span> <span class="s1">&#39;-t&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;neutral&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Charge status of terminus: neutral, charged, NT, CT&#39;</span><span class="p">)</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">UserWarning</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">hydrogen</span><span class="p">:</span>
+        <span class="n">pdb_addH</span> <span class="o">=</span> <span class="n">add_backbone_hydrogen</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">aa</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">aa</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s1">_addH.pdb&#39;</span><span class="p">)</span>
+        <span class="n">at2cg</span><span class="p">(</span><span class="n">pdb_addH</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cg</span><span class="p">,</span> <span class="n">terminal</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">terminal</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">at2cg</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">aa</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cg</span><span class="p">,</span> <span class="n">terminal</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">terminal</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Shanlong Li, Jian Huang, Yumeng Zhang, Jianhan Chen.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
