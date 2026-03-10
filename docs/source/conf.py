@@ -23,6 +23,9 @@ MOCK_MODULES = [
 for mod in MOCK_MODULES:
     sys.modules[mod] = MagicMock()
 
+# Make 'unit' available as a name since utils.py uses it in default args
+import openmm.unit as unit  # this now points to the MagicMock
+sys.modules['__main__'].unit = sys.modules['openmm.unit']
 
 sys.path.insert(0, os.path.abspath('../..'))
 
