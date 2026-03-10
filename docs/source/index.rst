@@ -14,8 +14,7 @@ documentation for details.
    :maxdepth: 2
    :caption: Getting Started:
 
-   installation
-   quickstart      ← add this
+   quickstart
 
 .. toctree::
    :maxdepth: 2
