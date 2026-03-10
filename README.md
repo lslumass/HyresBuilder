@@ -1,5 +1,6 @@
 # HyresBuilder: for running HyRes and iCon simulation.   
 This package is built for the simulation of HyRes protein and iConRNA (iConDNA later) simulation.    
+Details please follow the [docs](https://hyresbuilder.readthedocs.io)   
 **Main functions:**
 1. Construct HyRes peptide structure from sequence or convert atomistic structure into HyRes model;   
 2. Construct iConRNA model from sequence or convert atomistic structure into iConRNA model;   
