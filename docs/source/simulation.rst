@@ -43,7 +43,7 @@ Command-Line Usage
      - Box dimensions in nm. One value for cubic, three for orthorhombic.
    * - ``-s``, ``--salt``
      - ``150.0``
-     - NaCl concentration in mM.
+     - Ionic strength in mM.
    * - ``-e``, ``--ens``
      - ``NVT``
      - Ensemble: ``NPT``, ``NVT``, or ``non`` (non-periodic).
