@@ -2,6 +2,4 @@ utils
 =============
 
 .. automodule:: HyresBuilder.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   :members: loaf_ff, setup
