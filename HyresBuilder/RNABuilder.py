@@ -1,7 +1,7 @@
 """
-this package is used to generate CG_RNA model
-Athour: Shanlong Li
-Date: Nov 13, 2023
+This module is used to generate CG_RNA model.   
+Athour: Shanlong Li   
+Date: Nov 13, 2023   
 """
 
 import sys
@@ -70,6 +70,16 @@ def transform(ref, atoms):
     return atoms
 
 def build(name, sequence):
+    """
+    Build RNA model from sequence.
+
+    Args:
+        name: str, output pdb file name
+        sequence:, str, RNA sequence, "AUCG"
+
+    Returns:
+        pdb file: name.pdb
+    """
     out = f'{name}.pdb'
     with open(out, 'w') as f:
         print('REMARK  iConRNA', file=f)

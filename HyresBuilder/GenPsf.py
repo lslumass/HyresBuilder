@@ -86,6 +86,14 @@ def encode_segid(n: int) -> str:
     return f"{lead}{BASE36[rem // 36]}{BASE36[rem % 36]}"
 
 def genpsf(pdb_in, psf_out, terminal):
+    """
+    Generate psf file for given pdb.
+
+    Args:
+        pdb_in: input pdb file
+        psf_out: output psf file
+        terminal: the charge status of terminus: 'neutral', 'charged', 'NT', and 'CT'.
+    """
     # load topology files
     RNA_topology, _ = utils.load_ff('RNA')
     protein_topology, _ = utils.load_ff('Protein')

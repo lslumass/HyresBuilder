@@ -1,14 +1,7 @@
 """
-Mutator: module used to do mutations and PTMs
-input:
-    inpdb: pdb file, single chain of protein or RNA
-    sites: mutation sites
-    mutations: mutation type
-output:
-    outpdb: new pdb file after mutation
-
-Authors: Shanlong Li
-Date: Feb 14, 2026
+Performe mutations/modifications on a PDB file.   
+Authors: Shanlong Li   
+Date: Feb 14, 2026   
 """
 
 from psfgen import PsfGen
@@ -16,6 +9,67 @@ from HyresBuilder import utils
 import argparse
 import sys
 from pathlib import Path
+
+
+def mutate(pdb_in, sites, mutations, pdb_out=None, segid='P001'):
+    """
+    Performe mutations on a PDB file.
+
+    Args:
+        pdb_in  (str):              Input PDB file path.
+        sites   (int | list[int]):  Residue number(s) to mutate.
+        mutations (str | list[str]):Mutation type(s) as 3-letter codes (e.g. 'ALA').
+                                    A single value is broadcast to all sites.
+        pdb_out (str, optional):    Output PDB file path. Defaults to
+                                    '<pdb_in stem>_mut.pdb' in the same directory.
+        segid   (str):              Segment ID — 'P001' for Protein, 'R001' for RNA.
+                                    Must start with 'P' or 'R'. Default: 'P001'.
+
+    Returns:
+        str: Path to the written output PDB file.
+
+    Raises:
+        FileNotFoundError: If pdb_in does not exist.
+        ValueError:        If sites/mutations lengths are mismatched, or segid is invalid.
+
+    Examples:
+        >>> from mutator import mutate
+
+        >>> # Single mutation
+        >>> mutate('protein.pdb', 123, 'ALA')
+
+        >>> # Multiple mutations, explicit output path
+        >>> mutate('protein.pdb', [10, 20, 30], ['ALA', 'GLY', 'TRP'],
+        ...        pdb_out='protein_mut.pdb')
+
+        >>> # Broadcast one mutation type to every site
+        >>> mutate('protein.pdb', [10, 20, 30], 'ALA')
+
+        >>> # RNA mutation
+        >>> mutate('rna.pdb', [10, 20], ['G', 'C'], segid='R001')
+    """
+    # ---------- normalise sites / mutations to lists ----------
+    if isinstance(sites, int):
+        sites = [sites]
+    if isinstance(mutations, str):
+        mutations = [mutations]
+
+    sites     = list(sites)
+    mutations = list(mutations)
+
+    # broadcast single mutation type to all sites
+    if len(mutations) == 1 and len(sites) > 1:
+        mutations = mutations * len(sites)
+
+    # ---------- default output path ----------
+    if pdb_out is None:
+        p = Path(pdb_in)
+        pdb_out = str(p.parent / f"{p.stem}_mut{p.suffix}")
+
+    # ---------- delegate to core function ----------
+    mut(pdb_in, pdb_out, sites, mutations, segid)
+
+    return pdb_out
 
 
 def mut(pdb_in, pdb_out, sites, mutations, segid):
@@ -48,9 +102,9 @@ def mut(pdb_in, pdb_out, sites, mutations, segid):
     
     # Build mutation table
     site_mut = []
-    for site, mut in zip(sites, mutations):
-        site_mut.append((str(site), mut.upper()))
-        print(f"  Mutation: Residue {site} → {mut.upper()}")
+    for site, mut_type in zip(sites, mutations):
+        site_mut.append((str(site), mut_type.upper()))
+        print(f"  Mutation: Residue {site} → {mut_type.upper()}")
     
     # Determine molecule type 
     if segid.startswith('P'):

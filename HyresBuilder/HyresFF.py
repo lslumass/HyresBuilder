@@ -1,8 +1,8 @@
 """
-This package is used to constructe Hyres Force Field, iConRNA force field
-Athours: Shanlong Li, Xiping Gong, Yumeng Zhang
-Date: Mar 9, 2024
-Modified: Sep 29, 2025 
+To constructe Hyres Force Field, and iConRNA force field.   
+Athours: Shanlong Li, Xiping Gong, Yumeng Zhang   
+Date: Mar 9, 2024   
+Modified: Sep 29, 2025    
 """
 
 from openmm.unit import *

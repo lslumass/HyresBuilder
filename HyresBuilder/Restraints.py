@@ -14,12 +14,28 @@ from itertools import combinations
 # helper function to get atom indices for a give pdb
 def get_atom_indices_coordinates(pdb, selection):
     """
-    pdb: pdb file
-    selection: mdtraj selection syntax (ref: https://mdtraj.org/1.9.4/atom_selection.html)
-        of note, if your 'selection' has chainid, you need to use the chainid from PDB file.
-            chainid in mdtraj is forced to be numbered as 0, 1, 2, ...
-            here, instead of using those sequential integers for chainid, we override it with the 
-            original chain id from PDB file.
+    Get atom indices and coordinates for a selection from a PDB file.
+
+    Wraps mdtraj's atom selection with a fix for chain IDs: mdtraj internally
+    renumbers chains as 0, 1, 2, ..., but this function maps the original
+    alphabetic chain IDs from the PDB file so that selections like
+    'chainid A' work as expected.
+
+    Args:
+        pdb       (str): Path to the PDB file.
+        selection (str): MDTraj atom selection string.
+                         See https://mdtraj.org/1.9.4/atom_selection.html.
+                         Chain IDs should match those in the PDB file (e.g. 'A', 'B'),
+                         not mdtraj's internal sequential integers.
+
+    Returns:
+        tuple:
+            - indices     (np.ndarray, shape (N,)):    Atom indices of the selection.
+            - coordinates (np.ndarray, shape (N, 3)):  Atomic coordinates in nanometers
+                                                       at frame 0.
+
+    Example:
+        >>> indices, coords = get_atom_indices_coordinates('system.pdb', 'name CA and chainid A')
     """
     pdb_md = md.load_pdb(pdb)
 
@@ -45,6 +61,23 @@ def get_atom_indices_coordinates(pdb, selection):
 
 # Get the center of mass of a selection
 def get_COM(pdb, selection):
+    """
+    Compute the center of mass (COM) of a selected group of atoms.
+
+    Applies the same chain-ID remapping as get_atom_indices_coordinates, so
+    alphabetic chain IDs from the PDB file can be used directly in the selection.
+
+    Args:
+        pdb       (str): Path to the PDB file.
+        selection (str): MDTraj atom selection string.
+                         Chain IDs should match those in the PDB file (e.g. 'A', 'B').
+
+    Returns:
+        np.ndarray, shape (3,): Center-of-mass coordinates in nanometers at frame 0.
+
+    Example:
+        >>> com = get_COM('system.pdb', 'resid 1 to 50 and chainid A')
+    """
     pdb_md = md.load_pdb(pdb)
 
     if 'chainid' in selection:
@@ -70,12 +103,31 @@ def get_COM(pdb, selection):
 # Positional restraints
 def positional_restraint(system, indx_pos_Kcons_list):
     """
-    indx_pos_list: list of tuples. Each tuple has two elements, the first one being the atom index,
-        the second one being the 3D coordinate (x, y, z) as the reference position
-        
-        example: [(1, (10.0, 12.0, 13.0), 400), (10, (20.0, 23.5, 5.6), 400), ...]
-            restraint the atom with index 1 to be at (10.0, 12.0, 13.0) with Kcons=400 kj/mol/nm**2; and 
-            restraint the atom with index 10 to be at (20.0, 23.5, 5.6) with Kcons=400 kj/mol/nm**2
+    Apply per-atom positional (harmonic) restraints to an OpenMM system.
+
+    Each atom is restrained to an arbitrary reference position using a
+    periodic-distance harmonic potential:
+        U = kp * periodicdistance(x, y, z, x0, y0, z0)^2
+
+    Using periodicdistance ensures the restraint works correctly under
+    periodic boundary conditions.
+
+    Args:
+        system               (openmm.System): OpenMM System object to modify.
+        indx_pos_Kcons_list  (list of tuples): Each tuple contains:
+            - idx    (int):            Atom index (0-based).
+            - pos    (array-like):     Reference position (x0, y0, z0) in nanometers.
+            - Kcons  (float):          Force constant in kJ/mol/nm².
+
+    Returns:
+        openmm.System: The modified system with positional restraints added.
+
+    Example:
+        >>> restraints = [
+        ...     (0,  (1.0, 1.2, 1.3), 400),   # restrain atom 0  to (1.0, 1.2, 1.3) nm
+        ...     (10, (2.0, 2.3, 0.5), 400),   # restrain atom 10 to (2.0, 2.3, 0.5) nm
+        ... ]
+        >>> system = positional_restraint(system, restraints)
     """
 
     # omm positional restraints
@@ -94,13 +146,24 @@ def positional_restraint(system, indx_pos_Kcons_list):
 
 def bb_positional_restraint(system, pdb_ref, Kcons=400):
     """
-    add backbone restraints, given a reference PDB
-    arguments:
-    system: omm system object
-    pdb_ref: pdb file path
-    Kcons: (float) K constant. kj/mol/nm**2
+    Apply positional restraints to all protein backbone atoms (CA, N, C, O).
 
-    Return: system
+    Reference positions are taken directly from the provided PDB file.
+    A single global force constant is shared across all restrained atoms.
+    The harmonic potential uses periodicdistance for PBC compatibility:
+        U = kp * periodicdistance(x, y, z, x0, y0, z0)^2
+
+    Args:
+        system  (openmm.System): OpenMM System object to modify.
+        pdb_ref (str):           Path to the reference PDB file. Backbone atom
+                                 positions are read from this file.
+        Kcons   (float):         Force constant in kJ/mol/nm². Default: 400.
+
+    Returns:
+        openmm.System: The modified system with backbone restraints added.
+
+    Example:
+        >>> system = bb_positional_restraint(system, 'reference.pdb', Kcons=200)
     """
     # Load pdb
     pdb_init = PDBFile(pdb_ref)
@@ -122,6 +185,29 @@ def bb_positional_restraint(system, pdb_ref, Kcons=400):
     return system
 
 def CA_positional_restraint(system, pdb_file, domain):
+    """
+    Apply positional restraints to CA atoms within a folded domain.
+
+    Only CA atoms identified as part of secondary structure elements (helices
+    or strands) by identify_folded_CA_idx are restrained. Uses a standard
+    harmonic potential (not periodic-distance):
+        U = k * ((x-x0)^2 + (y-y0)^2 + (z-z0)^2)
+
+    Force constant is hardcoded to 400 kJ/mol/nm².
+
+    Args:
+        system   (openmm.System): OpenMM System object to modify.
+        pdb_file (str):           Path to the PDB file. Used both to define the
+                                  topology and as the source of reference positions.
+        domain   (tuple):         Domain definition as (chain_id, (start_resid, end_resid)).
+                                  Example: ('A', (1, 50))
+
+    Returns:
+        openmm.System: The modified system with CA restraints added.
+
+    Example:
+        >>> system = CA_positional_restraint(system, 'protein.pdb', ('A', (1, 50)))
+    """
     pdb_tmp = PDBFile(pdb_file)
     CA_pos_restraint = CustomExternalForce('k*((x-x0)^2+(y-y0)^2+(z-z0)^2)')
     CA_pos_restraint.addGlobalParameter('k', 400.0*unit.kilojoule_per_mole/unit.nanometers/unit.nanometers)
@@ -139,13 +225,28 @@ def CA_positional_restraint(system, pdb_file, domain):
 # Center of mass positional restraints
 def COM_positional_restraint(system, group_indices_pos_kcons):
     """
-    system: omm system
-    group_indices_pos: list of tuples
-        example: [((1,2,3,4), (x0, y0, z0), 400), ...]
-            1,2,3,4 are the atom indices of the group; 
-            x0, y0, z0 are the x y z coordinates of reference COM position
-            400 is the K constant (unit: kj/mol/nm**2) 
-    return: omm system    
+    Apply positional restraints on the center of mass (COM) of atom groups.
+
+    Each group's COM is harmonically restrained to a reference position using
+    OpenMM's CustomCentroidBondForce with periodic-distance:
+        U = kp * periodicdistance(x, y, z, x0, y0, z0)^2
+
+    Args:
+        system                  (openmm.System): OpenMM System object to modify.
+        group_indices_pos_kcons (list of tuples): Each tuple contains:
+            - group_idx  (array-like): Atom indices forming the group.
+            - ref_pos    (array-like): Reference COM position (x0, y0, z0) in nanometers.
+            - Kcons      (float):      Force constant in kJ/mol/nm².
+
+    Returns:
+        openmm.System: The modified system with COM positional restraints added.
+
+    Example:
+        >>> restraints = [
+        ...     ([0, 1, 2, 3], (1.0, 1.5, 2.0), 400),  # restrain COM of atoms 0-3
+        ...     ([4, 5, 6],    (3.0, 2.5, 1.0), 200),  # restrain COM of atoms 4-6
+        ... ]
+        >>> system = COM_positional_restraint(system, restraints)
     """
     # omm positional restraints
     com_pos_restraint = CustomCentroidBondForce(1, 'kp*periodicdistance(x, y, z, x0, y0, z0)^2')
@@ -163,43 +264,29 @@ def COM_positional_restraint(system, group_indices_pos_kcons):
 
 # Center of mass distance restraints
 def COM_relative_restraint(system, groups_dist_Kcons_list):
-    """ Apply distance restraint between two atom groups
-    system: omm system
-    groups_dist_Kcons_list: (list of tuples)
-        example: [((1,2,3), (4,5,6), 10.0, 400), ...]
-            (1,2,3): atom indices of atom group1
-            (4,5,6): atom indices of atom group2
-            1.0: reference distance, unit of nanometer
-            400: K constant, kj/mol/nm**2
-# add restraints
-print("add restraints")
-u = mda.Universe(parser.parse_args().psf, parser.parse_args().pdb)
-sel = u.select_atoms('segid PA0')
-cas = u.select_atoms('segid PA0 and name CA')
-run = DSSP(sel).run()
-result = run.results.dssp[0]
+    """
+    Apply a harmonic distance restraint between the centers of mass of two atom groups.
 
-strcutre_CA = []
-for ca, s in zip(cas, result):
-    if s in ['E', 'H']:
-        strcutre_CA.append(ca.index)
+    Uses OpenMM's CustomCentroidBondForce with potential:
+        U = 0.5 * kp * (distance(g1, g2) - d0)^2
 
-pos_restraint = CustomExternalForce('kg*((x-x0)^2 + (y-y0)^2 +(z-z0)^2);')
-pos_restraint.addGlobalParameter('kg', 400*kilojoules_per_mole/unit.nanometer)
-pos_restraint.addPerParticleParameter('x0')
-pos_restraint.addPerParticleParameter('y0')
-pos_restraint.addPerParticleParameter('z0')
-crds = u.atoms.positions/10
-for atom in strcutre_CA:
-    pos = crds[atom]
-    pos_restraint.addParticle(atom, pos)
-system.addForce(pos_restraint)
+    Args:
+        system                (openmm.System): OpenMM System object to modify.
+        groups_dist_Kcons_list (list of tuples): Each tuple contains:
+            - group1  (array-like): Atom indices of the first group.
+            - group2  (array-like): Atom indices of the second group.
+            - dist    (float):      Target COM–COM distance in nanometers.
+            - Kcons   (float):      Force constant in kJ/mol/nm².
 
-sim.context.reinitialize(preserveState=True)
+    Returns:
+        openmm.System: The modified system with COM distance restraints added.
 
-            restrain distance between atom group 1 and atom group 2 to be 10 Angstrome using Kcons=400 kj/mol/nm**2
-
-    return omm system     
+    Example:
+        >>> restraints = [
+        ...     ([0, 1, 2], [3, 4, 5], 1.0, 400),  # restrain group COM distance to 1.0 nm
+        ...     ([6, 7],    [8, 9],    2.5, 200),   # restrain group COM distance to 2.5 nm
+        ... ]
+        >>> system = COM_relative_restraint(system, restraints)
     """
     COM_force = CustomCentroidBondForce(2, "0.5*kp*( (distance(g1, g2)-d0 )^2)")
     COM_force.addPerBondParameter('kp')  # Force constant
@@ -219,10 +306,30 @@ sim.context.reinitialize(preserveState=True)
 # Identify regions with secondary structure
 def identify_folded_CA_idx(pdb, domain):
     """
-    pdb: mdtraj object
-    domain: 
-        example: ('A', (1, 50))
-    return: CA atom indices for the folded region
+    Identify CA atom indices belonging to secondary-structure elements in a domain.
+
+    Uses MDTraj's DSSP implementation (simplified scheme) to classify each residue
+    within the specified domain. Residues assigned to helix ('H') or strand ('E')
+    are considered folded; coil ('C') residues are excluded.
+
+    Args:
+        pdb    (md.Trajectory): MDTraj Trajectory object (typically loaded via md.load_pdb).
+        domain (tuple):         Domain definition as (chain_id, (start_resid, end_resid)).
+                                - chain_id      (str): Alphabetic chain ID matching the PDB file.
+                                - start_resid   (int): First residue number (inclusive, PDB numbering).
+                                - end_resid     (int): Last residue number (inclusive, PDB numbering).
+                                Example: ('A', (1, 50))
+
+    Returns:
+        list[int]: CA atom indices (0-based, mdtraj numbering) for all residues
+                   in secondary structure elements within the domain.
+
+    Raises:
+        AssertionError: If the specified chain_id is not present in the PDB topology.
+
+    Example:
+        >>> pdb_md = md.load_pdb('protein.pdb')
+        >>> ca_indices = identify_folded_CA_idx(pdb_md, ('A', (1, 50)))
     """
     # get chainid dict
     chainid_dict = {chain.chain_id: chain.index for chain in pdb.topology.chains}
@@ -247,14 +354,36 @@ def identify_folded_CA_idx(pdb, domain):
 # Domain restraints
 def domain_3D_restraint(system, pdb_ref, domain_ranges, Kcons=400, cutoff=1.2):
     """
-    system: omm system
-    domain_ranges: a list of tuples, and each tuple defines one domain range:
-        ('chain_id'), (starting_resid, ending_resid))
-        example: [('A', (1,50)), ('B', (75, 200)), ...] 
-            # two domains: resid 1-50 of chain A and resid 75-200 of chain B
-    Kcons_internal: (float) K constant for harmonic restraint. default unit: kj/mol/nm**2
-    cutoff: cutoff distance, unit: nanometer
-    return omm system
+    Restrain the internal 3D structure of folded domains using pairwise CA–CA bonds.
+
+    For each domain, all CA atoms in secondary-structure elements are identified via
+    identify_folded_CA_idx. Pairs of those CA atoms within the cutoff distance in the
+    reference PDB are added as HarmonicBondForce bonds, preserving the native
+    geometry of each folded region throughout the simulation.
+
+    Bond potential:
+        U = 0.5 * Kcons * (r - r0)^2
+    where r0 is the distance between the pair in the reference PDB.
+
+    Args:
+        system        (openmm.System): OpenMM System object to modify.
+        pdb_ref       (str):           Path to the reference PDB file.
+        domain_ranges (list of tuples): List of domain definitions, each as
+                                        (chain_id, (start_resid, end_resid)).
+                                        Example: [('A', (1, 50)), ('B', (75, 200))]
+        Kcons         (float):         Force constant in kJ/mol/nm². Default: 400.
+        cutoff        (float):         Maximum CA–CA distance (nm) for a pair to be
+                                       included as a restrained bond. Default: 1.2 nm.
+
+    Returns:
+        openmm.System: The modified system with domain structural restraints added.
+
+    Notes:
+        The number of restrained pairs per domain is printed to stdout.
+
+    Example:
+        >>> domains = [('A', (1, 50)), ('B', (75, 200))]
+        >>> system = domain_3D_restraint(system, 'reference.pdb', domains, Kcons=400, cutoff=1.2)
     """
     internal_force = HarmonicBondForce()
     Kcons_internal = Kcons * unit.kilojoule_per_mole/unit.nanometers**2
