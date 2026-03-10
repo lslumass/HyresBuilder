@@ -14,9 +14,11 @@ HyresBuilder documentation
 3. `Yumeng Zhang, Shanlong Li, Xiping Gong, and Jianhan Chen, JACS, 2024, 146, 342. <https://pubs.acs.org/doi/10.1021/jacs.3c09195>`_
 4. `Shanlong Li and Jianhan Chen, PNAS, 2025, 122, e2504583122. <https://www.pnas.org/doi/10.1073/pnas.2504583122>`_
 
+
 ----
+
 .. list-table::
-   :width: 50 100
+   :widths: 70 100
    :align: center
    
    * - .. figure:: _static/hyres.png
