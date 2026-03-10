@@ -14,21 +14,26 @@ HyresBuilder documentation
 3. `Yumeng Zhang, Shanlong Li, Xiping Gong, and Jianhan Chen, JACS, 2024, 146, 342. <https://pubs.acs.org/doi/10.1021/jacs.3c09195>`_
 4. `Shanlong Li and Jianhan Chen, PNAS, 2025, 122, e2504583122. <https://www.pnas.org/doi/10.1073/pnas.2504583122>`_
 
+---
+
 .. figure:: _static/hyres.png
    :width: 600
-   :left
+   :align: center
    :target: https://pubs.acs.org/doi/10.1021/jacs.3c09195
    
    **HyRes model**
 
 .. figure:: _static/iconrna.jpg
    :width: 600
-   :left
+   :align: center
    :target: https://www.pnas.org/doi/10.1073/pnas.2504583122
    
    **iConRNA model**
 
+---
+
 .. toctree::
+   :caption: Contents:
    :maxdepth: 2
 
    quickstart
