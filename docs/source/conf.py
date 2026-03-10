@@ -11,13 +11,6 @@ from unittest.mock import MagicMock
 
 MOCK_MODULES = [
     'psfgen',
-    'openmm',
-    'openmm.app',
-    'openmm.unit',
-    'mdtraj',
-    'numpy',
-    'numpy.linalg',
-    'pkg_resources',
 ]
 for mod in MOCK_MODULES:
     sys.modules[mod] = MagicMock()
