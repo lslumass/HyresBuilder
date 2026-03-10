@@ -379,8 +379,8 @@ def domain_3D_restraint(system, pdb_ref, domain_ranges, Kcons=400, cutoff=1.2):
     Example:
         >>> domains = [('A', (1, 50)), ('B', (75, 200))]
         >>> system = domain_3D_restraint(system, 'reference.pdb', domains, Kcons=400, cutoff=1.2)
-
     """
+    
     internal_force = HarmonicBondForce()
     Kcons_internal = Kcons * unit.kilojoule_per_mole/unit.nanometers**2
 

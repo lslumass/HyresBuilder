@@ -14,23 +14,73 @@ import numpy as np
 
 def buildSystem(psf, system, ffs, modification=None):
     """
-    Constructs a protein and/or RNA force field.
-    
+    Build the HyRes protein and/or iConRNA force field into an OpenMM system.
+
+    Replaces the standard OpenMM forces with custom force field terms tailored
+    for the HyRes/iConRNA coarse-grained models. The following forces are
+    constructed and added in order:
+
+    1. **ReB angle force** — replaces ``HarmonicAngleForce`` with a Restricted
+       Bending (ReB) potential for RNA and CA-CB angles.
+    2. **Debye-Hückel electrostatics** — screened charge-charge interactions
+       via ``CustomNonbondedForce`` with configurable screening length and
+       dielectric constant.
+    3. **1-4 nonbonded interactions** — short-range LJ and electrostatic terms
+       for 1-4 bonded pairs via ``CustomBondForce``.
+    4. **Backbone hydrogen bonds** — N-H···O hydrogen bond potential for protein
+       backbone via ``CustomHbondForce`` (skipped for PRO residues).
+    5. **RNA base stacking** — centroid-based stacking potential between
+       consecutive bases via ``CustomCentroidBondForce``.
+    6. **RNA base pairing** — A-U, C-G, and G-U Watson-Crick and wobble pair
+       potentials via ``CustomHbondForce``.
+
+    The original ``NonbondedForce`` and ``HarmonicAngleForce`` are removed after
+    replacement. Each remaining force is assigned a unique force group index.
+
     Args:
-        psf: PSF file containing topology information
-        system: OpenMM system object
-        ffs: Force field parameters dictionary containing:
-            - dh: Debye-Huckel screening length
-            - lmd: Lambda parameter for charge-charge interactions
-            - er: Relative dielectric constant
-        modification: custome defined function for further modifying system
-    
+        psf (CharmmPsfFile): Parsed PSF object containing topology and atom
+                             information.
+        system (System): OpenMM ``System`` object created from the PSF topology,
+                         to which forces will be added.
+        ffs (dict): Force field parameter dictionary. Required keys:
+
+                    - ``'dh'`` (Quantity) — Debye-Hückel screening length in
+                      length units (e.g. ``1.2*unit.nanometer``).
+                    - ``'lmd'`` (float) — Lambda scaling factor for protein-RNA
+                      charge-charge interactions.
+                    - ``'er'`` (float) — Relative dielectric constant.
+
+        modification (callable, optional): A user-defined function that accepts
+                                           the ``System`` object and applies
+                                           additional force modifications before
+                                           the function returns. Called after all
+                                           built-in forces are added but before
+                                           ``NonbondedForce`` is removed.
+                                           Default is ``None``.
+
     Returns:
-        Modified OpenMM system with protein and/or RNA force field
-    
+        System: The modified OpenMM ``System`` object with all HyRes/iConRNA
+                force field terms applied.
+
     Raises:
-        ValueError: If required parameters or forces are missing
+        ValueError: If any of the required keys (``'dh'``, ``'lmd'``, ``'er'``)
+                    are missing from ``ffs``.
+
+    Example:
+        >>> from openmm.app import CharmmPsfFile
+        >>> from openmm import System
+        >>> from HyresBuilder import HyresFF
+        >>> psf = CharmmPsfFile("conf.psf")
+        >>> system = psf.createSystem(...)
+        >>> ffs = {'dh': 1.2*unit.nanometer, 'lmd': 0.0, 'er': 80.0}
+        >>> system = HyresFF.buildSystem(psf, system, ffs)
+
+        >>> # With custom modification
+        >>> def my_mod(system):
+        ...     pass  # add extra forces here
+        >>> system = HyresFF.buildSystem(psf, system, ffs, modification=my_mod)
     """
+    
     print('\n################# constructe HyRes and/or iConRNA force field ####################')
     top = psf.topology
     

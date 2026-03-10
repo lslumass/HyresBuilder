@@ -89,15 +89,44 @@ def encode_segid(n: int) -> str:
     rem  = n % 1296
     return f"{lead}{BASE36[rem // 36]}{BASE36[rem % 36]}"
 
-def genpsf(pdb_in, psf_out, terminal):
+def genpsf(pdb_in, psf_out, terminal='neutral'):
     """
-    Generate psf file for given pdb.
+    Generate a PSF file for a HyRes protein or iConRNA coarse-grained system.
+
+    Reads the input CG PDB, automatically detects molecule types (protein, RNA,
+    DNA, Mg2+, Ca2+) by chain ID, assigns segment IDs, and uses psfgen to build
+    the topology and write the PSF file. Temporary chain PDB files are removed
+    after the PSF is written.
+
+    Segment ID naming convention:
+
+    - Protein chains: ``P001``, ``P002``, ...
+    - RNA chains: ``R001``, ``R002``, ...
+    - DNA chains: ``D001``, ``D002``, ...
+    - Mg2+ ions: ``M001``
+    - Ca2+ ions: ``C001``
 
     Args:
-        pdb_in: input pdb file
-        psf_out: output psf file
-        terminal: the charge status of terminus: 'neutral', 'charged', 'NT', and 'CT'.
+        pdb_in (str): Path to the input coarse-grained PDB file. May contain
+                      mixed protein, RNA, DNA, and ion chains.
+        psf_out (str): Path to the output PSF file.
+        terminal (str, optional): Charge status of protein termini. Options:
+
+                                  - ``'neutral'`` — uncharged termini (default)
+                                  - ``'charged'`` — both termini charged
+                                  - ``'NT'`` — N-terminus charged only
+                                  - ``'CT'`` — C-terminus charged only
+                                  - ``'positive'`` — both termini negatively charged
+
+    Returns:
+        None. Writes a PSF file to ``psf_out``.
+
+    Example:
+        >>> from HyresBuilder import GenPsf
+        >>> GenPsf.genpsf("conf.pdb", "conf.psf")
+        >>> GenPsf.genpsf("conf.pdb", "conf.psf", terminal="charged")
     """
+    
     # load topology files
     RNA_topology, _ = utils.load_ff('RNA')
     protein_topology, _ = utils.load_ff('Protein')
