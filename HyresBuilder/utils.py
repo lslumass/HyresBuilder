@@ -13,30 +13,40 @@ from .rG4sFF import *
 
 def load_ff(model):
     """
-    Resolve and return the topology and parameter file paths for a given HyRes force field model.
+    Return the topology and parameter file paths for a given force field model.
 
     File paths are resolved from within the installed HyresBuilder package using
-    pkg_resources, so no manual path management is needed.
+    ``pkg_resources``, so no manual path management is needed regardless of where
+    the package is installed.
 
     Args:
-        model (str): Force field model type. Supported values:
-            - ``'Protein'`` : HyRes protein force field (top_hyres_mix / param_hyres_mix)
-            - ``'RNA'    `` : HyRes RNA force field     (top_RNA_mix  / param_RNA_mix)
-            - ``'DNA'    `` : HyRes DNA force field     (top_DNA_mix  / param_DNA_mix)
-            - ``'rG4s'   `` : RNA G-quadruplex model, uses RNA topology with a dedicated parameter file (param_rG4s)
-            - ``'ATP'    `` : ATP force field            (top_ATP      / param_ATP)
+        model (str): Force field model name. Supported values:
+
+                     - ``'Protein'`` — HyRes protein force field
+                       (``top_hyres_mix`` / ``param_hyres_mix``)
+                     - ``'RNA'`` — iConRNA force field
+                       (``top_RNA_mix`` / ``param_RNA_mix``)
+                     - ``'DNA'`` — iConDNA force field
+                       (``top_DNA_mix`` / ``param_DNA_mix``)
+                     - ``'rG4s'`` — RNA G-quadruplex model, uses RNA topology
+                       with a dedicated parameter file (``param_rG4s``)
+                     - ``'ATP'`` — ATP force field
+                       (``top_ATP`` / ``param_ATP``)
 
     Returns:
-        tuple[str, str]:
-            - top_inp   (str): Absolute path to the CHARMM topology (.inp) file.
-            - param_inp (str): Absolute path to the CHARMM parameter (.inp) file.
+        tuple[str, str]: A 2-tuple of absolute paths:
+
+                         - ``top_inp`` — CHARMM topology (``.inp``) file.
+                         - ``param_inp`` — CHARMM parameter (``.inp``) file.
 
     Raises:
         SystemExit: If an unsupported model name is provided.
 
     Example:
+        >>> from HyresBuilder.utils import load_ff
         >>> top, param = load_ff('Protein')
         >>> top, param = load_ff('RNA')
+        >>> top, param = load_ff('rG4s')
     """
 
     if model == 'Protein':
@@ -105,50 +115,77 @@ def cal_dh(c_ion, T):
 
 def setup(params, modification=None):
     """
-    Construct and initialize a HyRes OpenMM simulation system from a parameter object.
+    Build and initialize a complete HyRes/iConRNA OpenMM simulation system.
 
-    Performs the full setup pipeline in seven stages:
-    1. Parse simulation parameters from the params object.
+    Executes the full setup pipeline in seven stages:
+
+    1. Parse simulation parameters from ``params``.
     2. Configure periodic boundary conditions (PBC) and box vectors.
-    3. Compute force field parameters: dielectric constant, Debye–Hückel screening length, and Mg²⁺–RNA charge scaling factor (lambda).
-    4. Load CHARMM topology and parameter files for Protein and RNA.
+    3. Compute force field parameters: temperature-dependent dielectric constant,
+       Debye-Hückel screening length, and Mg²⁺-RNA charge scaling factor (lambda).
+    4. Load CHARMM topology and parameter files for protein and RNA.
     5. Import coordinates (PDB) and topology (PSF).
-    6. Build the HyRes custom force field via HyresFF.buildSystem.
-    7. Attach the barostat (NPT) and initialize the Langevin integrator and CUDA simulation context.
+    6. Build the HyRes custom force field via :func:`HyresFF.buildSystem`.
+    7. Attach the barostat (NPT only), initialize the Langevin integrator, and
+       create the CUDA simulation context with positions and velocities.
 
     Args:
-        params (argparse.Namespace or equivalent): Object with the following attributes:
-            - ``pdb``       (str):            Path to the input PDB coordinate file.
-            - ``psf``       (str):            Path to the CHARMM PSF topology file.
-            - ``temp``      (float):          Simulation temperature in Kelvin.
-            - ``salt``      (float):          Monovalent salt concentration in mM (converted to M internally).
-            - ``Mg``        (float):          Mg²⁺ concentration in mM.
-            - ``ens``       (str):            Ensemble type: 'NPT', 'NVT', or 'non' (non-periodic).
-            - ``dt``        (unit.Quantity):  Integration time step.
-            - ``er_ref``    (float):          Reference dielectric constant used to scale the temperature-dependent er.
-            - ``pressure``  (unit.Quantity):  Pressure for NPT barostat.
-            - ``friction``  (unit.Quantity):  Friction coefficient for the Langevin integrator.
-            - ``gpu_id``    (str):            CUDA device index (e.g. '0').
-            - ``box``       (list[float]):    PBC box dimensions in nm. Provide one value for a cubic box or three values [lx, ly, lz] for an orthorhombic box.
-        modification (callable, optional): A user-supplied function passed directly to HyresFF.buildSystem for custom force field modifications. Default: None.
+        params (argparse.Namespace): Simulation parameter object with the
+                                     following attributes:
+
+                                     - ``pdb`` (str) — path to input PDB file.
+                                     - ``psf`` (str) — path to CHARMM PSF file.
+                                     - ``temp`` (float) — temperature in Kelvin.
+                                     - ``salt`` (float) — NaCl concentration in mM.
+                                     - ``Mg`` (float) — Mg²⁺ concentration in mM.
+                                     - ``ens`` (str) — ensemble: ``'NPT'``,
+                                       ``'NVT'``, or ``'non'`` (non-periodic).
+                                     - ``box`` (list of float) — box dimensions
+                                       in nm; one value for cubic, three for
+                                       orthorhombic.
+                                     - ``dt`` (Quantity) — integration time step.
+                                     - ``er_ref`` (float) — reference dielectric
+                                       used to scale the temperature-dependent er.
+                                     - ``pressure`` (Quantity) — pressure for NPT
+                                       barostat.
+                                     - ``friction`` (Quantity) — Langevin friction
+                                       coefficient.
+                                     - ``gpu_id`` (str) — CUDA device index
+                                       (e.g. ``'0'``).
+
+        modification (callable, optional): User-defined function that accepts the
+                                           ``System`` object and applies additional
+                                           force modifications. Passed directly to
+                                           :func:`HyresFF.buildSystem`. Called
+                                           after all built-in forces are added.
+                                           Default is ``None``.
 
     Returns:
         tuple:
-            - system (openmm.System):          The fully constructed OpenMM System.
-            - sim    (openmm.app.Simulation):  The initialized Simulation object with positions and velocities set.
+            - ``system`` (System) — the fully constructed OpenMM ``System``.
+            - ``sim`` (Simulation) — the initialized ``Simulation`` object with
+              positions and velocities set.
 
     Raises:
-        SystemExit: If an unsupported ensemble type is provided, if a Mg²⁺ concentration is specified for a non-periodic system, or if an invalid box dimension list is given.
+        SystemExit: If an unsupported ensemble type is provided, if Mg²⁺ is
+                    specified for a non-periodic system, or if an invalid box
+                    dimension list is given.
 
     Notes:
-        * The dielectric constant is computed as er = er_t(T) * er_ref / 77.6, where
-          er_t(T) is the temperature-dependent pure-water dielectric from cal_er.
-        * The Mg²⁺–RNA lambda parameter is computed via nMg2lmd using the 'rA' RNA type.
-        * The CUDA platform is used with mixed precision.
+        The dielectric constant is scaled as ``er = er_t(T) * er_ref / 77.6``,
+        where ``er_t(T)`` is the temperature-dependent pure-water dielectric
+        from :func:`cal_er`. The Mg²⁺-RNA lambda parameter is computed via
+        :func:`nMg2lmd` using the ``'rA'`` RNA type. The CUDA platform is used
+        with mixed precision.
 
     Example:
+        >>> from HyresBuilder.utils import setup
         >>> system, sim = setup(params)
-        >>> system, sim = setup(params, modification=my_custom_force_fn)
+
+        >>> # With a custom force modification
+        >>> def my_mod(system):
+        ...     pass  # add or remove forces here
+        >>> system, sim = setup(params, modification=my_mod)
     """
     
     print('\n################## set up simulation parameters ###################')
