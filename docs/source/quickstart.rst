@@ -21,7 +21,6 @@ Installation
 **Dependencies:**
 
 - `OpenMM <https://openmm.org/>`_
-- `CHARMM-GUI <https://www.charmm-gui.org/>`_ (registration required)
 - psfgen (install via conda):
 
   .. code-block:: bash
