@@ -11,7 +11,3 @@ sphinx:
 python:
   install:
     - requirements: docs/requirements.txt
-    - method: pip
-      path: .        # RTD will find pyproject.toml automatically
-      pip_install_options:
-        - "--no-deps"            # ← skips ALL dependencies entirely
