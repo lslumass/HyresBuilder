@@ -1,5 +1,5 @@
 """
-| Define specific interactions for aging simulations
+| define specific interactions for aging simulations
 | Date: Nov-07-2025
 | Authors: Shanlong Li
 """

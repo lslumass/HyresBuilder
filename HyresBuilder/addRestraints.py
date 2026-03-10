@@ -1,5 +1,5 @@
 """
-| Additional restraints
+| additional restraints
 | Date: Oct 23, 2025
 | Author: Shanlong Li
 """

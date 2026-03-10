@@ -1,5 +1,5 @@
 """
-| This module is to help set up restraints in Hyres model
+| This module is used to help set up restraints in Hyres model
 | Athour: Jian Huang
 | Date: Nov 12, 2024
 | Modified: Nov 12, 2024

@@ -1,5 +1,5 @@
 """
-| This function is used to constructe iConRNA force field for rG4s 
+| This module is used to constructe iConRNA force field for rG4s 
 | Athours: Shanlong Li
 | Date: Dec 1, 2024
 """

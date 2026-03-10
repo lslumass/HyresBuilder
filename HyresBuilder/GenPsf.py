@@ -1,3 +1,7 @@
+"""
+Generate the psf file.
+"""
+
 from psfgen import PsfGen
 from HyresBuilder import utils
 import argparse, os, glob
