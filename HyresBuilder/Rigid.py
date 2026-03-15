@@ -38,6 +38,114 @@ import numpy as np
 import numpy.linalg as lin
 from itertools import combinations
 
+
+def resolveBodiesToIndices(psf, segment_bodies):
+    """Resolve segment-based body definitions into lists of atom indices.
+
+    Parameters
+    ----------
+    psf : str or openmm.app.CharmmPsfFile
+        Either a path to a PSF file (str) or an already-loaded CharmmPsfFile object.
+    segment_bodies : list of (segid, residue_list) tuples
+        Each tuple defines one rigid body:
+          - segid (str): the segment ID as it appears in the PSF file.
+          - residue_list: either
+              * a (start, end) tuple of inclusive author residue numbers, or
+              * an explicit list of author residue numbers [27, 28, 30, ...].
+
+        Examples::
+
+            # range tuple – residues 27 to 95 inclusive in segment P001
+            ('P001', (27, 95))
+
+            # explicit list – only these three residues in segment P042
+            ('P042', [10, 11, 50])
+
+            # mix both styles across multiple bodies
+            [('P001', (27, 95)), ('P002', (27, 95)), ('P003', [30, 31, 32])]
+
+    Returns
+    -------
+    bodies : list of list of int
+        Each inner list contains the atom indices that form one rigid body,
+        ready to pass directly to createRigidBodies().
+    """
+    from openmm.app import CharmmPsfFile
+    import warnings
+    if isinstance(psf, str):
+        psf = CharmmPsfFile(psf)
+
+    # Build a fast lookup: segid -> chain object
+    chain_map = {chain.id: chain for chain in psf.topology.chains()}
+
+    bodies = []
+    for segid, residue_list in segment_bodies:
+        if segid not in chain_map:
+            raise ValueError(f"Segment '{segid}' not found in PSF. "
+                             f"Available segments: {list(chain_map.keys())}")
+
+        # Normalise residue_list into a set of ints for O(1) membership test
+        if isinstance(residue_list, tuple) and len(residue_list) == 2:
+            res_set = set(range(int(residue_list[0]), int(residue_list[1]) + 1))
+        else:
+            res_set = {int(r) for r in residue_list}
+
+        body_atoms = []
+        for residue in chain_map[segid].residues():
+            try:
+                res_num = int(residue.id)
+            except ValueError:
+                continue   # skip insertion-code residues e.g. '27A'
+            if res_num in res_set:
+                for atom in residue.atoms():
+                    body_atoms.append(atom.index)
+
+        if body_atoms:
+            bodies.append(body_atoms)
+        else:
+            warnings.warn(f"No atoms found for segment '{segid}' with "
+                          f"residue_list={residue_list}. Body skipped.")
+
+    return bodies
+
+
+def createRigidSegments(system, psf, pdb, segment_bodies):
+    """Resolve segment/residue definitions from a PSF/PDB and apply rigid bodies.
+
+    Combines resolveBodiesToIndices() and createRigidBodies() in one call.
+
+    Parameters
+    ----------
+    system : openmm.System
+        The System to modify.
+    psf : str or openmm.app.CharmmPsfFile
+        Either a path to a PSF file (str) or an already-loaded CharmmPsfFile object.
+    pdb : str or openmm.app.PDBFile
+        Either a path to a PDB file (str) or an already-loaded PDBFile object.
+        Positions are extracted from this file.
+    segment_bodies : list of (segid, residue_list) tuples
+        Each tuple defines one rigid body.
+        residue_list can be a (start, end) range tuple or an explicit list of residue numbers.
+
+    Example
+    -------
+    ::
+
+        from Rigid import createRigidSegments
+
+        segment_bodies = [(f'P{i+1:03}', (27, 95)) for i in range(80)]
+        createRigidSegments(system, 'conf.psf', 'conf.pdb', segment_bodies)
+    """
+    from openmm.app import PDBFile
+    if isinstance(pdb, str):
+        pdb = PDBFile(pdb)
+    positions = pdb.positions
+
+    bodies = resolveBodiesToIndices(psf, segment_bodies)
+    print(f"[Rigid] Resolved {len(bodies)} rigid bodies from {len(segment_bodies)} definitions.")
+    createRigidBodies(system, positions, bodies)
+
+
 def createRigidBodies(system, positions, bodies):
     """Modify a System to turn specified sets of particles into rigid bodies.
     
