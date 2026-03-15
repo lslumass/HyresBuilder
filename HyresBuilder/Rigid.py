@@ -1,5 +1,5 @@
 """
-rigid.py: Implements rigid bodies
+Implements rigid bodies
 
 This is part of the OpenMM molecular simulation toolkit originating from
 Simbios, the NIH National Center for Physics-Based Simulation of
@@ -8,7 +8,7 @@ Medical Research, grant U54 GM072970. See https://simtk.org.
 
 Portions copyright (c) 2016 Stanford University and the Authors.
 Authors: Peter Eastman
-Contributors:
+Modified: Shanlong Li
 
 Permission is hereby granted, free of charge, to any person obtaining a 
 copy of this software and associated documentation files (the "Software"),
@@ -19,14 +19,6 @@ Software is furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-THE AUTHORS, CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 __author__ = "Peter Eastman"
 __version__ = "1.0"
@@ -148,27 +140,46 @@ def createRigidSegments(system, psf, pdb, segment_bodies):
 
 def createRigidBodies(system, positions, bodies):
     """Modify a System to turn specified sets of particles into rigid bodies.
-    
+
+    This is the low-level interface that operates directly on pre-built atom index lists.
+    For a higher-level interface that accepts PSF segment IDs and residue ranges, use
+    createRigidSegments() instead.
+
     For every rigid body, four particles are selected as "real" particles whose positions are integrated.
     Constraints are added between them to make them move as a rigid body.  All other particles in the body
     are then turned into virtual sites whose positions are computed based on the "real" particles.
-    
+
     Because virtual sites are massless, the mass properties of the rigid bodies will be slightly different
     from the corresponding sets of particles in the original system.  The masses of the non-virtual particles
     are chosen to guarantee that the total mass and center of mass of each rigid body exactly match those of
     the original particles.  The moment of inertia will be similar to that of the original particles, but
     not identical.
-    
+
     Care is needed when using constraints, since virtual particles cannot participate in constraints.  If the
     input system includes any constraints, this function will automatically remove ones that connect two
-    particles in the same rigid body.  But if there is a constraint beween a particle in a rigid body and
+    particles in the same rigid body.  But if there is a constraint between a particle in a rigid body and
     another particle not in that body, it will likely lead to an exception when you try to create a context.
-    
-    Parameters:
-     - system (System) the System to modify
-     - positions (list) the positions of all particles in the system
-     - bodies (list) each element of this list defines one rigid body.  Each element should itself be a list
-       of the indices of all particles that make up that rigid body.
+
+    Parameters
+    ----------
+    system : openmm.System
+        The System to modify.
+    positions : list
+        The positions of all particles in the system.
+    bodies : list of list of int
+        Each element defines one rigid body as a list of atom indices.
+
+    Example
+    -------
+    ::
+
+        from Rigid import createRigidBodies
+        from openmm.app import PDBFile
+
+        pdb = PDBFile('conf.pdb')
+        # bodies is a list of lists of atom indices, one per rigid body
+        bodies = [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]
+        createRigidBodies(system, pdb.positions, bodies)
     """
     # Remove any constraints involving particles in rigid bodies.
     
