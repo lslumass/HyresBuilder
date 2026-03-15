@@ -475,7 +475,7 @@ def segment_3D_restraint(system, pdb_ref, domain_ranges, Kcons=400, cutoff=1.2, 
 
         # ── Select the domain slice and compute DSSP ──────────────────────────
         if use_segid:
-            domain_sel = "segid %s and residue %s to %s" % (identifier, starting_resid, ending_resid)
+            domain_sel = "segment_id %s and residue %s to %s" % (identifier, starting_resid, ending_resid)
         else:
             assert identifier in chainid_dict, \
                 f"Chain ID '{identifier}' given in the domain definition does not exist!"
@@ -494,7 +494,7 @@ def segment_3D_restraint(system, pdb_ref, domain_ranges, Kcons=400, cutoff=1.2, 
         # ── Back-map to CA atom indices in the full topology ──────────────────
         if use_segid:
             folded_CA_idx = [
-                pdb_md.topology.select("segid %s and residue %s and name CA" % (identifier, r))[0]
+                pdb_md.topology.select("segment_id %s and residue %s and name CA" % (identifier, r))[0]
                 for r in folded_resids
             ]
         else:
