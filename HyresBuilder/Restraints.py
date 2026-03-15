@@ -407,8 +407,7 @@ def domain_3D_restraint(system, pdb_ref, domain_ranges, Kcons=400, cutoff=1.2):
     system.addForce(internal_force)
     return system
 
-
-def segment_3D_restraint(system, pdb_ref, domain_ranges, Kcons=400, cutoff=1.2, psf_file=None):
+def segment_3D_restraint(system, pdb_ref, psf_file, domain_ranges, Kcons=400, cutoff=1.2):
     """
     Restrain the internal 3D structure of folded domains using pairwise CA–CA bonds.
 
@@ -422,86 +421,65 @@ def segment_3D_restraint(system, pdb_ref, domain_ranges, Kcons=400, cutoff=1.2, 
 
     Args:
         system        (openmm.System):  OpenMM System object to modify.
-        pdb_ref       (str):            Path to the reference PDB/coordinate file.
-        domain_ranges (list of tuples): List of domain definitions. Two formats supported:
-
-                                        Without PSF (chain-based):
-                                            (chain_id, (start_resid, end_resid))
-                                            e.g. [('A', (1, 50)), ('B', (75, 200))]
-
-                                        With PSF (segid-based):
-                                            (segid, (start_resid, end_resid))
-                                            e.g. [('PROA', (1, 50)), ('PROB', (75, 200))]
-
+        pdb_ref       (str):            Path to the reference coordinate file.
+        psf_file      (str):            Path to the PSF topology file. Domain identifiers
+                                        in domain_ranges are matched against segment IDs
+                                        (segid) in this topology.
+        domain_ranges (list of tuples): List of domain definitions as
+                                        (segid, (start_resid, end_resid)).
+                                        Example: [('PROA', (1, 50)), ('PROB', (75, 200))]
         Kcons         (float):          Force constant in kJ/mol/nm². Default: 400.
         cutoff        (float):          Maximum CA–CA distance (nm) for a pair to be
                                         included as a restrained bond. Default: 1.2 nm.
-        psf_file      (str or None):    Path to a PSF topology file. When provided,
-                                        domain identifiers are interpreted as segment IDs
-                                        (segid) instead of chain IDs. Default: None.
 
     Returns:
         openmm.System: The modified system with domain structural restraints added.
 
     Notes:
-        - The number of restrained pairs per domain is printed to stdout.
-        - When psf_file is provided, pdb_ref is treated as a coordinate file and its
-          topology is ignored in favour of the PSF.
+        The number of restrained pairs per domain is printed to stdout.
 
     Example:
-        # Chain-based (no PSF):
-        >>> domains = [('A', (1, 50)), ('B', (75, 200))]
-        >>> system = domain_3D_restraint(system, 'ref.pdb', domains)
-
-        # Segid-based (PSF):
         >>> domains = [('PROA', (1, 50)), ('PROB', (75, 200))]
-        >>> system = domain_3D_restraint(system, 'ref.crd', domains, psf_file='topol.psf')
+        >>> system = domain_3D_restraint(system, 'ref.crd', 'topol.psf', domains)
     """
     internal_force = HarmonicBondForce()
     Kcons_internal = Kcons * unit.kilojoule_per_mole / unit.nanometers**2
 
-    # ── Load reference structure ──────────────────────────────────────────────
-    if psf_file is not None:
-        pdb_md = md.load(pdb_ref, top=psf_file)
-        use_segid = True
-    else:
-        pdb_md = md.load_pdb(pdb_ref)
-        use_segid = False
-        chainid_dict = {chain.chain_id: chain.index for chain in pdb_md.topology.chains}
+    # ── Load reference structure with PSF topology ────────────────────────────
+    pdb_md = md.load(pdb_ref, top=psf_file)
 
     # ── Build restrained bonds per domain ────────────────────────────────────
     for domain in domain_ranges:
         identifier, (starting_resid, ending_resid) = domain
 
-        # ── Select the domain slice and compute DSSP ──────────────────────────
-        if use_segid:
-            domain_sel = "segment_id %s and residue %s to %s" % (identifier, starting_resid, ending_resid)
-        else:
-            assert identifier in chainid_dict, \
-                f"Chain ID '{identifier}' given in the domain definition does not exist!"
-            domain_sel = "chainid %s and residue %s to %s" % (chainid_dict[identifier], starting_resid, ending_resid)
+        # ── Get atom indices from PSF segment ID ──────────────────────────────
+        domain_atom_idx = [
+            atom.index
+            for residue in pdb_md.topology.residues
+            if residue.segment_id == identifier
+            and starting_resid <= residue.resSeq <= ending_resid
+            for atom in residue.atoms
+        ]
+        assert len(domain_atom_idx) > 0, \
+            f"Segment ID '{identifier}' with resid {starting_resid}–{ending_resid} not found in PSF!"
 
-        selected_domain = pdb_md.atom_slice(pdb_md.topology.select(domain_sel))
-        dssp   = md.compute_dssp(selected_domain, simplified=True)
+        # ── DSSP on the sliced domain ─────────────────────────────────────────
+        selected_domain = pdb_md.atom_slice(domain_atom_idx)
+        dssp = md.compute_dssp(selected_domain, simplified=True)
         folded = np.where(dssp != 'C', 1, 0)[0]
-
-        # resSeq values of folded residues (for back-mapping to the full topology)
-        folded_resids = [
+        folded_resids = set(
             selected_domain.topology.residue(idx).resSeq
             for idx, i in enumerate(folded) if i == 1
-        ]
+        )
 
-        # ── Back-map to CA atom indices in the full topology ──────────────────
-        if use_segid:
-            folded_CA_idx = [
-                pdb_md.topology.select("segment_id %s and residue %s and name CA" % (identifier, r))[0]
-                for r in folded_resids
-            ]
-        else:
-            folded_CA_idx = [
-                pdb_md.topology.select("chainid %s and residue %s and name CA" % (chainid_dict[identifier], r))[0]
-                for r in folded_resids
-            ]
+        # ── Back-map folded resSeq → CA atom index in full topology ───────────
+        folded_CA_idx = [
+            atom.index
+            for residue in pdb_md.topology.residues
+            if residue.segment_id == identifier and residue.resSeq in folded_resids
+            for atom in residue.atoms
+            if atom.name == 'CA'
+        ]
 
         # ── Add pairwise bonds within cutoff ──────────────────────────────────
         pairs = list(combinations(folded_CA_idx, 2))
