@@ -2,7 +2,7 @@
 | This module is used to load force field files and set up simulation.
 """
 
-import pkg_resources as pkg_res
+from importlib.resources import files
 from openmm.unit import *
 from openmm.app import *
 from openmm import *
@@ -11,13 +11,13 @@ from .HyresFF import *
 from .rG4sFF import *
 
 
-def load_ff(model):
+def load_ff(model: str) -> tuple[str, str]:
     """
     Return the topology and parameter file paths for a given force field model.
 
     File paths are resolved from within the installed HyresBuilder package using
-    ``pkg_resources``, so no manual path management is needed regardless of where
-    the package is installed.
+    ``importlib.resources``, so no manual path management is needed regardless
+    of where the package is installed.
 
     Args:
         model (str): Force field model name. Supported values:
@@ -36,7 +36,7 @@ def load_ff(model):
     Returns:
         tuple[str, str]: A 2-tuple of absolute paths:
 
-                         - ``top_inp`` — CHARMM topology (``.inp``) file.
+                         - ``top_inp``   — CHARMM topology (``.inp``) file.
                          - ``param_inp`` — CHARMM parameter (``.inp``) file.
 
     Raises:
@@ -48,26 +48,28 @@ def load_ff(model):
         >>> top, param = load_ff('RNA')
         >>> top, param = load_ff('rG4s')
     """
+    ff = files("HyresBuilder") / "forcefield"
 
     if model == 'Protein':
-        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_hyres_mix.inp")
-        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_hyres_mix.inp")
+        path1 = ff / "top_hyres_mix.inp"
+        path2 = ff / "param_hyres_mix.inp"
     elif model == 'RNA':
-        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_RNA_mix.inp")
-        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_RNA_mix.inp")
+        path1 = ff / "top_RNA_mix.inp"
+        path2 = ff / "param_RNA_mix.inp"
     elif model == 'DNA':
-        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_DNA_mix.inp")
-        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_DNA_mix.inp")
+        path1 = ff / "top_DNA_mix.inp"
+        path2 = ff / "param_DNA_mix.inp"
     elif model == 'rG4s':
-        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_RNA_mix.inp")
-        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_rG4s.inp")
+        path1 = ff / "top_RNA_mix.inp"
+        path2 = ff / "param_rG4s.inp"
     elif model == 'ATP':
-        path1 = pkg_res.resource_filename("HyresBuilder", "forcefield/top_ATP.inp")
-        path2 = pkg_res.resource_filename("HyresBuilder", "forcefield/param_ATP.inp")
+        path1 = ff / "top_ATP.inp"
+        path2 = ff / "param_ATP.inp"
     else:
-        print("Error: The model type {} is not supported, only for Portein, RNA, DNA, and, ATP.".format(model))
+        print("Error: The model type {} is not supported, only for Protein, RNA, DNA, rG4s, and ATP.".format(model))
         exit(1)
-    top_inp, param_inp = str(path1), str(path2)
+
+    top_inp, param_inp = path1.as_posix(), path2.as_posix()
 
     return top_inp, param_inp
 
