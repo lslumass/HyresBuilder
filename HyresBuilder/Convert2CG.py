@@ -1,5 +1,5 @@
 """
-| Convert all-atom structure to CG structure.
+| Convert all-atom structures to CG structures.
 """
 
 from psfgen import PsfGen
@@ -442,11 +442,28 @@ def set_terminus(gen, segid, terminal):
 
 def at2hyres(pdb_in, pdb_out):
     """
-    Convert all-atom protein to HyRes CG pdb.
-    
+    Convert an all-atom protein PDB to a HyRes coarse-grained PDB.
+
+    Backbone atoms (N, H, CA, C, O) are preserved at their original positions.
+    Sidechain heavy atoms are collapsed into one or more coarse-grained beads
+    by computing their geometric center, named CB, CC, CD, CE, CF in order.
+    Glycine residues have no sidechain bead. Histidine variants (HSD, HSE, HSP)
+    are renamed to HIS. Atom serial numbers are encoded in hybrid-36 format to
+    support systems with more than 99,999 atoms.
+
     Args:
-        pdb_in : str, input all-atom PDB file
-        pdb_out : str, output HyRes CG PDB file
+        pdb_in (str): Path to the input all-atom PDB file.
+        pdb_out (str): Path to the output HyRes coarse-grained PDB file.
+
+    Returns:
+        None. Writes a CG PDB file to ``pdb_out``.
+
+    Raises:
+        SystemExit: If an unrecognized residue type is encountered.
+
+    Example:
+        >>> from HyresBuilder import Convert2CG
+        >>> Convert2CG.at2hyres("protein_aa.pdb", "protein_cg.pdb")
     """
     
     def encode_serial(n):
@@ -613,11 +630,28 @@ def at2hyres(pdb_in, pdb_out):
 
 def at2icon(pdb_in, pdb_out):
     """
-    Convert all-atom RNA to iConRNA PDB.
-    
+    Convert an all-atom RNA PDB to an iConRNA coarse-grained PDB.
+
+    Each nucleotide is mapped onto a set of coarse-grained beads:
+
+    - **P** — phosphate group (P, O1P, O2P, O5', O3' from previous residue)
+    - **C1** — sugar bead at C4'
+    - **C2** — sugar bead at C1'
+    - **NA/NB/NC/ND** — base beads (number depends on nucleotide type)
+
+    Bead coordinates are computed as the geometric center of the contributing
+    all-atom positions. Supported nucleotides: ADE, GUA, CYT, URA.
+
     Args:
-        pdb_in : str, Input all-atom PDB file
-        pdb_out : str, Output iConRNA PDB file
+        pdb_in (str): Path to the input all-atom RNA PDB file.
+        pdb_out (str): Path to the output iConRNA coarse-grained PDB file.
+
+    Returns:
+        None. Writes a CG PDB file to ``pdb_out``.
+
+    Example:
+        >>> from HyresBuilder import Convert2CG
+        >>> Convert2CG.at2icon("rna_aa.pdb", "rna_cg.pdb")
     """
     
     def encode_serial(n):
@@ -837,17 +871,43 @@ def fix_pdb_serial(pdb_file, output_file=None):
 
 def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
     """
-    Convert all-atom PDB to CG PDB (HyRes for protein or iConRNA for RNA).
-    
+    Convert an all-atom PDB to a coarse-grained PDB and PSF file.
+
+    Automatically detects molecule types (protein or RNA) by chain, then
+    applies :func:`at2hyres` for protein chains and :func:`at2icon` for RNA
+    chains. Topology and connectivity are handled by psfgen, which also writes
+    the PSF file. Atom serial numbers exceeding 99,999 are re-encoded in
+    hybrid-36 format. Temporary intermediate files are removed after conversion
+    unless ``cleanup=False``.
+
     Args:
-        pdb_in : str, Input all-atom PDB file
-        pdb_out : str, Output CG PDB file
-        terminal : str, Charge status of protein terminus: 'neutral', 'charged', 'NT', 'CT'
-        cleanup : bool, Whether to clean up temporary files
-    
+        pdb_in (str): Path to the input all-atom PDB file. May contain mixed
+                      protein and RNA chains.
+        pdb_out (str): Path to the output coarse-grained PDB file.
+        terminal (str, optional): Charge status of protein termini. Options:
+
+                                  - ``'neutral'`` — uncharged termini (default)
+                                  - ``'charged'`` — both termini charged
+                                  - ``'NT'`` — N-terminus charged only
+                                  - ``'CT'`` — C-terminus charged only
+
+        cleanup (bool, optional): If ``True``, removes intermediate temporary
+                                  PDB files after conversion. Default is ``True``.
+
     Returns:
-        tuple : (pdb_file, psf_file)
+        tuple: A 2-tuple ``(pdb_file, psf_file)`` with paths to the output
+               coarse-grained PDB and PSF files.
+
+    Raises:
+        ValueError: If an unsupported molecule type is detected in the PDB.
+
+    Example:
+        >>> from HyresBuilder import Convert2CG
+        >>> pdb, psf = Convert2CG.at2cg("system_aa.pdb", "system_cg.pdb")
+        >>> pdb, psf = Convert2CG.at2cg("system_aa.pdb", "system_cg.pdb",
+        ...                              terminal="charged")
     """
+    
     # Load topology files
     RNA_topology, _ = load_ff('RNA')
     protein_topology, _ = load_ff('Protein')

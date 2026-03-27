@@ -12,7 +12,8 @@ def split_chains(pdb):
                    "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
     rnas = ["ADE", "GUA", "CYT", "URA"]
     dnas = ["DAD", "DGU", "DCY", "DTH"]
-    mg, cal = ["MG+"], ["CA+"] 
+    mg, cal = ["MG+"], ["CA+"]
+
     def get_type(resname):
         chaintype = (
             'P' if resname in aas else
@@ -24,7 +25,7 @@ def split_chains(pdb):
         )
         return chaintype
 
-    currentID = None
+    currentKey = None
     atoms = []
     chains = []
     types = []
@@ -32,17 +33,21 @@ def split_chains(pdb):
         for line in f:
             if line.startswith('ATOM'):
                 chainid = line[21]
-                resname = line[17:20]
-                if chainid != currentID:
+                segid   = line[72:76].strip()  # segID, cols 73-76
+                resname = line[17:20].strip()
+                key = (chainid, segid)
+
+                if key != currentKey:
                     if atoms:
                         chains.append(atoms)
-                    currentID = chainid
+                    currentKey = key
                     types.append(get_type(resname))
                     atoms = [line]
                 else:
                     atoms.append(line)
         if atoms:
             chains.append(atoms)
+
     # save out each chain
     for i, (t, chain) in enumerate(zip(types, chains)):
         if t in ['P', 'R', 'D']:
@@ -50,7 +55,7 @@ def split_chains(pdb):
         elif t in ['M', 'C']:
             tmp_pdb = f"psfgentmp_{t}.pdb"
         else:
-            print('Unkown molecule type')
+            print('Unknown molecule type')
             exit(1)
 
         with open(tmp_pdb, 'w') as f:
@@ -89,15 +94,44 @@ def encode_segid(n: int) -> str:
     rem  = n % 1296
     return f"{lead}{BASE36[rem // 36]}{BASE36[rem % 36]}"
 
-def genpsf(pdb_in, psf_out, terminal):
+def genpsf(pdb_in, psf_out, terminal='neutral'):
     """
-    Generate psf file for given pdb.
+    Generate a PSF file for a HyRes protein or iConRNA coarse-grained system.
+
+    Reads the input CG PDB, automatically detects molecule types (protein, RNA,
+    DNA, Mg2+, Ca2+) by chain ID, assigns segment IDs, and uses psfgen to build
+    the topology and write the PSF file. Temporary chain PDB files are removed
+    after the PSF is written.
+
+    Segment ID naming convention:
+
+    - Protein chains: ``P001``, ``P002``, ...
+    - RNA chains: ``R001``, ``R002``, ...
+    - DNA chains: ``D001``, ``D002``, ...
+    - Mg2+ ions: ``M001``
+    - Ca2+ ions: ``C001``
 
     Args:
-        pdb_in: input pdb file
-        psf_out: output psf file
-        terminal: the charge status of terminus: 'neutral', 'charged', 'NT', and 'CT'.
+        pdb_in (str): Path to the input coarse-grained PDB file. May contain
+                      mixed protein, RNA, DNA, and ion chains.
+        psf_out (str): Path to the output PSF file.
+        terminal (str, optional): Charge status of protein termini. Options:
+
+                                  - ``'neutral'`` — uncharged termini (default)
+                                  - ``'charged'`` — both termini charged
+                                  - ``'NT'`` — N-terminus charged only
+                                  - ``'CT'`` — C-terminus charged only
+                                  - ``'positive'`` — both termini negatively charged
+
+    Returns:
+        None. Writes a PSF file to ``psf_out``.
+
+    Example:
+        >>> from HyresBuilder import GenPsf
+        >>> GenPsf.genpsf("conf.pdb", "conf.psf")
+        >>> GenPsf.genpsf("conf.pdb", "conf.psf", terminal="charged")
     """
+    
     # load topology files
     RNA_topology, _ = utils.load_ff('RNA')
     protein_topology, _ = utils.load_ff('Protein')

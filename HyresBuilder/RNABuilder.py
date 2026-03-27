@@ -71,15 +71,29 @@ def transform(ref, atoms):
 
 def build(name, sequence):
     """
-    Build RNA model from sequence.
+    Build an iConRNA coarse-grained RNA structure from a nucleotide sequence.
+
+    Each residue is placed sequentially by mapping its nucleotide type onto a
+    set of reference bead coordinates (P, C1, C2, NA, NB, NC, and ND for purines).
+    Residues are stacked along the z-axis with a 3.63 Å rise per residue.
+    The finished structure is written as a PDB file with iConRNA REMARK headers.
 
     Args:
-        name: str, output pdb file name
-        sequence:, str, RNA sequence, "AUCG"
+        name (str): Stem of the output file. The PDB is written to ``<name>.pdb``.
+        sequence (str): RNA sequence in single-letter codes (e.g. ``'AUCG'``). Supported nucleotides: ``A``, ``U``, ``C``, ``G``.
 
     Returns:
-        pdb file: name.pdb
+        None. Writes a PDB file to ``<name>.pdb`` in the current working directory.
+
+    Raises:
+        KeyError: If any character in ``sequence`` is not one of ``A``, ``U``, ``C``, ``G``.
+
+    Example:
+        >>> from HyresBuilder import RNABuilder
+        >>> RNABuilder.build("myrna", "AUCGAUCG")
+        # output: myrna.pdb
     """
+
     out = f'{name}.pdb'
     with open(out, 'w') as f:
         print('REMARK  iConRNA', file=f)

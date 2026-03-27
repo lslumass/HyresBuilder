@@ -29,8 +29,8 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 project = 'HyresBuilder'
-copyright = '2026, Shanlong Li, Jian Huang, Yumeng Zhang, Jianhan Chen'
-author = 'Shanlong Li, Jian Huang, Yumeng Zhang, Jianhan Chen'
+copyright = '2026, Shanlong Li, Jian Huang, Yumeng Zhang, Xiping Gong, Jianhan Chen'
+author = 'Shanlong Li, Jian Huang, Yumeng Zhang, Xiping Gong, Jianhan Chen'
 release = 'latest'
 
 # -- General configuration ---------------------------------------------------

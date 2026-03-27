@@ -1,5 +1,5 @@
 """
-rigid.py: Implements rigid bodies
+Implements rigid bodies
 
 This is part of the OpenMM molecular simulation toolkit originating from
 Simbios, the NIH National Center for Physics-Based Simulation of
@@ -8,7 +8,7 @@ Medical Research, grant U54 GM072970. See https://simtk.org.
 
 Portions copyright (c) 2016 Stanford University and the Authors.
 Authors: Peter Eastman
-Contributors:
+Modified: Shanlong Li
 
 Permission is hereby granted, free of charge, to any person obtaining a 
 copy of this software and associated documentation files (the "Software"),
@@ -19,14 +19,6 @@ Software is furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-THE AUTHORS, CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 __author__ = "Peter Eastman"
 __version__ = "1.0"
@@ -38,29 +30,156 @@ import numpy as np
 import numpy.linalg as lin
 from itertools import combinations
 
+
+def resolveBodiesToIndices(psf, segment_bodies):
+    """Resolve segment-based body definitions into lists of atom indices.
+
+    Parameters
+    ----------
+    psf : str or openmm.app.CharmmPsfFile
+        Either a path to a PSF file (str) or an already-loaded CharmmPsfFile object.
+    segment_bodies : list of (segid, residue_list) tuples
+        Each tuple defines one rigid body:
+          - segid (str): the segment ID as it appears in the PSF file.
+          - residue_list: either
+              * a (start, end) tuple of inclusive author residue numbers, or
+              * an explicit list of author residue numbers [27, 28, 30, ...].
+
+        Examples::
+
+            # range tuple – residues 27 to 95 inclusive in segment P001
+            ('P001', (27, 95))
+
+            # explicit list – only these three residues in segment P042
+            ('P042', [10, 11, 50])
+
+            # mix both styles across multiple bodies
+            [('P001', (27, 95)), ('P002', (27, 95)), ('P003', [30, 31, 32])]
+
+    Returns
+    -------
+    bodies : list of list of int
+        Each inner list contains the atom indices that form one rigid body,
+        ready to pass directly to createRigidBodies().
+    """
+    from openmm.app import CharmmPsfFile
+    import warnings
+    if isinstance(psf, str):
+        psf = CharmmPsfFile(psf)
+
+    # Build a fast lookup: segid -> chain object
+    chain_map = {chain.id: chain for chain in psf.topology.chains()}
+
+    bodies = []
+    for segid, residue_list in segment_bodies:
+        if segid not in chain_map:
+            raise ValueError(f"Segment '{segid}' not found in PSF. "
+                             f"Available segments: {list(chain_map.keys())}")
+
+        # Normalise residue_list into a set of ints for O(1) membership test
+        if isinstance(residue_list, tuple) and len(residue_list) == 2:
+            res_set = set(range(int(residue_list[0]), int(residue_list[1]) + 1))
+        else:
+            res_set = {int(r) for r in residue_list}
+
+        body_atoms = []
+        for residue in chain_map[segid].residues():
+            try:
+                res_num = int(residue.id)
+            except ValueError:
+                continue   # skip insertion-code residues e.g. '27A'
+            if res_num in res_set:
+                for atom in residue.atoms():
+                    body_atoms.append(atom.index)
+
+        if body_atoms:
+            bodies.append(body_atoms)
+        else:
+            warnings.warn(f"No atoms found for segment '{segid}' with "
+                          f"residue_list={residue_list}. Body skipped.")
+
+    return bodies
+
+
+def createRigidSegments(system, psf, pdb, segment_bodies):
+    """Resolve segment/residue definitions from a PSF/PDB and apply rigid bodies.
+
+    Combines resolveBodiesToIndices() and createRigidBodies() in one call.
+
+    Parameters
+    ----------
+    system : openmm.System
+        The System to modify.
+    psf : str or openmm.app.CharmmPsfFile
+        Either a path to a PSF file (str) or an already-loaded CharmmPsfFile object.
+    pdb : str or openmm.app.PDBFile
+        Either a path to a PDB file (str) or an already-loaded PDBFile object.
+        Positions are extracted from this file.
+    segment_bodies : list of (segid, residue_list) tuples
+        Each tuple defines one rigid body.
+        residue_list can be a (start, end) range tuple or an explicit list of residue numbers.
+
+    Example
+    -------
+    ::
+
+        from Rigid import createRigidSegments
+
+        segment_bodies = [(f'P{i+1:03}', (27, 95)) for i in range(80)]
+        createRigidSegments(system, 'conf.psf', 'conf.pdb', segment_bodies)
+    """
+    from openmm.app import PDBFile
+    if isinstance(pdb, str):
+        pdb = PDBFile(pdb)
+    positions = pdb.positions
+
+    bodies = resolveBodiesToIndices(psf, segment_bodies)
+    print(f"[Rigid] Resolved {len(bodies)} rigid bodies from {len(segment_bodies)} definitions.")
+    createRigidBodies(system, positions, bodies)
+
+
 def createRigidBodies(system, positions, bodies):
     """Modify a System to turn specified sets of particles into rigid bodies.
-    
+
+    This is the low-level interface that operates directly on pre-built atom index lists.
+    For a higher-level interface that accepts PSF segment IDs and residue ranges, use
+    createRigidSegments() instead.
+
     For every rigid body, four particles are selected as "real" particles whose positions are integrated.
     Constraints are added between them to make them move as a rigid body.  All other particles in the body
     are then turned into virtual sites whose positions are computed based on the "real" particles.
-    
+
     Because virtual sites are massless, the mass properties of the rigid bodies will be slightly different
     from the corresponding sets of particles in the original system.  The masses of the non-virtual particles
     are chosen to guarantee that the total mass and center of mass of each rigid body exactly match those of
     the original particles.  The moment of inertia will be similar to that of the original particles, but
     not identical.
-    
+
     Care is needed when using constraints, since virtual particles cannot participate in constraints.  If the
     input system includes any constraints, this function will automatically remove ones that connect two
-    particles in the same rigid body.  But if there is a constraint beween a particle in a rigid body and
+    particles in the same rigid body.  But if there is a constraint between a particle in a rigid body and
     another particle not in that body, it will likely lead to an exception when you try to create a context.
-    
-    Parameters:
-     - system (System) the System to modify
-     - positions (list) the positions of all particles in the system
-     - bodies (list) each element of this list defines one rigid body.  Each element should itself be a list
-       of the indices of all particles that make up that rigid body.
+
+    Parameters
+    ----------
+    system : openmm.System
+        The System to modify.
+    positions : list
+        The positions of all particles in the system.
+    bodies : list of list of int
+        Each element defines one rigid body as a list of atom indices.
+
+    Example
+    -------
+    ::
+
+        from Rigid import createRigidBodies
+        from openmm.app import PDBFile
+
+        pdb = PDBFile('conf.pdb')
+        # bodies is a list of lists of atom indices, one per rigid body
+        bodies = [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]
+        createRigidBodies(system, pdb.positions, bodies)
     """
     # Remove any constraints involving particles in rigid bodies.
     

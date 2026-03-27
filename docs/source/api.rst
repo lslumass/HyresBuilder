@@ -14,4 +14,5 @@ API Reference
    api/Mutator
    api/Restraints
    api/addRestraints
+   api/Rigid
    api/Aging

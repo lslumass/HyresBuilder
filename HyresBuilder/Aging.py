@@ -12,16 +12,49 @@ from openmm import *
 
 def inRegisterHB(system, top, res_list, age=1.0):
     """
-    Hydrogen bonds between same residues only for in-Register beta sheets.
+    Add in-register backbone hydrogen bonds between identical residue positions
+    across beta-sheet chains for amyloid aging simulations.
+
+    Implements a ``CustomHbondForce`` that only forms N-H···O hydrogen bonds
+    between donor and acceptor atoms that share the **same residue index**
+    (``delta(di - ai) == 1``). This enforces in-register beta-sheet geometry,
+    mimicking the structural locking that occurs during amyloid aging.
+    Proline residues are excluded as they lack backbone NH groups. Self-pairs
+    (same residue donating and accepting) are excluded via ``addExclusion``.
+
+    The hydrogen bond potential takes the form:
+
+    .. code-block:: text
+
+        epsilon * (5*(sigma/r)^12 - 6*(sigma/r)^10) * step(cos3) * cos3 * delta(di-ai)
+
+    where ``r`` is the N···O distance, ``phi`` is the N-H···O angle, and
+    ``sigma = 0.29 nm``.
 
     Args:
-        system: openmm system object
-        res_list: list of residue indices for in-Register beta sheets
-        age: aging stength as HB force strength
-    
+        system (System): OpenMM ``System`` object to which the hydrogen bond
+                         force will be added.
+        top (Topology): OpenMM ``Topology`` object used to identify N, H, and O
+                        atoms and their residue indices.
+        res_list (list of int): Residue indices to include in the in-register
+                                hydrogen bond network.
+        age (float, optional): Aging strength scaling factor applied to the
+                               hydrogen bond energy (in kcal/mol). A value of
+                               ``1.0`` corresponds to 1 kcal/mol per bond.
+                               Default is ``1.0``.
+
     Returns:
-        openmm system
+        System: The modified OpenMM ``System`` object with the
+                ``inRegister HBForce`` added.
+
+    Example:
+        >>> from openmm.app import PDBFile, CharmmPsfFile
+        >>> from HyresBuilder import Aging
+        >>> psf = CharmmPsfFile("conf.psf")
+        >>> res_list = list(range(10, 40))  # residues 10-39 form the fibril core
+        >>> system = Aging.inRegisterHB(system, psf.topology, res_list, age=2.0)
     """
+    
     #for force in system.getForces():
     #    if force.getName() == "NonbondedForce":
     #        nbforce = force

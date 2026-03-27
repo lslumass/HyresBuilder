@@ -11,17 +11,39 @@ from openmm import *
 
 def posres_CA(system, pdb, residue_list=None, limited_range=None):
     """
-    CA positional resitraints based on resid list.
+    Apply positional restraints to CA atoms selected by residue index.
+
+    Adds a harmonic ``CustomExternalForce`` that restrains each selected CA atom
+    to its reference position in the PDB file with a spring constant of
+    200 kJ/mol/nm². Restraints can be further filtered to a specific atom index
+    range using ``limited_range``.
 
     Args:
-        system: openmm.System
-        pdb: openmm.app.PDBFile, PDBFile(pdb_file)
-        residue_list: list of residue index to be restrained
-        limited_range: tuple defined the index range of CA for restraint
-    
+        system (System): OpenMM ``System`` object to which the restraint force
+                         will be added.
+        pdb (PDBFile): OpenMM ``PDBFile`` object providing topology and reference
+                       positions (e.g. ``PDBFile('conf.pdb')``).
+        residue_list (list of int, optional): Residue indices to restrain.
+                                              If ``None``, no atoms are restrained.
+        limited_range (tuple of int, optional): ``(min_index, max_index)`` atom
+                                                index range. Only CA atoms within
+                                                this range are restrained.
+                                                If ``None``, all CA atoms in
+                                                ``residue_list`` are restrained.
+
     Returns:
-        no returns, system will be modified.
+        None. Modifies ``system`` in place by adding a ``Ca_position_restraint``
+        force.
+
+    Example:
+        >>> from openmm.app import PDBFile
+        >>> from HyresBuilder import addRestraints
+        >>> pdb = PDBFile("conf.pdb")
+        >>> addRestraints.posres_CA(system, pdb, residue_list=[1, 2, 3, 4, 5])
+        >>> addRestraints.posres_CA(system, pdb, residue_list=[1, 2, 3],
+        ...                         limited_range=(0, 500))
     """
+    
     # add restraint
     ### set position restraints CA atoms
     restraint = CustomExternalForce('kpos*((x-x0)^2+(y-y0)^2+(z-z0)^2)')
@@ -45,16 +67,31 @@ def posres_CA(system, pdb, residue_list=None, limited_range=None):
 
 def posres_CAs(system, pdb, grp):
     """
-    CA positional restraints based on atom index.
+    Apply positional restraints to CA atoms selected by atom index.
+
+    Adds a harmonic ``CustomExternalForce`` that restrains each atom in ``grp``
+    to its reference position in the PDB file with a spring constant of
+    200 kJ/mol/nm². Use this function when you already know the exact atom
+    indices to restrain, rather than selecting by residue ID.
 
     Args:
-        system: openmm.System
-        pdb: openmm.app.PDBFile, PDBFile(pdb_file)
-        grp: list of atom index of CA
+        system (System): OpenMM ``System`` object to which the restraint force
+                         will be added.
+        pdb (PDBFile): OpenMM ``PDBFile`` object providing topology and reference
+                       positions (e.g. ``PDBFile('conf.pdb')``).
+        grp (list of int): Atom indices to restrain.
 
     Returns:
-        no return, system will be modified.
+        None. Modifies ``system`` in place by adding a ``Ca_position_restraint``
+        force.
+
+    Example:
+        >>> from openmm.app import PDBFile
+        >>> from HyresBuilder import addRestraints
+        >>> pdb = PDBFile("conf.pdb")
+        >>> addRestraints.posres_CAs(system, pdb, grp=[0, 5, 10, 15])
     """
+
     # add restraint
     ### set position restraints CA atoms
     restraint = CustomExternalForce('kpos*((x-x0)^2+(y-y0)^2+(z-z0)^2)')
@@ -70,16 +107,37 @@ def posres_CAs(system, pdb, grp):
 
 def posre_amyloid(system, pdb, alignment_file):
     """
-    Specific restraints for amyloid.
+    Apply CA positional restraints to the structured core of an amyloid fibril.
+
+    Reads an alignment file (``alignment.ali``) to identify which residues are
+    present in the fibril core (non-``'-'`` positions in the alignment sequence).
+    Restraints are applied to CA atoms of those residues across all chains using
+    :func:`posres_CAs` with a spring constant of 200 kJ/mol/nm².
 
     Args:
-        system: openmm.System
-        pdb: openmm.app.PDBFile, PDBFile(pdb_file)
-        alignment_file: alignment.ali when build fibril
-    
+        system (System): OpenMM ``System`` object to which the restraint force
+                         will be added.
+        pdb (PDBFile): OpenMM ``PDBFile`` object providing topology and reference
+                       positions (e.g. ``PDBFile('conf.pdb')``).
+        alignment_file (str): Path to the ``alignment.ali`` file generated during
+                              fibril model building. The number of sequence blocks
+                              must match the number of chains in the PDB.
+
     Returns:
-        no return, system will be modified
+        None. Modifies ``system`` in place by adding positional restraints via
+        :func:`posres_CAs`.
+
+    Raises:
+        SystemExit: If the number of chains in ``pdb`` does not match the number
+                    of sequence blocks in ``alignment_file``.
+
+    Example:
+        >>> from openmm.app import PDBFile
+        >>> from HyresBuilder import addRestraints
+        >>> pdb = PDBFile("fibril.pdb")
+        >>> addRestraints.posre_amyloid(system, pdb, "alignment.ali")
     """
+
     with open(alignment_file, 'r') as f:
         lines = f.readlines()
     blocks = [index for index, line in enumerate(lines) if line.startswith('>')]
@@ -110,16 +168,37 @@ def posre_amyloid(system, pdb, alignment_file):
 
 def freeze_amyloid(system, pdb, alignment_file):
     """
-    Freeze amyloid through set atom mass of fibril core to zero.
+    Freeze the structured core of an amyloid fibril by setting atom masses to zero.
+
+    Reads an ``alignment.ali`` file to identify residues present in the fibril
+    core (non-``'-'`` positions in the alignment sequence). Sets the mass of
+    every atom in those residues to zero, effectively freezing them during
+    simulation. This is cheaper than positional restraints and guarantees no
+    drift of the fibril core.
 
     Args:
-        system: openmm.System
-        pdb: openmm.app.PDBFile, PDBFile(pdb_file)
-        alignment_file: alignment.ali when build fibril
+        system (System): OpenMM ``System`` object whose particle masses will be
+                         modified.
+        pdb (PDBFile): OpenMM ``PDBFile`` object providing topology information
+                       (e.g. ``PDBFile('fibril.pdb')``).
+        alignment_file (str): Path to the ``alignment.ali`` file generated during
+                              fibril model building. The number of sequence blocks
+                              must match the number of chains in the PDB.
 
     Returns:
-        no return, system will be modified.
+        None. Modifies ``system`` in place by setting particle masses to zero.
+
+    Raises:
+        SystemExit: If the number of chains in ``pdb`` does not match the number
+                    of sequence blocks in ``alignment_file``.
+
+    Example:
+        >>> from openmm.app import PDBFile
+        >>> from HyresBuilder import addRestraints
+        >>> pdb = PDBFile("fibril.pdb")
+        >>> addRestraints.freeze_amyloid(system, pdb, "alignment.ali")
     """
+
     with open(alignment_file, 'r') as f:
         lines = f.readlines()
     blocks = [index for index, line in enumerate(lines) if line.startswith('>')]
@@ -148,16 +227,32 @@ def freeze_amyloid(system, pdb, alignment_file):
 
 def comres_xyz(system, pdb, groups):
     """
-    Center of mass (COM) restraints at xyz dimensions.
+    Apply a center-of-mass (COM) restraint in all three (x, y, z) dimensions.
+
+    Computes the mass-weighted COM of the selected atoms from their reference
+    positions and adds a ``CustomCentroidBondForce`` that penalizes deviation
+    from that reference COM with a spring constant of 500 kJ/mol/nm². Periodic
+    boundary conditions are enabled. Use this to prevent drift of a molecular
+    group in all directions.
 
     Args:
-        system: openmm.System
-        pdb: openmm.app.PDBFile, PDBFile(pdb_file)
-        groups: list of atom index for com
+        system (System): OpenMM ``System`` object to which the restraint force
+                         will be added.
+        pdb (PDBFile): OpenMM ``PDBFile`` object providing topology and reference
+                       positions (e.g. ``PDBFile('conf.pdb')``).
+        groups (list of int): Atom indices whose COM will be restrained.
 
     Returns:
-        no return, add new force to system
+        None. Modifies ``system`` in place by adding a ``COM_xyz_restraint``
+        force.
+
+    Example:
+        >>> from openmm.app import PDBFile
+        >>> from HyresBuilder import addRestraints
+        >>> pdb = PDBFile("conf.pdb")
+        >>> addRestraints.comres_xyz(system, pdb, groups=[0, 1, 2, 3, 4])
     """
+
     # add COM restraint
     cds = pdb.getPositions(asNumpy=True)
     def com(grp):
@@ -185,16 +280,34 @@ def comres_xyz(system, pdb, groups):
 
 def comres_yz(system, pdb, groups):
     """
-    Center of mass (COM) restraints at yz dimensions.
+    Apply a center-of-mass (COM) restraint in the y and z dimensions only.
+
+    Computes the mass-weighted COM of the selected atoms from their reference
+    positions and adds a ``CustomCentroidBondForce`` that penalizes deviation
+    in the y and z directions with a spring constant of 500 kJ/mol/nm². The
+    x dimension is left unrestrained, allowing free movement along that axis.
+    Useful for slab or membrane simulations where lateral diffusion along x
+    should remain unhindered. Periodic boundary conditions are enabled.
 
     Args:
-        system: openmm.System
-        pdb: openmm.app.PDBFile, PDBFile(pdb_file)
-        groups: list of atom index for com
+        system (System): OpenMM ``System`` object to which the restraint force
+                         will be added.
+        pdb (PDBFile): OpenMM ``PDBFile`` object providing topology and reference
+                       positions (e.g. ``PDBFile('conf.pdb')``).
+        groups (list of int): Atom indices whose COM will be restrained in y/z.
 
     Returns:
-        no return, add new force to system
+        None. Modifies ``system`` in place by adding a ``COM_yz_restraint``
+        force.
+
+    Example:
+        >>> from openmm.app import PDBFile
+        >>> from HyresBuilder import addRestraints
+        >>> pdb = PDBFile("conf.pdb")
+        >>> addRestraints.comres_yz(system, pdb, groups=[0, 1, 2, 3, 4])
     """
+
+
     # add COM restraint
     cds = pdb.getPositions(asNumpy=True)
     def com(grp):

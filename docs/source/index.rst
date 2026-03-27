@@ -42,5 +42,6 @@ HyresBuilder documentation
    :maxdepth: 2
 
    quickstart
+   simulation
    citation
    api
