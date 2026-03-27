@@ -12,7 +12,8 @@ def split_chains(pdb):
                    "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
     rnas = ["ADE", "GUA", "CYT", "URA"]
     dnas = ["DAD", "DGU", "DCY", "DTH"]
-    mg, cal = ["MG+"], ["CA+"] 
+    mg, cal = ["MG+"], ["CA+"]
+
     def get_type(resname):
         chaintype = (
             'P' if resname in aas else
@@ -24,7 +25,7 @@ def split_chains(pdb):
         )
         return chaintype
 
-    currentID = None
+    currentKey = None
     atoms = []
     chains = []
     types = []
@@ -32,17 +33,21 @@ def split_chains(pdb):
         for line in f:
             if line.startswith('ATOM'):
                 chainid = line[21]
-                resname = line[17:20]
-                if chainid != currentID:
+                segid   = line[72:76].strip()  # segID, cols 73-76
+                resname = line[17:20].strip()
+                key = (chainid, segid)
+
+                if key != currentKey:
                     if atoms:
                         chains.append(atoms)
-                    currentID = chainid
+                    currentKey = key
                     types.append(get_type(resname))
                     atoms = [line]
                 else:
                     atoms.append(line)
         if atoms:
             chains.append(atoms)
+
     # save out each chain
     for i, (t, chain) in enumerate(zip(types, chains)):
         if t in ['P', 'R', 'D']:
@@ -50,7 +55,7 @@ def split_chains(pdb):
         elif t in ['M', 'C']:
             tmp_pdb = f"psfgentmp_{t}.pdb"
         else:
-            print('Unkown molecule type')
+            print('Unknown molecule type')
             exit(1)
 
         with open(tmp_pdb, 'w') as f:
