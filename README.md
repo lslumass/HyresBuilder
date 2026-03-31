@@ -1,4 +1,4 @@
-# HyresBuilder: for running HyRes and iCon simulation.   
+# HyresBuilder: for running HyRes simulation.   
 This package is built for the simulation of HyRes protein simulation.    
 **Main functions:**
 1. Construct HyRes peptide structure from sequence or convert atomistic structure into HyRes model; 
