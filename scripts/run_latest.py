@@ -40,8 +40,6 @@ pressure = 1*unit.atmosphere                                    # pressure in NP
 friction = 0.1/unit.picosecond                                  # friction coefficient in Langevin
 
 ### set up system and simulation
-# utils.setup(model, parser, params, dt, pressure, friction, gpu_id)
-# model: select from 'protein', 'RNA', 'mix'
 # default set: pressure = 1*unit.atmosphere, friction = 0.1/unit.picosecond, gpu_id = "0"
 system, sim = utils.setup(args=args, dt=dt_equil)
 
