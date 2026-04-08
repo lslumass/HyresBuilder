@@ -548,9 +548,9 @@ def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecon
 
 
 ## functions for umbrella sampling
-def US_initial_windows(system, sim, group1, group2, fc_pull=1000.0, v_pull=0.01, total_steps=100000, increment_steps=2):
+def US_initial_windows(system, sim, group1, group2, r0, fc_pull=1000.0, v_pull=0.01, total_steps=100000, increment_steps=2):
     """
-    SMD to enforce the groups distance to around 0.
+    SMD to steer the COM distance between two atom groups down to r0.
 
     Parameters
     ----------
@@ -558,24 +558,25 @@ def US_initial_windows(system, sim, group1, group2, fc_pull=1000.0, v_pull=0.01,
         The OpenMM System object to which the pulling force will be added.
     sim : openmm.app.Simulation
         The running Simulation; its context is reinitialized after the force
-        is added and its integrator step size is used to advance r0.
+        is added and its integrator step size is used to advance the anchor.
     group1 : list[int]
         Atom indices for the first centroid group (e.g. the protein).
     group2 : list[int]
         Atom indices for the second centroid group (e.g. the ligand).
+    r0 : float
+        Target COM distance / stopping criterion (nanometers). Must be >= 0.
     fc_pull : float, optional
-        Harmonic force constant for the pulling bias
-        (kJ mol⁻¹ nm⁻², default 1000.0).
+        Harmonic force constant (kJ mol⁻¹ nm⁻², default 1000.0).
     v_pull : float, optional
-        Pulling velocity used to advance the anchor point
-        (nm ps⁻¹, default 0.01).
+        Pulling velocity (nm ps⁻¹, default 0.01).
     total_steps : int, optional
-        Total number of integration steps to run during SMD (default 100 000).
-
-    Returns
-    -------
-    None; writes ``init.pdb`` to the current directory with the final coordinates after SMD.
+        Maximum integration steps (default 100 000).
+    increment_steps : int, optional
+        Steps between CV checks and anchor updates (default 2).
     """
+    if float(r0) < 0:
+        raise ValueError(f'r0 must be >= 0 nm, got {r0}')
+
     # --- Collective variable: COM distance between the two groups -----------
     cv = CustomCentroidBondForce(2, 'r; r = distance(g1, g2)')
     grp1, grp2 = cv.addGroup(group1), cv.addGroup(group2)
@@ -586,32 +587,61 @@ def US_initial_windows(system, sim, group1, group2, fc_pull=1000.0, v_pull=0.01,
     v_pull  = v_pull  * unit.nanometers / unit.picosecond
     dt      = sim.integrator.getStepSize()
 
+    r0_nm = float(r0)
+
     # --- Harmonic bias -------------------------------------------------------
+    # Force is added with a placeholder r0; anchor is corrected to current CV
+    # immediately after reinitialisation (before any steps are taken).
     pullingForce = CustomCVForce('0.5*fc_pull*(cv-r0)^2')
     pullingForce.addGlobalParameter('fc_pull', fc_pull)
-    pullingForce.addGlobalParameter('r0', 0.0 * unit.nanometers)
+    pullingForce.addGlobalParameter('r0', r0_nm * unit.nanometers)
     pullingForce.addCollectiveVariable('cv', cv)
-    force_index = system.addForce(pullingForce)   # returned for optional cleanup
+    force_index = system.addForce(pullingForce)
     sim.context.reinitialize(preserveState=True)
 
-    # --- SMD pulling loop ----------------------------------------------------
-    print("SMD pulling", pullingForce.getCollectiveVariableValues(sim.context))
-    log_every = max(1, 5000 // increment_steps)
-    for i in range(total_steps // increment_steps):
-        sim.step(increment_steps)
-        current_cv_value = pullingForce.getCollectiveVariableValues(sim.context)[0]
-        print(current_cv_value)
+    # --- Read current CV and set anchor to current distance -----------------
+    current_cv_value = pullingForce.getCollectiveVariableValues(sim.context)[0]
+    print(f'SMD start: r = {current_cv_value:.4f} nm  target r0 = {r0_nm:.4f} nm')
 
-        if current_cv_value <= 0.1:
-            print(f'Initial window reached: r = {current_cv_value:.4f} nm at step {i*2}')
-            state = sim.context.getState(getPositions=True, enforcePeriodicBox=False)
-            coords = state.getPositions()
-            with open(f'init.pdb', 'w') as outfile:
-                PDBFile.writeFile(sim.topology, coords, outfile)
-            break
-    
-    if current_cv_value > 0.1:
-        print(f'Warning: Initial window not reached after {total_steps} steps. Final r = {current_cv_value:.4f} nm')
+    if current_cv_value <= r0_nm:
+        print(f'CV already at target ({current_cv_value:.4f} nm ≤ {r0_nm:.4f} nm). Skipping SMD.')
+    else:
+        anchor_nm  = current_cv_value                       # plain float, for clamping
+        anchor_qty = anchor_nm * unit.nanometers
+        sim.context.setParameter('r0', anchor_qty)
+
+        step_displacement_nm = (v_pull * dt * increment_steps).value_in_unit(unit.nanometers)
+
+        log_every = max(1, 5000 // increment_steps)
+        reached   = False
+
+        for i in range(total_steps // increment_steps):
+            sim.step(increment_steps)
+            current_cv_value = pullingForce.getCollectiveVariableValues(sim.context)[0]
+
+            anchor_nm  = max(anchor_nm - step_displacement_nm, r0_nm)
+            anchor_qty = anchor_nm * unit.nanometers
+            sim.context.setParameter('r0', anchor_qty)
+
+            if i % log_every == 0:
+                print(f'step {i * increment_steps:>8d}  |  '
+                      f'r = {current_cv_value:.4f} nm  |  anchor = {anchor_nm:.4f} nm')
+
+            if current_cv_value <= r0_nm:
+                print(f'Target reached: r = {current_cv_value:.4f} nm '
+                      f'at step {i * increment_steps}')
+                reached = True
+                break
+
+        if not reached:
+            print(f'Warning: target r0 not reached after {total_steps} steps. '
+                  f'Final r = {current_cv_value:.4f} nm')
+
+    # --- Always write the final structure -----------------------------------
+    state  = sim.context.getState(getPositions=True, enforcePeriodicBox=False)
+    coords = state.getPositions()
+    with open('init.pdb', 'w') as outfile:
+        PDBFile.writeFile(sim.topology, coords, outfile)
 
 
 def US_create_windows(system, sim, group1, group2, r0, r1, window_num, fc_pull=1000.0, v_pull=0.01, total_steps = 100000, increment_steps = 10):
