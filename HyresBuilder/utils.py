@@ -659,6 +659,10 @@ def US_create_windows(system, sim, group1, group2, r0, r1, window_num, fc_pull=1
             state = sim.context.getState(getPositions=True, enforcePeriodicBox=False)
             window_coords.append(state.getPositions())
             window_index += 1
+        
+        if window_index >= window_num:
+            print('All windows captured.')
+            break
 
     # --- Warn if simulation ended before all windows were reached ------------
     if window_index < window_num:
