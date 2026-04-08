@@ -278,55 +278,60 @@ def comres_xyz(system, pdb, groups):
     system.addForce(com_xyz)
 
 
-def comres_yz(system, pdb, groups):
+def comres_2d(system, dimension, groups, pdb_path, k=1000*kilojoule_per_mole/unit.nanometer**2):
     """
-    Apply a center-of-mass (COM) restraint in the y and z dimensions only.
+    Add a 2D harmonic COM restraint to the system, leaving one axis free.
 
-    Computes the mass-weighted COM of the selected atoms from their reference
-    positions and adds a ``CustomCentroidBondForce`` that penalizes deviation
-    in the y and z directions with a spring constant of 500 kJ/mol/nm². The
-    x dimension is left unrestrained, allowing free movement along that axis.
-    Useful for slab or membrane simulations where lateral diffusion along x
-    should remain unhindered. Periodic boundary conditions are enabled.
+    Parameters
+    ----------
+    system    : openmm.System
+    dimension : str — one of 'xy', 'xz', or 'yz'
+                The two axes that are restrained; the third is left free.
+    groups    : list[int] — atom indices forming the restrained group
+    pdb_path  : str — path to the PDB file used to compute the initial COM
+    k         : force constant (default 1000 kJ/mol/nm²)
 
-    Args:
-        system (System): OpenMM ``System`` object to which the restraint force
-                         will be added.
-        pdb (PDBFile): OpenMM ``PDBFile`` object providing topology and reference
-                       positions (e.g. ``PDBFile('conf.pdb')``).
-        groups (list of int): Atom indices whose COM will be restrained in y/z.
-
-    Returns:
-        None. Modifies ``system`` in place by adding a ``COM_yz_restraint``
-        force.
-
-    Example:
-        >>> from openmm.app import PDBFile
-        >>> from HyresBuilder import addRestraints
-        >>> pdb = PDBFile("conf.pdb")
-        >>> addRestraints.comres_yz(system, pdb, groups=[0, 1, 2, 3, 4])
+    Returns
+    -------
+    openmm.CustomCentroidBondForce added to system
     """
+    dimension = dimension.lower()
+    if dimension not in ('xy', 'xz', 'yz'):
+        raise ValueError(f"dimension must be 'xy', 'xz', or 'yz', got '{dimension}'")
 
-
-    # add COM restraint
+    # ── Read positions from PDB ────────────────────────────────────────────────
+    pdb = PDBFile(pdb_path)
     cds = pdb.getPositions(asNumpy=True)
-    def com(grp):
-        cx_sum, cy_sum, cz_sum, m_sum = quantity.Quantity(0.0, unit.daltons*unit.nanometers), quantity.Quantity(0.0, unit.daltons*unit.nanometers), quantity.Quantity(0.0, unit.daltons*unit.nanometers), quantity.Quantity(0.0, unit.daltons)
-        for i in grp:
-            cx_sum += system.getParticleMass(i)*cds[i,0]
-            cy_sum += system.getParticleMass(i)*cds[i,1]
-            cz_sum += system.getParticleMass(i)*cds[i,2]
-            m_sum += system.getParticleMass(i)
-        cx, cy, cz = cx_sum/m_sum, cy_sum/m_sum, cz_sum/m_sum
-        return [cx, cy, cz]
 
-    print('com of selected residues:', com(groups))
-    com_yz = CustomCentroidBondForce(1, 'kyz*((y1 - cy)^2 + (z1 - cz)^2);')
-    com_yz.setName("COM_yz_restraint")
-    com_yz.addGroup(groups)
-    com_yz.addGlobalParameter('kyz', 500.0*kilojoule_per_mole/(unit.nanometer**2))
-    com_yz.addPerBondParameter('cy')
-    com_yz.addPerBondParameter('cz')
-    com_yz.setUsesPeriodicBoundaryConditions(True)
-    com_yz.addBond([0], com(groups)[1:])
-    system.addForce(com_yz)
+    # ── Compute mass-weighted COM ──────────────────────────────────────────────
+    cx_sum = quantity.Quantity(0.0, unit.dalton * unit.nanometer)
+    cy_sum = quantity.Quantity(0.0, unit.dalton * unit.nanometer)
+    cz_sum = quantity.Quantity(0.0, unit.dalton * unit.nanometer)
+    m_sum  = quantity.Quantity(0.0, unit.dalton)
+
+    for i in groups:
+        m = system.getParticleMass(i)
+        cx_sum += m * cds[i, 0]
+        cy_sum += m * cds[i, 1]
+        cz_sum += m * cds[i, 2]
+        m_sum  += m
+    cx, cy, cz = cx_sum / m_sum, cy_sum / m_sum, cz_sum / m_sum
+
+    # ── Build energy expression ────────────────────────────────────────────────
+    expr_map = {
+        'yz': ('k2d * pointdistance(x1, y1, z1, x1, cy, cz)^2', {'cy': cy, 'cz': cz}),
+        'xz': ('k2d * pointdistance(x1, y1, z1, cx, y1, cz)^2', {'cx': cx, 'cz': cz}),
+        'xy': ('k2d * pointdistance(x1, y1, z1, cx, cy, z1)^2', {'cx': cx, 'cy': cy}),
+    }
+    expr, values = expr_map[dimension]
+
+    # ── Build force ────────────────────────────────────────────────────────────
+    force_2d = CustomCentroidBondForce(1, expr)
+    force_2d.addGroup(groups)
+    force_2d.addGlobalParameter('k2d', k)
+    for name, value in values.items():
+        force_2d.addGlobalParameter(name, value)
+    force_2d.setUsesPeriodicBoundaryConditions(True)
+    force_2d.addBond([0])
+
+    system.addForce(force_2d)

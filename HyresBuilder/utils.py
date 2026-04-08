@@ -545,3 +545,217 @@ def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecon
     sim.context.setVelocitiesToTemperature(temperature)
     print(f'Langevin, CUDA, {temperature}')
     return system, sim
+
+
+def US_create_windows(system, sim, group1, group2, r0, r1, window_num, fc_pull=1000.0, v_pull=0.01, total_steps = 100000, increment_steps = 10):
+    """
+    Generate umbrella sampling window structures via Steered Molecular Dynamics (SMD).
+
+    A CustomCentroidBondForce collective variable (CV) is defined as the
+    center-of-mass distance between two atom groups. A harmonic bias
+    (CustomCVForce) is then applied and its anchor point r0 is advanced at
+    constant velocity v_pull, steering the system from r0 to r1. Whenever
+    the instantaneous CV crosses the next window target, the current
+    coordinates are saved as a PDB file (window_0.pdb, window_1.pdb, …).
+
+    Parameters
+    ----------
+    system : openmm.System
+        The OpenMM System object to which the pulling force will be added.
+    sim : openmm.app.Simulation
+        The running Simulation; its context is reinitialized after the force
+        is added and its integrator step size is used to advance r0.
+    group1 : list[int]
+        Atom indices for the first centroid group (e.g. the protein).
+    group2 : list[int]
+        Atom indices for the second centroid group (e.g. the ligand).
+    r0 : float
+        Starting CV value / initial anchor position (nanometers).
+    r1 : float
+        Ending CV value; the furthest window target (nanometers).
+    window_num : int
+        Number of evenly-spaced windows between r0 and r1 (inclusive).
+    fc_pull : float, optional
+        Harmonic force constant for the pulling bias
+        (kJ mol⁻¹ nm⁻², default 1000.0).
+    v_pull : float, optional
+        Pulling velocity used to advance the anchor point
+        (nm ps⁻¹, default 0.01).
+    total_steps : int, optional
+        Total number of integration steps to run during SMD (default 100 000).
+    increment_steps : int, optional
+        Steps between CV checks and anchor updates (default 10).
+
+    Returns
+    -------
+        windows : numpy.ndarray
+            Array of window target CV values (nanometers) corresponding to the saved structures.
+        Writes window_<i>.pdb files to the current directory; one file per
+        captured window. Fewer than window_num files are written if the
+        simulation ends before all windows are reached.
+
+    Notes
+    -----
+    * The pulling force is permanently added to `system`. Call
+      ``system.removeForce(force_index)`` with the returned index if you
+      intend to reuse the system object.
+    * Coordinates are saved with ``enforcePeriodicBox=False`` so molecules
+      are kept whole across PBC boundaries.
+    * Window spacing is uniform in CV space; actual sampled windows may
+      differ slightly because structures are captured when the CV first
+      *crosses* each target.
+    * Steps that do not divide evenly into increment_steps are silently
+      dropped. Ensure ``total_steps % increment_steps == 0`` if exact step
+      counts matter.
+    """
+    print('#create windows:')
+
+    # --- Collective variable: COM distance between the two groups -----------
+    cv = CustomCentroidBondForce(2, 'r; r = distance(g1, g2)')
+    grp1, grp2 = cv.addGroup(group1), cv.addGroup(group2)
+    cv.addBond([grp1, grp2])
+
+    # --- Attach units --------------------------------------------------------
+    fc_pull = fc_pull * kilojoule_per_mole / (unit.nanometers ** 2)
+    v_pull  = v_pull  * unit.nanometers / unit.picosecond
+    dt      = sim.integrator.getStepSize()
+
+    r0_nm = float(r0)   
+    r1_nm = float(r1)
+    r0_qty = r0_nm * unit.nanometers  # Quantity used by OpenMM context parameter
+
+    # --- Harmonic bias -------------------------------------------------------
+    pullingForce = CustomCVForce('0.5*fc_pull*(cv-r0)^2')
+    pullingForce.addGlobalParameter('fc_pull', fc_pull)
+    pullingForce.addGlobalParameter('r0', r0_qty)
+    pullingForce.addCollectiveVariable('cv', cv)
+    force_index = system.addForce(pullingForce)   # returned for optional cleanup
+    sim.context.reinitialize(preserveState=True)
+
+    # --- Window targets (plain floats in nm) ---------------------------------
+    windows       = np.linspace(r0_nm, r1_nm, window_num)
+    window_coords = []
+    window_index  = 0
+
+    # --- SMD pulling loop ----------------------------------------------------
+    print("SMD pulling", pullingForce.getCollectiveVariableValues(sim.context))
+    log_every = max(1, 5000 // increment_steps)
+    for i in range(total_steps // increment_steps):
+        sim.step(increment_steps)
+        current_cv_value = pullingForce.getCollectiveVariableValues(sim.context)[0]
+
+        if i % log_every == 0:
+            print(f'r0 = {r0_nm:.4f} nm  |  r = {current_cv_value:.4f} nm')
+
+        # Advance the anchor position
+        step_displacement = v_pull * dt * increment_steps          # Quantity (nm)
+        r0_nm  += step_displacement.value_in_unit(unit.nanometers) # keep float in sync
+        r0_qty += step_displacement                                 # keep Quantity in sync
+        sim.context.setParameter('r0', r0_qty)
+
+        # Capture window structure when CV crosses the next target
+        if window_index < len(windows) and current_cv_value >= windows[window_index]:
+            print(f'saving window {window_index}: target={windows[window_index]:.4f} nm  r={current_cv_value:.4f} nm')
+            state = sim.context.getState(getPositions=True, enforcePeriodicBox=False)
+            window_coords.append(state.getPositions())
+            window_index += 1
+
+    # --- Warn if simulation ended before all windows were reached ------------
+    if window_index < window_num:
+        print(f'WARNING: only {window_index}/{window_num} windows captured. '
+              f'Consider increasing total_steps or decreasing v_pull.')
+
+    # --- Write window PDB files ----------------------------------------------
+    for i, coords in enumerate(window_coords):
+        with open(f'window_{i}.pdb', 'w') as outfile:
+            PDBFile.writeFile(sim.topology, coords, outfile)
+    
+    return windows
+
+
+def US_collect_cv(system, sim, group1, group2, window_index, windows, fc_pull=300.0, total_steps = 20000000, record_steps = 1000):
+    """
+    run umbrella sampling for each window and collect CV values.
+
+    Parameters
+    ----------
+    system : openmm.System
+        The OpenMM System object to which the pulling force will be added.
+    sim : openmm.app.Simulation
+        The running Simulation; its context is reinitialized after the force
+        is added and its integrator step size is used to advance r0.
+    group1 : list[int]
+        Atom indices for the first centroid group (e.g. the protein).
+    group2 : list[int]
+        Atom indices for the second centroid group (e.g. the ligand).
+    window_index : int
+        Index of the current window to sample.
+    windows : numpy.ndarray
+        Array of window target CV values (nanometers).
+    fc_pull : float, optional
+        Harmonic force constant for the pulling bias
+        (kJ mol⁻¹ nm⁻², default 300.0).
+    total_steps : int, optional
+        Total number of integration steps to run the production simulation for each window (default 20000000).
+    record_steps : int, optional
+        Steps between CV recordings (default 1000).
+
+    Returns
+    -------
+    None
+        Writes cv_values_window_{window_index}.txt.
+    """
+    print("define the CV:")
+    cv = CustomCentroidBondForce(2, 'r; r = distance(g1, g2)')
+    grp1, grp2 = cv.addGroup(group1), cv.addGroup(group2)
+    cv.addBond([grp1, grp2])
+
+    ### pulling force 
+    fc_pull = fc_pull*kilojoule_per_mole/(unit.nanometers**2)
+
+    ### running windows
+    print('running window', window_index)
+    r0 = windows[window_index]*unit.nanometers
+
+    pullingForce = CustomCVForce('0.5*fc_pull*(cv-r0)^2')
+    pullingForce.addGlobalParameter('fc_pull', fc_pull)
+    pullingForce.addGlobalParameter('r0', r0)
+    pullingForce.addCollectiveVariable('cv', cv)
+    system.addForce(pullingForce)
+    sim.context.reinitialize(preserveState=True)
+    sim.context.setParameter('r0', r0)
+    sim.step(1000)
+
+    # data collection
+    cv_values = []
+    for i in range(total_steps//record_steps):
+        sim.step(record_steps)
+        current_cv_value = pullingForce.getCollectiveVariableValues(sim.context)
+        cv_values.append([i, current_cv_value[0]])
+    np.savetxt(f'cv_values_window_{window_index}.txt', np.array(cv_values))
+    print('Completed window', window_index)
+
+
+def US_gen_metafile(windows, fc_pull=300.0):
+    """
+    Generate a metafile (metafile.txt) that lists the CV values file, window target, and force constant for each umbrella sampling window.
+
+    Parameters
+    ----------
+    windows : numpy.ndarray
+        Array of window target CV values (nanometers) corresponding to the saved structures.
+    fc_pull : float, optional
+        Harmonic force constant used in the umbrella sampling (kJ mol⁻¹ nm⁻², default 300.0).
+    
+    Returns
+    -------
+    None
+        Writes metafile.txt with lines formatted as: "cv_values_window_{i}.txt {window_target} {fc_pull}\n" for each window index i.
+    """
+    metafilelines = []
+    for i in range(len(windows)):
+        metafileline = f'cv_values_window_{i}.txt {windows[i]} {fc_pull}\n'
+        metafilelines.append(metafileline)
+
+    with open("metafile.txt", "w") as f:
+        f.writelines(metafilelines)
