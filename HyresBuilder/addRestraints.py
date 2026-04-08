@@ -278,7 +278,7 @@ def comres_xyz(system, pdb, groups):
     system.addForce(com_xyz)
 
 
-def comres_2d(system, dimension, groups, pdb_path, k=1000*kilojoule_per_mole/unit.nanometer**2):
+def comres_2d(system, dimension, groups, pdb_path, k=1000):
     """
     Add a 2D harmonic COM restraint to the system, leaving one axis free.
 
@@ -328,7 +328,7 @@ def comres_2d(system, dimension, groups, pdb_path, k=1000*kilojoule_per_mole/uni
     # ── Build force ────────────────────────────────────────────────────────────
     force_2d = CustomCentroidBondForce(1, expr)
     force_2d.addGroup(groups)
-    force_2d.addGlobalParameter('k2d', k)
+    force_2d.addGlobalParameter('k2d', k*kilojoule_per_mole/(unit.nanometer**2))
     for name, value in values.items():
         force_2d.addGlobalParameter(name, value)
     force_2d.setUsesPeriodicBoundaryConditions(True)

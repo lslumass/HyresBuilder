@@ -750,7 +750,7 @@ def US_gen_metafile(windows, fc_pull=300.0):
     Returns
     -------
     None
-        Writes metafile.txt with lines formatted as: "cv_values_window_{i}.txt {window_target} {fc_pull}\n" for each window index i.
+        Writes metafile.txt with lines formatted as: "cv_values_window_{i}.txt {window_target} {fc_pull}" for each window index i.
     """
     metafilelines = []
     for i in range(len(windows)):
