@@ -278,7 +278,7 @@ def comres_xyz(system, pdb, groups):
     system.addForce(com_xyz)
 
 
-def comres_2d(system, dimension, groups, pdb_path, k=1000):
+def comres_2d(system, dimension, groups, pdb, k=1000):
     """
     Add a 2D harmonic COM restraint to the system, leaving one axis free.
 
@@ -288,7 +288,7 @@ def comres_2d(system, dimension, groups, pdb_path, k=1000):
     dimension : str — one of 'xy', 'xz', or 'yz'
                 The two axes that are restrained; the third is left free.
     groups    : list[int] — atom indices forming the restrained group
-    pdb_path  : str — path to the PDB file used to compute the initial COM
+    pdb       : openmm.app.PDBFile — PDB file used to compute the initial COM
     k         : force constant (default 1000 kJ/mol/nm²)
 
     Returns
@@ -300,7 +300,6 @@ def comres_2d(system, dimension, groups, pdb_path, k=1000):
         raise ValueError(f"dimension must be 'xy', 'xz', or 'yz', got '{dimension}'")
 
     # ── Read positions from PDB ────────────────────────────────────────────────
-    pdb = PDBFile(pdb_path)
     cds = pdb.getPositions(asNumpy=True)
 
     # ── Compute mass-weighted COM ──────────────────────────────────────────────
