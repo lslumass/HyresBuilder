@@ -548,7 +548,7 @@ def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecon
 
 
 ## functions for umbrella sampling
-def US_initial_windows(system, sim, group1, group2, fc_pull=1000.0, v_pull=0.01, total_steps = 100000):
+def US_initial_windows(system, sim, group1, group2, fc_pull=1000.0, v_pull=0.01, total_steps=100000, increment_steps=2):
     """
     SMD to enforce the groups distance to around 0.
 
@@ -596,9 +596,11 @@ def US_initial_windows(system, sim, group1, group2, fc_pull=1000.0, v_pull=0.01,
 
     # --- SMD pulling loop ----------------------------------------------------
     print("SMD pulling", pullingForce.getCollectiveVariableValues(sim.context))
-    for i in range(total_steps):
-        sim.step(2)
+    log_every = max(1, 5000 // increment_steps)
+    for i in range(total_steps // increment_steps):
+        sim.step(increment_steps)
         current_cv_value = pullingForce.getCollectiveVariableValues(sim.context)[0]
+        print(current_cv_value)
 
         if current_cv_value <= 0.1:
             print(f'Initial window reached: r = {current_cv_value:.4f} nm at step {i*2}')
