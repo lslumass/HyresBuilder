@@ -548,7 +548,7 @@ def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecon
 
 
 ## functions for umbrella sampling
-def US_initial_windows(system, sim, group1, group2, r0, fc_pull=1000.0, v_pull=0.01, total_steps=100000, increment_steps=2):
+def US_initial_windows(system, sim, group1, group2, r0, rcut=0.5, fc_pull=1000.0, v_pull=0.01, total_steps=100000, increment_steps=2):
     """
     SMD to steer the COM distance between two atom groups down to r0.
 
@@ -569,10 +569,8 @@ def US_initial_windows(system, sim, group1, group2, r0, fc_pull=1000.0, v_pull=0
     group2 : list[int]
         Atom indices for the second centroid group (e.g. the ligand).
     r0 : float
-        Target COM-COM distance / stopping criterion (nanometers). Must be
-        >= 0. This is a center-of-mass distance, not an atom-atom distance —
-        values well below 0.3 nm are physically meaningful depending on the
-        size and geometry of the two groups.
+    rcut : float
+        Target COM-COM distance / stopping criterion (nanometers). SMD stops when cv <= r0+rcut
     fc_pull : float, optional
         Harmonic force constant (kJ mol⁻¹ nm⁻², default 1000.0).
     v_pull : float, optional
@@ -657,7 +655,7 @@ def US_initial_windows(system, sim, group1, group2, r0, fc_pull=1000.0, v_pull=0
                           f'Check for conflicting forces via system.getForces().')
                 cv_at_last_check = current_cv_value
 
-            if current_cv_value <= (r0_nm + 0.5):
+            if current_cv_value <= (r0_nm + rcut):
                 print(f'Target reached: r = {current_cv_value:.4f} nm '
                       f'at step {i * increment_steps}')
                 reached = True
