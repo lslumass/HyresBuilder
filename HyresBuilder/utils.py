@@ -657,7 +657,7 @@ def US_initial_windows(system, sim, group1, group2, r0, fc_pull=1000.0, v_pull=0
                           f'Check for conflicting forces via system.getForces().')
                 cv_at_last_check = current_cv_value
 
-            if current_cv_value <= r0_nm:
+            if current_cv_value <= (r0_nm + 0.5):
                 print(f'Target reached: r = {current_cv_value:.4f} nm '
                       f'at step {i * increment_steps}')
                 reached = True
