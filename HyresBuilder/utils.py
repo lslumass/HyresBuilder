@@ -552,6 +552,11 @@ def US_initial_windows(system, sim, group1, group2, r0, fc_pull=1000.0, v_pull=0
     """
     SMD to steer the COM distance between two atom groups down to r0.
 
+    The harmonic anchor starts at the current CV value and is stepped toward
+    r0 at velocity v_pull. The anchor is clamped at r0 so it never overshoots.
+    The simulation stops early as soon as the CV reaches or crosses r0. The
+    final structure is always written to ``init.pdb`` regardless of outcome.
+
     Parameters
     ----------
     system : openmm.System
@@ -564,7 +569,10 @@ def US_initial_windows(system, sim, group1, group2, r0, fc_pull=1000.0, v_pull=0
     group2 : list[int]
         Atom indices for the second centroid group (e.g. the ligand).
     r0 : float
-        Target COM distance / stopping criterion (nanometers). Must be >= 0.
+        Target COM-COM distance / stopping criterion (nanometers). Must be
+        >= 0. This is a center-of-mass distance, not an atom-atom distance —
+        values well below 0.3 nm are physically meaningful depending on the
+        size and geometry of the two groups.
     fc_pull : float, optional
         Harmonic force constant (kJ mol⁻¹ nm⁻², default 1000.0).
     v_pull : float, optional
@@ -573,6 +581,10 @@ def US_initial_windows(system, sim, group1, group2, r0, fc_pull=1000.0, v_pull=0
         Maximum integration steps (default 100 000).
     increment_steps : int, optional
         Steps between CV checks and anchor updates (default 2).
+
+    Returns
+    -------
+    None
     """
     if float(r0) < 0:
         raise ValueError(f'r0 must be >= 0 nm, got {r0}')
@@ -590,8 +602,8 @@ def US_initial_windows(system, sim, group1, group2, r0, fc_pull=1000.0, v_pull=0
     r0_nm = float(r0)
 
     # --- Harmonic bias -------------------------------------------------------
-    # Force is added with a placeholder r0; anchor is corrected to current CV
-    # immediately after reinitialisation (before any steps are taken).
+    # Anchor is set to the placeholder r0 here; it is immediately corrected to
+    # current_cv_value after reinitialisation, before any steps are taken.
     pullingForce = CustomCVForce('0.5*fc_pull*(cv-r0)^2')
     pullingForce.addGlobalParameter('fc_pull', fc_pull)
     pullingForce.addGlobalParameter('r0', r0_nm * unit.nanometers)
@@ -601,24 +613,31 @@ def US_initial_windows(system, sim, group1, group2, r0, fc_pull=1000.0, v_pull=0
 
     # --- Read current CV and set anchor to current distance -----------------
     current_cv_value = pullingForce.getCollectiveVariableValues(sim.context)[0]
-    print(f'SMD start: r = {current_cv_value:.4f} nm  target r0 = {r0_nm:.4f} nm')
+    print(f'SMD start: r = {current_cv_value:.4f} nm  |  target r0 = {r0_nm:.4f} nm  '
+          f'|  force_index = {force_index}')
 
     if current_cv_value <= r0_nm:
-        print(f'CV already at target ({current_cv_value:.4f} nm ≤ {r0_nm:.4f} nm). Skipping SMD.')
+        print(f'CV already at target ({current_cv_value:.4f} nm <= {r0_nm:.4f} nm). Skipping SMD.')
     else:
-        anchor_nm  = current_cv_value                       # plain float, for clamping
+        # Anchor starts at the current CV — not at r0 — to avoid a large
+        # initial force spike from the full pulling distance.
+        anchor_nm  = current_cv_value
         anchor_qty = anchor_nm * unit.nanometers
         sim.context.setParameter('r0', anchor_qty)
 
+        # Constant per-increment displacement — computed once outside the loop.
         step_displacement_nm = (v_pull * dt * increment_steps).value_in_unit(unit.nanometers)
-
-        log_every = max(1, 5000 // increment_steps)
-        reached   = False
+        log_every            = max(1, 5000  // increment_steps)
+        stall_check_every    = max(1, 20000 // increment_steps)
+        stall_threshold      = step_displacement_nm * stall_check_every * 0.05  # 5% of expected travel
+        cv_at_last_check     = current_cv_value
+        reached              = False
 
         for i in range(total_steps // increment_steps):
             sim.step(increment_steps)
             current_cv_value = pullingForce.getCollectiveVariableValues(sim.context)[0]
 
+            # Advance anchor toward r0, clamped so it never overshoots.
             anchor_nm  = max(anchor_nm - step_displacement_nm, r0_nm)
             anchor_qty = anchor_nm * unit.nanometers
             sim.context.setParameter('r0', anchor_qty)
@@ -627,6 +646,17 @@ def US_initial_windows(system, sim, group1, group2, r0, fc_pull=1000.0, v_pull=0
                 print(f'step {i * increment_steps:>8d}  |  '
                       f'r = {current_cv_value:.4f} nm  |  anchor = {anchor_nm:.4f} nm')
 
+            # Stall detection: if the CV has barely moved over a long window,
+            # almost always means a conflicting force is cancelling the pull.
+            if i > 0 and i % stall_check_every == 0:
+                cv_change = abs(cv_at_last_check - current_cv_value)
+                if cv_change < stall_threshold:
+                    print(f'WARNING: CV moved only {cv_change:.6f} nm over the last '
+                          f'{stall_check_every * increment_steps} steps '
+                          f'(expected ~{step_displacement_nm * stall_check_every:.4f} nm). '
+                          f'Check for conflicting forces via system.getForces().')
+                cv_at_last_check = current_cv_value
+
             if current_cv_value <= r0_nm:
                 print(f'Target reached: r = {current_cv_value:.4f} nm '
                       f'at step {i * increment_steps}')
@@ -634,15 +664,17 @@ def US_initial_windows(system, sim, group1, group2, r0, fc_pull=1000.0, v_pull=0
                 break
 
         if not reached:
-            print(f'Warning: target r0 not reached after {total_steps} steps. '
-                  f'Final r = {current_cv_value:.4f} nm')
+            print(f'WARNING: target r0 not reached after {total_steps} steps. '
+                  f'Final r = {current_cv_value:.4f} nm. '
+                  f'If the CV barely moved, check for conflicting CustomCVForces '
+                  f'on the system and remove them before retrying.')
 
     # --- Always write the final structure -----------------------------------
     state  = sim.context.getState(getPositions=True, enforcePeriodicBox=False)
     coords = state.getPositions()
     with open('init.pdb', 'w') as outfile:
         PDBFile.writeFile(sim.topology, coords, outfile)
-
+        
 
 def US_create_windows(system, sim, group1, group2, r0, r1, window_num, fc_pull=1000.0, v_pull=0.01, total_steps = 100000, increment_steps = 10):
     """
