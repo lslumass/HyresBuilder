@@ -16,3 +16,4 @@ API Reference
    api/addRestraints
    api/Rigid
    api/Aging
+   api/USampling
