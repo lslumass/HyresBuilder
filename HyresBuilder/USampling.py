@@ -678,7 +678,8 @@ class WHAM:
 # Command-line interface
 # ---------------------------------------------------------------------------
 
-if __name__ == "__main__":
+def main():
+    """Command-line entry point for the ``pywham`` script."""
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -727,3 +728,7 @@ if __name__ == "__main__":
     wham.compute_pmf(hmin=args.pmf_min, hmax=args.pmf_max, num_bins=args.bins,
                      maxiter=args.maxiter, conver=args.conver,
                      save_pmf=args.pmf_out)
+
+
+if __name__ == '__main__':
+    main()
