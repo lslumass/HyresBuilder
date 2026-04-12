@@ -4,8 +4,14 @@ Umbrella sampling and WHAM analysis
 
 This module provides utilities for setting up and running umbrella sampling
 simulations with OpenMM, and analysing the resulting CV trajectories with the
-histogram-free Weighted Histogram Analysis Method (WHAM) to produce a
-potential of mean force (PMF).
+external Grossfield WHAM program to produce a potential of mean force (PMF).
+
+The umbrella sampling workflow was designed based on the OpenMM umbrella
+sampling tutorial (https://openmm.github.io/openmm-cookbook/latest/notebooks/cookbook/Umbrella%20Sampling.html).
+PMF computation is delegated to the Grossfield WHAM program
+(http://membrane.urmc.rochester.edu/?page_id=126);
+full documentation for the WHAM binary is available at
+http://membrane.urmc.rochester.edu/sites/default/files/wham/doc.pdf.
 
 Workflow
 --------
@@ -19,8 +25,10 @@ Workflow
    each window and records the CV time series.
 5. **Generate metafile** – :func:`US_gen_metafile` writes the metafile that
    maps each CV trajectory to its restraint parameters.
-6. **Compute PMF** – :class:`WHAM` reads the metafile and CV trajectories and
-   returns the unbiased PMF in a single call to :meth:`WHAM.compute_pmf`.
+6. **Compute PMF** – :func:`wham` (or the ``gfwham`` command-line entry point)
+   optionally generates the metafile and then delegates PMF computation to the
+   Grossfield WHAM external binary (http://membrane.urmc.rochester.edu/?page_id=126)
+   via a ``wham`` system call.
 
 Input file formats
 ------------------
@@ -47,18 +55,20 @@ Column 0 is the time step (ignored); column 1 is the CV value.
 
 WHAM equations
 --------------
-The histogram-free WHAM self-consistent equations are:
+The Grossfield WHAM program solves the histogram-based self-consistent
+equations (see http://membrane.urmc.rochester.edu/sites/default/files/wham/doc.pdf):
 
 .. math::
 
-    f_k^{-1} = \\sum_{i,n}
-        \\frac{\\exp(-\\beta U_k(r_{i,n}))}
-             {\\sum_j N_j f_j \\exp(-\\beta U_j(r_{i,n}))}
+    f_k^{-1} = \\sum_{b}
+        \\frac{H_b}
+             {\\sum_j N_j f_j \\exp(-\\beta U_j(r_b))}
 
 where :math:`U_k(r) = \\frac{1}{2} K_k (r - r_k^0)^2` is the harmonic
-restraint of window *k*, :math:`r_{i,n}` is the CV at frame *n* of
-trajectory *i*, and :math:`\\beta = 1/k_\\mathrm{B}T`.  Once converged,
-the unbiased PMF is:
+restraint of window *k*, :math:`H_b` is the total histogram count in bin *b*
+across all trajectories, :math:`r_b` is the bin centre, :math:`N_j` is the
+number of samples in window *j*, and :math:`\\beta = 1/k_\\mathrm{B}T`.
+Once converged, the unbiased PMF is:
 
 .. math::
 
@@ -70,21 +80,45 @@ Examples
 
 .. code-block:: python
 
-    from wham import WHAM
+    from wham import US_define_windows, US_gen_metafile, wham
+    import sys
 
-    wham = WHAM(T=300.0, metadata='metafile.txt')
-    bins, pmf = wham.compute_pmf(hmin=0.5, hmax=5.5, num_bins=100,
-                                 save_pmf='pmf.txt')
+    # 1. Build metafile
+    windows = US_define_windows(r0=0.5, r1=5.5, window_num=18)
+    US_gen_metafile(windows, fc_pull=300.0, metafile='metafile.txt')
 
-**Command line:**
+    # 2. Compute PMF via the Grossfield WHAM binary
+    sys.argv = ['wham.py', 'metafile.txt', '0.5', '5.5', '18', '300',
+                '--temp', '300', '--bins', '100', '--pmf', 'pmf.txt',
+                '--no-gen-metafile']
+    wham()
+
+**Command line (via the** ``gfwham`` **entry point):**
 
 .. code-block:: bash
 
     # Generate metafile then compute the PMF
-    python wham.py metafile.txt 0.5 5.5 18 300 -T 300 -b 100
+    gfwham metafile.txt 0.5 5.5 18 300 --temp 300 --bins 100
 
     # Skip metafile generation (metafile already exists)
-    python wham.py metafile.txt 0.5 5.5 18 300 --no-gen-metafile
+    gfwham metafile.txt 0.5 5.5 18 300 --no-gen-metafile
+
+    # Enable Monte Carlo error estimation (Grossfield WHAM MC mode)
+    gfwham metafile.txt 0.5 5.5 18 300 --no-gen-metafile --MC 50 --seed 42
+
+.. note::
+
+    The ``wham`` binary (Grossfield lab) must be installed and available on
+    ``PATH``.  Download it from http://membrane.urmc.rochester.edu/?page_id=126
+    and consult the documentation at
+    http://membrane.urmc.rochester.edu/sites/default/files/wham/doc.pdf
+    for installation instructions and a full description of all options.
+    The call signature used internally is::
+
+        wham <min> <max> <bins> <tol> <temp> 0 <metafile> <pmf> [MC] [seed]
+
+    Units must be consistent with those used during simulation
+    (nanometers and kJ mol⁻¹ nm⁻² throughout this module).
 """
 
 import numpy as np
@@ -487,7 +521,8 @@ def wham():
 
     if not args.no_gen_metafile:
         windows = US_define_windows(r0=args.min, r1=args.max, window_num=args.window_num)
-        US_gen_metafile(windows, fc_pull=args.fc_pull, metafile=args.metafile)
+        fc_pull = args.fc_pull/4.184  # convert kJ mol-1 nm-2 to kcal mol-1 nm-2 for WHAM   
+        US_gen_metafile(windows, fc_pull=fc_pull, metafile=args.metafile)
 
     if args.MC > 0:
         os.system(f"wham {args.min} {args.max} {args.bins} {args.tol} {args.temp} 0 {args.metafile} {args.pmf} {args.MC} {args.seed}")
