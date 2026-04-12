@@ -486,7 +486,7 @@ def wham():
     args = parser.parse_args()
 
     if not args.no_gen_metafile:
-        windows = US_define_windows(r0=args.pmf_min, r1=args.pmf_max, window_num=args.window_num)
+        windows = US_define_windows(r0=args.min, r1=args.max, window_num=args.window_num)
         US_gen_metafile(windows, fc_pull=args.fc_pull, metafile=args.metafile)
 
     if args.MC > 0:
