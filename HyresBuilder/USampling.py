@@ -525,9 +525,9 @@ def wham():
         US_gen_metafile(windows, fc_pull=fc_pull, metafile=args.metafile)
 
     if args.MC > 0:
-        os.system(f"wham {args.min} {args.max} {args.bins} {args.tol} {args.temp} 0 {args.metafile} {args.pmf} {args.MC} {args.seed}")
+        os.system(f"wham {args.min} {args.max} {args.bins} {args.tol} {args.temp} 0 {args.metafile} {args.pmf} {args.MC} {args.seed} >> wham.log")
     else:
-        os.system(f"wham {args.min} {args.max} {args.bins} {args.tol} {args.temp} 0 {args.metafile} {args.pmf}")
+        os.system(f"wham {args.min} {args.max} {args.bins} {args.tol} {args.temp} 0 {args.metafile} {args.pmf} >> wham.log")
 
 
 if __name__ == '__main__':
