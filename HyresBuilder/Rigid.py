@@ -1,24 +1,63 @@
 """
-Implements rigid bodies
+Rigid body implementation for OpenMM molecular simulations.
 
-This is part of the OpenMM molecular simulation toolkit originating from
-Simbios, the NIH National Center for Physics-Based Simulation of
-Biological Structures at Stanford, funded under the NIH Roadmap for
-Medical Research, grant U54 GM072970. See https://simtk.org.
+This module converts arbitrary groups of atoms in an OpenMM ``System`` into
+rigid bodies, allowing entire protein domains, fibril chains, or other
+structured regions to be treated as internally fixed objects during simulation.
+Rigid bodies reduce the number of degrees of freedom, remove the need to
+integrate fast internal motions, and allow larger integration time steps for
+the constrained regions.
 
-Portions copyright (c) 2016 Stanford University and the Authors.
-Authors: Peter Eastman
-Modified: Shanlong Li
+Implementation strategy
+-----------------------
+For each rigid body, four atoms are designated as "real" particles whose
+positions are integrated normally. All remaining atoms in the body are
+converted to ``OutOfPlaneSite`` virtual sites whose positions are recomputed
+analytically at every step from the four real particles. Constraints are
+added between every pair of real particles to maintain their pairwise
+distances. Any pre-existing constraints that couple two atoms within the same
+body are automatically removed to avoid conflicts.
 
-Permission is hereby granted, free of charge, to any person obtaining a 
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
+The four real particles and their masses are chosen so that the total mass and
+center of mass of the rigid body exactly match those of the original atom set.
+For bodies with fewer than five atoms, all atoms are treated as real particles.
+The moment of inertia will be similar but not identical to the original
+distribution.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+The three reference atoms used to define the virtual-site frame are selected
+from the real particles by maximising the norm of their cross product, ensuring
+a well-conditioned out-of-plane coordinate frame.
+
+Interface levels
+----------------
+Three functions are provided at increasing levels of abstraction:
+
+* :func:`createRigidBodies` — low-level; accepts pre-built lists of atom
+  indices directly.
+* :func:`resolveBodiesToIndices` — mid-level; resolves PSF segment IDs and
+  residue ranges (as inclusive ``(start, end)`` tuples or explicit lists)
+  into atom index lists.
+* :func:`createRigidSegments` — high-level; combines the two steps above,
+  accepting PSF and PDB file paths or pre-loaded objects and a concise
+  segment-body specification.
+
+Limitations
+-----------
+Virtual sites are massless and cannot participate in constraints with atoms
+outside their own rigid body. If such cross-body constraints exist in the
+input system they will cause an exception at ``Context`` creation time and
+must be removed manually before calling these functions.
+
+Original authors:  Peter Eastman (Stanford University / Simbios)
+Modified by:       Shanlong Li
+
+This module is derived from the OpenMM toolkit and is distributed under the
+MIT licence. See the licence header in the source file for the full text.
+
+Dependencies
+------------
+* `OpenMM <https://openmm.org>`_ (``openmm``, ``openmm.unit``)
+* `NumPy <https://numpy.org>`_ (``numpy``, ``numpy.linalg``)
 """
 __author__ = "Peter Eastman"
 __version__ = "1.0"

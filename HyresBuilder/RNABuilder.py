@@ -1,13 +1,45 @@
 """
-| This module is used to generate CG_RNA model.   
-| Athour: Shanlong Li   
-| Date: Nov 13, 2023   
+De novo iConRNA coarse-grained RNA structure generation from sequence.
+
+This module builds iConRNA coarse-grained RNA PDB files directly from a
+single-letter nucleotide sequence, without requiring an all-atom input
+structure. Each nucleotide is placed sequentially using a fixed set of
+reference bead coordinates that define the iConRNA bead topology, and
+residues are stacked along the z-axis with a 3.63 Å rise per step,
+producing a canonical A-form–like helical geometry.
+
+Bead topology
+-------------
+Reference bead coordinates are stored in the ``maps`` dictionary, keyed
+by single-letter nucleotide code. Purines (A, G) carry seven beads
+(P, C1, C2, NA, NB, NC, ND); pyrimidines (C, U) carry six (P, C1, C2,
+NA, NB, NC). Three-letter residue names follow the iConRNA convention:
+ADE, GUA, CYT, URA.
+
+Build pipeline
+--------------
+The top-level function :func:`build` orchestrates the full workflow:
+
+1. Iterate over the sequence and load the reference bead layout for each
+   nucleotide (:func:`read_map`).
+2. Translate the new residue so that its P bead aligns with the reference
+   anchor point, which advances by 3.63 Å along z after each residue
+   (:func:`transform`).
+3. Accumulate all transformed beads and write the output PDB with iConRNA
+   REMARK headers.
+
+A command-line interface is exposed via :func:`main` and registered as
+the ``RNABuilder`` entry point.
+
+Reference
+---------
+S. Li and J. Chen, *Proc. Natl. Acad. Sci. USA*, 2025, **122**, e2504583122.
+
+Author:     Shanlong Li
+Date:       Nov 13, 2023
 """
 
-import sys
 import argparse
-import numpy as np
-from pathlib import Path
 
 
 maps = {

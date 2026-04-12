@@ -1,7 +1,33 @@
 """
-| additional restraints
-| Date: Oct 23, 2025
-| Author: Shanlong Li
+Additional restraints for HyRes+OpenMM simulations.
+
+This module extends a standard OpenMM simulation setup with harmonic positional
+and center-of-mass (COM) restraint utilities. It is designed for use in
+coarse-grained and all-atom protein simulations, with specialized support for
+amyloid fibril systems where structured core residues must be selectively
+frozen or tethered during equilibration and production runs.
+
+Restraint types provided
+------------------------
+* **CA positional restraints** — harmonic springs on Cα atoms, selectable by
+  residue index (:func:`posres_CA`) or by explicit atom index (:func:`posres_CAs`).
+* **Amyloid-aware restraints** — automatically identify the structured fibril
+  core from a MODELLER ``alignment.ali`` file and apply either positional
+  restraints (:func:`posre_amyloid`) or full-atom freezing via zero mass
+  (:func:`freeze_amyloid`).
+* **COM restraints** — restrain the center of mass of a group of atoms in all
+  three dimensions (:func:`comres_xyz`) or within a user-specified 2D plane,
+  leaving the remaining axis free (:func:`comres_2d`).
+
+All forces are added directly to the provided ``openmm.System`` object in place
+and are compatible with periodic boundary conditions where applicable.
+
+Dependencies
+------------
+* `OpenMM <https://openmm.org>`_ (``openmm``, ``openmm.app``, ``openmm.unit``)
+
+Date:   Oct 23, 2025
+Author: Shanlong Li
 """
 
 from openmm.unit import *

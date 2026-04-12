@@ -1,7 +1,52 @@
 """
-| Build HyRes protein pdb from amino acid sequences.   
-| Authors: Shanlong Li   
-| Date: Mar 10, 2026
+De novo HyRes coarse-grained protein structure generation from sequence.
+
+This module builds coarse-grained HyRes protein PDB files directly from
+a single-letter amino acid sequence, without requiring an all-atom input
+structure. Each residue is placed sequentially by aligning its backbone
+onto the preceding residue using the Kabsch superposition algorithm,
+producing a connected chain with physically reasonable local geometry.
+
+Structure database
+------------------
+Residue templates are stored in ``AMINO_ACID_STRUCTURES``, a dictionary
+keyed by single-letter code. Most residues carry two entries: a primary
+conformation (``'A'``) and an alternate rotamer (``'A0'``), allowing
+optional conformational sampling every fourth residue to break extended-
+chain artefacts. All 20 standard amino acids are represented, with proline
+handled specially throughout the pipeline (no backbone H donor, no H
+included in alignment atoms).
+
+Build pipeline
+--------------
+The top-level function :func:`build_peptide` orchestrates the full workflow:
+
+1. Iterate over the sequence; for each residue, optionally draw from the
+   alternate rotamer at every 4th position (:func:`get_amino_acid`,
+   :func:`align_residues`).
+2. Superpose the new residue's backbone onto the previous residue's
+   C-terminal atoms via the Kabsch algorithm (:func:`kabsch`).
+3. Accumulate all transformed atoms and translate the chain so that the
+   first Cα sits at (5000, 5000, 5000) Å, placing it well within a
+   typical periodic simulation box.
+4. Optionally run a Cα-only clash check (:func:`detect_clashes`) and
+   retry with a new random seed if clashes are found, up to
+   ``max_retries`` attempts.
+5. Write the output PDB (:func:`write_pdb`).
+
+A command-line interface is exposed via :func:`main` and registered as
+the ``BuildPeptide`` entry point.
+
+Reference
+---------
+Y. Zhang, S. Li, X. Gong and J. Chen, *J. Am. Chem. Soc.*, 2024, **146**, 342–357.
+
+Authors:    Shanlong Li
+Date:       Mar 10, 2026
+
+Dependencies
+------------
+* `NumPy <https://numpy.org>`_ (``numpy``)
 """
 
 import numpy as np

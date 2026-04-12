@@ -1,8 +1,57 @@
 """
-| This module is used to help set up restraints in Hyres model
-| Athour: Jian Huang
-| Date: Nov 12, 2024
-| Modified: Nov 12, 2024
+Restraint setup utilities for HyRes coarse-grained simulations.
+
+This module provides a collection of helper functions for constructing and
+applying structural restraints to OpenMM systems built on the HyRes protein
+and iConRNA RNA force fields. Restraints range from per-atom positional
+springs to center-of-mass (COM) distance controls and native-contact–based
+domain integrity bonds, covering the most common equilibration and
+production-run use cases.
+
+Atom selection
+--------------
+Several functions accept MDTraj-style selection strings. Because MDTraj
+internally renumbers chains as sequential integers (0, 1, 2, …), selections
+using alphabetic chain IDs (e.g. ``chainid A``) are automatically remapped
+to MDTraj's internal numbering before evaluation (:func:`get_atom_indices_coordinates`,
+:func:`get_COM`). This allows the caller to use chain IDs exactly as they
+appear in the PDB file throughout.
+
+Restraint types provided
+------------------------
+* **Per-atom positional restraints** — harmonic springs pinning individual
+  atoms to arbitrary reference positions, using ``periodicdistance`` for
+  PBC compatibility (:func:`positional_restraint`).
+* **Backbone positional restraints** — bulk restraint of all protein backbone
+  heavy atoms (CA, N, C, O) to a reference PDB (:func:`bb_positional_restraint`).
+* **Folded-domain CA restraints** — positional restraints restricted to CA
+  atoms in secondary-structure elements (helix or strand) identified by DSSP
+  (:func:`CA_positional_restraint`).
+* **COM positional restraints** — harmonic springs on the center of mass of
+  atom groups using ``CustomCentroidBondForce`` (:func:`COM_positional_restraint`).
+* **COM distance restraints** — harmonic potential on the COM–COM distance
+  between two atom groups (:func:`COM_relative_restraint`).
+* **Domain 3D restraints** — pairwise native CA–CA ``HarmonicBondForce`` bonds
+  for all secondary-structure pairs within a cutoff distance, preserving the
+  internal geometry of folded domains; available for both chain-ID–based
+  (:func:`domain_3D_restraint`) and PSF segment-ID–based topologies
+  (:func:`segment_3D_restraint`).
+
+Secondary-structure detection
+------------------------------
+Folded residues are identified via MDTraj's DSSP implementation (simplified
+scheme): residues labelled ``'H'`` (helix) or ``'E'`` (strand) are treated as
+structured; ``'C'`` (coil) residues are excluded. This logic is encapsulated
+in :func:`identify_folded_CA_idx` and reused by the domain restraint functions.
+
+Author:      Jian Huang
+Date:        Nov 12, 2024
+
+Dependencies
+------------
+* `OpenMM <https://openmm.org>`_ (``openmm``, ``openmm.app``)
+* `MDTraj <https://mdtraj.org>`_ (``mdtraj``)
+* `NumPy <https://numpy.org>`_ (``numpy``)
 """
 
 from openmm.app import *
