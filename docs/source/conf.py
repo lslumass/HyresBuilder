@@ -47,3 +47,7 @@ exclude_patterns = []
 html_theme = 'sphinx_rtd_theme'
 # Make sure this directory actually exists in docs/source/
 html_static_path = ['_static']
+# color
+html_theme_options = {
+    'style_nav_header_background': '#881c1c'
+}
