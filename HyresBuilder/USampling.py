@@ -88,7 +88,7 @@ Examples
 """
 
 import numpy as np
-import sys
+import os
 from openmm.unit import *
 from openmm.app import *
 from openmm import *
@@ -457,229 +457,8 @@ def US_gen_metafile(windows, fc_pull=300.0, metafile='metafile.txt'):
 # WHAM
 # ---------------------------------------------------------------------------
 
-class WHAM:
-    """Histogram-free WHAM for 1D umbrella sampling.
-
-    Reads the metafile and CV trajectories, solves the WHAM self-consistent
-    equations internally, and returns the PMF in a single call to
-    :meth:`compute_pmf`.
-
-    Parameters
-    ----------
-    T : float
-        Simulation temperature in Kelvin.
-    metadata : str
-        Path to the metafile.  Each non-comment line must contain three
-        whitespace-separated fields: CV trajectory filename, restraint
-        centre, and harmonic force constant
-        (kJ mol⁻¹ nm⁻²).
-    skip : int, optional
-        Frame stride; every *skip*-th frame is used.  Default is ``1``
-        (use every frame).
-
-    Attributes
-    ----------
-    R : numpy.ndarray, shape (nt, Nwind)
-        CV values from all trajectory files after striding.
-        ``R[n, k]`` is the CV at frame *n* of window *k*.
-    restraints : numpy.ndarray, shape (Nwind,)
-        Restraint centres :math:`r_k^0` parsed from the metafile.
-    forces : numpy.ndarray, shape (Nwind,)
-        Harmonic force constants :math:`K_k` parsed from the metafile.
-    bin_centers : numpy.ndarray, shape (num_bins,)
-        PMF histogram bin centres; set after :meth:`compute_pmf`.
-    pmf : numpy.ndarray, shape (num_bins,)
-        PMF in kcal mol⁻¹ (minimum shifted to zero);
-        set after :meth:`compute_pmf`.
-
-    Raises
-    ------
-    SystemExit
-        If the metafile cannot be parsed, any trajectory file cannot be
-        opened, or no windows are found.
-
-    Examples
-    --------
-    .. code-block:: python
-
-        wham = WHAM(T=300.0, metadata='metafile.txt')
-        bins, pmf = wham.compute_pmf(hmin=0.5, hmax=5.5, num_bins=100)
-    """
-
-    def __init__(self, T, metadata, skip=1):
-        self.kbolt = 0.001982923700   # kcal mol-1 K-1
-        self.T     = T
-        self.B     = 1.0 / (self.kbolt * self.T)
-        self.skip  = skip
-
-        self.files      = []
-        self.restraints = []
-        self.forces     = []
-
-        with open(metadata) as fp:
-            for line in fp:
-                line = line.strip()
-                if not line or line.startswith('#'):
-                    continue
-                parts = line.split()
-                if len(parts) < 3:
-                    sys.exit(f"ERROR: metafile line has fewer than 3 columns:\n  '{line}'")
-                self.files.append(parts[0])
-                self.restraints.append(float(parts[1]))
-                self.forces.append(float(parts[2]))
-
-        self.Nwind      = len(self.files)
-        self.restraints = np.array(self.restraints)
-        self.forces     = np.array(self.forces)
-
-        if self.Nwind == 0:
-            sys.exit("ERROR: no windows found in metafile.")
-
-        traj_list = []
-        for fname in self.files:
-            try:
-                data = np.loadtxt(fname)
-            except OSError:
-                sys.exit(f"ERROR: cannot open trajectory file '{fname}'")
-            cv = data[:, 1] if data.ndim > 1 else data
-            traj_list.append(cv[::self.skip])
-
-        lengths = [len(t) for t in traj_list]
-        if len(set(lengths)) != 1:
-            print("WARNING: windows have unequal frame counts – truncating to shortest.")
-            for f, l in zip(self.files, lengths):
-                print(f"  {f}: {l} frames")
-            self.nt = min(lengths)
-            traj_list = [t[:self.nt] for t in traj_list]
-        else:
-            self.nt = lengths[0]
-
-        self.R = np.column_stack(traj_list)   # (nt, Nwind)
-        print(f"Loaded {self.Nwind} windows x {self.nt} frames each.")
-        print(f"CV range: [{self.R.min():.4f}, {self.R.max():.4f}]")
-
-    def _solve_wham(self, maxiter=50000, conver=1e-8):
-        """Solve the WHAM self-consistent equations (internal).
-
-        Parameters
-        ----------
-        maxiter : int
-            Maximum iterations.
-        conver : float
-            Convergence threshold on :math:`\\max_k |\\Delta \\ln f_k|`.
-
-        Returns
-        -------
-        lnf : numpy.ndarray, shape (Nwind,)
-            Dimensionless free energies :math:`\\beta f_k`, with
-            :math:`f_0 = 0` as the reference.
-        """
-        N  = float(self.nt)
-        bU = (self.B * 0.5
-              * self.forces[:, np.newaxis, np.newaxis]
-              * (self.R[np.newaxis, :, :] - self.restraints[:, np.newaxis, np.newaxis]) ** 2)
-        exp_neg_bU = np.exp(-bU)
-        lnf = np.zeros(self.Nwind)
-
-        print("Solving WHAM equations ...")
-        for iteration in range(1, maxiter + 1):
-            log_terms = np.log(N) + lnf[:, np.newaxis, np.newaxis] - bU
-            lse_max   = log_terms.max(axis=0)
-            denom     = np.exp(log_terms - lse_max).sum(axis=0) * np.exp(lse_max)
-            inv_f_new = (exp_neg_bU / denom[np.newaxis]).sum(axis=(1, 2))
-            lnf_new   = -np.log(inv_f_new)
-            lnf_new  -= lnf_new[0]
-            delta     = np.max(np.abs(lnf_new - lnf))
-            lnf       = lnf_new
-            if iteration % 200 == 0:
-                print(f"  iter {iteration:6d}  |  max |Δ ln f| = {delta:.3e}")
-            if delta < conver:
-                print(f"  Converged at iteration {iteration} (Δ = {delta:.2e})")
-                return lnf
-        print(f"WARNING: did not converge after {maxiter} iterations (Δ = {delta:.2e})")
-        return lnf
-
-    def compute_pmf(self, hmin, hmax, num_bins,
-                    maxiter=50000, conver=1e-8,
-                    save_pmf='./pmf.txt'):
-        """Compute the PMF along the CV.
-
-        Solves the WHAM equations internally, then uses the resulting
-        weights to build an unbiased weighted histogram and convert it to
-        a free-energy profile:
-
-        .. math::
-
-            A(r) = -k_\\mathrm{B} T \\ln P^0(r)
-
-        The PMF is shifted so that its global minimum is zero.
-
-        Parameters
-        ----------
-        hmin : float
-            Lower bound of the CV histogram range (same units as the CV).
-        hmax : float
-            Upper bound of the CV histogram range.
-        num_bins : int
-            Number of equally spaced histogram bins between *hmin* and
-            *hmax*.
-        maxiter : int, optional
-            Maximum WHAM iterations.  Default is ``50000``.
-        conver : float, optional
-            Convergence threshold on :math:`\\max_k |\\Delta \\ln f_k|`.
-            Default is ``1e-8``.
-        save_pmf : str, optional
-            Output file with two columns: bin centre and PMF
-            (kcal mol⁻¹).  Default is ``'./pmf.txt'``.
-
-        Returns
-        -------
-        bin_centers : numpy.ndarray, shape (num_bins,)
-            Centre of each histogram bin.
-        pmf : numpy.ndarray, shape (num_bins,)
-            PMF in kcal mol⁻¹, minimum set to zero.
-
-        Notes
-        -----
-        Bins with zero counts yield ``NaN`` and are silently ignored
-        when computing the minimum shift.
-        """
-        lnf = self._solve_wham(maxiter=maxiter, conver=conver)
-
-        bins        = np.linspace(hmin, hmax, num_bins + 1)
-        bin_centers = bins[:-1] + 0.5 * np.diff(bins)
-        r_all       = self.R.flatten(order='F')
-
-        bU_flat    = (self.B * 0.5
-                      * self.forces[:, np.newaxis]
-                      * (r_all[np.newaxis, :] - self.restraints[:, np.newaxis]) ** 2)
-        log_terms  = np.log(float(self.nt)) + lnf[:, np.newaxis] - bU_flat
-        lse_max    = log_terms.max(axis=0)
-        denom_flat = np.exp(log_terms - lse_max).sum(axis=0) * np.exp(lse_max)
-        weights    = 1.0 / denom_flat
-
-        pdf, _ = np.histogram(r_all, bins=bins, weights=weights, density=True)
-        with np.errstate(divide='ignore', invalid='ignore'):
-            pmf = -(1.0 / self.B) * np.log(pdf)
-        pmf -= np.nanmin(pmf)
-
-        self.bin_centers = bin_centers
-        self.pmf         = pmf
-
-        np.savetxt(save_pmf, np.column_stack([bin_centers, pmf]),
-                   fmt='%.8f', header='CV_bin_center   PMF(kcal/mol)')
-        print(f"PMF saved to '{save_pmf}'")
-
-
-        return bin_centers, pmf
-
-
-# ---------------------------------------------------------------------------
-# Command-line interface
-# ---------------------------------------------------------------------------
-
-def main():
-    """Command-line entry point for the ``pywham`` script."""
+def wham():
+    """Command-line entry point for the ``gfwham`` script."""
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -689,46 +468,32 @@ def main():
     )
 
     # Required
-    parser.add_argument('metafile',
-                        help='Path to the metafile '
-                             '(columns: cv_file  restraint_center  force_constant)')
-    parser.add_argument('pmf_min', type=float,
-                        help='Lower CV bound for the PMF histogram')
-    parser.add_argument('pmf_max', type=float,
-                        help='Upper CV bound for the PMF histogram')
-    parser.add_argument('window_num', type=int,
-                        help='Number of umbrella sampling windows')
-    parser.add_argument('fc_pull', type=float,
-                        help='Harmonic force constant (kJ mol-1 nm-2)')
+    parser.add_argument('metafile', help='Path to the metafile (columns: cv_file  restraint_center  force_constant)')
+    parser.add_argument('min', type=float, help='Lower CV bound for the PMF histogram')
+    parser.add_argument('max', type=float, help='Upper CV bound for the PMF histogram')
+    parser.add_argument('window_num', type=int, help='Number of umbrella sampling windows')
+    parser.add_argument('fc_pull', type=float, help='Harmonic force constant (kJ mol-1 nm-2)')
+    
+    parser.add_argument('--temp', type=float, default=298.0, help='Simulation temperature in Kelvin')
+    parser.add_argument('--bins', type=int, default=50, help='Number of PMF histogram bins')
+    parser.add_argument('--tol', type=float, default=1e-6, help='Tolerance for WHAM convergence')
+    parser.add_argument('--pmf', default='pmf.txt', help='Output file for the PMF')
+    parser.add_argument('--no-gen-metafile', action='store_true', help='Skip metafile generation (use existing metafile)')
 
-    # Optional
-    parser.add_argument('-T', '--temperature', type=float, default=298.0,
-                        metavar='K', help='Simulation temperature in Kelvin')
-    parser.add_argument('-s', '--skip', type=int, default=1, metavar='N',
-                        help='Use every N-th frame (stride)')
-    parser.add_argument('-b', '--bins', type=int, default=100, metavar='N',
-                        help='Number of PMF histogram bins')
-    parser.add_argument('--maxiter', type=int, default=50000,
-                        help='Maximum WHAM iterations')
-    parser.add_argument('--conver', type=float, default=1e-8,
-                        help='Convergence threshold on max |delta ln f|')
-    parser.add_argument('--pmf-out', default='pmf.txt', metavar='FILE',
-                        help='Output file for the PMF')
-    parser.add_argument('--no-gen-metafile', action='store_true',
-                        help='Skip metafile generation (use existing metafile)')
+    parser.add_argument('--MC', type=int, default=1000, help='Number of Monte Carlo steps')
+    parser.add_argument('--seed', type=int, default=12345,  help='random seed for Monte Carlo sampling')
 
     args = parser.parse_args()
 
     if not args.no_gen_metafile:
-        windows = US_define_windows(r0=args.pmf_min, r1=args.pmf_max,
-                                    window_num=args.window_num)
+        windows = US_define_windows(r0=args.pmf_min, r1=args.pmf_max, window_num=args.window_num)
         US_gen_metafile(windows, fc_pull=args.fc_pull, metafile=args.metafile)
 
-    wham = WHAM(T=args.temperature, metadata=args.metafile, skip=args.skip)
-    wham.compute_pmf(hmin=args.pmf_min, hmax=args.pmf_max, num_bins=args.bins,
-                     maxiter=args.maxiter, conver=args.conver,
-                     save_pmf=args.pmf_out)
+    if args.MC > 0:
+        os.system(f"wham {args.min} {args.max} {args.window_num} {args.tol} {args.temp} 0 {args.metafile} {args.pmf} {args.MC} {args.seed}")
+    else:
+        os.system(f"wham {args.min} {args.max} {args.window_num} {args.tol} {args.temp} 0 {args.metafile} {args.pmf}")
 
 
 if __name__ == '__main__':
-    main()
+    wham()

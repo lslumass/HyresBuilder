@@ -48,7 +48,7 @@ pepbuilder = "HyresBuilder.PeptideBuilder:main"
 rnabuilder = "HyresBuilder.RNABuilder:main"
 genpsf = "HyresBuilder.GenPsf:main"
 mutate = "HyresBuilder.Mutator:main"
-pywham = "HyresBuilder.USampling:main"
+gfwham = "HyresBuilder.USampling:wham"
 
 [tool.setuptools]
 packages = ["HyresBuilder"]
