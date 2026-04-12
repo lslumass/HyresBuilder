@@ -480,7 +480,7 @@ def wham():
     parser.add_argument('--pmf', default='pmf.txt', help='Output file for the PMF')
     parser.add_argument('--no-gen-metafile', action='store_true', help='Skip metafile generation (use existing metafile)')
 
-    parser.add_argument('--MC', type=int, default=1000, help='Number of Monte Carlo steps')
+    parser.add_argument('--MC', type=int, default=0, help='Number of Monte Carlo steps')
     parser.add_argument('--seed', type=int, default=12345,  help='random seed for Monte Carlo sampling')
 
     args = parser.parse_args()
