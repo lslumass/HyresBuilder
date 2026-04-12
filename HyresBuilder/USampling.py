@@ -502,7 +502,7 @@ def wham():
     )
 
     # Required
-    parser.add_argument('metafile', help='Path to the metafile (columns: cv_file  restraint_center  force_constant)')
+    parser.add_argument('metafile', help='Path to the metafile (columns: cv_file  restraint_center  force_constant (kcal mol-1 nm-2))')
     parser.add_argument('min', type=float, help='Lower CV bound for the PMF histogram')
     parser.add_argument('max', type=float, help='Upper CV bound for the PMF histogram')
     parser.add_argument('window_num', type=int, help='Number of umbrella sampling windows')
