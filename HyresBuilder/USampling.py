@@ -6,12 +6,10 @@ This module provides utilities for setting up and running umbrella sampling
 simulations with OpenMM, and analysing the resulting CV trajectories with the
 external Grossfield WHAM program to produce a potential of mean force (PMF).
 
-The umbrella sampling workflow was designed based on the OpenMM umbrella
-sampling tutorial (https://openmm.github.io/openmm-cookbook/latest/notebooks/cookbook/Umbrella%20Sampling.html).
-PMF computation is delegated to the Grossfield WHAM program
-(http://membrane.urmc.rochester.edu/?page_id=126);
-full documentation for the WHAM binary is available at
-http://membrane.urmc.rochester.edu/sites/default/files/wham/doc.pdf.
+The umbrella sampling workflow was designed based on the `OpenMM umbrella
+sampling tutorial`_. PMF computation is delegated to the `Grossfield WHAM
+program`_; full documentation for the WHAM binary is available in the
+`WHAM documentation`_.
 
 Workflow
 --------
@@ -27,8 +25,10 @@ Workflow
    maps each CV trajectory to its restraint parameters.
 6. **Compute PMF** – :func:`wham` (or the ``gfwham`` command-line entry point)
    optionally generates the metafile and then delegates PMF computation to the
-   Grossfield WHAM external binary (http://membrane.urmc.rochester.edu/?page_id=126)
-   via a ``wham`` system call.
+   `Grossfield WHAM program`_ via a ``wham`` subprocess call.  Optionally,
+   :func:`wham_block_average` performs a two-block error analysis by splitting
+   each window's CV trajectory in half, running WHAM independently on each
+   half, and reporting the mean PMF with per-bin error estimates.
 
 Input file formats
 ------------------
@@ -53,10 +53,23 @@ Columns (whitespace-separated):
 
 Column 0 is the time step (ignored); column 1 is the CV value.
 
+**PMF output file** (e.g. ``pmf.txt``) — standard Grossfield WHAM output
+(two columns: bin centre and free energy) when running in normal or MC mode.
+In block-average mode the output has three columns::
+
+    # CV    PMF_mean (kcal/mol)    PMF_error (kcal/mol)
+    0.500000    0.000000    0.031724
+    0.600000    0.412803    0.018950
+    ...
+
+The third column is half the absolute difference between the two block PMFs,
+:math:`\\sigma_b = |A_1(r) - A_2(r)| / 2`, a standard two-block error estimate.
+Bins where either block has no data are written as ``nan``.
+
 WHAM equations
 --------------
 The Grossfield WHAM program solves the histogram-based self-consistent
-equations (see http://membrane.urmc.rochester.edu/sites/default/files/wham/doc.pdf):
+equations (see `WHAM documentation`_):
 
 .. math::
 
@@ -93,6 +106,12 @@ Examples
                 '--no-gen-metafile']
     wham()
 
+    # 3. Block-average PMF with error estimates
+    sys.argv = ['wham.py', 'metafile.txt', '0.5', '5.5', '18', '300',
+                '--temp', '300', '--bins', '100', '--pmf', 'pmf.txt',
+                '--no-gen-metafile', '--block']
+    wham()
+
 **Command line (via the** ``gfwham`` **entry point):**
 
 .. code-block:: bash
@@ -106,19 +125,30 @@ Examples
     # Enable Monte Carlo error estimation (Grossfield WHAM MC mode)
     gfwham metafile.txt 0.5 5.5 18 300 --no-gen-metafile --MC 50 --seed 42
 
+    # Two-block error analysis (splits each CV trajectory in half)
+    gfwham metafile.txt 0.5 5.5 18 300 --no-gen-metafile --block
+
 .. note::
 
     The ``wham`` binary (Grossfield lab) must be installed and available on
-    ``PATH``.  Download it from http://membrane.urmc.rochester.edu/?page_id=126
-    and consult the documentation at
-    http://membrane.urmc.rochester.edu/sites/default/files/wham/doc.pdf
-    for installation instructions and a full description of all options.
-    The call signature used internally is::
+    ``PATH``.  Download it from the `Grossfield WHAM program`_ page and consult
+    the `WHAM documentation`_ for installation instructions and a full
+    description of all options.  The call signature used internally is::
 
         wham <min> <max> <bins> <tol> <temp> 0 <metafile> <pmf> [MC] [seed]
 
     Units must be consistent with those used during simulation
     (nanometers and kJ mol⁻¹ nm⁻² throughout this module).
+
+    Block-average mode writes a separate log file named after the PMF output
+    (e.g. ``pmf_block.log``) and requires each CV trajectory to contain at
+    least two frames.  The ``--block`` and ``--MC`` flags are mutually
+    exclusive: block averaging runs WHAM in deterministic mode on each half
+    independently.
+
+.. _OpenMM umbrella sampling tutorial: https://openmm.github.io/openmm-cookbook/latest/notebooks/cookbook/Umbrella%20Sampling.html
+.. _Grossfield WHAM program: http://membrane.urmc.rochester.edu/?page_id=126
+.. _WHAM documentation: http://membrane.urmc.rochester.edu/sites/default/files/wham/doc.pdf
 """
 
 import numpy as np
@@ -490,6 +520,126 @@ def US_gen_metafile(windows, fc_pull=300.0, metafile='metafile.txt'):
 # ---------------------------------------------------------------------------
 # WHAM
 # ---------------------------------------------------------------------------
+def wham_block_average(metafile, min_cv, max_cv, bins, tol, temp, pmf_out, MC=0, seed=12345):
+    """
+    Block averaging: split each window's CV trajectory into two equal halves,
+    run WHAM independently on each block, then write mean ± half-difference PMF.
+    """
+    import tempfile, shutil, subprocess
+    import numpy as np
+
+    # ── 1. Parse the metafile ──────────────────────────────────────────────
+    entries = []
+    with open(metafile) as fh:
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            parts = line.split()
+            entries.append((parts[0], parts[1], parts[2]))
+
+    if not entries:                                              # ✅ guard #6
+        raise ValueError(f"No valid entries found in metafile: {metafile}")
+
+    log_file = pmf_out.replace('.txt', '_block.log')            # ✅ fix #5
+
+    # ── 2. Build two block metafiles in a temp directory ──────────────────
+    tmpdir = tempfile.mkdtemp(prefix='wham_block_')
+    try:
+        block_metafiles = [
+            os.path.join(tmpdir, 'block0.meta'),
+            os.path.join(tmpdir, 'block1.meta'),
+        ]
+        block_handles = [open(f, 'w') for f in block_metafiles]
+
+        try:                                                     # ✅ fix #3
+            for win_idx, (cv_file, center, fc) in enumerate(entries):
+                data = np.loadtxt(cv_file)
+                N    = len(data)
+                half = N // 2
+
+                if half == 0:                                    # ✅ fix #4
+                    raise ValueError(
+                        f"CV file '{cv_file}' has fewer than 2 frames ({N}); "
+                        "cannot split into two blocks."
+                    )
+
+                blocks = [data[:half], data[half: half * 2]]
+
+                for b_idx, block_data in enumerate(blocks):
+                    block_cv = os.path.join(                     # ✅ fix #2
+                        tmpdir, f'block{b_idx}_win{win_idx}.dat'
+                    )
+                    np.savetxt(block_cv, block_data, fmt='%.10g')
+                    block_handles[b_idx].write(f'{block_cv}\t{center}\t{fc}\n')
+        finally:
+            for fh in block_handles:
+                fh.close()
+
+        # ── 3. Run WHAM for each block ─────────────────────────────────────
+        pmf_files = []
+        for b_idx, bmeta in enumerate(block_metafiles):
+            bpmf = os.path.join(tmpdir, f'pmf_block{b_idx}.txt')
+            pmf_files.append(bpmf)
+            cmd = [
+                'wham',
+                str(min_cv), str(max_cv), str(bins),
+                str(tol), str(temp), '0',
+                bmeta, bpmf,
+            ]
+            if MC > 0:
+                cmd += [str(MC), str(seed)]
+
+            with open(log_file, 'a') as log:                    # ✅ fix #1
+                result = subprocess.run(cmd, stdout=log, stderr=log)
+
+            if result.returncode != 0:
+                raise RuntimeError(
+                    f"WHAM failed for block {b_idx} (exit code {result.returncode}). "
+                    f"See {log_file} for details."
+                )
+
+            if not os.path.exists(bpmf):                        # belt-and-suspenders
+                raise RuntimeError(
+                    f"WHAM exited cleanly but produced no output: {bpmf}. "
+                    f"See {log_file} for details."
+                )
+
+        # ── 4. Read both PMFs ──────────────────────────────────────────────
+        def read_pmf(path):
+            xs, ys = [], []
+            with open(path) as fh:
+                for line in fh:
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    parts = line.split()
+                    xs.append(float(parts[0]))
+                    ys.append(float(parts[1]))
+            return np.array(xs), np.array(ys)
+
+        cv0, pmf0 = read_pmf(pmf_files[0])
+        _,   pmf1 = read_pmf(pmf_files[1])
+
+        # ── 5. Average and error ───────────────────────────────────────────
+        valid    = np.isfinite(pmf0) & np.isfinite(pmf1)
+        pmf_mean = np.where(valid, (pmf0 + pmf1) / 2.0,   np.nan)
+        pmf_err  = np.where(valid, np.abs(pmf0 - pmf1) / 2.0, np.nan)
+
+        # ── 6. Write output ────────────────────────────────────────────────
+        with open(pmf_out, 'w') as out:
+            out.write('# CV\tPMF_mean (kcal/mol)\tPMF_error (kcal/mol)\n')
+            for x, y, e in zip(cv0, pmf_mean, pmf_err):
+                if np.isnan(y):
+                    out.write(f'{x:.6f}\tnan\tnan\n')
+                else:
+                    out.write(f'{x:.6f}\t{y:.6f}\t{e:.6f}\n')
+
+        print(f'[block average] PMF written to {pmf_out}  (log: {log_file})')
+
+    finally:
+        shutil.rmtree(tmpdir)
+
 
 def wham():
     """Command-line entry point for the ``gfwham`` script."""
@@ -501,33 +651,48 @@ def wham():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
 
-    # Required
-    parser.add_argument('metafile', help='Path to the metafile (columns: cv_file  restraint_center  force_constant (kcal mol-1 nm-2))')
-    parser.add_argument('min', type=float, help='Lower CV bound for the PMF histogram')
-    parser.add_argument('max', type=float, help='Upper CV bound for the PMF histogram')
-    parser.add_argument('window_num', type=int, help='Number of umbrella sampling windows')
-    parser.add_argument('fc_pull', type=float, help='Harmonic force constant (kJ mol-1 nm-2)')
-    
-    parser.add_argument('--temp', type=float, default=298.0, help='Simulation temperature in Kelvin')
-    parser.add_argument('--bins', type=int, default=50, help='Number of PMF histogram bins')
-    parser.add_argument('--tol', type=float, default=1e-6, help='Tolerance for WHAM convergence')
-    parser.add_argument('--pmf', default='pmf.txt', help='Output file for the PMF')
-    parser.add_argument('--no-gen-metafile', action='store_true', help='Skip metafile generation (use existing metafile)')
+    # Required positional
+    parser.add_argument('metafile',    help='Path to the metafile (columns: cv_file  restraint_center  force_constant (kcal mol-1 nm-2))')
+    parser.add_argument('min',         type=float, help='Lower CV bound for the PMF histogram')
+    parser.add_argument('max',         type=float, help='Upper CV bound for the PMF histogram')
+    parser.add_argument('window_num',  type=int,   help='Number of umbrella sampling windows')
+    parser.add_argument('fc_pull',     type=float, help='Harmonic force constant (kJ mol-1 nm-2)')
 
-    parser.add_argument('--MC', type=int, default=0, help='Number of Monte Carlo steps')
-    parser.add_argument('--seed', type=int, default=12345,  help='random seed for Monte Carlo sampling')
+    # Optional
+    parser.add_argument('--temp',            type=float, default=298.0,  help='Simulation temperature in Kelvin')
+    parser.add_argument('--bins',            type=int,   default=50,     help='Number of PMF histogram bins')
+    parser.add_argument('--tol',             type=float, default=1e-6,   help='Tolerance for WHAM convergence')
+    parser.add_argument('--pmf',                         default='pmf.txt', help='Output file for the PMF')
+    parser.add_argument('--no-gen-metafile', action='store_true',        help='Skip metafile generation (use existing metafile)')
+    parser.add_argument('--MC',              type=int,   default=0,      help='Number of Monte Carlo steps')
+    parser.add_argument('--seed',            type=int,   default=12345,  help='Random seed for Monte Carlo sampling')
+    parser.add_argument('--block',           action='store_true',
+                        help='Block-average PMF: split each window trajectory in two, '
+                             'run WHAM on each half, report mean ± half-difference per bin')
 
     args = parser.parse_args()
 
+    # ── metafile generation ────────────────────────────────────────────────
     if not args.no_gen_metafile:
-        windows = US_define_windows(r0=args.min, r1=args.max, window_num=args.window_num)
-        fc_pull = args.fc_pull/4.184  # convert kJ mol-1 nm-2 to kcal mol-1 nm-2 for WHAM   
+        windows  = US_define_windows(r0=args.min, r1=args.max, window_num=args.window_num)
+        fc_pull  = args.fc_pull / 4.184   # kJ mol-1 nm-2 → kcal mol-1 nm-2
         US_gen_metafile(windows, fc_pull=fc_pull, metafile=args.metafile)
 
-    if args.MC > 0:
-        os.system(f"wham {args.min} {args.max} {args.bins} {args.tol} {args.temp} 0 {args.metafile} {args.pmf} {args.MC} {args.seed} >> wham.log")
+    # ── PMF calculation ────────────────────────────────────────────────────
+    if args.block:
+        wham_block_average(
+            metafile=args.metafile,
+            min_cv=args.min, max_cv=args.max,
+            bins=args.bins,  tol=args.tol,   temp=args.temp,
+            pmf_out=args.pmf,
+            MC=args.MC,      seed=args.seed,
+        )
+    elif args.MC > 0:
+        os.system(f"wham {args.min} {args.max} {args.bins} {args.tol} {args.temp} 0 "
+                  f"{args.metafile} {args.pmf} {args.MC} {args.seed} >> wham.log")
     else:
-        os.system(f"wham {args.min} {args.max} {args.bins} {args.tol} {args.temp} 0 {args.metafile} {args.pmf} >> wham.log")
+        os.system(f"wham {args.min} {args.max} {args.bins} {args.tol} {args.temp} 0 "
+                  f"{args.metafile} {args.pmf} >> wham.log")
 
 
 if __name__ == '__main__':
