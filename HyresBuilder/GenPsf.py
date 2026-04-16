@@ -53,9 +53,10 @@ import argparse, os, glob
 def split_chains(pdb):
     aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
                    "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
-    rnas = ["ADE", "GUA", "CYT", "URA", 'PHO']
+    rnas = ["ADE", "GUA", "CYT", "URA"]
     dnas = ["DAD", "DGU", "DCY", "DTH"]
     mg, cal = ["MG+"], ["CA+"]
+    phos = ['PHO']
 
     def get_type(resname):
         chaintype = (
@@ -64,6 +65,7 @@ def split_chains(pdb):
             'D' if resname in dnas else
             'M' if resname in mg else
             'C' if resname in cal else
+            'PHO' if resname in phos else
             None
         )
         return chaintype
@@ -93,7 +95,7 @@ def split_chains(pdb):
 
     # save out each chain
     for i, (t, chain) in enumerate(zip(types, chains)):
-        if t in ['P', 'R', 'D']:
+        if t in ['P', 'R', 'D', 'PHO']:
             tmp_pdb = f"psfgentmp_{i}.pdb"
         elif t in ['M', 'C']:
             tmp_pdb = f"psfgentmp_{t}.pdb"
@@ -184,7 +186,7 @@ def genpsf(pdb_in, psf_out, terminal='neutral'):
     gen.read_topology(RNA_topology)
     gen.read_topology(protein_topology)
 
-    counts = {'P': 1, 'R': 1, 'D': 1, 'M': 1, 'C': 1}
+    counts = {'P': 1, 'R': 1, 'D': 1, 'M': 1, 'C': 1, 'PHO': 1}
     types = split_chains(pdb_in)
     for i, t in enumerate(types):
         if t in ["P", "R", "D"]:
@@ -196,6 +198,8 @@ def genpsf(pdb_in, psf_out, terminal='neutral'):
         counts[t] += 1
         if t == 'P':
             gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False)
+        elif t == 'PHO':
+            gen.add_segment(segid=segid, pdbfile=tmp_pdb)
         else:
             gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False, auto_dihedrals=False)
 
