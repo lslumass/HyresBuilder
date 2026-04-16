@@ -1,7 +1,37 @@
 """
-| Performe mutations/modifications on a PDB file.   
-| Authors: Shanlong Li   
-| Date: Feb 14, 2026   
+Residue mutation utilities for HyRes and iConRNA coarse-grained PDB structures.
+
+This module applies in silico point mutations to coarse-grained PDB files
+produced by the HyRes (protein) and iConRNA (RNA) pipelines. Mutations are
+performed via ``psfgen``, which rebuilds the affected residue geometry —
+including guessed coordinates for newly introduced atoms, and regenerated
+angles and dihedrals — so the output is immediately suitable for downstream
+PSF generation and simulation setup.
+
+Both protein and RNA chains are supported, selected by segment ID prefix
+(``P`` for protein, ``R`` for RNA). Multiple sites can be mutated in a single
+call, and a single mutation type can be broadcast across all target sites for
+convenience.
+
+Workflow
+--------
+1. Normalise sites and mutation types into matched lists (:func:`mutate`).
+2. Load HyRes/iConRNA topology files via ``utils.load_ff``.
+3. Register the input PDB as a ``psfgen`` segment with the ``mutate`` table
+   applied at the ``add_segment`` step (:func:`mut`).
+4. Read reference coordinates, guess coordinates for mutated positions,
+   regenerate angles and dihedrals, and write the output PDB.
+
+A command-line interface is exposed via :func:`main`, accepting one or more
+mutation sites and types as positional or named arguments.
+
+Authors:    Shanlong Li
+Date:       Feb 14, 2026
+
+Dependencies
+------------
+* `psfgen <https://github.com/MDAnalysis/psfgen>`_ (``psfgen.PsfGen``)
+* HyresBuilder force-field topology files, loaded via ``utils.load_ff``.
 """
 
 from psfgen import PsfGen

@@ -1,5 +1,68 @@
 """
-| This module is used to load force field files and set up simulation.
+Force field loading and simulation setup utilities for HyRes and iConRNA systems.
+
+This module provides the shared infrastructure used across HyresBuilder to
+locate force field files, compute solution-condition parameters, and assemble
+complete OpenMM simulation systems. It serves as the primary entry point for
+constructing production-ready simulations from a PSF/PDB pair and a parameter
+namespace.
+
+Force field file resolution
+---------------------------
+CHARMM topology and parameter files are bundled within the installed
+HyresBuilder package and resolved at runtime via ``importlib.resources``,
+requiring no manual path management. Five models are supported by
+:func:`load_ff`:
+
+========== ===============================================================
+Model      Description
+========== ===============================================================
+Protein    HyRes coarse-grained protein (``top_hyres_mix`` / ``param_hyres_mix``)
+RNA        iConRNA coarse-grained RNA (``top_RNA_mix`` / ``param_RNA_mix``)
+DNA        iConDNA coarse-grained DNA (``top_DNA_mix`` / ``param_DNA_mix``)
+rG4s       RNA G-quadruplex; uses RNA topology with ``param_rG4s``
+ATP        ATP force field (``top_ATP`` / ``param_ATP``)
+========== ===============================================================
+
+Solution-condition parameters
+------------------------------
+Three helper functions translate experimental solution conditions into the
+physical parameters consumed by the force field:
+
+* :func:`cal_er` — temperature-dependent relative dielectric constant of
+  water, fitted to a cubic polynomial.
+* :func:`cal_dh` — Debye–Hückel screening length (nm) from ionic strength
+  and temperature, using the Bjerrum length at the given dielectric.
+* :func:`nMg2lmd` — Mg²⁺-to-lambda conversion: maps a Mg²⁺ concentration
+  (mM) and temperature onto the charge-scaling factor ``lmd`` that modulates
+  Mg²⁺–RNA phosphate interactions. Empirical Hill-function parameters are
+  provided for rA, rU, and CAG RNA contexts, or can be supplied as custom
+  values.
+
+Simulation setup pipeline
+--------------------------
+Two setup functions share the same seven-stage pipeline — parse parameters,
+configure PBC, compute force field parameters, load topology files, import
+PSF/PDB, build the custom force field, attach the integrator and barostat —
+and differ only in which force field they target:
+
+* :func:`setup` — primary entry point for HyRes protein / iConRNA mixed
+  systems; accepts a rich ``params`` namespace and an optional
+  ``modification`` hook for injecting extra forces after the built-in
+  terms are added.
+* :func:`rG4s_setup` — specialised setup for rG4 G-quadruplex systems;
+  loads the rG4s parameter file and passes an additional ``ion_type``
+  energy parameter to :func:`rG4sFF.rG4sSystem`.
+
+Both functions return a ``(system, sim)`` tuple with positions and velocities
+initialised, ready for production runs. The CUDA platform is used throughout
+with mixed precision.
+
+Dependencies
+------------
+* `OpenMM <https://openmm.org>`_ (``openmm``, ``openmm.app``, ``openmm.unit``)
+* `NumPy <https://numpy.org>`_ (``numpy``)
+* HyresBuilder submodules: ``HyresFF``, ``rG4sFF``
 """
 
 from importlib.resources import files

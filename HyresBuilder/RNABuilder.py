@@ -1,13 +1,45 @@
 """
-| This module is used to generate CG_RNA model.   
-| Athour: Shanlong Li   
-| Date: Nov 13, 2023   
+De novo iConRNA coarse-grained RNA structure generation from sequence.
+
+This module builds iConRNA coarse-grained RNA PDB files directly from a
+single-letter nucleotide sequence, without requiring an all-atom input
+structure. Each nucleotide is placed sequentially using a fixed set of
+reference bead coordinates that define the iConRNA bead topology, and
+residues are stacked along the z-axis with a 3.63 Å rise per step,
+producing a canonical A-form–like helical geometry.
+
+Bead topology
+-------------
+Reference bead coordinates are stored in the ``maps`` dictionary, keyed
+by single-letter nucleotide code. Purines (A, G) carry seven beads
+(P, C1, C2, NA, NB, NC, ND); pyrimidines (C, U) carry six (P, C1, C2,
+NA, NB, NC). Three-letter residue names follow the iConRNA convention:
+ADE, GUA, CYT, URA.
+
+Build pipeline
+--------------
+The top-level function :func:`build` orchestrates the full workflow:
+
+1. Iterate over the sequence and load the reference bead layout for each
+   nucleotide (:func:`read_map`).
+2. Translate the new residue so that its P bead aligns with the reference
+   anchor point, which advances by 3.63 Å along z after each residue
+   (:func:`transform`).
+3. Accumulate all transformed beads and write the output PDB with iConRNA
+   REMARK headers.
+
+A command-line interface is exposed via :func:`main` and registered as
+the ``RNABuilder`` entry point.
+
+Reference
+---------
+S. Li and J. Chen, *Proc. Natl. Acad. Sci. USA*, 2025, **122**, e2504583122.
+
+Author:     Shanlong Li
+Date:       Nov 13, 2023
 """
 
-import sys
 import argparse
-import numpy as np
-from pathlib import Path
 
 
 maps = {
@@ -115,17 +147,58 @@ def build(name, sequence):
             printcg(atoms, f)
         print('END', file=f)
 
+def build_polyP(name, n):
+    """
+    Build a poly-phosphate (polyP) coarse-grained structure of n residues.
+
+    Each residue is a single PHO bead (P), placed sequentially along the
+    z-axis with a fixed P-P distance of 2.7 Å.  The output PDB uses the
+    residue name ``PHO`` and bead name ``P``.
+
+    Args:
+        name (str): Stem of the output file. The PDB is written to ``<name>.pdb``.
+        n (int): Number of phosphate beads (residues) in the chain.
+
+    Returns:
+        None. Writes a PDB file to ``<name>.pdb`` in the current working directory.
+
+    Example:
+        >>> from HyresBuilder import RNABuilder
+        >>> RNABuilder.build_polyP("polyP", 10)
+        # output: polyP.pdb
+    """
+    PP_DIST = 2.7   # Å, P-P distance along z
+
+    out = f'{name}.pdb'
+    with open(out, 'w') as f:
+        print('REMARK  iConRNA', file=f)
+        print('REMARK  CREATE BY RNABUILDER/SHANLONG LI', file=f)
+        print('REMARK  Ref: S. Li and J. Chen, PNAS, 2025, 122, e2504583122.', file=f)
+        print('REMARK  SEQUENCE: PHO x{}'.format(n), file=f)
+        for i in range(n):
+            atom = ['ATOM', i + 1, 'P', 'PHO', 'X', i + 1,
+                    9000.0, 9000.0, 9000.0 + i * PP_DIST,
+                    1.00, 0.00, 'RNAP']
+            printcg([atom], f)
+        print('END', file=f)
+
 def main():
     """Command-line interface"""
     
     parser = argparse.ArgumentParser(description='RNABuilder: build iConRNA from sequence')
     parser.add_argument('name', type=str, help='protein name, output: name.pdb')
-    parser.add_argument('seq', type=str, help='sequence in one-letter')
+    parser.add_argument('seq', type=str, help='sequence in one-letter, for polyP, use Pn (e.g. P10 for 10 residues)')
 
     args = parser.parse_args()
-    build(args.name, args.seq)
-    print(f"RNA structure saved to {args.name}.pdb")
+
+    seq = args.seq
+    if seq.startswith('P'):
+        n = int(seq[1:])
+        build_polyP(args.name, n)
+        print(f"PolyP structure saved to {args.name}.pdb")
+    else:
+        build(args.name, args.seq)
+        print(f"RNA structure saved to {args.name}.pdb")
 
 if __name__ == '__main__':
     main()
-

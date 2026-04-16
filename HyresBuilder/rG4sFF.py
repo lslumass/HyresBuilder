@@ -1,7 +1,57 @@
 """
-| This module is used to constructe iConRNA force field for rG4s 
-| Athours: Shanlong Li
-| Date: Dec 1, 2024
+iConRNA force field construction for RNA G-quadruplex (rG4) systems.
+
+This module extends the standard iConRNA force field with the additional
+G–G Hoogsteen base-pairing terms required to model RNA G-quadruplex (rG4)
+structures. It shares the same backbone electrostatic, angle, and stacking
+architecture as the general HyRes/iConRNA force field, but replaces the
+G–U wobble pair with two dedicated G–G pairing forces that capture the
+geometry of the Hoogsteen-edge interactions found in G-quartet planes.
+
+Force terms applied
+-------------------
+The following forces are constructed and registered in order by
+:func:`rG4sSystem`:
+
+1. **Restricted Bending (ReB) angle force** — replaces ``HarmonicAngleForce``
+   with a sine-based bending potential for RNA backbone and base angles,
+   with doubled force constants for RNA beads relative to the standard model.
+2. **Debye–Hückel electrostatics** — screened Coulomb interactions via
+   ``CustomNonbondedForce``, with configurable screening length (``dh``),
+   relative dielectric constant (``er``), and a lambda scaling factor (``lmd``)
+   for protein–RNA cross-interactions.
+3. **1-4 nonbonded interactions** — short-range Lennard-Jones and electrostatic
+   corrections for 1–4 bonded pairs via ``CustomBondForce``.
+4. **RNA base stacking** — centroid-distance–based stacking potential between
+   consecutive bases via ``CustomCentroidBondForce``, with residue-pair-specific
+   well depths and optimal distances.
+5. **A–U base pairing** — Watson-Crick pair via ``CustomHbondForce`` with
+   dual distance and angular gating terms.
+6. **C–G base pairing** — Watson-Crick pair via ``CustomHbondForce`` with
+   dual distance and angular gating terms.
+7. **G–G base pairing** — two complementary ``CustomHbondForce`` terms
+   (``GGpairForce1`` and ``GGpairForce2``) capturing NB–ND and NC–NC
+   Hoogsteen contacts respectively, with dihedral and angular gating and
+   automatic exclusions for self-pairs and sequential nearest neighbours.
+
+The original ``NonbondedForce`` and ``HarmonicAngleForce`` are removed
+after all custom terms have been added.
+
+Key difference from the standard iConRNA model
+-----------------------------------------------
+The G–U wobble pair is omitted and replaced by the two G–G Hoogsteen
+pair forces. The G–G interaction strength is controlled by
+``ffs['ion_type']``, a Quantity in energy units, allowing the strength
+of the G-quartet hydrogen bonds to be tuned independently of the other
+base-pairing terms.
+
+Author:     Shanlong Li
+Date:       Dec 01, 2024
+
+Dependencies
+------------
+* `OpenMM <https://openmm.org>`_ (``openmm``, ``openmm.app``, ``openmm.unit``)
+* `NumPy <https://numpy.org>`_ (``numpy``)
 """
 
 from openmm.unit import *

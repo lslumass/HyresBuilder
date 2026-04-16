@@ -1,5 +1,55 @@
 """
-| Convert all-atom structures to CG structures.
+Conversion utilities for all-atom to coarse-grained (CG) structure preparation.
+
+This module provides the tools needed to convert all-atom protein and RNA
+structures into coarse-grained representations compatible with the HyRes
+(protein) and iConRNA (RNA) force fields. It handles the full conversion
+pipeline — from optional backbone hydrogen addition through CG bead placement,
+topology generation, and PSF writing — and can process mixed protein/RNA
+systems in a single call.
+
+Conversion models
+-----------------
+* **HyRes (protein)** — backbone heavy atoms (N, H, CA, C, O) are retained at
+  their original positions; sidechain heavy atoms are collapsed into one to five
+  geometric-center beads named CB, CC, CD, CE, CF depending on residue type.
+  Glycine carries no sidechain bead. Histidine variants (HSD, HSE, HSP) are
+  unified under the HIS residue name (:func:`at2hyres`).
+* **iConRNA (RNA)** — each nucleotide is mapped to a phosphate bead (P), two
+  sugar beads (C1 at C4′, C2 at C1′), and two to four base beads (NA–ND),
+  all placed at the geometric center of their contributing all-atom coordinates.
+  Supported nucleotides: ADE, GUA, CYT, URA (:func:`at2icon`).
+
+Pipeline overview
+-----------------
+The top-level entry point :func:`at2cg` orchestrates the full workflow:
+
+1. Optionally add backbone amide hydrogens to the all-atom input
+   (:func:`add_backbone_hydrogen`).
+2. Split the input PDB into per-chain temporary files and detect molecule
+   types (:func:`split_chains`).
+3. Apply the appropriate CG mapping per chain (:func:`at2hyres` or
+   :func:`at2icon`).
+4. Build topology and write PSF via ``psfgen``, set terminus charge states
+   (:func:`set_terminus`), and re-encode any atom serial numbers exceeding
+   99,999 in hybrid-36 format (:func:`fix_pdb_serial`).
+5. Optionally remove intermediate temporary files.
+
+A command-line interface is exposed via :func:`main` and registered as the
+``Convert2CG`` entry point.
+
+Hybrid-36 serial encoding
+--------------------------
+PDB format supports a maximum atom serial of 99,999. This module encodes
+larger serials in hybrid-36 (base-36 alphanumeric strings: A0000–Z9ZZZ for
+atoms 100,000–1,316,735, then a0000–z9ZZZ beyond that), ensuring output files
+remain valid for large systems.
+
+Dependencies
+------------
+* `OpenMM <https://openmm.org>`_ (``openmm``, ``openmm.app``, ``openmm.unit``)
+* `psfgen <https://github.com/MDAnalysis/psfgen>`_ (``psfgen.PsfGen``)
+* `NumPy <https://numpy.org>`_ (``numpy``)
 """
 
 from psfgen import PsfGen

@@ -1,8 +1,54 @@
 """
-| To constructe Hyres Force Field, and iConRNA force field.   
-| Athours: Shanlong Li, Xiping Gong, Yumeng Zhang   
-| Date: Mar 9, 2024   
-| Modified: Sep 29, 2025    
+HyRes protein and iConRNA RNA coarse-grained force field construction.
+
+This module replaces the standard OpenMM force terms generated from a CHARMM
+PSF/parameter file with the custom interactions that define the HyRes and
+iConRNA coarse-grained models. All forces are added to an existing OpenMM
+``System`` object in place, and the original ``NonbondedForce`` and
+``HarmonicAngleForce`` are removed after substitution.
+
+Force terms applied
+-------------------
+The following forces are constructed and registered in order by
+:func:`buildSystem`:
+
+1. **Restricted Bending (ReB) angle force** — replaces ``HarmonicAngleForce``
+   with a sine-based bending potential for RNA backbone and CA–CB angles,
+   preventing collapse through the planar singularity.
+2. **Debye–Hückel electrostatics** — screened Coulomb interactions via
+   ``CustomNonbondedForce``, with configurable screening length (``dh``),
+   relative dielectric constant (``er``), and a lambda scaling factor (``lmd``)
+   that modulates protein–RNA cross-interactions.
+3. **1-4 nonbonded interactions** — short-range Lennard-Jones and electrostatic
+   corrections for 1–4 bonded pairs via ``CustomBondForce``.
+4. **Backbone hydrogen bonds** — N-H···O potential for protein backbone via
+   ``CustomHbondForce``; proline residues are excluded as donors.
+5. **RNA base stacking** — centroid-distance–based stacking potential between
+   consecutive bases via ``CustomCentroidBondForce``, with residue-pair-specific
+   well depths and optimal distances.
+6. **RNA base pairing** — Watson-Crick A-U and C-G pairs and wobble G-U pairs,
+   each implemented as a separate ``CustomHbondForce`` with angular and
+   distance-dependent gating.
+
+Each force is assigned a unique force group index to facilitate per-force
+energy decomposition during analysis.
+
+Extensibility
+-------------
+An optional ``modification`` callable can be passed to :func:`buildSystem` to
+inject additional forces or modify existing ones after the built-in terms are
+added but before ``NonbondedForce`` is removed. This hook supports use cases
+such as positional restraints, aging interactions, or experimental potential
+terms without modifying this module directly.
+
+Authors:     Shanlong Li, Xiping Gong, Yumeng Zhang
+Date:        Mar 09, 2024
+Modified:    Sep 29, 2025
+
+Dependencies
+------------
+* `OpenMM <https://openmm.org>`_ (``openmm``, ``openmm.app``, ``openmm.unit``)
+* `NumPy <https://numpy.org>`_ (``numpy``)
 """
 
 from openmm.unit import *

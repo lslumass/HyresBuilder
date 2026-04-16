@@ -31,6 +31,9 @@ RU1   RU2   250.0      2.49   ! U: NA-NB
 RU1   RU3   180.0      2.70   ! U: NA-NC
 RU2   RU3   150.0      2.99   ! U: NB-NC
 
+!## for polyphosphate
+RP    RP     40.6      2.70   ! P-P
+
 
 THETAS
 !angles in backbone
@@ -56,6 +59,9 @@ RA3   RA4   RA1   40.0      84.0  !  NC-ND-NA
 RG1   RG2   RG3   40.0      88.0  !  NA-NB-NC
 RG2   RG3   RG4   40.0      83.0  !  NB-NC-ND
 RG3   RG4   RG1   40.0      72.0  !  NC-ND-NA
+
+!## for polyphosphate
+RP    RP     RP    50.0    99.0   ! P-P-P
 
 
 PHI
@@ -87,6 +93,9 @@ RA1   RA2   RA3   RA4     50.0    1   180.0   !NA-NB-NC-ND
 RS2   RG1   RG2   RG3     80.0    1     0.0   !C2-NA-NB-NC
 RG1   RG2   RG4   RG3     80.0    1     0.0   !NA-NB-ND-NC
 RG1   RG2   RG3   RG4     50.0    1   180.0   !NA-NB-NC-ND
+
+!## for polyphosphate
+RP    RP    RP    RP       0.5    1     0.0   ! P-P-P-P
 
 
 IMPHI

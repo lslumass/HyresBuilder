@@ -1,5 +1,48 @@
 """
-Generate the psf file.
+PSF file generation for HyRes and iConRNA coarse-grained systems.
+
+This module constructs CHARMM-style PSF topology files from coarse-grained
+PDB structures produced by the HyRes (protein) and iConRNA (RNA) force fields.
+It handles mixed systems containing any combination of protein, RNA, DNA,
+Mg²⁺, and Ca²⁺ chains in a single input PDB, automatically detecting molecule
+types by chain identity and assigning structured segment IDs before invoking
+``psfgen`` to build and write the topology.
+
+Workflow
+--------
+1. Parse the input CG PDB and split it into per-chain temporary files,
+   detecting molecule type from residue names (:func:`split_chains`).
+2. Assign segment IDs following the convention below and register each chain
+   with ``psfgen`` using the appropriate force-field topology (:func:`genpsf`).
+3. Optionally set terminus charge states for protein chains
+   (:func:`set_terminus`).
+4. Write the PSF file and remove all intermediate temporary PDB files.
+
+Segment ID convention
+---------------------
+Segment IDs are four characters: a single type prefix followed by a
+three-character hybrid-36 counter encoded by :func:`encode_segid`.
+
+========  ===========  ===============
+Prefix    Molecule     Example IDs
+========  ===========  ===============
+``P``     Protein      P001, P002, …
+``R``     RNA          R001, R002, …
+``D``     DNA          D001, D002, …
+``M``     Mg²⁺ ions    M001
+``C``     Ca²⁺ ions    C001
+========  ===========  ===============
+
+The hybrid-36 counter supports up to 68,391 chains per molecule type before
+overflowing.
+
+A command-line interface is exposed via :func:`main` and registered as the
+``GenPsf`` entry point.
+
+Dependencies
+------------
+* `psfgen <https://github.com/MDAnalysis/psfgen>`_ (``psfgen.PsfGen``)
+* HyresBuilder force-field topology files, loaded via ``utils.load_ff``.
 """
 
 from psfgen import PsfGen

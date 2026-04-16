@@ -1,7 +1,39 @@
 """
-| define specific interactions for aging simulations
-| Date: Nov-07-2025
-| Authors: Shanlong Li
+Force definitions for amyloid aging simulations.
+
+This module implements custom inter-chain interactions that model the progressive
+structural consolidation of amyloid fibrils over time — a process referred to
+here as "aging". As fibrils mature, backbone hydrogen bonds between adjacent
+beta-strands become increasingly locked in an in-register arrangement, reducing
+conformational dynamics and stiffening the fibril core.
+
+The forces defined here are designed to be layered on top of an existing OpenMM
+force field (e.g. HyRes, CHARMM36) without modifying its nonbonded terms,
+and are controlled by a scalar ``age`` parameter that scales the interaction
+strength to allow gradual or staged aging protocols.
+
+Force types provided
+--------------------
+* **In-register backbone hydrogen bonds** — a ``CustomHbondForce`` that
+  exclusively couples N-H···O donor–acceptor pairs sharing the same residue
+  index across chains, enforcing parallel in-register β-sheet geometry
+  (:func:`inRegisterHB`).
+
+Conventions
+-----------
+* Residue indexing follows OpenMM conventions (integer residue IDs from topology).
+* Proline residues are always excluded from hydrogen bond donor lists, as they
+  lack a backbone NH group.
+* All forces use nanometer / kilojoule-per-mole internal units; user-facing
+  parameters (e.g. ``age``) are accepted in kcal/mol for convenience and
+  converted internally.
+
+Dependencies
+------------
+* `OpenMM <https://openmm.org>`_ (``openmm``, ``openmm.app``, ``openmm.unit``)
+
+Date:    Nov 07, 2025
+Author:  Shanlong Li
 """
 
 
