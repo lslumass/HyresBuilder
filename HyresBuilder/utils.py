@@ -751,11 +751,9 @@ def iConRNA_setup(params, RNA='rU', modification=None):
     }
 
     # 4. load force field files
-    top_pro, param_pro = load_ff('Protein')
-    top_RNA, param_RNA = load_ff('RNA')
-    #top_DNA, param_DNA = load_ff('DNA')
-    #top_ATP, param_ATP = load_ff('RNA')
-    params = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro)
+    top_RNA = files("HyresBuilder") / "forcefield" / "top_RNA.inp"
+    param_RNA = files("HyresBuilder") / "forcefield" / "param_RNA.inp"
+    params = CharmmParameterSet(top_RNA, param_RNA)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf

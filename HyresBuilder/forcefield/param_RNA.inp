@@ -62,7 +62,7 @@ CNC   OCN   NCN   25.0      84.0  !  NB-NC-ND
 OCN   NCN   N1C   25.0      72.0  !  NC-ND-NA
 
 !## for polyphosphate
-BP    BP     BP    50.0    99.0   ! P-P-P
+BP    BP     BP    60.0    99.0   ! P-P-P
 
 
 PHI
@@ -80,7 +80,7 @@ N1C   CNC   NCN   OCN     50.0    1     0.0
 N1C   CNC   OCN   NCN     80.0    1   180.0
 
 !## for polyphosphate
-BP    BP    BP    BP       0.5    1     0.0   ! P-P-P-P
+BP    BP    BP    BP       0.9    1     0.0   ! P-P-P-P
 
 
 IMPHI
