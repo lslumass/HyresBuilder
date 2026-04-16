@@ -147,6 +147,41 @@ def build(name, sequence):
             printcg(atoms, f)
         print('END', file=f)
 
+def build_polyP(name, n):
+    """
+    Build a poly-phosphate (polyP) coarse-grained structure of n residues.
+
+    Each residue is a single PHO bead (P), placed sequentially along the
+    z-axis with a fixed P-P distance of 2.7 Å.  The output PDB uses the
+    residue name ``PHO`` and bead name ``P``.
+
+    Args:
+        name (str): Stem of the output file. The PDB is written to ``<name>.pdb``.
+        n (int): Number of phosphate beads (residues) in the chain.
+
+    Returns:
+        None. Writes a PDB file to ``<name>.pdb`` in the current working directory.
+
+    Example:
+        >>> from HyresBuilder import RNABuilder
+        >>> RNABuilder.build_polyP("polyP", 10)
+        # output: polyP.pdb
+    """
+    PP_DIST = 2.7   # Å, P-P distance along z
+
+    out = f'{name}.pdb'
+    with open(out, 'w') as f:
+        print('REMARK  iConRNA', file=f)
+        print('REMARK  CREATE BY RNABUILDER/SHANLONG LI', file=f)
+        print('REMARK  Ref: S. Li and J. Chen, PNAS, 2025, 122, e2504583122.', file=f)
+        print('REMARK  SEQUENCE: PHO x{}'.format(n), file=f)
+        for i in range(n):
+            atom = ['ATOM', i + 1, 'P', 'PHO', 'X', i + 1,
+                    9000.0, 9000.0, 9000.0 + i * PP_DIST,
+                    1.00, 0.00, 'RNAP']
+            printcg([atom], f)
+        print('END', file=f)
+
 def main():
     """Command-line interface"""
     
@@ -155,9 +190,15 @@ def main():
     parser.add_argument('seq', type=str, help='sequence in one-letter')
 
     args = parser.parse_args()
-    build(args.name, args.seq)
-    print(f"RNA structure saved to {args.name}.pdb")
+
+    seq = args.seq
+    if seq.startswith('P'):
+        n = len(seq)
+        build_polyP(args.name, n)
+        print(f"PolyP structure saved to {args.name}.pdb")
+    else:
+        build(args.name, args.seq)
+        print(f"RNA structure saved to {args.name}.pdb")
 
 if __name__ == '__main__':
     main()
-
