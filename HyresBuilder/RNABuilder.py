@@ -187,13 +187,13 @@ def main():
     
     parser = argparse.ArgumentParser(description='RNABuilder: build iConRNA from sequence')
     parser.add_argument('name', type=str, help='protein name, output: name.pdb')
-    parser.add_argument('seq', type=str, help='sequence in one-letter')
+    parser.add_argument('seq', type=str, help='sequence in one-letter, for polyP, use Pn (e.g. P10 for 10 residues)')
 
     args = parser.parse_args()
 
     seq = args.seq
     if seq.startswith('P'):
-        n = len(seq)
+        n = int(seq[1:])
         build_polyP(args.name, n)
         print(f"PolyP structure saved to {args.name}.pdb")
     else:
