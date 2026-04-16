@@ -50,6 +50,7 @@ and differ only in which force field they target:
   systems; accepts a rich ``params`` namespace and an optional
   ``modification`` hook for injecting extra forces after the built-in
   terms are added.
+* :func:`iConRNA_setup` — specialised setup for original iConRNA systems
 * :func:`rG4s_setup` — specialised setup for rG4 G-quadruplex systems;
   loads the rG4s parameter file and passes an additional ``ion_type``
   energy parameter to :func:`rG4sFF.rG4sSystem`.
