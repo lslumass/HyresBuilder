@@ -338,7 +338,7 @@ def setup(params, modification=None):
 
     # 6. construct force field
     system = buildSystem(psf, system, ffs, modification=modification)
-    print("HyresFF.buildSystem for custom force field")
+    print("buildSystem for HyRes_iConRNA")
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
@@ -781,7 +781,7 @@ def iConRNA_setup(params, RNA='rU', modification=None):
 
     # 6. construct force field
     system = iConRNASystem(psf, system, ffs, modification=modification)
-    print("HyresFF.iConRNASystem for custom force field")
+    print("iConRNASystem for iConRNA model")
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
