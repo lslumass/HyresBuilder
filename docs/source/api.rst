@@ -8,8 +8,7 @@ API Reference
    api/RNABuilder
    api/Convert2CG
    api/GenPsf
-   api/HyresFF
-   api/rG4sFF
+   api/FFs
    api/utils
    api/Mutator
    api/Restraints

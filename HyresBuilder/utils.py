@@ -70,8 +70,7 @@ from openmm.unit import *
 from openmm.app import *
 from openmm import *
 import numpy as np
-from .HyresFF import *
-from .rG4sFF import *
+from .FFs import *
 
 
 def load_ff(model: str) -> tuple[str, str]:
