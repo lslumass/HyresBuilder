@@ -5,6 +5,15 @@
 * 
 
 BOND
+!
+!V(bond) = Kb(b - b0)**2
+!
+!Kb: kcal/mole/A**2
+!b0: A
+!
+!atom type   Kb         b0
+!
+
 !bonds in amino acid backbone
 H     NH1    300.0      0.98  ! H-N (non-pro)               
 C1E   NH1    320.0      1.45  ! CA-N (non-pro, non-gly)     
@@ -64,7 +73,22 @@ P2T   P3T    200.0      3.20  ! pThr CB-CC
 ! special bond in pro
 N     A2P    400.0      1.86  ! pro
 
+
 THETAS
+!V = V(angle) + V(Urey-Bradley)
+!
+!V(angle) = Ktheta(Theta - Theta0)**2
+!
+!V(Urey-Bradley) = Kub(S - S0)**2
+!
+!Ktheta: kcal/mole/rad**2
+!Theta0: degrees
+!Kub: kcal/mole/A**2 (Urey-Bradley)
+!S0: A
+!
+!atom types     Ktheta    Theta0   Kub     S0
+!
+
 !angles in amino acid backbone
 C     NH1   H     30.0     120.0  ! H-N-C                       
 C1E   NH1   H     35.0     120.0  ! H-N-CA (non-gly)            
@@ -175,7 +199,18 @@ N     C1E   A2P   0.00     60.0   ! pro
 N     A2P   C1E   0.00     60.0   ! pro
 C1E   N     A2P   0.00     60.0   ! pro
 
+
 PHI
+!
+!V(dihedral) = Kchi(1 + cos(n(chi) - delta))
+!
+!Kchi: kcal/mole
+!n: multiplicity
+!delta: degrees
+!
+!atom types             Kchi    n   delta
+!
+
 !phi in amino acid backbone
 C     C1E   N     C       0.30    3     0.0    ! phi (pro)
 X     C1E   N     X       0.00    3     0.0    ! not phi (pro)
@@ -273,7 +308,18 @@ P1W   A2W   A4W   A3W     0.00    2     180.0  ! trp CC-CD-CF-CE
 C     N     A2P   C1E     0.00    2     180.0  ! pro C-N-CB-CA
 N     A2P   C1E   C       0.00    2     180.0  ! pro N-CB-CA-C
 
+
 IMPHI
+!
+!V(improper) = Kpsi(psi - psi0)**2
+!
+!Kpsi: kcal/mole/rad**2
+!psi0: degrees
+!note that the second column of numbers (0) is ignored
+!
+!atom types           Kpsi                   psi0
+!
+
 !backbone N-C-CA-H 
 NH1   X     X     H      45.00    0     0.0
 !backbone C-CA-N-O
@@ -1003,8 +1049,15 @@ C     NH1   C2E   C     NH1   C2E   C     N   24
 NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
      CUTNB 12.0  CTOFNB 12.0  CTONNB 11.0
 
-!                 Emin         Rmin
-!                 (kcal/mol)   (A)
+!
+!V(Lennard-Jones) = Eps,i,j[(Rmin,i,j/ri,j)**12 - 2(Rmin,i,j/ri,j)**6]
+!
+!epsilon: kcal/mole, Eps,i,j = sqrt(eps,i * eps,j)
+!Rmin/2: A, Rmin,i,j = Rmin/2,i + Rmin/2,j
+!
+!atom  ignored    epsilon      Rmin/2   ignored   eps,1-4       Rmin/2,1-4
+!
+
 H        0.00     -0.0060      0.2245   0.00     -0.0498       0.8000  ! amide H                  
 C        0.00     -0.0144      2.1000   0.00     -0.1000       1.9000  ! carbonyl C               
 C1E      0.00     -0.0058      2.3650   0.00     -0.1000       1.9000  ! CA in backbone (non-gly) 
