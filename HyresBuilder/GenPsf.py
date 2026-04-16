@@ -94,14 +94,19 @@ def split_chains(pdb):
             chains.append(atoms)
 
     # save out each chain
+    pre_type = None
     for i, (t, chain) in enumerate(zip(types, chains)):
         if t in ['P', 'R', 'D', 'PHO']:
             tmp_pdb = f"psfgentmp_{i}.pdb"
         elif t in ['M', 'C']:
-            tmp_pdb = f"psfgentmp_{t}.pdb"
+            if t == pre_type:
+                continue  # skip if same ion type as previous chain
+            else:
+                tmp_pdb = f"psfgentmp_{t}.pdb"
         else:
             print('Unknown molecule type')
             exit(1)
+        pre_type = t
 
         with open(tmp_pdb, 'w') as f:
             for line in chain:
