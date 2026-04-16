@@ -190,7 +190,8 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix'):
     if RNA == 'mix':
         RNA_topology, _ = utils.load_ff('RNA')
     elif RNA == 'icon':
-        RNA_topology = files("HyresBuilder") / "forcefield" / "top_RNA.inp"
+        path1 = files("HyresBuilder") / "forcefield" / "top_RNA.inp"
+        RNA_topology = path1.as_posix()
     protein_topology, _ = utils.load_ff('Protein')
 
     # generate psf

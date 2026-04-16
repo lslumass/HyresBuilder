@@ -751,8 +751,10 @@ def iConRNA_setup(params, RNA='rU', modification=None):
     }
 
     # 4. load force field files
-    top_RNA = files("HyresBuilder") / "forcefield" / "top_RNA.inp"
-    param_RNA = files("HyresBuilder") / "forcefield" / "param_RNA.inp"
+    path1 = files("HyresBuilder") / "forcefield" / "top_RNA.inp"
+    top_RNA = path1.as_posix()
+    path2 = files("HyresBuilder") / "forcefield" / "param_RNA.inp"
+    param_RNA = path2.as_posix()
     params = CharmmParameterSet(top_RNA, param_RNA)
 
     print('\n################## load coordinates and topology ###################')
