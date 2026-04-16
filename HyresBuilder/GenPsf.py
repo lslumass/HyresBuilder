@@ -45,6 +45,7 @@ Dependencies
 * HyresBuilder force-field topology files, loaded via ``utils.load_ff``.
 """
 
+from importlib.resources import files
 from psfgen import PsfGen
 from HyresBuilder import utils
 import argparse, os, glob
@@ -144,7 +145,7 @@ def encode_segid(n: int) -> str:
     rem  = n % 1296
     return f"{lead}{BASE36[rem // 36]}{BASE36[rem % 36]}"
 
-def genpsf(pdb_in, psf_out, terminal='neutral'):
+def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix'):
     """
     Generate a PSF file for a HyRes protein or iConRNA coarse-grained system.
 
@@ -172,6 +173,9 @@ def genpsf(pdb_in, psf_out, terminal='neutral'):
                                   - ``'NT'`` — N-terminus charged only
                                   - ``'CT'`` — C-terminus charged only
                                   - ``'positive'`` — both termini negatively charged
+        RNA (str, optional): Which RNA topology to use. Options:
+                            - ``'mix'`` (default) — use HyRes_iConRNA topologies
+                            - ``'icon'`` — use iConRNA topologies instead
 
     Returns:
         None. Writes a PSF file to ``psf_out``.
@@ -183,7 +187,10 @@ def genpsf(pdb_in, psf_out, terminal='neutral'):
     """
     
     # load topology files
-    RNA_topology, _ = utils.load_ff('RNA')
+    if RNA == 'mix':
+        RNA_topology, _ = utils.load_ff('RNA')
+    elif RNA == 'icon':
+        RNA_topology = files("HyresBuilder") / "forcefield" / "top_RNA.inp"
     protein_topology, _ = utils.load_ff('Protein')
 
     # generate psf
@@ -225,9 +232,13 @@ def main():
     parser.add_argument("psf", help="output name/path for PSF", default='conf.psf')
     parser.add_argument("-t", "--ter", choices=['neutral', 'charged', 'NT', 'CT', 'positive'], 
                         help="Terminal charged status (choose from ['neutral', 'charged', 'NT', 'CT', 'positive'])", default='neutral')
+    parser.add_argument("--icon", action='store_true', help="Use iConRNA topologies instead of HyRes_iConRNA topologies")
     args = parser.parse_args()
 
-    genpsf(args.pdb, args.psf, args.ter)
+    if args.icon:
+        genpsf(args.pdb, args.psf, args.ter, RNA='icon')
+    else:
+        genpsf(args.pdb, args.psf, args.ter)
     # cleanup
     for file_path in glob.glob("psfgentmp_*.pdb"):
         os.remove(file_path)
