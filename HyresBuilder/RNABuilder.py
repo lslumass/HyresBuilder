@@ -147,40 +147,69 @@ def build(name, sequence):
             printcg(atoms, f)
         print('END', file=f)
 
-def build_polyP(name, n):
+def build_polyP(name, n, seed=None):
     """
     Build a poly-phosphate (polyP) coarse-grained structure of n residues.
-
-    Each residue is a single PHO bead (P), placed sequentially along the
-    z-axis with a fixed P-P distance of 2.7 Å.  The output PDB uses the
-    residue name ``PHO`` and bead name ``P``.
-
+ 
+    Each residue is a single PHO bead (P). Beads are placed via a random walk
+    so that every P-P bond is exactly 2.7 Å but the chain is non-linear.
+    The step direction is drawn uniformly from the unit sphere, giving a
+    realistic disordered conformation. The output PDB uses residue name
+    PHO and bead name P.
+ 
     Args:
-        name (str): Stem of the output file. The PDB is written to ``<name>.pdb``.
+        name (str): Stem of the output file. The PDB is written to <n>.pdb.
         n (int): Number of phosphate beads (residues) in the chain.
-
+        seed (int, optional): Random seed for reproducibility. Default is None
+            (non-reproducible).
+ 
     Returns:
-        None. Writes a PDB file to ``<name>.pdb`` in the current working directory.
-
+        None. Writes a PDB file to <n>.pdb in the current working directory.
+ 
     Example:
         >>> from HyresBuilder import RNABuilder
         >>> RNABuilder.build_polyP("polyP", 10)
         # output: polyP.pdb
+        >>> RNABuilder.build_polyP("polyP_rep", 10, seed=42)  # reproducible
     """
-    PP_DIST = 2.7   # Å, P-P distance along z
-
-    out = f'{name}.pdb'
-    with open(out, 'w') as f:
-        print('REMARK  iConRNA', file=f)
-        print('REMARK  CREATE BY RNABUILDER/SHANLONG LI', file=f)
-        print('REMARK  Ref: S. Li and J. Chen, PNAS, 2025, 122, e2504583122.', file=f)
-        print('REMARK  SEQUENCE: PHO x{}'.format(n), file=f)
-        for i in range(n):
-            atom = ['ATOM', i + 1, 'P', 'PHO', 'X', i + 1,
-                    9000.0, 9000.0, 9000.0 + i * PP_DIST,
-                    1.00, 0.00, 'RNAP']
+    import math
+    import random
+ 
+    PP_DIST = 2.7   # Å, fixed P-P bond length
+ 
+    rng = random.Random(seed)
+ 
+    def random_unit_vector():
+        """Uniform random direction on the unit sphere (Marsaglia method)."""
+        while True:
+            x = rng.uniform(-1, 1)
+            y = rng.uniform(-1, 1)
+            if x*x + y*y >= 1:
+                continue
+            z = math.sqrt(1 - x*x - y*y) * rng.choice([-1, 1])
+            return x, y, z
+ 
+    # Build coordinates via random walk starting at the origin
+    x, y, z = 9000.0, 9000.0, 9000.0
+    coords = [(x, y, z)]
+    for _ in range(n - 1):
+        dx, dy, dz = random_unit_vector()
+        x += dx * PP_DIST
+        y += dy * PP_DIST
+        z += dz * PP_DIST
+        coords.append((x, y, z))
+ 
+    out = f"{name}.pdb"
+    with open(out, "w") as f:
+        print("REMARK  iConRNA", file=f)
+        print("REMARK  CREATE BY RNABUILDER/SHANLONG LI", file=f)
+        print("REMARK  Ref: S. Li and J. Chen, PNAS, 2025, 122, e2504583122.", file=f)
+        print("REMARK  SEQUENCE: PHO x{}".format(n), file=f)
+        for i, (cx, cy, cz) in enumerate(coords):
+            atom = ["ATOM", i + 1, "P", "PHO", "X", i + 1,
+                    cx, cy, cz, 1.00, 0.00, "RNAP"]
             printcg([atom], f)
-        print('END', file=f)
+        print("END", file=f)
 
 def main():
     """Command-line interface"""
