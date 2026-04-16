@@ -189,11 +189,30 @@ def build_polyP(name, n, seed=None):
             z = math.sqrt(1 - x*x - y*y) * rng.choice([-1, 1])
             return x, y, z
  
-    # Build coordinates via random walk starting at the origin
+    def next_direction(prev_dir):
+        """Return a random unit vector satisfying:
+          - dz > 0  (z always increases along the chain)
+          - dot(prev_dir, new_dir) > 0  (P-P-P angle > 90°)
+        Both constraints are enforced by rejection sampling.
+        prev_dir is None for the very first bond (only dz > 0 is required).
+        """
+        while True:
+            d = random_unit_vector()
+            if d[2] <= 0:                              # must go +z
+                continue
+            if prev_dir is not None:
+                dot = d[0]*prev_dir[0] + d[1]*prev_dir[1] + d[2]*prev_dir[2]
+                if dot <= 0:                           # P-P-P angle must be > 90°
+                    continue
+            return d
+ 
+    # Build coordinates via constrained random walk
     x, y, z = 9000.0, 9000.0, 9000.0
     coords = [(x, y, z)]
+    prev_dir = None
     for _ in range(n - 1):
-        dx, dy, dz = random_unit_vector()
+        dx, dy, dz = next_direction(prev_dir)
+        prev_dir = (dx, dy, dz)
         x += dx * PP_DIST
         y += dy * PP_DIST
         z += dz * PP_DIST
