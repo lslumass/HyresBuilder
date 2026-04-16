@@ -53,7 +53,7 @@ import argparse, os, glob
 def split_chains(pdb):
     aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
                    "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
-    rnas = ["ADE", "GUA", "CYT", "URA"]
+    rnas = ["ADE", "GUA", "CYT", "URA", 'PHO']
     dnas = ["DAD", "DGU", "DCY", "DTH"]
     mg, cal = ["MG+"], ["CA+"]
 
