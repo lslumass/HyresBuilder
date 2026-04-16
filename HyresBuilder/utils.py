@@ -780,8 +780,8 @@ def iConRNA_setup(params, RNA='rU', modification=None):
     print(f"switch distance: {d_switch}")
 
     # 6. construct force field
-    system = buildSystem(psf, system, ffs, modification=modification)
-    print("HyresFF.buildSystem for custom force field")
+    system = iConRNASystem(psf, system, ffs, modification=modification)
+    print("HyresFF.iConRNASystem for custom force field")
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')

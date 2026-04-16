@@ -524,7 +524,7 @@ def iConRNASystem(psf, system, ffs, modification=None):
     >>> ffs    = {
     ...     'dh'       : 1.2 * unit.nanometer,
     ...     'lmd'      : 1.0,
-    ...     'er'       : 80.0,
+    ...     'er'       : 20.0,
     ...     'eps_base' : 3.0 * unit.kilocalorie_per_mole,
     ... }
     >>> system = HyresFF.iConRNASystem(psf, system, ffs)
@@ -599,7 +599,7 @@ def iConRNASystem(psf, system, ffs, modification=None):
     print('\n# add base stacking force')
     # base stakcing and paring
     # define relative strength of base pairing and stacking
-    eps_base = ffs['eps_base']
+    eps_base = 2.05*unit.kilocalorie_per_mole
     scales = {'AA':1.0, 'AG':1.0, 'AC':0.8, 'AU':0.8, 'GA':1.0, 'GG':1.0, 'GC':1.0, 'GU':1.0,
               'CA':0.4, 'CG':0.5, 'CC':0.5, 'CU':0.3, 'UA':0.3, 'UG':0.3, 'UC':0.2, 'UU':0.0,
               'A-U':0.395, 'C-G':0.545}
