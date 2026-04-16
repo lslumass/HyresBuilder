@@ -126,7 +126,7 @@ IMPR C1   P    +P   C2
 
 RESI PHO         -1.00  !
 GROUP                   !
-ATOM P    BP     -1.00  !
+ATOM P    RP     -1.00  !
 BOND P    +P
 
 
