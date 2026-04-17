@@ -647,9 +647,10 @@ def iConRNA_setup(params, RNA='rU', modification=None):
                                      - ``gpu_id`` (str) — CUDA device index
                                        (e.g. ``'0'``).
 
-        RNA (str, optional): RNA type for Mg²⁺-RNA interaction parameterization.
-                             Supported values: ``'rA'``, ``'rU'``, ``'CAG'``, and tuple. Default is ``'rA'``.
+        RNA (str, tuple, or float): RNA type for Mg²⁺-RNA interaction parameterization.
+                             Supported values: ``'rA'``, ``'rU'``, ``'CAG'``, tuple or float. Default is ``'rA'``.
                              if tuple is given, it should be (F, M, n) for the nMg2lmd function to customize the Mg-RNA interaction.
+                             if float is given, it will be used as the lmd value directly.
 
         modification (callable, optional): User-defined function that accepts the
                                            ``System`` object and applies additional
@@ -734,20 +735,22 @@ def iConRNA_setup(params, RNA='rU', modification=None):
     print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
 
     # Mg-P interaction
-    if isinstance(RNA, tuple):
-        F, M, n = RNA
-        lmd = nMg2lmd(c_Mg, T, F=F, M=M, n=n)
-    else:
-        lmd = nMg2lmd(c_Mg, T, RNA=RNA)
+    match RNA:
+        case str():
+            lmd = nMg2lmd(c_Mg, T, RNA=RNA)
+        case (F, M, n):
+            lmd = nMg2lmd(c_Mg, T, F=F, M=M, n=n)
+        case float():
+            lmd = RNA
     print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
 
     # force field parameters
     ffs = {
-        'temp': T,                                                  # Temperature
+        'temp': T,                                                   # Temperature
         'lmd': lmd,                                                  # Charge scaling factor of P-
-        'dh': dh,                                                  # Debye Huckel screening length
-        'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
-        'er': er,                                                  # relative dielectric constant
+        'dh': dh,                                                    # Debye Huckel screening length
+        'ke': 138.935456,                                            # Coulomb constant, ONE_4PI_EPS0
+        'er': er,                                                    # relative dielectric constant
     }
 
     # 4. load force field files
