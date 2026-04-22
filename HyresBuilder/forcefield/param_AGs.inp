@@ -14,7 +14,7 @@ BOND
 !
 !bonds for Kanamycin (KAN)
 C3O   C2N   166.0      3.12   ! K1-K2, K1-K3
-C30   OCO    35.0      3.10   ! K1-K4, K1-K7
+C3O   OCO    35.0      3.10   ! K1-K4, K1-K7
 C2N   C2N   139.0      2.60   ! K2-K3
 OCO   ONH   130.5      2.77   ! K4-K5
 OCO   C2O    78.0      3.00   ! K4-K6
