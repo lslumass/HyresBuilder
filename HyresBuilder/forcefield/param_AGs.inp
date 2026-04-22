@@ -1,0 +1,113 @@
+* parameter file for CG aminoglycosides
+*  
+* Date: Apr 22, 2026
+* Author: Shanlong Li
+
+BOND
+!
+!V(bond) = Kb(b - b0)**2
+!
+!Kb: kcal/mole/A**2
+!b0: A
+!
+!atom type Kb          b0
+!
+!bonds for Kanamycin (KAN)
+C3O   C2N   166.0      3.12   ! K1-K2, K1-K3
+C30   OCO    35.0      3.10   ! K1-K4, K1-K7
+C2N   C2N   139.0      2.60   ! K2-K3
+OCO   ONH   130.5      2.77   ! K4-K5
+OCO   C2O    78.0      3.00   ! K4-K6
+ONH   C2O   155.0      2.94   ! K5-K6
+C2O   P1S    10.0      2.70   ! K6-K10
+OCO   OH2   100.0      2.75   ! K7-K8
+OCO   OC2    78.0      3.00   ! K7-K9
+OH2   OC2   100.0      2.92   ! K8-K9
+OC2   QdK    10.0      2.70   ! K9-K11
+
+
+THETAS
+!V = V(angle) + V(Urey-Bradley)
+!
+!V(angle) = Ktheta(Theta - Theta0)**2
+!
+!V(Urey-Bradley) = Kub(S - S0)**2
+!
+!Ktheta: kcal/mole/rad**2
+!Theta0: degrees
+!Kub: kcal/mole/A**2 (Urey-Bradley)
+!S0: A
+!
+!atom types     Ktheta    Theta0   Kub     S0
+!
+
+!angles for Kanamycin (KAN)
+C2N   C3O   OCO   35.0      70.0  ! K3-K1-K4, K2-K1-K7
+OCO   C3O   OCO   15.0     157.0  ! K4-K1-K7
+C3O   OCO   ONH   10.0     137.5  ! K1-K4-K5
+C3O   OCO   C2O   20.0     116.0  ! K1-K4-K6
+OCO   C2O   P1S   15.0      82.0  ! K4-K6-K10
+C3O   OCO   OH2    7.0     115.5  ! K1-K7-K8
+C3O   OCO   OC2    5.0     155.0  ! K1-K7-K9
+OCO   OC2   QdK    8.0      84.0  ! K7-K9-K11
+OH2   OC2   QdK   10.0     135.0  ! K8-K9-K11
+
+
+PHI
+!
+!V(dihedral) = Kchi(1 + cos(n(chi) - delta))
+!
+!Kchi: kcal/mole
+!n: multiplicity
+!delta: degrees
+!
+!atom types             Kchi    n   delta
+!
+
+!phi for Kanamycin (KAN)
+C2N   C3O   OCO   OC2      1.3    1  -121.0    ! K2-K1-K7-K9
+C2N   C3O   OCO   ONH      6.5    1    95.0    ! K3-K1-K4-K5
+ONH   OCO   C2O   P1S      8.8    1   -22.5    ! K5-K4-K6-K10
+OH2   OCO   OC2   QdK      9.5    1   -17.0    ! K8-K7-K9-K11
+
+
+IMPHI
+
+
+NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
+     CUTNB 12.0  CTOFNB 12.0  CTONNB 11.0
+
+!
+!V(Lennard-Jones) = Eps,i,j[(Rmin,i,j/ri,j)**12 - 2(Rmin,i,j/ri,j)**6]
+!
+!epsilon: kcal/mole, Eps,i,j = sqrt(eps,i * eps,j)
+!Rmin/2: A, Rmin,i,j = Rmin/2,i + Rmin/2,j
+!
+!atom  ignored    epsilon      Rmin/2   ignored   eps,1-4       Rmin/2,1-4
+!
+C3O      0.00     -0.0502      2.5375   0.00     -0.0502      2.5375 !
+C2N      0.00     -0.0150      2.2109   0.00     -0.0150      2.2109 !
+OCO      0.00     -0.1000      2.1190   0.00     -0.1000      2.1190 !
+ONH      0.00     -0.0150      2.5198   0.00     -0.0150      2.5198 !
+C2O      0.00     -0.0502      2.3063   0.00     -0.0502      2.3063 !
+OH2      0.00     -0.0300      2.4460   0.00     -0.0300      2.4460 !
+OC2      0.00     -0.0502      2.4340   0.00     -0.0502      2.4340 !
+
+NBFIX
+!                 Emin         Rmin
+!                 (kcal/mol)   (A)
+C3O    C3O       -0.0502      5.0750           !necessary, do not delete
+
+!# QdR/QdK-RNA cation-pi interactions
+QdR       RA1       -0.13000       4.5000 
+QdR       RG1       -0.43000       4.5000
+QdR       RC1       -0.38000       4.5000
+QdR       RU1       -0.09000       4.5000
+
+!# QdK       RA1    --- too weak, IGNORE ---
+QdK       RG1       -0.22000       4.5000
+QdK       RC1       -0.27000       4.5000
+QdK       RU1       -0.17000       4.5000
+
+
+END

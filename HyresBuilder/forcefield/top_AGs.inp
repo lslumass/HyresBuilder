@@ -1,0 +1,45 @@
+* topology file for coarse grained aminoglycosides
+*
+   20    1              
+MASS   401 C3O  56.06   ! KAN-1
+MASS   402 C2N  35.55   ! KAN-2, KAN-3
+MASS   403 OCO  45.02   ! KAN-4, KAN-7
+MASS   404 ONH  59.07   ! KAN-5
+MASS   405 C2O  43.03   ! KAN-6
+MASS   406 OH2  60.05   ! KAN-8
+MASS   407 OC2  43.03   ! KAN-9, use a different name with KAN-6 for better angle definition
+!MASS   408 P1S  ! KAN-10 uses CB of Ser
+!MASS   409 QdK  ! KAN-11 uses CB of Lys
+
+
+AUTOGENERATE
+DEFA FIRS NTER LAST CTER
+
+RESI KAN         +4.00
+GROUP                 
+ATOM K1   C3O     0.00
+ATOM K2   C2N    +1.00
+ATOM K3   C2N    +1.00
+GROUP                 
+ATOM K4   OCO     0.00
+ATOM K5   ONH    +1.00
+ATOM K6   C2O     0.00
+ATOM K10  P1S     0.00
+GROUP                 
+ATOM K7   OCO     0.00
+ATOM K8   OH2     0.00
+ATOM K9   OC2     0.00
+ATOM K11  QdK    +1.00
+BOND K1   K2        K1   K3        K1   K4        K1   K7
+BOND K2   K3        K4   K5        K4   K6        K5   K6
+BOND K6   K10       K7   K8        K7   K9        K8   K9
+BOND K9   K11
+ANGL K2   K1   K7        K3   K1   K4        K4   K1   K7
+ANGL K1   K4   K5        K1   K4   K6        K4   K6   K10
+ANGL K1   K7   K8        K1   K7   K9        K7   K9   K11
+ANGL K8   K9   K11
+DIHE K2   K1   K7   K9        K3   K1   K4   K5        K5   K4   K6   K10
+DIHE K8   K7   K9   K11
+
+
+END
