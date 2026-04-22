@@ -204,6 +204,8 @@ def buildSystem(psf, system, ffs, modification=None):
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
         elif atoms[ang[0]] == 'CA' and atoms[ang[1]] == 'CB':
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
+        elif atoms[ang[0]].startswith('K'):
+            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
         else:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])
     system.addForce(ReB)
