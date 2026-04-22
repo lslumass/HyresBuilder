@@ -193,11 +193,13 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix'):
         path1 = files("HyresBuilder") / "forcefield" / "top_RNA.inp"
         RNA_topology = path1.as_posix()
     protein_topology, _ = utils.load_ff('Protein')
+    AGs_topology, _ = utils.load_ff('AGs')
 
     # generate psf
     gen = PsfGen()
     gen.read_topology(RNA_topology)
     gen.read_topology(protein_topology)
+    gen.read_topology(AGs_topology)
 
     counts = {'P': 1, 'R': 1, 'D': 1, 'M': 1, 'C': 1, 'PHO': 1}
     types = split_chains(pdb_in)
