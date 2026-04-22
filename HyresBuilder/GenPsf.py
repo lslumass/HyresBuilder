@@ -58,6 +58,7 @@ def split_chains(pdb):
     dnas = ["DAD", "DGU", "DCY", "DTH"]
     mg, cal = ["MG+"], ["CA+"]
     phos = ['PHO']
+    AGs = ['KAN']
 
     def get_type(resname):
         chaintype = (
@@ -67,6 +68,7 @@ def split_chains(pdb):
             'M' if resname in mg else
             'C' if resname in cal else
             'PHO' if resname in phos else
+            'AGs' if resname in AGs else
             None
         )
         return chaintype
@@ -97,7 +99,7 @@ def split_chains(pdb):
     # save out each chain
     pre_type = None
     for i, (t, chain) in enumerate(zip(types, chains)):
-        if t in ['P', 'R', 'D', 'PHO']:
+        if t in ['P', 'R', 'D', 'PHO', 'AGs']:
             tmp_pdb = f"psfgentmp_{i}.pdb"
         elif t in ['M', 'C']:
             if t == pre_type:
