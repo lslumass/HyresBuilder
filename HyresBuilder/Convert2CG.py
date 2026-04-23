@@ -1013,8 +1013,8 @@ def at2AGs(pdb_in, pdb_out):
                            f"  1.00  0.00      {segid:4s}\n")
                 
                 # Base beads
-                if resname in base_mappings:
-                    for bead_name, atom_names in base_mappings[resname]:
+                if resname in AGs_mappings:
+                    for bead_name, atom_names in AGs_mappings[resname]:
                         base_atoms = [a for a in res_atoms if a['name'] in atom_names]
                         if base_atoms:
                             coords = np.array([[a['x'], a['y'], a['z']] for a in base_atoms])
