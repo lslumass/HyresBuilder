@@ -433,6 +433,8 @@ def split_chains(pdb):
                 chain_id = line[21].strip()
                 segid = line[72:76].strip()
                 resname = line[17:20].strip()
+                resname = {"A": "ADE", "G": "GUA", "C": "CYT", "U": "URA",
+                           "DA": "DAD", "DG": "DGU", "DC": "DCY", "DT": "DTH"}.get(resname, resname)
                 if resname in HISs:
                     resname = 'HIS'
                 
