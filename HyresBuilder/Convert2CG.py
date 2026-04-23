@@ -974,44 +974,6 @@ def at2AGs(pdb_in, pdb_out):
                 chain = res_data['chain']
                 res_atoms = res_data['atoms']
                 
-                # P bead (phosphate group)
-                p_atoms = [a for a in res_atoms if a['name'] in ["P", "O1P", "O2P", "O5'"]]
-                # Add O3' from previous residue
-                if resid - 1 in segments[segid]:
-                    prev_atoms = segments[segid][resid - 1]['atoms']
-                    p_atoms.extend([a for a in prev_atoms if a['name'] == "O3'"])
-                
-                if p_atoms:
-                    coords = np.array([[a['x'], a['y'], a['z']] for a in p_atoms])
-                    center = coords.mean(axis=0)
-                    atom_serial += 1
-                    serial_str = encode_serial(atom_serial)
-                    f.write(f"ATOM  {serial_str}  P   {resname:3s} {chain}{resid:4d}    "
-                           f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
-                           f"  1.00  0.00      {segid:4s}\n")
-                
-                # C1 bead (C4' sugar)
-                c1_atoms = [a for a in res_atoms if a['name'] == "C4'"]
-                if c1_atoms:
-                    coords = np.array([[a['x'], a['y'], a['z']] for a in c1_atoms])
-                    center = coords.mean(axis=0)
-                    atom_serial += 1
-                    serial_str = encode_serial(atom_serial)
-                    f.write(f"ATOM  {serial_str}  C1  {resname:3s} {chain}{resid:4d}    "
-                           f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
-                           f"  1.00  0.00      {segid:4s}\n")
-                
-                # C2 bead (C1' sugar)
-                c2_atoms = [a for a in res_atoms if a['name'] == "C1'"]
-                if c2_atoms:
-                    coords = np.array([[a['x'], a['y'], a['z']] for a in c2_atoms])
-                    center = coords.mean(axis=0)
-                    atom_serial += 1
-                    serial_str = encode_serial(atom_serial)
-                    f.write(f"ATOM  {serial_str}  C2  {resname:3s} {chain}{resid:4d}    "
-                           f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
-                           f"  1.00  0.00      {segid:4s}\n")
-                
                 # Base beads
                 if resname in AGs_mappings:
                     for bead_name, atom_names in AGs_mappings[resname]:
@@ -1021,14 +983,14 @@ def at2AGs(pdb_in, pdb_out):
                             center = coords.mean(axis=0)
                             atom_serial += 1
                             serial_str = encode_serial(atom_serial)
-                            f.write(f"ATOM  {serial_str}  {bead_name:2s}  {resname:3s} "
+                            f.write(f"ATOM  {serial_str}  {bead_name:<4s}  {resname:3s} "
                                    f"{chain}{resid:4d}    "
                                    f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
                                    f"  1.00  0.00      {segid:4s}\n")
         
         f.write('END\n')
     
-    print(f'At2iCon conversion done, output written to {pdb_out}')
+    print(f'at2AGs conversion done, output written to {pdb_out}')
 
 def fix_pdb_serial(pdb_file, output_file=None):
     """
