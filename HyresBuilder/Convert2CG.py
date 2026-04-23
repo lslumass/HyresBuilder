@@ -1162,6 +1162,11 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
             gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, 
                           auto_angles=False, auto_dihedrals=False)
             gen.read_coords(segid=segid, filename=tmp_cg_pdb)
+        elif mol_type == 'A':
+            at2AGs(tmp_pdb, tmp_cg_pdb)
+            gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, 
+                          auto_angles=False, auto_dihedrals=False)
+            gen.read_coords(segid=segid, filename=tmp_cg_pdb)
         else:
             raise ValueError(f"Unsupported molecule type: {mol_type}")
     
