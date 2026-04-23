@@ -1140,11 +1140,13 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
     # Load topology files
     RNA_topology, _ = load_ff('RNA')
     protein_topology, _ = load_ff('Protein')
+    AGs_topology, _ = load_ff('AGs')
     
     # Set up psfgen
     gen = PsfGen()
     gen.read_topology(RNA_topology)
     gen.read_topology(protein_topology)
+    gen.read_topology(AGs_topology)
     
     # Split chains and convert
     types, segids = split_chains(pdb_in)
