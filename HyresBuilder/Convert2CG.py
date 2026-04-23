@@ -350,9 +350,10 @@ def split_chains(pdb):
     """Split PDB file into separate chains and identify their types."""
     aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
            "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
-    rnas = ["ADE", "GUA", "CYT", "URA"]
-    dnas = ["DAD", "DGU", "DCY", "DTH"]
-    counts = {'P': 0, 'R': 0, 'D': 0}
+    rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
+    dnas = ["DAD", "DGU", "DCY", "DTH", "DA", "DG", "DC", "DT"]
+    ags = ["KAN"]
+    counts = {'P': 0, 'R': 0, 'D': 0, 'A': 0}
 
     # HIS names
     HISs = ['HSD', 'HSE', 'HSP', 'HID', 'HIE', 'HIP']
@@ -364,6 +365,8 @@ def split_chains(pdb):
             return 'R'
         elif resname in dnas:
             return 'D'
+        elif resname in ags:
+            return 'A'
         return None
 
     # Variables to track current and previous chain identifiers
@@ -784,6 +787,177 @@ def at2icon(pdb_in, pdb_out):
             ('NB', ['C4', 'O4', 'N3', 'H3']),
             ('NC', ['C2', 'O2'])
         ]
+    }
+    
+    atom_serial = 0
+    with open(pdb_out, 'w') as f:
+        for segid in sorted(segments.keys()):
+            for resid in sorted(segments[segid].keys()):
+                res_data = segments[segid][resid]
+                resname = res_data['resname']
+                chain = res_data['chain']
+                res_atoms = res_data['atoms']
+                
+                # P bead (phosphate group)
+                p_atoms = [a for a in res_atoms if a['name'] in ["P", "O1P", "O2P", "O5'"]]
+                # Add O3' from previous residue
+                if resid - 1 in segments[segid]:
+                    prev_atoms = segments[segid][resid - 1]['atoms']
+                    p_atoms.extend([a for a in prev_atoms if a['name'] == "O3'"])
+                
+                if p_atoms:
+                    coords = np.array([[a['x'], a['y'], a['z']] for a in p_atoms])
+                    center = coords.mean(axis=0)
+                    atom_serial += 1
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"ATOM  {serial_str}  P   {resname:3s} {chain}{resid:4d}    "
+                           f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
+                           f"  1.00  0.00      {segid:4s}\n")
+                
+                # C1 bead (C4' sugar)
+                c1_atoms = [a for a in res_atoms if a['name'] == "C4'"]
+                if c1_atoms:
+                    coords = np.array([[a['x'], a['y'], a['z']] for a in c1_atoms])
+                    center = coords.mean(axis=0)
+                    atom_serial += 1
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"ATOM  {serial_str}  C1  {resname:3s} {chain}{resid:4d}    "
+                           f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
+                           f"  1.00  0.00      {segid:4s}\n")
+                
+                # C2 bead (C1' sugar)
+                c2_atoms = [a for a in res_atoms if a['name'] == "C1'"]
+                if c2_atoms:
+                    coords = np.array([[a['x'], a['y'], a['z']] for a in c2_atoms])
+                    center = coords.mean(axis=0)
+                    atom_serial += 1
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"ATOM  {serial_str}  C2  {resname:3s} {chain}{resid:4d}    "
+                           f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
+                           f"  1.00  0.00      {segid:4s}\n")
+                
+                # Base beads
+                if resname in base_mappings:
+                    for bead_name, atom_names in base_mappings[resname]:
+                        base_atoms = [a for a in res_atoms if a['name'] in atom_names]
+                        if base_atoms:
+                            coords = np.array([[a['x'], a['y'], a['z']] for a in base_atoms])
+                            center = coords.mean(axis=0)
+                            atom_serial += 1
+                            serial_str = encode_serial(atom_serial)
+                            f.write(f"ATOM  {serial_str}  {bead_name:2s}  {resname:3s} "
+                                   f"{chain}{resid:4d}    "
+                                   f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
+                                   f"  1.00  0.00      {segid:4s}\n")
+        
+        f.write('END\n')
+    
+    print(f'At2iCon conversion done, output written to {pdb_out}')
+
+def at2AGs(pdb_in, pdb_out):
+    """
+    Convert an all-atom aminoglycosides (AGs) PDB to coarse-grained PDB.
+
+    Each AGs has its specific mapping rules
+
+    Args:
+        pdb_in (str): Path to the input all-atom RNA PDB file.
+        pdb_out (str): Path to the output iConRNA coarse-grained PDB file.
+
+    Returns:
+        None. Writes a CG PDB file to ``pdb_out``.
+
+    Example:
+        >>> from HyresBuilder import Convert2CG
+        >>> Convert2CG.at2AGs("rna_aa.pdb", "rna_cg.pdb")
+    """
+    
+    def encode_serial(n):
+        """Encode integer to hybrid-36 format for PDB serial number field (5 chars)."""
+        if n < 100000:
+            return f"{n:5d}"
+
+        n -= 100000
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+        if n < 26 * (36**4):  # uppercase range
+            result = []
+            for _ in range(4):
+                n, remainder = divmod(n, 36)
+                result.append(chars[remainder])
+            result.append(chr(ord('A') + n))
+            return ''.join(reversed(result))
+
+        n -= 26 * (36**4)  # lowercase range
+        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
+        result = []
+        for _ in range(4):
+            n, remainder = divmod(n, 36)
+            result.append(chars_lower[remainder])
+        result.append(chr(ord('a') + n))
+        return ''.join(reversed(result))
+    
+    # Parse PDB file
+    atoms = []
+    with open(pdb_in, 'r') as f:
+        for line in f:
+            if line.startswith('ATOM'):
+                atoms.append({
+                    'name': line[12:16].strip(),
+                    'resname': line[17:20].strip(),
+                    'chain': line[21],
+                    'resid': int(line[22:26].strip()),
+                    'x': float(line[30:38].strip()),
+                    'y': float(line[38:46].strip()),
+                    'z': float(line[46:54].strip()),
+                    'segid': line[72:76].strip() if len(line) > 72 else ''
+                })
+    
+    # Group by segment and residue
+    segments = {}
+    for atom in atoms:
+        segid = atom['segid']
+        resid = atom['resid']
+        if segid not in segments:
+            segments[segid] = {}
+        if resid not in segments[segid]:
+            segments[segid][resid] = {
+                'resname': atom['resname'], 
+                'chain': atom['chain'], 
+                'atoms': []
+            }
+        segments[segid][resid]['atoms'].append(atom)
+    
+    # Base bead mappings for each nucleotide
+    AGs_mappings = {
+        # kanamycin A
+        'KAN': [
+            ('K1',  ['C8', 'C9', 'C10', 'O10']),
+            ('K2',  ['C11', 'C12', 'N2']),
+            ('K3',  ['C7', 'C12', 'N3']),
+            ('K4',  ['O11', 'C13', 'O12']),
+            ('K5',  ['C14', 'C15', 'N4', 'O13']),
+            ('K6',  ['C16', 'C17', 'O14']),
+            ('K7',  ['C1', 'O5', 'O9']),
+            ('K8',  ['C2', 'C3', 'O6', 'O7']),
+            ('K9',  ['C4', 'C5', 'O8']),
+            ('K10', ['C18', 'O15']),
+            ('K11', ['C6', 'N1'])
+        ],
+        # gentamicin C1a
+        'LLL': [
+            ('K1',  []),
+            ('K2',  []),
+            ('K3',  []),
+            ('K4',  []),
+            ('K5',  []),
+            ('K6',  []),
+            ('K7',  []),
+            ('K8',  []),
+            ('K9',  []),
+            ('K10', []),
+            ('K11', []),
+        ],
     }
     
     atom_serial = 0
