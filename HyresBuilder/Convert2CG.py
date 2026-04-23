@@ -452,7 +452,7 @@ def split_chains(pdb):
                     
                     mol_type = get_type(resname)
                     if mol_type is None:
-                        raise ValueError(f'Unknown residue type: {resname}')
+                        raise ValueError(f'Unknown residue type: {str(resname)}')
                     types.append(mol_type)
                     new_segid = f"{mol_type}{counts[mol_type]:03d}"
                     counts[mol_type] += 1
