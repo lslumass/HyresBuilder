@@ -983,7 +983,7 @@ def at2AGs(pdb_in, pdb_out):
                             center = coords.mean(axis=0)
                             atom_serial += 1
                             serial_str = encode_serial(atom_serial)
-                            f.write(f"ATOM  {serial_str}  {bead_name:<4s}  {resname:3s} "
+                            f.write(f"ATOM  {serial_str}  {bead_name:<4s}{resname:3s} "
                                    f"{chain}{resid:4d}    "
                                    f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
                                    f"  1.00  0.00      {segid:4s}\n")
