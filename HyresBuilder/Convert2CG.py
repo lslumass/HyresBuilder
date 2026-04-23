@@ -438,6 +438,9 @@ def split_chains(pdb):
                 if resname in HISs:
                     resname = 'HIS'
                 
+                # Write the mapped resname back into the line
+                line = line[:17] + resname.ljust(3) + line[20:]
+                
                 # Select the identifier to use
                 identifier = chain_id if use_chain_id else segid
                 
@@ -452,7 +455,7 @@ def split_chains(pdb):
                     
                     mol_type = get_type(resname)
                     if mol_type is None:
-                        raise ValueError(f'Unknown residue type: {str(resname)}')
+                        raise ValueError(f'Unknown residue type: {resname}')
                     types.append(mol_type)
                     new_segid = f"{mol_type}{counts[mol_type]:03d}"
                     counts[mol_type] += 1
