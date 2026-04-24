@@ -40,6 +40,7 @@ Date:       Nov 13, 2023
 """
 
 import argparse
+import re
 
 
 maps = {
@@ -240,13 +241,23 @@ def main():
     args = parser.parse_args()
 
     seq = args.seq
-    if seq.startswith('P'):
-        n = int(seq[1:])
-        build_polyP(args.name, n)
-        print(f"PolyP structure saved to {args.name}.pdb")
-    else:
-        build(args.name, args.seq)
+    match = re.fullmatch(r'([A-Za-z])(\d+)', seq)
+    if match:
+        letter = match.group(1)
+        count = int(match.group(2))
+        if letter == 'P':
+            build_polyP(args.name, count)
+            print(f"PolyP structure saved to {args.name}.pdb")
+        else:
+            seq = letter * count
+            build(args.name, seq)
+            print(f"RNA structure saved to {args.name}.pdb")
+    elif seq.isalpha():
+        build(args.name, seq)
         print(f"RNA structure saved to {args.name}.pdb")
+    else:
+        raise ValueError("Invalid sequence format. Use either a pure letter sequence (e.g. AUCGAUCG) or a letter followed by a number (i.e. A100, CAG100, P10).")
+    
 
 if __name__ == '__main__':
     main()
