@@ -813,81 +813,14 @@ def iConRNA_setup(params, RNA='rU', modification=None):
     return system, sim
 
 
-def setup_dev(params, modification=None):
+def setupMg(params, RNA='rA', modification=None):
     """
-    Build and initialize a complete HyRes/iConRNA OpenMM simulation system.
-
-    Executes the full setup pipeline in seven stages:
-
-    1. Parse simulation parameters from ``params``.
-    2. Configure periodic boundary conditions (PBC) and box vectors.
-    3. Compute force field parameters: temperature-dependent dielectric constant,
-       Debye-Hückel screening length, and Mg²⁺-RNA charge scaling factor (lambda).
-    4. Load CHARMM topology and parameter files for protein and RNA.
-    5. Import coordinates (PDB) and topology (PSF).
-    6. Build the HyRes custom force field via :func:`HyresFF.buildSystem`.
-    7. Attach the barostat (NPT only), initialize the Langevin integrator, and
-       create the CUDA simulation context with positions and velocities.
-
-    Args:
-        params (argparse.Namespace): Simulation parameter object with the
-                                     following attributes:
-
-                                     - ``pdb`` (str) — path to input PDB file.
-                                     - ``psf`` (str) — path to CHARMM PSF file.
-                                     - ``temp`` (float) — temperature in Kelvin.
-                                     - ``salt`` (float) — NaCl concentration in mM.
-                                     - ``Mg`` (float) — Mg²⁺ concentration in mM.
-                                     - ``ens`` (str) — ensemble: ``'NPT'``,
-                                       ``'NVT'``, or ``'non'`` (non-periodic).
-                                     - ``box`` (list of float) — box dimensions
-                                       in nm; one value for cubic, three for
-                                       orthorhombic.
-                                     - ``dt`` (Quantity) — integration time step.
-                                     - ``er_ref`` (float) — reference dielectric
-                                       used to scale the temperature-dependent er.
-                                     - ``pressure`` (Quantity) — pressure for NPT
-                                       barostat.
-                                     - ``friction`` (Quantity) — Langevin friction
-                                       coefficient.
-                                     - ``gpu_id`` (str) — CUDA device index
-                                       (e.g. ``'0'``).
-
-        modification (callable, optional): User-defined function that accepts the
-                                           ``System`` object and applies additional
-                                           force modifications. Passed directly to
-                                           :func:`HyresFF.buildSystem`. Called
-                                           after all built-in forces are added.
-                                           Default is ``None``.
-
-    Returns:
-        tuple:
-            - ``system`` (System) — the fully constructed OpenMM ``System``.
-            - ``sim`` (Simulation) — the initialized ``Simulation`` object with
-              positions and velocities set.
-
-    Raises:
-        SystemExit: If an unsupported ensemble type is provided, if Mg²⁺ is
-                    specified for a non-periodic system, or if an invalid box
-                    dimension list is given.
-
-    Notes:
-        The dielectric constant is scaled as ``er = er_t(T) * er_ref / 77.6``,
-        where ``er_t(T)`` is the temperature-dependent pure-water dielectric
-        from :func:`cal_er`. The Mg²⁺-RNA lambda parameter is computed via
-        :func:`nMg2lmd` using the ``'rA'`` RNA type. The CUDA platform is used
-        with mixed precision.
-
-    Example:
-        >>> from HyresBuilder.utils import setup
-        >>> system, sim = setup(params)
-
-        >>> # With a custom force modification
-        >>> def my_mod(system):
-        ...     pass  # add or remove forces here
-        >>> system, sim = setup(params, modification=my_mod)
+    Similar to setup(), but with a focus on Mg²⁺-RNA interactions, where
+    the er = 20 was specifically chosen to match the experimental Mg²⁺-RNA interactions.
+    other details are the same as setup().
     """
     
+    print('\nThis is special system, where er = 20.0 for Mg-P interactions, otherwise 60.0')
     print('\n################## set up simulation parameters ###################')
     # 1. input parameters
     pdb_file = params.pdb
@@ -933,10 +866,22 @@ def setup_dev(params, modification=None):
     er = er_t*er_ref/77.6
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     # Mg-P interaction
-    lmd = nMg2lmd(c_Mg, T, RNA='rA')
+    lmd = nMg2lmd(c_Mg, T, RNA=RNA)
     print(f"dielectric constant: er = {er:.2f}")
     print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
+
+    # Mg-P interaction
+    match RNA:
+        case str():
+            lmd = nMg2lmd(c_Mg, T, RNA=RNA)
+        case (F, M, n):
+            lmd = nMg2lmd(c_Mg, T, F=F, M=M, n=n)
+        case float():
+            lmd = RNA
+    print(f"dielectric constant for Mg-P interactions: 20.0")
+    print(f'Mg-P interactions are determined based on {RNA}')
     print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
+    
     ffs = {
         'temp': T,                                                  # Temperature
         'lmd': lmd,                                                  # Charge scaling factor of P-

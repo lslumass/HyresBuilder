@@ -1,15 +1,48 @@
 * topology file for coarse grained aminoglycosides
 *
    20    1              
-MASS   401 C3O  56.06   ! KAN-1
-MASS   402 C2N  35.55   ! KAN-2, KAN-3
-MASS   403 OCO  45.02   ! KAN-4, KAN-7
-MASS   404 ONH  59.07   ! KAN-5
-MASS   405 C2O  43.03   ! KAN-6
-MASS   406 OH2  60.05   ! KAN-8
-MASS   407 OC2  43.03   ! KAN-9, use a different name with KAN-6 for better angle definition
+! bead types for Kanamycin A (KAN)
+MASS   401 K01  56.06   ! KAN-1
+MASS   402 K23  35.55   ! KAN-2, KAN-3
+MASS   403 K47  45.02   ! KAN-4, KAN-7
+MASS   404 K05  59.07   ! KAN-5
+MASS   405 K06  43.03   ! KAN-6
+MASS   406 K08  60.05   ! KAN-8
+MASS   407 K09  43.03   ! KAN-9
 !MASS   408 P1S  ! KAN-10 uses CB of Ser
 !MASS   409 QdK  ! KAN-11 uses CB of Lys
+
+! bead types for Gentamicin C1a (LLL)
+MASS   411 G01  56.06   ! LLL-1
+MASS   412 G23  35.55   ! LLL-2, LLL-3
+MASS   413 G47  45.02   ! LLL-4, LLL-7
+MASS   414 G05  43.03   ! LLL-5
+MASS   415 G06  57.07   ! LLL-6
+MASS   416 G08  43.07   ! LLL-8
+MASS   417 G09  27.05   ! LLL-9
+!MASS   418 P2H  ! LLL-10 uses CC of His
+!MASS   419 QdK  ! LLL-11 uses CB of Lys
+
+! bead types for streptomycin (SRY)
+MASS   421 S01  42.04   ! SRY-1
+MASS   422 S02  58.04   ! SRY-2, SRY-3
+MASS   423 S03  44.05   ! SRY-4, SRY-7
+MASS   424 S04  43.04   ! SRY-5
+MASS   425 S05  43.04   ! SRY-6
+MASS   426 S06  43.04   ! SRY-8
+MASS   427 S07  45.02   ! SRY-9
+MASS   428 S08  43.04   ! SRY-8
+MASS   429 S09  43.04   ! SRY-9
+!MASS   4210 QdR  ! SRY-10 uses CB of Arg
+!MASS   4211 QdR  ! SRY-11 uses CB of Arg
+!MASS   4312 P1S  ! SRY-12 uses CB of Ser
+!MASS   4313 P1S  ! SRY-13 uses CC of His
+
+!! AGs
+! KAN: kanamycin A
+! SRY: streptomycin
+! 51G: gentamicin C1
+! LLL: gentamicin C1a
 
 
 AUTOGENERATE
@@ -17,17 +50,17 @@ DEFA FIRS NTER LAST CTER
 
 RESI KAN         +4.00
 GROUP                 
-ATOM K1   C3O     0.00
-ATOM K2   C2N    +1.00
-ATOM K3   C2N    +1.00
+ATOM K1   K01     0.00
+ATOM K2   K23    +1.00
+ATOM K3   K23    +1.00
 GROUP                 
-ATOM K4   OCO     0.00
-ATOM K5   ONH    +1.00
-ATOM K6   C2O     0.00
+ATOM K4   K47     0.00
+ATOM K5   K05    +1.00
+ATOM K6   K06     0.00
 GROUP                 
-ATOM K7   OCO     0.00
-ATOM K8   OH2     0.00
-ATOM K9   OC2     0.00
+ATOM K7   K47     0.00
+ATOM K8   K08     0.00
+ATOM K9   K09     0.00
 GROUP
 ATOM K10  P1S     0.00
 GROUP
@@ -38,10 +71,72 @@ BOND K6   K10       K7   K8        K7   K9        K8   K9
 BOND K9   K11
 ANGL K2   K1   K7        K3   K1   K4        K4   K1   K7
 ANGL K1   K4   K5        K1   K4   K6        K4   K6   K10
-ANGL K1   K7   K8        K1   K7   K9        K7   K9   K11
-ANGL K8   K9   K11
-DIHE K2   K1   K7   K9        K3   K1   K4   K5        K5   K4   K6   K10
-DIHE K8   K7   K9   K11
+ANGL K5   K6   K10       K1   K7   K8        K1   K7   K9
+ANGL K7   K9   K11       K8   K9   K11
+DIHE K2   K1   K7   K9        K1   K2   K7   K8        K1   K3   K4   K6
+DIHE K3   K1   K4   K5        K5   K4   K6   K10       K8   K7   K9   K11
+
+
+RESI LLL         +5.00
+GROUP                 
+ATOM G1   G01     0.00
+ATOM G2   G23    +1.00
+ATOM G3   G23    +1.00
+GROUP                 
+ATOM G4   G47     0.00
+ATOM G5   G05     0.00
+ATOM G6   G06     0.00
+GROUP                 
+ATOM G7   G47     0.00
+ATOM G8   G08    +1.00
+ATOM G9   G09     0.00
+GROUP
+ATOM G10  P2H    +1.00
+GROUP
+ATOM G11  QdK    +1.00
+BOND G1   G2        G1   G3        G1   G4        G1   G7
+BOND G2   G3        G4   G5        G4   G6        G5   G6
+BOND G5   G10       G7   G8        G7   G9        G8   G9
+BOND G9   G11
+ANGL G2   G1   G7        G3   G1   G4        G4   G1   G7
+ANGL G1   G4   G5        G1   G4   G6        G4   G5   G10
+ANGL G4   G6   G10       G1   G7   G8        G1   G7   G9
+ANGL G7   G9   G11       G8   G9   G11
+DIHE G2   G1   G7   G9        G1   G2   G7   G8        G1   G3   G4   G6
+DIHE G3   G1   G4   G5        G4   G6   G5   G10       G8   G7   G9   G11
+
+
+RESI SRY         +3.00
+GROUP                 
+ATOM S1   S01     0.00
+ATOM S2   S02     0.00
+ATOM S3   S03     0.00
+GROUP                 
+ATOM S4   S04     0.00
+ATOM S5   S05     0.00
+ATOM S6   S06     0.00
+GROUP                 
+ATOM S7   S07     0.00
+ATOM S8   S08     0.00
+ATOM S9   S09     0.00
+GROUP
+ATOM S10  QdR    +1.00
+ATOM S11  QdR    +1.00
+GROUP
+ATOM S12  P1S     0.00
+ATOM S13  P2H    +1.00
+BOND S1   S2        S1   S3        S1   S4        S1   S7
+BOND S2   S3        S4   S5        S4   S6        S5   S6
+BOND S5   S10       S6   S11       S7   S8        S7   S9
+BOND S8   S9        S8   S12       S9   S13
+ANGL S2   S1   S7        S3   S1   S4        S4   S1   S7
+ANGL S1   S4   S5        S1   S4   S6        S4   S5   S10
+ANGL S6   S5   S10       S4   S6   S11       S5   S6   S11
+ANGL S1   S7   S8        S1   S7   S9        S7   S8   S12
+ANGL S9   S8   S12       S7   S9   S13       S8   S9   S13
+DIHE S2   S1   S7   S9        S1   S2   S7   S8        S1   S3   S4   S6
+DIHE S3   S1   S4   S5        S6   S4   S5   S10       S4   S5   S6   S11
+DIHE S9   S7   S8   S12       S8   S7   S9   S13
 
 
 END
