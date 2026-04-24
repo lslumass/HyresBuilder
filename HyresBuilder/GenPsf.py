@@ -291,6 +291,7 @@ def custom_genpsf(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix'):
     
     # loop through each pdb and add segments based on molecule type and number
     for pdb, num in zip(pdb_list, num_list):
+        num = int(num)
         with open(pdb, 'r') as f:
             for line in f:
                 if line.startswith('ATOM'):
