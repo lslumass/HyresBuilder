@@ -328,18 +328,18 @@ def main():
                         help="Terminal charged status (choose from ['neutral', 'charged', 'NT', 'CT', 'positive'])", default='neutral')
     parser.add_argument("--icon", action='store_true', help="Use iConRNA topologies instead of HyRes_iConRNA topologies")
     parser.add_argument("--custom", action='store_true', help="Custom model with specified pdb files and numbers")
-    parser.add_argument("-p", "pdb_list", nargs='+', help="List of PDB files for custom model (ignored if --custom not set)")
-    parser.add_argument("-n", "num_list", nargs='+', help="List of numbers of each molecule type for custom model (ignored if --custom not set)")
+    parser.add_argument("-p", "--pdb_list", nargs='+', help="List of PDB files for custom model (ignored if --custom not set)")
+    parser.add_argument("-n", "--num_list", nargs='+', help="List of numbers of each molecule type for custom model (ignored if --custom not set)")
     args = parser.parse_args()
 
     if args.icon:
         if args.custom:
-            custom_genpsf(args.pdb, args.psf, args.ter, RNA='icon')
+            custom_genpsf(args.pdb_list, args.num_list, args.ter, RNA='icon')
         else:
             genpsf(args.pdb, args.psf, args.ter, RNA='icon')
     else:
         if args.custom:
-            custom_genpsf(args.pdb, args.psf, args.ter)
+            custom_genpsf(args.pdb_list, args.num_list, args.ter)
         else:
             genpsf(args.pdb, args.psf, args.ter)
     # cleanup
