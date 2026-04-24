@@ -71,8 +71,8 @@ BOND K6   K10       K7   K8        K7   K9        K8   K9
 BOND K9   K11
 ANGL K2   K1   K7        K3   K1   K4        K4   K1   K7
 ANGL K1   K4   K5        K1   K4   K6        K4   K6   K10
-ANGL K1   K7   K8        K1   K7   K9 !K5   K6   K10       
-ANGL K7   K9   K11!       K8   K9   K11
+ANGL K1   K7   K8        K1   K7   K9
+ANGL K7   K9   K11       K8   K9   K11
 DIHE K2   K1   K7   K9!        K1   K2   K7   K8        K1   K3   K4   K6
 DIHE K3   K1   K4   K5        K5   K4   K6   K10       K8   K7   K9   K11
 
