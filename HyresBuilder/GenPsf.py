@@ -335,14 +335,14 @@ def main():
 
     if args.icon:
         if args.custom:
-            custom_genpsf(args.pdb_list, args.num_list, args.ter, RNA='icon')
+            custom_genpsf(args.pdb_list, args.num_list, args.psf,terminal=args.ter, RNA='icon')
         else:
-            genpsf(args.pdb, args.psf, args.ter, RNA='icon')
+            genpsf(args.pdb, args.psf, terminal=args.ter, RNA='icon')
     else:
         if args.custom:
-            custom_genpsf(args.pdb_list, args.num_list, args.ter)
+            custom_genpsf(args.pdb_list, args.num_list, args.psf, terminal=args.ter)
         else:
-            genpsf(args.pdb, args.psf, args.ter)
+            genpsf(args.pdb, args.psf, terminal=args.ter)
     # cleanup
     for file_path in glob.glob("psfgentmp_*.pdb"):
         os.remove(file_path)
