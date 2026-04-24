@@ -231,6 +231,95 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix'):
     for file_path in glob.glob("psfgentmp_*.pdb"):
         os.remove(file_path)
 
+def custom_genpsf(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix'):
+    """
+    Generate a PSF file based on given pdb list and numbers.
+
+    Args:
+        pdb_list (list of str): List of PDB files for each molecule type.
+        num_list (list of int): List of numbers of each molecule type corresponding to pdb_list.
+        psf_out (str): Path to the output PSF file.
+        terminal (str, optional): Charge status of protein termini. Options:
+                                    - ``'neutral'`` — uncharged termini (default)
+                                    - ``'charged'`` — both termini charged
+                                    - ``'NT'`` — N-terminus charged only
+                                    - ``'CT'`` — C-terminus charged only
+                                    - ``'positive'`` — both termini negatively charged 
+        RNA (str, optional): Which RNA topology to use. Options:
+                            - ``'mix'`` (default) — use HyRes_iConRNA topologies
+                            - ``'icon'`` — use iConRNA topologies instead
+    
+    Returns:
+        None. Writes a PSF file to ``psf_out``.
+    """
+    # load topology files
+    if RNA == 'mix':
+        RNA_topology, _ = utils.load_ff('RNA')
+    elif RNA == 'icon':
+        path1 = files("HyresBuilder") / "forcefield" / "top_RNA.inp"
+        RNA_topology = path1.as_posix()
+    protein_topology, _ = utils.load_ff('Protein')
+    AGs_topology, _ = utils.load_ff('AGs')
+
+    # generate psf
+    gen = PsfGen()
+    gen.read_topology(RNA_topology)
+    gen.read_topology(protein_topology)
+    gen.read_topology(AGs_topology)
+
+    # molecule type definitions
+    aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
+           "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
+    rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
+    dnas = ["DAD", "DGU", "DCY", "DTH", "DA", "DG", "DC", "DT"]
+    mg, cal = ["MG+"], ["CA+"]
+    phos = ['PHO']
+    AGs = ['KAN']
+
+    def get_type(resname):
+        chaintype = (
+            'P' if resname in aas else
+            'R' if resname in rnas else
+            'D' if resname in dnas else
+            'M' if resname in mg else
+            'C' if resname in cal else
+            'PHO' if resname in phos else
+            'AGs' if resname in AGs else
+            None
+        )
+        return chaintype
+    
+    # loop through each pdb and add segments based on molecule type and number
+    for pdb, num in zip(pdb_list, num_list):
+        with open(pdb, 'r') as f:
+            for line in f:
+                if line.startswith('ATOM'):
+                    resname = line[17:20].strip()
+                    chaintype = get_type(resname)
+                    if chaintype is None:
+                        print(f"Unknown molecule type for residue {resname} in file {pdb}")
+                        exit(1)
+                    elif chaintype == 'P':
+                        for i in range(num):
+                            segid = f"{chaintype}{encode_segid(i+1)}"
+                            gen.add_segment(segid=segid, pdbfile=pdb, auto_angles=False)
+                    elif chaintype == 'PHO':
+                        for i in range(num):
+                            segid = f"{chaintype}{encode_segid(i+1)}"
+                            gen.add_segment(segid=segid, pdbfile=pdb)
+                    else:
+                        for i in range(num):
+                            segid = f"{chaintype}{encode_segid(i+1)}"
+                            gen.add_segment(segid=segid, pdbfile=pdb, auto_angles=False, auto_dihedrals=False)
+                    break  # only need to check the first ATOM line to determine type
+
+    # re-set the charge status of terminus
+    for segid in gen.get_segids():
+        if terminal != "neutral":
+            set_terminus(gen, segid, terminal)       
+            
+    gen.write_psf(filename=psf_out)
+
 def main():
     parser = argparse.ArgumentParser(description="generate PSF for Hyres/iCon systems", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("pdb", help="CG PDB file(s)", default='conf.pdb')
@@ -238,12 +327,21 @@ def main():
     parser.add_argument("-t", "--ter", choices=['neutral', 'charged', 'NT', 'CT', 'positive'], 
                         help="Terminal charged status (choose from ['neutral', 'charged', 'NT', 'CT', 'positive'])", default='neutral')
     parser.add_argument("--icon", action='store_true', help="Use iConRNA topologies instead of HyRes_iConRNA topologies")
+    parser.add_argument("--custom", action='store_true', help="Custom model with specified pdb files and numbers")
+    parser.add_argument("-p", "pdb_list", nargs='+', help="List of PDB files for custom model (ignored if --custom not set)")
+    parser.add_argument("-n", "num_list", nargs='+', help="List of numbers of each molecule type for custom model (ignored if --custom not set)")
     args = parser.parse_args()
 
     if args.icon:
-        genpsf(args.pdb, args.psf, args.ter, RNA='icon')
+        if args.custom:
+            custom_genpsf(args.pdb, args.psf, args.ter, RNA='icon')
+        else:
+            genpsf(args.pdb, args.psf, args.ter, RNA='icon')
     else:
-        genpsf(args.pdb, args.psf, args.ter)
+        if args.custom:
+            custom_genpsf(args.pdb, args.psf, args.ter)
+        else:
+            genpsf(args.pdb, args.psf, args.ter)
     # cleanup
     for file_path in glob.glob("psfgentmp_*.pdb"):
         os.remove(file_path)
