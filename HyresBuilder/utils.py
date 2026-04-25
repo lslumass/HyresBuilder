@@ -617,7 +617,7 @@ def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecon
     return system, sim
 
 
-def iConRNA_setup(params, RNA='rU', modification=None):
+def iConRNA_setup(params, modification=None):
     """
     Build and initialize a complete HyRes/iConRNA OpenMM simulation system.
 
@@ -641,7 +641,7 @@ def iConRNA_setup(params, RNA='rU', modification=None):
                                      - ``psf`` (str) — path to CHARMM PSF file.
                                      - ``temp`` (float) — temperature in Kelvin.
                                      - ``salt`` (float) — NaCl concentration in mM.
-                                     - ``Mg`` (float) — Mg²⁺ concentration in mM.
+                                     - ``lmd`` (float) — lmd value for Mg²⁺-RNA interaction.
                                      - ``ens`` (str) — ensemble: ``'NPT'``,
                                        ``'NVT'``, or ``'non'`` (non-periodic).
                                      - ``box`` (list of float) — box dimensions
@@ -657,12 +657,7 @@ def iConRNA_setup(params, RNA='rU', modification=None):
                                      - ``gpu_id`` (str) — CUDA device index
                                        (e.g. ``'0'``).
 
-        RNA (str, tuple, or float): RNA type for Mg²⁺-RNA interaction parameterization.
-                             Supported values: ``'rA'``, ``'rU'``, ``'CAG'``, tuple or float. Default is ``'rA'``.
-                             if tuple is given, it should be (F, M, n) for the nMg2lmd function to customize the Mg-RNA interaction.
-                             if float is given, it will be used as the lmd value directly.
-
-        modification (callable, optional): User-defined function that accepts the
+       modification (callable, optional): User-defined function that accepts the
                                            ``System`` object and applies additional
                                            force modifications. Passed directly to
                                            :func:`HyresFF.buildSystem`. Called
@@ -680,13 +675,6 @@ def iConRNA_setup(params, RNA='rU', modification=None):
                     specified for a non-periodic system, or if an invalid box
                     dimension list is given.
 
-    Notes:
-        The dielectric constant is scaled as ``er = er_t(T) * er_ref / 77.6``,
-        where ``er_t(T)`` is the temperature-dependent pure-water dielectric
-        from :func:`cal_er`. The Mg²⁺-RNA lambda parameter is computed via
-        :func:`nMg2lmd` using the ``'rA'`` RNA type. The CUDA platform is used
-        with mixed precision.
-
     Example:
         >>> from HyresBuilder.utils import setup
         >>> system, sim = setup(params)
@@ -703,7 +691,7 @@ def iConRNA_setup(params, RNA='rU', modification=None):
     psf_file = params.psf
     T = params.temp
     c_ion = params.salt/1000.0                                   # concentration of ions in M
-    c_Mg = params.Mg                                           # concentration of Mg in mM
+    lmd = params.lmd                                           # lmd value for Mg²⁺-RNA interaction
     ensemble = params.ens
 
     dt = params.dt
@@ -713,7 +701,7 @@ def iConRNA_setup(params, RNA='rU', modification=None):
     gpu_id = params.gpu_id
     
     # 2. set pbc and box vector
-    if ensemble == 'non' and c_Mg != 0.0:
+    if ensemble == 'non' and lmd != 0.0:
         print("Error: Mg ion cannot be usde in non-periodic system.")
         exit(1)
     if ensemble in ['NPT', 'NVT']:
@@ -743,15 +731,6 @@ def iConRNA_setup(params, RNA='rU', modification=None):
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
     print(f"dielectric constant: er = {er:.2f}")
     print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
-
-    # Mg-P interaction
-    match RNA:
-        case str():
-            lmd = nMg2lmd(c_Mg, T, RNA=RNA)
-        case (F, M, n):
-            lmd = nMg2lmd(c_Mg, T, F=F, M=M, n=n)
-        case float():
-            lmd = RNA
     print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
 
     # force field parameters
@@ -768,7 +747,8 @@ def iConRNA_setup(params, RNA='rU', modification=None):
     top_RNA = path1.as_posix()
     path2 = files("HyresBuilder") / "forcefield" / "param_RNA.inp"
     param_RNA = path2.as_posix()
-    ffparams = CharmmParameterSet(top_RNA, param_RNA)
+    top_AGs, param_AGs = load_ff('AGs')
+    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_AGs, param_AGs)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
