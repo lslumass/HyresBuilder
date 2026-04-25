@@ -1108,11 +1108,10 @@ def rG4sSystem(psf, system, ffs, modification=None):
     return system
 
 
-# for HyRes_iConRNA System with er=20 specifically for Mg-RNA interactions
+# for HyRes_iConRNA System with Mg-RNA interactions
 def buildMgSystem(psf, system, ffs, modification=None):
     """
-    similar to buildSystem, but specifically for Mg-RNA interactions, where 
-    the dielectric constant is set to 60, but 20 for Mg-RNA interactions.
+    similar to buildSystem, but specifically for Mg-RNA interactions\.
     """
     
     print('\n################# constructe HyRes and/or iConRNA force field ####################')
@@ -1172,7 +1171,7 @@ def buildMgSystem(psf, system, ffs, modification=None):
     # 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce
     dh = ffs['dh']
     er = ffs['er']
-    lmd = ffs['lmd']*(er/20.0)   # scale the lambda for Mg-RNA interactions, where er is set to 20
+    lmd = ffs['lmd']
     # add custom nonbondedforce: CNBForce, here only charge-charge interactions
     formula = f"""138.935456/er*charge1*charge2/r*exp(-r/dh)*kpmg;
                 dh={dh.value_in_unit(unit.nanometer)}; er={er}; kpmg=select(lb1+lb2,1,lmd); lmd={lmd}
