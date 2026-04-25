@@ -139,6 +139,21 @@ def load_ff(model: str) -> tuple[str, str]:
 
     return top_inp, param_inp
 
+def estimate_lmd(cNa, cMg, length, Rg, T):
+    # imperical estimation of nMg: doi: 10.1016/j.bpj.2010.06.029
+    # convert nMg to lmd: https://doi.org/10.1073/pnas.2504583122
+    N = length
+    Rg0 = 0.406*N + 130/(N + 11)
+    A = 0.65 + 4.2/N*(Rg/Rg0)**2
+    B = 1.8 - 9.8/N*(Rg/Rg0)**2
+    Na_Mg = 10**B * cMg**A
+    nMg = 0.47*(Na_Mg/(Na_Mg+cNa))
+
+    nMg_T = nMg + 0.0012*(T-273-30)
+    lmd = 1.265*(nMg_T/0.172)**0.625/(1+(nMg_T/0.172)**0.625)
+
+    return lmd
+
 def nMg2lmd(cMg, T, F=0.0, M=0.0, n=0.0, RNA='rA'):
     if RNA == 'rA':
         F, M, n = 0.54, 0.94, 0.59
@@ -202,7 +217,7 @@ def setup(params, modification=None):
                                      - ``psf`` (str) — path to CHARMM PSF file.
                                      - ``temp`` (float) — temperature in Kelvin.
                                      - ``salt`` (float) — NaCl concentration in mM.
-                                     - ``Mg`` (float) — Mg²⁺ concentration in mM.
+                                     - ``lmd`` (float) — lmd for Mg²⁺-RNA interaction.
                                      - ``ens`` (str) — ensemble: ``'NPT'``,
                                        ``'NVT'``, or ``'non'`` (non-periodic).
                                      - ``box`` (list of float) — box dimensions
@@ -236,13 +251,6 @@ def setup(params, modification=None):
                     specified for a non-periodic system, or if an invalid box
                     dimension list is given.
 
-    Notes:
-        The dielectric constant is scaled as ``er = er_t(T) * er_ref / 77.6``,
-        where ``er_t(T)`` is the temperature-dependent pure-water dielectric
-        from :func:`cal_er`. The Mg²⁺-RNA lambda parameter is computed via
-        :func:`nMg2lmd` using the ``'rA'`` RNA type. The CUDA platform is used
-        with mixed precision.
-
     Example:
         >>> from HyresBuilder.utils import setup
         >>> system, sim = setup(params)
@@ -259,7 +267,7 @@ def setup(params, modification=None):
     psf_file = params.psf
     T = params.temp
     c_ion = params.salt/1000.0                                   # concentration of ions in M
-    c_Mg = params.Mg                                           # concentration of Mg in mM
+    lmd = params.lmd                                             # lmd for Mg²⁺-RNA interaction
     ensemble = params.ens
 
     dt = params.dt
@@ -269,8 +277,8 @@ def setup(params, modification=None):
     gpu_id = params.gpu_id
     
     # 2. set pbc and box vector
-    if ensemble == 'non' and c_Mg != 0.0:
-        print("Error: Mg ion cannot be usde in non-periodic system.")
+    if ensemble == 'non' and lmd != 0.0:
+        print("Error: Mg ion cannot be run in non-periodic system.")
         exit(1)
     if ensemble in ['NPT', 'NVT']:
         # pbc box length
@@ -297,11 +305,10 @@ def setup(params, modification=None):
     er_t = cal_er(T)                                                   # relative electric constant
     er = er_t*er_ref/77.6
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
-    # Mg-P interaction
-    lmd = nMg2lmd(c_Mg, T, RNA='rA')
     print(f"dielectric constant: er = {er:.2f}")
     print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
     print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
+
     ffs = {
         'temp': T,                                                  # Temperature
         'lmd': lmd,                                                  # Charge scaling factor of P-
