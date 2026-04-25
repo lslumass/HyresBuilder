@@ -921,8 +921,8 @@ def setupMg(params, RNA='rA', modification=None):
     print(f"switch distance: {d_switch}")
 
     # 6. construct force field
-    system = buildSystem(psf, system, ffs, modification=modification)
-    print("buildSystem for HyRes_iConRNA")
+    system = buildMgSystem(psf, system, ffs, modification=modification)
+    print("buildMgSystem for HyRes_iConRNA-Mg")
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
