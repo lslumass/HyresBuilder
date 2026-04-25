@@ -748,7 +748,8 @@ def iConRNA_setup(params, modification=None):
     path2 = files("HyresBuilder") / "forcefield" / "param_RNA.inp"
     param_RNA = path2.as_posix()
     top_AGs, param_AGs = load_ff('AGs')
-    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_AGs, param_AGs)
+    top_pro, param_pro = load_ff('Protein')
+    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_AGs, param_AGs, top_pro, param_pro)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
