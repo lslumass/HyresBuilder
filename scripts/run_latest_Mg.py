@@ -1,6 +1,6 @@
 """
 Date: Sep 29, 2025
-Modified: Feb 26, 2026
+Modified: Apr 25, 2026
 Latest running script for HyRes and iConRNA simulation
 Author: Shanlong Li
 email: shanlongli@umass.edu
@@ -24,7 +24,6 @@ parser.add_argument('-t', "--temp", default=303, type=float, help="system temper
 parser.add_argument('-b', "--box", nargs='+', type=float, help="box dimensions in nanometer, e.g., '50 50 50' ")
 parser.add_argument('-s', "--salt", default=150.0, type=float, help="salt concentration in mM, default is 150.0 mM")
 parser.add_argument('-e', "--ens", default='NVT', type=str, help="simulation ensemble, NPT, NVT, or non, non is for non-periodic system")
-parser.add_argument('-m', "--Mg", default=0.0, type=float, help="Mg2+ concentration in mM")
 params = parser.parse_args()
 out = params.out
 
@@ -43,6 +42,20 @@ params.pressure = 1*unit.atmosphere                             # pressure in NP
 params.friction = 0.1/unit.picosecond                           # friction coefficient in Langevin
 params.er_ref = 60.0                                            # dielectric constant
 params.gpu_id = "0"                                             # gpu_id used for simulation
+
+# special parameters
+params.lmd = 0.0                                                 # lmd for Mg²⁺-RNA interaction, default is 0.0 (no Mg)
+"""
+for Mg2+-containing system, calculate the lmd parameter for Mg-RNA interaction and add it to params
+if Mg2+ is not included, lmd = 0.0
+
+1. for well-defined system, e.g., similar system to be PNAS paper:
+    lmd = utils.nMg2lmd(Mg_concentration, params.temp, RNA='rA')
+2. for rough estimation:
+    lmd = utils.estimate_lmd(params.salt, Mg_concentration, RNA_lenght, RNA_Rg, params.temp)
+
+params.lmd = lmd
+"""
 
 ### set up system and simulation
 """
