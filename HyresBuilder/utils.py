@@ -267,7 +267,7 @@ def setup(params, modification=None):
     psf_file = params.psf
     T = params.temp
     c_ion = params.salt/1000.0                                   # concentration of ions in M
-    lmd = params.lmd                                             # lmd for Mg²⁺-RNA interaction
+    lmd = getattr(params, "lmd", 0)                              # lmd for Mg²⁺-RNA interaction, if don't give, it's 0.
     ensemble = params.ens
 
     dt = params.dt
