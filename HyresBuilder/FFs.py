@@ -212,14 +212,14 @@ def buildSystem(psf, system, ffs, modification=None):
 
     # 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce
     dh = ffs['dh']
-    lmd = ffs['lmd']
     er = ffs['er']
+    lmd = ffs['lmd']*(er/20.0)   # scale the lambda for Mg-RNA interactions, where er is set to 20
     # add custom nonbondedforce: CNBForce, here only charge-charge interactions
     formula = f"""138.935456/er*charge1*charge2/r*exp(-r/dh)*kpmg;
                 dh={dh.value_in_unit(unit.nanometer)}; er={er}; kpmg=select(lb1+lb2,1,lmd); lmd={lmd}
               """
     CNBForce = CustomNonbondedForce(formula)
-    CNBForce.setName("DH_ElecForce")
+    CNBForce.setName("Debye-Hückel_ElectrostaticForce")
     CNBForce.setNonbondedMethod(nbforce.getNonbondedMethod())
     CNBForce.setUseSwitchingFunction(use=True)
     CNBForce.setCutoffDistance(1.8*unit.nanometers)
@@ -1111,7 +1111,7 @@ def rG4sSystem(psf, system, ffs, modification=None):
 # for HyRes_iConRNA System with Mg-RNA interactions
 def buildMgSystem(psf, system, ffs, modification=None):
     """
-    similar to buildSystem, but specifically for Mg-RNA interactions\.
+    similar to buildSystem, but specifically for Mg-RNA interactions.
     """
     
     print('\n################# constructe HyRes and/or iConRNA force field ####################')
@@ -1171,13 +1171,13 @@ def buildMgSystem(psf, system, ffs, modification=None):
     # 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce
     dh = ffs['dh']
     er = ffs['er']
-    lmd = ffs['lmd']
+    lmd = ffs['lmd']*(er/20.0)   # scale the lambda for Mg-RNA interactions, where er is set to 20
     # add custom nonbondedforce: CNBForce, here only charge-charge interactions
     formula = f"""138.935456/er*charge1*charge2/r*exp(-r/dh)*kpmg;
                 dh={dh.value_in_unit(unit.nanometer)}; er={er}; kpmg=select(lb1+lb2,1,lmd); lmd={lmd}
               """
     CNBForce = CustomNonbondedForce(formula)
-    CNBForce.setName("DH_ElecForce")
+    CNBForce.setName("Debye-Hückel_ElectrostaticForce")
     CNBForce.setNonbondedMethod(nbforce.getNonbondedMethod())
     CNBForce.setUseSwitchingFunction(use=True)
     CNBForce.setCutoffDistance(1.8*unit.nanometers)
