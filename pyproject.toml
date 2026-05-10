@@ -22,7 +22,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
 ]
 dependencies = [
-    "psfgen",
+    "psfgen=1.0.5",
     "MDAnalysis>=2.0.0",
     "numpy>=1.19.0",
 ]
