@@ -213,7 +213,7 @@ def buildSystem(psf, system, ffs, modification=None):
     # 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce
     dh = ffs['dh']
     er = ffs['er']
-    lmd = ffs['lmd']*(er/20.0)   # scale the lambda for Mg-RNA interactions, where er is set to 20
+    lmd = ffs['lmd']
     # add custom nonbondedforce: CNBForce, here only charge-charge interactions
     formula = f"""138.935456/ker*charge1*charge2/r*exp(-r/dh)*kpmg; dh={dh.value_in_unit(unit.nanometer)};
                   ker=select(la1+la2, 1, 20.0/{er})*{er}; kpmg=select(lb1+lb2, 1, {lmd});
