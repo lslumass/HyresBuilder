@@ -215,8 +215,8 @@ def buildSystem(psf, system, ffs, modification=None):
     er = ffs['er']
     lmd = ffs['lmd']*(er/20.0)   # scale the lambda for Mg-RNA interactions, where er is set to 20
     # add custom nonbondedforce: CNBForce, here only charge-charge interactions
-    formula = f"""138.935456/er*charge1*charge2/r*exp(-r/dh)*kpmg; dh={dh.value_in_unit(unit.nanometer)};
-                  er=select(la1+la2, {er}, 20.0); kpmg=select(lb1+lb2, 1, {lmd});
+    formula = f"""138.935456/ker*charge1*charge2/r*exp(-r/dh)*kpmg; dh={dh.value_in_unit(unit.nanometer)};
+                  ker=select(la1+la2, 1, 20.0/{er})*{er}; kpmg=select(lb1+lb2, 1, {lmd});
               """
     CNBForce = CustomNonbondedForce(formula)
     CNBForce.setName("DH_ElecForce")
