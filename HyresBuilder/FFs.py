@@ -219,7 +219,7 @@ def buildSystem(psf, system, ffs, modification=None):
                 dh={dh.value_in_unit(unit.nanometer)}; er={er}; kpmg=select(lb1+lb2,1,lmd); lmd={lmd}
               """
     CNBForce = CustomNonbondedForce(formula)
-    CNBForce.setName("Debye-Hückel_ElectrostaticForce")
+    CNBForce.setName("DH_ElecForce")
     CNBForce.setNonbondedMethod(nbforce.getNonbondedMethod())
     CNBForce.setUseSwitchingFunction(use=True)
     CNBForce.setCutoffDistance(1.8*unit.nanometers)
@@ -230,11 +230,11 @@ def buildSystem(psf, system, ffs, modification=None):
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
         if atoms[idx] == 'P':
-            lb = 1
+            lb = 0
         elif atoms[idx] == 'MG':
-            lb = -1
+            lb = 0
         else:
-            lb = 2
+            lb = 1
         perP = [particle[0], lb]
         CNBForce.addParticle(perP)
     
