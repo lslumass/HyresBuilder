@@ -215,8 +215,8 @@ def buildSystem(psf, system, ffs, modification=None):
     er = ffs['er']
     lmd = ffs['lmd']*(er/20.0)   # scale the lambda for Mg-RNA interactions, where er is set to 20
     # add custom nonbondedforce: CNBForce, here only charge-charge interactions
-    formula = f"""138.935456/er*charge1*charge2/r*exp(-r/dh)*kpmg;
-                dh={dh.value_in_unit(unit.nanometer)}; er={er}; kpmg=select(lb1+lb2,1,lmd); lmd={lmd}
+    formula = f"""138.935456/er*charge1*charge2/r*exp(-r/dh)*kpmg; dh={dh.value_in_unit(unit.nanometer)};
+                  er=select(la1+la2, {er}, 20.0); kpmg=select(lb1+lb2, 1, {lmd});
               """
     CNBForce = CustomNonbondedForce(formula)
     CNBForce.setName("DH_ElecForce")
@@ -225,17 +225,18 @@ def buildSystem(psf, system, ffs, modification=None):
     CNBForce.setCutoffDistance(1.8*unit.nanometers)
     CNBForce.setSwitchingDistance(1.6*unit.nanometers)
     CNBForce.addPerParticleParameter('charge')
+    CNBForce.addPerParticleParameter('la')
     CNBForce.addPerParticleParameter('lb')
     
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
         if atoms[idx] == 'P':
-            lb = 0
+            la, lb = 0, 1
         elif atoms[idx] == 'MG':
-            lb = 0
+            la, lb = 0, -1
         else:
-            lb = 1
-        perP = [particle[0], lb]
+            la, lb = 2, 2
+        perP = [particle[0], la, lb]
         CNBForce.addParticle(perP)
     
     CNBForce.createExclusionsFromBonds(bondlist, 3)
