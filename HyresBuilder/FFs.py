@@ -215,8 +215,8 @@ def buildSystem(psf, system, ffs, modification=None):
     er = ffs['er']
     lmd = ffs['lmd']
     # add custom nonbondedforce: CNBForce, here only charge-charge interactions
-    formula = f"""138.935456/ker*charge1*charge2/r*exp(-r/dh)*kpmg; dh={dh.value_in_unit(unit.nanometer)};
-                  ker=select(la1+la2, 1, 20.0/{er})*{er}; kpmg=select(lb1+lb2, 1, {lmd});
+    formula = f"""138.935456/{er}*charge1*charge2/r*exp(-r/dh)*kpmg;
+                  dh={dh.value_in_unit(unit.nanometer)}; kpmg=select(lb1+lb2, 1, {lmd});
               """
     CNBForce = CustomNonbondedForce(formula)
     CNBForce.setName("DH_ElecForce")
@@ -225,18 +225,17 @@ def buildSystem(psf, system, ffs, modification=None):
     CNBForce.setCutoffDistance(1.8*unit.nanometers)
     CNBForce.setSwitchingDistance(1.6*unit.nanometers)
     CNBForce.addPerParticleParameter('charge')
-    CNBForce.addPerParticleParameter('la')
     CNBForce.addPerParticleParameter('lb')
     
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
         if atoms[idx] == 'P':
-            la, lb = 0, 1
+            lb = 1
         elif atoms[idx] == 'MG':
-            la, lb = 0, -1
+            lb = -1
         else:
-            la, lb = 2, 2
-        perP = [particle[0], la, lb]
+            lb = 2
+        perP = [particle[0], lb]
         CNBForce.addParticle(perP)
     
     CNBForce.createExclusionsFromBonds(bondlist, 3)
@@ -1163,7 +1162,7 @@ def buildMgSystem(psf, system, ffs, modification=None):
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
         elif atoms[ang[0]] == 'CA' and atoms[ang[1]] == 'CB':
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
-        elif atoms[ang[0]][0] in ['K', 'G', 'S']:
+        elif atoms[ang[0]].startswith('K'):
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
         else:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])
@@ -1172,29 +1171,30 @@ def buildMgSystem(psf, system, ffs, modification=None):
     # 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce
     dh = ffs['dh']
     er = ffs['er']
-    lmd = ffs['lmd']*(er/20.0)   # scale the lambda for Mg-RNA interactions, where er is set to 20
+    lmd = ffs['lmd']
     # add custom nonbondedforce: CNBForce, here only charge-charge interactions
-    formula = f"""138.935456/er*charge1*charge2/r*exp(-r/dh)*kpmg;
-                dh={dh.value_in_unit(unit.nanometer)}; er={er}; kpmg=select(lb1+lb2,1,lmd); lmd={lmd}
+    formula = f"""138.935456/ker*charge1*charge2/r*exp(-r/dh)*kpmg; dh={dh.value_in_unit(unit.nanometer)};
+                  ker=select(la1+la2, 1, 20.0/{er})*{er}; kpmg=select(lb1+lb2, 1, {lmd});
               """
     CNBForce = CustomNonbondedForce(formula)
-    CNBForce.setName("Debye-Hückel_ElectrostaticForce")
+    CNBForce.setName("DH_ElecForce")
     CNBForce.setNonbondedMethod(nbforce.getNonbondedMethod())
     CNBForce.setUseSwitchingFunction(use=True)
     CNBForce.setCutoffDistance(1.8*unit.nanometers)
     CNBForce.setSwitchingDistance(1.6*unit.nanometers)
     CNBForce.addPerParticleParameter('charge')
+    CNBForce.addPerParticleParameter('la')
     CNBForce.addPerParticleParameter('lb')
     
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
         if atoms[idx] == 'P':
-            lb = 1
+            la, lb = 0, 1
         elif atoms[idx] == 'MG':
-            lb = -1
+            la, lb = 0, -1
         else:
-            lb = 2
-        perP = [particle[0], lb]
+            la, lb = 2, 2
+        perP = [particle[0], la, lb]
         CNBForce.addParticle(perP)
     
     CNBForce.createExclusionsFromBonds(bondlist, 3)
