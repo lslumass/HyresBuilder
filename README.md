@@ -8,9 +8,8 @@ Details please follow the [docs](https://hyresbuilder.readthedocs.io)
 
 ## Dependencies:
 1. [OpenMM](https://openmm.org/)
-2. [CHARMM-GUI](https://www.charmm-gui.org/) (registration required)
-3. [psfgen-python](https://psfgen.robinbetz.com/) (install through "conda install -c conda-forge psfgen")
-4. basis: numpy, numba, MDAnalysis
+2. [psfgen-python](https://psfgen.robinbetz.com/) (install through "conda install -c conda-forge psfgen")
+3. basis: numpy, numba, MDAnalysis
 
 ## Installation: 
 1. git clone https://github.com/lslumass/HyresBuilder.git   
