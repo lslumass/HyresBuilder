@@ -234,7 +234,7 @@ def buildSystem(psf, system, ffs, modification=None):
         elif atoms[idx] == 'MG':
             lb = -1
         else:
-            lb = 0
+            lb = 2
         perP = [particle[0], lb]
         CNBForce.addParticle(perP)
     
