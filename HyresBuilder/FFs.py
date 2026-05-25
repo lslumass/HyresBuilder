@@ -860,7 +860,7 @@ def rG4sSystem(psf, system, ffs, modification=None):
     for angle_idx in range(hmangle.getNumAngles()):
         ang = hmangle.getAngleParameters(angle_idx)
         if atoms[ang[0]] in ['P', 'C1', 'C2', 'NA', 'NB', 'NC', 'ND']:
-            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], 2*ang[4], 2])
+            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
         else:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])
     system.addForce(ReB)

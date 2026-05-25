@@ -561,7 +561,7 @@ def rG4s_setup(params, modification=None):
 
     # 4. load force field files
     top_pro, param_pro = load_ff('Protein')
-    top_RNA, param_RNA = load_ff('rG4s')
+    top_RNA, param_RNA = load_ff('RNA')
     #top_DNA, param_DNA = load_ff('DNA')
     top_AGs, param_AGs = load_ff('AGs')
     ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs)
