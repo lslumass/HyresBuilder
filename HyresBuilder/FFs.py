@@ -1047,7 +1047,7 @@ def rG4sSystem(psf, system, ffs, modification=None):
 
 
     # add G-G pair through CustomHbondForce
-    eps_GG = 3.2*unit.kilocalorie_per_mole
+    eps_GG = 3.0*unit.kilocalorie_per_mole
     r_gg1 = 0.40*unit.nanometer     # for NB-ND
     r_gg2 = 0.42*unit.nanometer     # for NC-NC
     
