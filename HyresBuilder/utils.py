@@ -590,7 +590,7 @@ def rG4s_setup(params, modification=None):
     print(f"switch distance: {d_switch}")
 
     # 6. construct force field
-    system = buildSystem(psf, system, ffs, modification=modification)
+    system = rG4sSystem(psf, system, ffs, modification=modification)
     print("buildSystem for HyRes_iConRNA")
 
     # 7. set simulation
