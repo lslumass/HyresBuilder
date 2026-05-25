@@ -194,6 +194,7 @@ NBFIX
 !                 Emin         Rmin
 !                 (kcal/mol)   (A)
 RP        MG        -0.50000       5.0000
+RP        RP        -0.08200       4.8680
 RS1       RS1       -0.09922       4.5652           !necessary, do not delete
 
 ! for pairing 
