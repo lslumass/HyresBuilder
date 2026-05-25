@@ -498,50 +498,38 @@ def setup2(args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picose
     return system, sim
 
 
-def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
+def rG4s_setup(params, modification=None):
     """
     Set up the rG4s simulation system with given parameters.
-    Parameters:
-    -----------
-    args: argparse.Namespace
-        The command line arguments containing simulation parameters.
-    dt: float
-        The time step for the integrator.
-    pressure: unit.Quantity
-        The pressure for the MonteCarloBarostat (default is 1 atm).
-    friction: unit.Quantity
-        The friction coefficient for the Langevin integrator (default is 0.1 / ps).
-    gpu_id: str
-        The GPU device index to use (default is "0").
-    Returns:
-    --------
-    system: openmm.System
-        The constructed OpenMM system.
-    sim: openmm.app.Simulation
-        The OpenMM simulation object.
     """
 
     print('\n################## set up simulation parameters ###################')
     # 1. input parameters
-    pdb_file = args.pdb
-    psf_file = args.psf
-    T = args.temp
-    c_ion = args.salt/1000.0                                   # concentration of ions in M
-    c_Mg = args.Mg                                           # concentration of Mg in mM
-    ensemble = args.ens
+    pdb_file = params.pdb
+    psf_file = params.psf
+    T = params.temp
+    c_ion = params.salt/1000.0                                   # concentration of ions in M
+    lmd = getattr(params, "lmd", 0)                              # lmd for Mg²⁺-RNA interaction, if don't give, it's 0.
+    ensemble = params.ens
+
+    dt = params.dt
+    er_ref = params.er_ref
+    pressure = params.pressure
+    friction = params.friction
+    gpu_id = params.gpu_id
     
     # 2. set pbc and box vector
-    if ensemble == 'non' and c_Mg != 0.0:
-        print("Error: Mg ion cannot be usde in non-periodic system.")
+    if ensemble == 'non' and lmd != 0.0:
+        print("Error: Mg ion cannot be run in non-periodic system.")
         exit(1)
     if ensemble in ['NPT', 'NVT']:
         # pbc box length
-        if len(args.box) == 1:
-            lx, ly, lz = args.box[0], args.box[0], args.box[0]
-        elif len(args.box) == 3:
-            lx = args.box[0]
-            ly = args.box[1]
-            lz = args.box[2]
+        if len(params.box) == 1:
+            lx, ly, lz = params.box[0], params.box[0], params.box[0]
+        elif len(params.box) == 3:
+            lx = params.box[0]
+            ly = params.box[1]
+            lz = params.box[2]
         else:
             print("Error: You must provide either one or three values for box.")
             exit(1)
@@ -557,44 +545,53 @@ def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecon
     d_switch = 1.1*unit.nanometer                               # switch function starting distance
     temperature = T*unit.kelvin 
     er_t = cal_er(T)                                                   # relative electric constant
-    er = er_t*60.0/77.6
+    er = er_t*er_ref/77.6
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
-    # Mg-P interaction
-    lmd = nMg2lmd(c_Mg, T, RNA='rA')
-    print(f'er: {er}, dh: {dh}, lmd: {lmd}')
+    print(f"dielectric constant: er = {er:.2f}")
+    print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
+    print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
+
     ffs = {
         'temp': T,                                                  # Temperature
         'lmd': lmd,                                                  # Charge scaling factor of P-
         'dh': dh,                                                  # Debye Huckel screening length
         'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
         'er': er,                                                  # relative dielectric constant
-        'ion_type': args.ion*unit.kilocalorie_per_mole,                                      # ion type, K or Na
     }
 
     # 4. load force field files
-    top_RNA, param_RNA = load_ff('rG4s')
     top_pro, param_pro = load_ff('Protein')
-    params = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro)
+    top_RNA, param_RNA = load_ff('rG4s')
+    #top_DNA, param_DNA = load_ff('DNA')
+    top_AGs, param_AGs = load_ff('AGs')
+    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
     pdb = PDBFile(pdb_file)
     psf = CharmmPsfFile(psf_file)
     top = psf.topology
+    print(f"coordinate file: {pdb_file}")
+    print(f"topology file: {psf_file}")
+
+    print('\n################## create system ###################')
     if ensemble == 'non':
-        system = psf.createSystem(params, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,
+        system = psf.createSystem(ffparams, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,
                                   nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
     else:
         psf.setBox(lx, ly, lz)
         top.setPeriodicBoxVectors((a, b, c))
         top.setUnitCellDimensions((lx, ly,lz))
-        system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds,
+        system = psf.createSystem(ffparams, nonbondedMethod=CutoffPeriodic, constraints=HBonds,
                                   nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
         system.setDefaultPeriodicBoxVectors(a, b, c)
+    
+    print(f"nonbonded cutoff: {cutoff}")
+    print(f"switch distance: {d_switch}")
 
     # 6. construct force field
-    print('\n################## build system ###################')
-    system = rG4sSystem(psf, system, ffs)
+    system = buildSystem(psf, system, ffs, modification=modification)
+    print("buildSystem for HyRes_iConRNA")
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
