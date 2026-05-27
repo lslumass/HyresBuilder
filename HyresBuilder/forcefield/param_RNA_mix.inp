@@ -22,12 +22,12 @@ RS2   RG1   150.0      1.93   ! C2-NA for G
 RS2   RC1   150.0      2.53   ! C2-NA for C
 RS2   RU1   150.0      2.53   ! C2-NA for U
 !bonds in base A
-RA1   RA2   500.0      1.63   ! A: NA-NB
+RA1   RA2   200.0      1.63   ! A: NA-NB
 RA1   RA4   200.0      2.40   ! A: NA-ND
 RA2   RA3   120.0      3.06   ! A: NB-NC
 RA3   RA4   200.0      2.72   ! A: NC-ND
 !bonds in base G
-RG1   RG2   500.0      1.63   ! G: NA-NB
+RG1   RG2   200.0      1.63   ! G: NA-NB
 RG1   RG4   130.0      3.05   ! G: NA-ND
 RG2   RG3   130.0      3.05   ! G: NB-NC
 RG3   RG4   150.0      2.90   ! G: NC-ND
@@ -72,16 +72,16 @@ RS2   RA1   RA2   50.0     127.0  ! C2-NA-NB for A
 RS2   RG1   RG2   50.0     127.0  ! C2-NA-NB for G
 RS2   RA1   RA4   50.0     117.0  ! C2-NA-ND for A
 RS2   RG1   RG4   40.0     116.0  ! C2-NA-ND for G
-RS2   RC1   RC3  100.0      59.0  ! C2-NA-NC for C
-RS2   RU1   RU3  100.0      59.0  ! C2-NA-NC for U
+RS2   RC1   RC3   50.0      59.0  ! C2-NA-NC for C
+RS2   RU1   RU3   50.0      59.0  ! C2-NA-NC for U
 ! internal angle for A:
-RA1   RA2   RA3  160.0      88.0  !  NA-NB-NC
-RA2   RA3   RA4  100.0      72.0  !  NB-NC-ND
-RA3   RA4   RA1  100.0      84.0  !  NC-ND-NA
+RA1   RA2   RA3   50.0      88.0  !  NA-NB-NC
+RA2   RA3   RA4   50.0      72.0  !  NB-NC-ND
+RA3   RA4   RA1   50.0      84.0  !  NC-ND-NA
 ! internal angle for G:
-RG1   RG2   RG3  160.0      88.0  !  NA-NB-NC
-RG2   RG3   RG4  100.0      83.0  !  NB-NC-ND
-RG3   RG4   RG1  100.0      72.0  !  NC-ND-NA
+RG1   RG2   RG3   50.0      88.0  !  NA-NB-NC
+RG2   RG3   RG4   50.0      83.0  !  NB-NC-ND
+RG3   RG4   RG1   50.0      72.0  !  NC-ND-NA
 
 !## for polyphosphate
 PHO   PHO   PHO   60.0      99.0  ! P-P-P
