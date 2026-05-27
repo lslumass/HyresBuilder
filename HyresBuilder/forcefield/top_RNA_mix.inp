@@ -20,6 +20,7 @@ MASS   316 RC3   28.010   ! CO    base -C(=O)- for C, U
 MASS   317 RU3   28.010   ! CO    base -C(=O)- for C, U
 MASS   318 MG    24.305   ! fully hydrated Mg2+
 MASS   319 SMG   24.305   ! chelated Mg2+
+MASS   320 PHO   78.970   ! Polyphosphate -P(O2)O-
 
 DECL -C1
 DECL +P
@@ -126,7 +127,7 @@ IMPR C1   P    +P   C2
 
 RESI PHO         -1.00  !
 GROUP                   !
-ATOM P    RP     -1.00  !
+ATOM P    PHO    -1.00  !
 BOND P    +P
 
 
