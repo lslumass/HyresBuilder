@@ -414,27 +414,27 @@ def buildSystem(psf, system, ffs, modification=None):
             system.addForce(pairCG)
             print(pairCG.getNumAcceptors(), pairCG.getNumDonors(), 'CG')
 
-        # add G-U pair through CustomHbondForce
-        eps_GU = eps_base*scales['G-U']
-        r_gu = 0.35*unit.nanometer
-
-        if num_G != 0 and num_U !=0:
-            formula = f"""eps_GU*(5.0*(r_gu/r)^12-6.0*(r_gu/r)^10)*step_phi; r=distance(a1,d1);
-                        step_phi=step(cos_phi)*cos_phi; cos_phi=-cos(phi)^5; phi=angle(d1,a1,a2);
-                        eps_GU={eps_GU.value_in_unit(unit.kilojoule_per_mole)};
-                        r_gu={r_gu.value_in_unit(unit.nanometer)}
-                      """
-            pairGU = CustomHbondForce(formula)
-            pairGU.setName('GUpairForce')
-            pairGU.setNonbondedMethod(nbforce.getNonbondedMethod())
-            pairGU.setCutoffDistance(0.65*unit.nanometers)
-
-            for idx in range(len(g_c)):
-                pairGU.addAcceptor(g_c[idx], g_b[idx], -1)
-            for idx in range(len(u_b)):
-                pairGU.addDonor(u_b[idx], -1, -1)
-            system.addForce(pairGU)
-            print(pairGU.getNumAcceptors(), pairGU.getNumDonors(), 'GU')
+#        # add G-U pair through CustomHbondForce
+#        eps_GU = eps_base*scales['G-U']
+#        r_gu = 0.35*unit.nanometer
+#
+#        if num_G != 0 and num_U !=0:
+#            formula = f"""eps_GU*(5.0*(r_gu/r)^12-6.0*(r_gu/r)^10)*step_phi; r=distance(a1,d1);
+#                        step_phi=step(cos_phi)*cos_phi; cos_phi=-cos(phi)^5; phi=angle(d1,a1,a2);
+#                        eps_GU={eps_GU.value_in_unit(unit.kilojoule_per_mole)};
+#                        r_gu={r_gu.value_in_unit(unit.nanometer)}
+#                      """
+#            pairGU = CustomHbondForce(formula)
+#            pairGU.setName('GUpairForce')
+#            pairGU.setNonbondedMethod(nbforce.getNonbondedMethod())
+#            pairGU.setCutoffDistance(0.65*unit.nanometers)
+#
+#            for idx in range(len(g_c)):
+#                pairGU.addAcceptor(g_c[idx], g_b[idx], -1)
+#            for idx in range(len(u_b)):
+#                pairGU.addDonor(u_b[idx], -1, -1)
+#            system.addForce(pairGU)
+#            print(pairGU.getNumAcceptors(), pairGU.getNumDonors(), 'GU')
 
     # further modification defined in running scripts
     if callable(modification):
