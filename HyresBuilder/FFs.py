@@ -193,7 +193,7 @@ def buildSystem(psf, system, ffs, modification=None):
         residues.append(atom.residue.name)
     
     # 3 Replace HarmonicAngle with Restricted Bending (ReB) potential
-    ReB = CustomAngleForce("0.5*kt*(theta-theta0)^2/(sin(theta)^kReB);")
+    ReB = CustomAngleForce("kt*(theta-theta0)^2/(sin(theta)^kReB);")
     ReB.setName('ReBAngleForce')
     ReB.addPerAngleParameter("theta0")
     ReB.addPerAngleParameter("kt")

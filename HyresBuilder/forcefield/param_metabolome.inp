@@ -1,0 +1,85 @@
+* parameter file for CG metobolome
+*  
+* Date: May 30, 2026
+* Author: Shanlong Li
+
+BOND
+!
+!V(bond) = Kb(b - b0)**2
+!
+!Kb: kcal/mole/A**2
+!b0: A
+!
+!atom type Kb          b0
+!
+!bonds for 1MNA
+P1H   A2W   
+K01   K23   166.0      3.12   ! K1-K2, K1-K3
+
+
+THETAS
+!V = V(angle) + V(Urey-Bradley)
+!
+!V(angle) = Ktheta(Theta - Theta0)**2
+!
+!V(Urey-Bradley) = Kub(S - S0)**2
+!
+!Ktheta: kcal/mole/rad**2
+!Theta0: degrees
+!Kub: kcal/mole/A**2 (Urey-Bradley)
+!S0: A
+!
+!atom types     Ktheta    Theta0   Kub     S0
+!
+
+!angles for Kanamycin (KAN)
+K23   K01   K47   35.0      70.0  ! K3-K1-K4, K2-K1-K7
+
+
+PHI
+!
+!V(dihedral) = Kchi(1 + cos(n(chi) - delta))
+!
+!Kchi: kcal/mole
+!n: multiplicity
+!delta: degrees
+!
+!atom types             Kchi    n   delta
+!
+
+!phi for Kanamycin (KAN)
+K23   K01   K47   K09      9.3    1    46.0    ! K2-K1-K7-K9
+K01   K23   K47   K08      2.6    1    72.0    ! K1-K2-K7-K8
+
+
+IMPHI
+
+
+NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
+     CUTNB 12.0  CTOFNB 12.0  CTONNB 11.0
+
+!
+!V(Lennard-Jones) = Eps,i,j[(Rmin,i,j/ri,j)**12 - 2(Rmin,i,j/ri,j)**6]
+!
+!epsilon: kcal/mole, Eps,i,j = sqrt(eps,i * eps,j)
+!Rmin/2: A, Rmin,i,j = Rmin/2,i + Rmin/2,j
+!
+!atom  ignored    epsilon      Rmin/2   ignored   eps,1-4       Rmin/2,1-4
+!
+
+! for Kanamycin A (KAN)
+M01      0.00     -0.0519      2.4340   0.00     -0.0519      2.4340
+M02      0.00     -0.0150      2.0982   0.00     -0.0150      2.0982
+M03      0.00     -0.0720      2.2759   0.00     -0.0720      2.2759
+M04      0.00     -0.0720      2.0591   0.00     -0.0720      2.0591 !
+M05      0.00     -0.0150      2.3268   0.00     -0.0150      2.3268 !
+M06      0.00     -0.0150      2.5008   0.00     -0.0150      2.5008 !
+M07      0.00     -0.0900      2.3689   0.00     -0.0900      2.3689 !
+
+NBFIX
+!                 Emin         Rmin
+!                 (kcal/mol)   (A)
+M01    M01       -0.0519      4.8680           !necessary, do not delete
+
+
+END
