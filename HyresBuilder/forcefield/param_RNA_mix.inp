@@ -60,8 +60,8 @@ THETAS
 !
 
 !angles in backbone
-RS1   RP    RS1    5.0     105.0
-RP    RS1   RP     5.0      95.0
+RS1   RP    RS1    2.0     105.0
+RP    RS1   RP     4.0      95.0
 RP    RS1   RS2    4.0     112.0
 RS1   RS2   RP    10.0      55.0
 RS1   RS2   RA1    4.0     136.0  ! C1-C2-NA for A
@@ -72,8 +72,8 @@ RS2   RA1   RA2   25.0     127.0  ! C2-NA-NB for A
 RS2   RG1   RG2   25.0     127.0  ! C2-NA-NB for G
 RS2   RA1   RA4   25.0     117.0  ! C2-NA-ND for A
 RS2   RG1   RG4   20.0     116.0  ! C2-NA-ND for G
-RS2   RC1   RC3   25.0      59.0  ! C2-NA-NC for C
-RS2   RU1   RU3   25.0      59.0  ! C2-NA-NC for U
+RS2   RC1   RC3   50.0      59.0  ! C2-NA-NC for C
+RS2   RU1   RU3   50.0      59.0  ! C2-NA-NC for U
 ! internal angle for A:
 RA1   RA2   RA3   80.0      88.0  !  NA-NB-NC
 RA2   RA3   RA4   50.0      72.0  !  NB-NC-ND
@@ -102,30 +102,30 @@ PHI
 RS1   RP    RS1   RP       0.2    1   -20.0
 RS1   RP    RS1   RS2      0.2    1  -120.0
 ! A/G
-RP    RS1   RS2   RA1     58.0    1  -160.0    ! P-C1-C2-NA for A 
-RP    RS1   RS2   RG1     58.0    1  -165.0    ! P-C1-C2-NA for G   
-RS1    RS2   RA1   RA2    55.0    1   160.0
-RS1    RS2   RG1   RG2    55.0    1   165.0
+RP    RS1   RS2   RA1     35.0    1  -160.0    ! P-C1-C2-NA for A 
+RP    RS1   RS2   RG1     35.0    1  -165.0    ! P-C1-C2-NA for G   
+RS1    RS2   RA1   RA2    35.0    1   160.0
+RS1    RS2   RG1   RG2    35.0    1   165.0
 !RS1   RS2   RA1   RA2     35.0    1    90.0
 !RS1   RS2   RA1   RA2     30.0    2  -165.0
 !RS1   RS2   RG1   RG2     35.0    1    90.0
 !RS1   RS2   RG1   RG2     30.0    2  -165.0
 
 ! C/U
-RP    RS1   RS2   RC1     55.0    1  -165.0    ! P-C1-C2-NA for C  
-RP    RS1   RS2   RU1     55.0    1  -165.0    ! P-C1-C2-NA for U 
+RP    RS1   RS2   RC1     35.0    1  -165.0    ! P-C1-C2-NA for C  
+RP    RS1   RS2   RU1     35.0    1  -165.0    ! P-C1-C2-NA for U 
 
-RS1   RS2   RC1   RC3     55.0    1   -15.0    !      
-RS1   RS2   RU1   RU3     55.0    1   -15.0    !                
+RS1   RS2   RC1   RC3     35.0    1   -15.0    !      
+RS1   RS2   RU1   RU3     35.0    1   -15.0    !                
 
 !phi in A
-RS2   RA1   RA2   RA3     80.0    1     0.0   !C2-NA-NB-NC
+RS2   RA1   RA2   RA3      0.0    1     0.0   !C2-NA-NB-NC
 RA1   RA2   RA4   RA3     80.0    1     0.0   !NA-NB-ND-NC
 RA1   RA2   RA3   RA4     50.0    1   180.0   !NA-NB-NC-ND
 !phi in G
-RS2   RG1   RG2   RG3     80.0    1     0.0   !C2-NA-NB-NC
-RG1   RG2   RG4   RG3     80.0    1     0.0   !NA-NB-ND-NC
-RG1   RG2   RG3   RG4     50.0    1   180.0   !NA-NB-NC-ND
+RS2   RG1   RG2   RG3      0.0    1     0.0   !C2-NA-NB-NC
+RG1   RG2   RG4   RG3     50.0    1     0.0   !NA-NB-ND-NC
+RG1   RG2   RG3   RG4     80.0    1   180.0   !NA-NB-NC-ND
 
 !## for polyphosphate
 PHO   PHO   PHO   PHO      0.9    1     0.0   ! P-P-P-P
@@ -146,11 +146,11 @@ RS1   RP    RP    RS2     15.0    0    29.0
 !NA-C2-NB-ND for A
 RA1   RS2   RA2   RA4     40.0    0     0.0
 !NA-C2-NB-ND for G
-RG1   RS2   RG2   RG4     40.0    0     0.0
+RG1   RS2   RG2   RG4     20.0    0     0.0
 !NA-C2-NB-NC for C
-RC1   RS2   RC2   RC3     40.0    0  -180.0
+RC1   RS2   RC2   RC3     20.0    0  -180.0
 !NA-C2-NB-NC for U
-RU1   RS2   RU2   RU3     40.0    0  -180.0
+RU1   RS2   RU2   RU3     20.0    0  -180.0
 
 
 NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -

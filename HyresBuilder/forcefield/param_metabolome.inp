@@ -1,4 +1,5 @@
 * parameter file for CG metobolome
+* bonded terms are wrong, which are modulted later based on metabolome.itp
 *  
 * Date: May 30, 2026
 * Author: Shanlong Li
@@ -12,9 +13,18 @@ BOND
 !
 !atom type Kb          b0
 !
-!bonds for 1MNA
-P1H   A2W   
-K01   K23   166.0      3.12   ! K1-K2, K1-K3
+! NCA
+P1H   A2W     0.0      1.0
+A2W   A2W     0.0      1.0
+A2W   A2W     0.0      1.0
+A2W   M04     0.0      1.0
+! 2HG
+M02   P1S    20.0      2.53
+P1S   C3E    20.0      2.40
+C3E   M02    20.0      2.32
+! 2PG
+M01   P1T    20.0      3.02
+P1T   M02    20.0      2.79
 
 
 THETAS
@@ -32,8 +42,14 @@ THETAS
 !atom types     Ktheta    Theta0   Kub     S0
 !
 
-!angles for Kanamycin (KAN)
-K23   K01   K47   35.0      70.0  ! K3-K1-K4, K2-K1-K7
+! NCA
+P1H   A2W   M04   25.0     135.0
+A2W   A2W   M04    0.0     165.0
+! 2HG
+M02   P1S   C3E   25.0      86.0
+P1S   C3E   M02   15.0     161.0
+! 2PG
+M01   P1T   M02   50.0     91.0
 
 
 PHI
@@ -47,12 +63,25 @@ PHI
 !atom types             Kchi    n   delta
 !
 
-!phi for Kanamycin (KAN)
-K23   K01   K47   K09      9.3    1    46.0    ! K2-K1-K7-K9
-K01   K23   K47   K08      2.6    1    72.0    ! K1-K2-K7-K8
+! 2HG
+M02   P1S   C3E   M02      0.5    1   180.0
+
+
 
 
 IMPHI
+!
+!V(improper) = Kpsi(psi - psi0)**2
+!
+!Kpsi: kcal/mole/rad**2
+!psi0: degrees
+!note that the second column of numbers (0) is ignored
+!
+!atom types           Kpsi                   psi0
+!
+
+!backbone N-C-CA-H 
+A2W   A2W   P1H   M04      25.0    0    0.0
 
 
 NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -

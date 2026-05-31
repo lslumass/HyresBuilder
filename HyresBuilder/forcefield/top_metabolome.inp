@@ -108,7 +108,7 @@ ATOM M2   A2V     0.00
 ATOM M3   M02    -1.00
 ATOM M4   M02    -1.00
 BOND M1   M2        M2   M3        M2   M4
-ANGL M1   M2   M3        M1   M2   M4        M3   M2   M4
+ANGL M1   M2   M3        M3   M2   M4
 
 RESI KGLU        -2.00
 GROUP                 
@@ -117,7 +117,7 @@ ATOM M2   C3E     0.00
 ATOM M3   C3E     0.00
 ATOM M4   M02    -1.00
 BOND M1   M2        M2   M3        M3   M4
-ANGL M1   M2   M3        M2   M3   M4
+ANGL M1   M2   M3        M1   M3   M4
 DIHE M1   M2   M3   M4
 
 RESI SUCC        -2.00
@@ -153,8 +153,8 @@ ATOM M4   M02    -1.00
 ATOM M5   M02    -1.00
 BOND M1   M2        M2   M3        M2   M5        M3   M4
 ANGL M1   M2   M3        M1   M2   M5        M2   M3   M4
-ANGL M3   M2   M5
-DIHE M1   M2   M3   M4       M5   M2   M3   M4
+DIHE M1   M2   M3   M4
+IMPH M2   M1   M3   M5
 
 RESI PAU         -1.00
 GROUP                 
@@ -186,7 +186,7 @@ ANGL M1   M2   M3
 RESI G6P         -2.00
 GROUP                 
 ATOM M1   M01    -2.00
-ATOM M2   A2V     0.00
+ATOM M2   RS1     0.00
 ATOM M3   M05     0.00
 ATOM M4   M05     0.00
 BOND M1   M2        M2   M3        M2   M4        M3   M4
@@ -203,7 +203,7 @@ RESI GPC          0.00
 GROUP                 
 ATOM M1   P1S     0.00
 ATOM M2   P1T     0.00
-ATOM M3   RS1    -1.00
+ATOM M3   RP     -1.00
 ATOM M4   C3E     0.00
 ATOM M5   M06     1.00
 BOND M1   M2        M2   M3        M3   M4        M4   M5
@@ -226,7 +226,7 @@ DIHE M1   M2   M3   M4       M1   M2   M3   M6       M2   M3   M4   M5
 RESI TAU          0.00
 GROUP                 
 ATOM M1   QdK     1.00
-ATOM M2   M01    -1.00
+ATOM M2   RS1    -1.00
 BOND M1   M2
 
 RESI TMG          0.00
