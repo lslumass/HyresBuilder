@@ -24,6 +24,7 @@ parser.add_argument('-t', "--temp", default=303, type=float, help="system temper
 parser.add_argument('-b', "--box", nargs='+', type=float, help="box dimensions in nanometer, e.g., '50 50 50' ")
 parser.add_argument('-s', "--salt", default=150.0, type=float, help="salt concentration in mM, default is 150.0 mM")
 parser.add_argument('-e', "--ens", default='NVT', type=str, help="simulation ensemble, NPT, NVT, or non, non is for non-periodic system")
+parser.add_argument('-m', "--Mg", default=0.0, type=float, help="Mg2+ concentration in mM")
 params = parser.parse_args()
 out = params.out
 
@@ -52,7 +53,7 @@ example:
     def mod(system):
         system.addForce(customforce)
     util.setup(params, modification=mod)
-"""
+"""        
 system, sim = utils.setup(params)
 
 """

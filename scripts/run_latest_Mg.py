@@ -8,7 +8,7 @@ email: shanlongli@umass.edu
 
 from __future__ import division, print_function
 import argparse
-from HyresBuilder import utils
+from HyresBuilder import utils, Rigid
 # OpenMM Imports
 from openmm.unit import *
 from openmm.app import *

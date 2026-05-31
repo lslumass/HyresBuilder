@@ -353,8 +353,8 @@ ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
 ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
 ANGL M1   C1   C3        NA   C2   C3
 DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
-DIHE NA   NB   NC   ND
-IMPR NA   C2   NB   ND        C1   M1   C3   C2
+DIHE NA   NB   NC   ND        M1   C1   C3   C2
+IMPR NA   C2   NB   ND
 
 RESI MTA          0.00  
 GROUP                             
@@ -374,8 +374,8 @@ ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
 ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
 ANGL M1   C1   C3        NA   C2   C3
 DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
-DIHE NA   NB   NC   ND
-IMPR NA   C2   NB   ND        C1   M1   C3   C2
+DIHE NA   NB   NC   ND        M1   C1   C3   C2
+IMPR NA   C2   NB   ND
 
 RESI AMP         -2.00  
 GROUP                             
@@ -395,8 +395,8 @@ ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
 ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
 ANGL M1   C1   C3        NA   C2   C3
 DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
-DIHE NA   NB   NC   ND
-IMPR NA   C2   NB   ND        C1   M1   C3   C2
+DIHE NA   NB   NC   ND        M1   C1   C3   C2
+IMPR NA   C2   NB   ND
 
 RESI AMP1         0.00     # AMP as the part of ADPR, NAD, NADH, SAM, FAD, etc.
 GROUP                             
@@ -415,8 +415,8 @@ ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
 ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
 ANGL NA   C2   C3
 DIHE NA   NB   ND   NC       -M1   C1   C2   NA        C1   C2   NA   NB
-DIHE NA   NB   NC   ND
-IMPR NA   C2   NB   ND        C1  -M1   C3   C2
+DIHE NA   NB   NC   ND       -M1   C1   C3   C2
+IMPR NA   C2   NB   ND
 
 RESI AMPP         0.00     # Phosphated AMP as the part of NADP, NADPH, etc.
 GROUP                             
@@ -436,8 +436,8 @@ ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
 ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
 ANGL NA   C2   C3        C2   C3   M1
 DIHE NA   NB   ND   NC       -M1   C1   C2   NA        C1   C2   NA   NB
-DIHE NA   NB   NC   ND
-IMPR NA   C2   NB   ND        C1  -M1   C3   C2        C3   C1   C2   M1
+DIHE NA   NB   NC   ND        M1   C1   C3   C2       -M1   C1   C3   M1
+IMPR NA   C2   NB   ND
 
 RESI ADP         -3.00  
 GROUP                             
@@ -460,7 +460,8 @@ ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
 ANGL M1   C1   C3        NA   C2   C3
 DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
 DIHE NA   NB   NC   ND        M2   M1   C1   C2        M2   M1   C1   C3
-IMPR NA   C2   NB   ND        C1   M1   C3   C2
+DIHE M1   C1   C3   C2
+IMPR NA   C2   NB   ND
 
 RESI ADPH        -2.00  
 GROUP                             
@@ -483,7 +484,8 @@ ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
 ANGL M1   C1   C3        NA   C2   C3
 DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
 DIHE NA   NB   NC   ND        M2   M1   C1   C2        M2   M1   C1   C3
-IMPR NA   C2   NB   ND        C1   M1   C3   C2
+DIHE M1   C1   C3   C2
+IMPR NA   C2   NB   ND
 
 RESI ATP         -4.00  
 GROUP                             
@@ -508,8 +510,8 @@ ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
 ANGL M1   C1   C3        NA   C2   C3
 DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
 DIHE NA   NB   NC   ND        M2   M1   C1   C2        M2   M1   C1   C3
-DIHE M3   M2   M1   C1
-IMPR NA   C2   NB   ND        C1   M1   C3   C2
+DIHE M3   M2   M1   C1        M1   C1   C3   C2
+IMPR NA   C2   NB   ND
 
 RESI ATPH        -3.00  
 GROUP                             
@@ -534,8 +536,8 @@ ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
 ANGL M1   C1   C3        NA   C2   C3
 DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
 DIHE NA   NB   NC   ND        M2   M1   C1   C2        M2   M1   C1   C3
-DIHE M3   M2   M1   C1
-IMPR NA   C2   NB   ND        C1   M1   C3   C2
+DIHE M3   M2   M1   C1        M1   C1   C3   C2
+IMPR NA   C2   NB   ND
 
 RESI ADPR        -2.00     ! ADPR: ADPR-AMP1
 GROUP                             
@@ -549,7 +551,7 @@ BOND M3   M4        M3   M5        M4   M5
 ANGL M1   +C1  +C2       M1  +C1  +C3        M1   M2   M3
 ANGL M2   M3   M4        M2   M3   M5        M2   M1   +C1
 DIHE M2   M1   +C1  +C2       M1   M2   M3   M5       M3   M2   M1  +C1
-IMPR M3   M2   M4   M5
+DIHE M1   M2   M3   M4        M2   M3   M5   M4
 
 RESI NAD         -1.00     ! NAD+: NAD-AMP1, NADP+: NAD-AMPP
 GROUP                             
