@@ -853,7 +853,7 @@ def rG4sSystem(psf, system, ffs, modification=None):
         ress.append(atom.residue.index)
     
     print('\n# replace HarmonicAngle with Restricted Bending (ReB) potential')
-    # Custom Angle Force
+    # 3 Replace HarmonicAngle with Restricted Bending (ReB) potential
     ReB = CustomAngleForce("0.5*kt*(theta-theta0)^2/(sin(theta)^kReB);")
     ReB.setName('ReBAngleForce')
     ReB.addPerAngleParameter("theta0")
@@ -863,37 +863,43 @@ def rG4sSystem(psf, system, ffs, modification=None):
         ang = hmangle.getAngleParameters(angle_idx)
         if atoms[ang[0]] in ['P', 'C1', 'C2', 'NA', 'NB', 'NC', 'ND']:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], 2*ang[4], 2])
+        elif atoms[ang[0]] == 'CA' and atoms[ang[1]] == 'CB':
+            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
+        elif atoms[ang[0]].startswith('K'):
+            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
+        elif atoms[ang[0]].startswith('M'):
+            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
         else:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])
     system.addForce(ReB)
 
-    print('\n# add custom nonbondedforce for DH-electrostatic interaction')
+    # 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce
     dh = ffs['dh']
-    lmd = ffs['lmd']
     er = ffs['er']
+    lmd = ffs['lmd']
     # add custom nonbondedforce: CNBForce, here only charge-charge interactions
-    formula = f"""138.935456/er*charge1*charge2/r*exp(-r/dh)*kpmg;
-                dh={dh.value_in_unit(unit.nanometer)}; er={er}; kpmg=select(lb1+lb2,1,lmd); lmd={lmd}
+    formula = f"""138.935456/ker*charge1*charge2/r*exp(-r/dh)*kpmg; dh={dh.value_in_unit(unit.nanometer)};
+                  ker=select(la1+la2, {er}, 20.0); kpmg=select(lb1+lb2, 1, {lmd});
               """
     CNBForce = CustomNonbondedForce(formula)
     CNBForce.setName("DH_ElecForce")
     CNBForce.setNonbondedMethod(nbforce.getNonbondedMethod())
     CNBForce.setUseSwitchingFunction(use=True)
-    #CNBForce.setUseLongRangeCorrection(use=True)
     CNBForce.setCutoffDistance(1.8*unit.nanometers)
     CNBForce.setSwitchingDistance(1.6*unit.nanometers)
     CNBForce.addPerParticleParameter('charge')
+    CNBForce.addPerParticleParameter('la')
     CNBForce.addPerParticleParameter('lb')
     
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
         if atoms[idx] == 'P':
-            lb = 1
-        elif atoms[idx] == 'MG':
-            lb = -1
+            la, lb = 0, 1
+        elif atoms[idx] in {'MG', 'CAL'}:
+            la, lb = 0, -1
         else:
-            lb = 2
-        perP = [particle[0], lb]
+            la, lb = 2, 2
+        perP = [particle[0], la, lb]
         CNBForce.addParticle(perP)
     
     CNBForce.createExclusionsFromBonds(bondlist, 3)
@@ -1049,7 +1055,7 @@ def rG4sSystem(psf, system, ffs, modification=None):
 
 
     # add G-G pair through CustomHbondForce
-    eps_GG = 3.0*unit.kilocalorie_per_mole
+    eps_GG = ffs['GG']*unit.kilocalorie_per_mole
     r_gg1 = 0.40*unit.nanometer     # for NB-ND
     r_gg2 = 0.42*unit.nanometer     # for NC-NC
     

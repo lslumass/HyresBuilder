@@ -502,9 +502,11 @@ def setup2(args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picose
     return system, sim
 
 
-def rG4s_setup(params, modification=None):
+def rG4s_setup(params, GG=3.0, modification=None):
     """
     Set up the rG4s simulation system with given parameters.
+    GG: float, the strength of G-G pair interaction in unit.kilocalorie_per_mole, default is 3.0 kcal/mol,
+        adjust this value to fit the experimental Tm under different conditions.
     """
 
     print('\n################## set up simulation parameters ###################')
@@ -561,6 +563,7 @@ def rG4s_setup(params, modification=None):
         'dh': dh,                                                  # Debye Huckel screening length
         'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
         'er': er,                                                  # relative dielectric constant
+        'GG': GG,                                                   # G-G pair interaction strength in unit.kilocalorie_per_mole
     }
 
     # 4. load force field files
