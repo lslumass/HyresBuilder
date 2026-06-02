@@ -800,21 +800,20 @@ def iConRNA_setup(params, modification=None):
     return system, sim
 
 
-def setupMg(params, RNA='rA', modification=None):
+def setupMg(params, modification=None):
     """
     Similar to setup(), but with a focus on Mg²⁺-RNA interactions, where
     the er = 20 was specifically chosen to match the experimental Mg²⁺-RNA interactions.
     other details are the same as setup().
     """
     
-    print('\nThis is special system, where er = 20.0 for Mg-P interactions, otherwise 60.0')
     print('\n################## set up simulation parameters ###################')
     # 1. input parameters
     pdb_file = params.pdb
     psf_file = params.psf
     T = params.temp
     c_ion = params.salt/1000.0                                   # concentration of ions in M
-    c_Mg = params.Mg                                           # concentration of Mg in mM
+    lmd = getattr(params, "lmd", 0)                              # lmd for Mg²⁺-RNA interaction, if don't give, it's 0.
     ensemble = params.ens
 
     dt = params.dt
@@ -824,8 +823,8 @@ def setupMg(params, RNA='rA', modification=None):
     gpu_id = params.gpu_id
     
     # 2. set pbc and box vector
-    if ensemble == 'non' and c_Mg != 0.0:
-        print("Error: Mg ion cannot be usde in non-periodic system.")
+    if ensemble == 'non' and lmd != 0.0:
+        print("Error: Mg ion cannot be run in non-periodic system.")
         exit(1)
     if ensemble in ['NPT', 'NVT']:
         # pbc box length
@@ -852,23 +851,10 @@ def setupMg(params, RNA='rA', modification=None):
     er_t = cal_er(T)                                                   # relative electric constant
     er = er_t*er_ref/77.6
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
-    # Mg-P interaction
-    lmd = nMg2lmd(c_Mg, T, RNA=RNA)
     print(f"dielectric constant: er = {er:.2f}")
     print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
-
-    # Mg-P interaction
-    match RNA:
-        case str():
-            lmd = nMg2lmd(c_Mg, T, RNA=RNA)
-        case (F, M, n):
-            lmd = nMg2lmd(c_Mg, T, F=F, M=M, n=n)
-        case float():
-            lmd = RNA
-    print(f"dielectric constant for Mg-P interactions: 20.0")
-    print(f'Mg-P interactions are determined based on {RNA}')
     print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
-    
+
     ffs = {
         'temp': T,                                                  # Temperature
         'lmd': lmd,                                                  # Charge scaling factor of P-
