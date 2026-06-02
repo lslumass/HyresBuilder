@@ -131,6 +131,9 @@ def load_ff(model: str) -> tuple[str, str]:
     elif model == 'AGs':
         path1 = ff / "top_AGs.inp"
         path2 = ff / "param_AGs.inp"
+    elif model == 'Metabolite':
+        path1 = ff / "top_metabolome.inp"
+        path2 = ff / "param_metabolome.inp"
     else:
         print("Error: The model type {} is not supported, only for Protein, RNA, DNA, rG4s, and ATP.".format(model))
         exit(1)
@@ -322,9 +325,10 @@ def setup(params, modification=None):
     # 4. load force field files
     top_pro, param_pro = load_ff('Protein')
     top_RNA, param_RNA = load_ff('RNA')
-    #top_DNA, param_DNA = load_ff('DNA')
+    top_DNA, param_DNA = load_ff('DNA')
     top_AGs, param_AGs = load_ff('AGs')
-    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs)
+    top_mets, param_mets = load_ff('Metabolite')
+    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
@@ -866,9 +870,10 @@ def setupMg(params, modification=None):
     # 4. load force field files
     top_pro, param_pro = load_ff('Protein')
     top_RNA, param_RNA = load_ff('RNA')
-    #top_DNA, param_DNA = load_ff('DNA')
+    top_DNA, param_DNA = load_ff('DNA')
     top_AGs, param_AGs = load_ff('AGs')
-    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs)
+    top_mets, param_mets = load_ff('Metabolite')
+    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf

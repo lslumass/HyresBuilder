@@ -206,6 +206,8 @@ def buildSystem(psf, system, ffs, modification=None):
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
         elif atoms[ang[0]].startswith('K'):
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
+        elif atoms[ang[0]].startswith('M'):
+            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
         else:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])
     system.addForce(ReB)
@@ -1111,7 +1113,7 @@ def rG4sSystem(psf, system, ffs, modification=None):
 # for HyRes_iConRNA System with Mg-RNA interactions
 def buildMgSystem(psf, system, ffs, modification=None):
     """
-    similar to buildSystem, but specifically for Mg-RNA interactions.
+    similar to buildSystem, but specifically for Mg/Ca-RNA interactions.
     """
     
     print('\n################# constructe HyRes and/or iConRNA force field ####################')
@@ -1164,6 +1166,8 @@ def buildMgSystem(psf, system, ffs, modification=None):
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
         elif atoms[ang[0]].startswith('K'):
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
+        elif atoms[ang[0]].startswith('M'):
+            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
         else:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])
     system.addForce(ReB)
@@ -1190,7 +1194,7 @@ def buildMgSystem(psf, system, ffs, modification=None):
         particle = nbforce.getParticleParameters(idx)
         if atoms[idx] == 'P':
             la, lb = 0, 1
-        elif atoms[idx] == 'MG':
+        elif atoms[idx] in {'MG', 'CAL'}:
             la, lb = 0, -1
         else:
             la, lb = 2, 2
