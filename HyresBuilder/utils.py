@@ -150,8 +150,8 @@ def estimate_lmd(cNa, cMg, length, Rg, T):
     nMg = 0.47*(Na_Mg/(Na_Mg+cNa))
 
     nMg_T = nMg + 0.0012*(T-273-30)
-    # lmd = 1.265*(nMg_T/0.172)**0.625/(1+(nMg_T/0.172)**0.625)           # for er = 20.0
-    lmd = 1.480*(nMg_T/0.172)**0.625/(1+(nMg_T/0.172)**0.625)           # for er = 60.0
+    lmd = 1.265*(nMg_T/0.172)**0.625/(1+(nMg_T/0.172)**0.625)           # for er = 20.0
+    #lmd = 1.480*(nMg_T/0.172)**0.625/(1+(nMg_T/0.172)**0.625)           # for er = 60.0
 
     return lmd
 
@@ -172,8 +172,8 @@ def nMg2lmd(cMg, T, F=0.0, M=0.0, n=0.0, RNA='rA'):
     else:
         nMg = F*(cMg/M)**n/(1+(cMg/M)**n)
         nMg_T = nMg + 0.0012*(T-273-30)
-        # lmd = 1.265*(nMg_T/0.172)**0.625/(1+(nMg_T/0.172)**0.625)           # for er = 20.0
-        lmd = 1.480*(nMg_T/0.172)**0.625/(1+(nMg_T/0.172)**0.625)           # for er = 60.0
+        lmd = 1.265*(nMg_T/0.172)**0.625/(1+(nMg_T/0.172)**0.625)           # for er = 20.0
+        #lmd = 1.480*(nMg_T/0.172)**0.625/(1+(nMg_T/0.172)**0.625)           # for er = 60.0
     
     return lmd
 
