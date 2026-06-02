@@ -69,7 +69,7 @@ example:
         system.addForce(customforce)
     util.setup(params, modification=mod)
 """
-system, sim = utils.setup(params, GG=params.GG)
+system, sim = utils.rG4s_setup(params, GG=params.GG)
 
 """
 if further modify the system, add this line below:

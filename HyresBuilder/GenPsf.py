@@ -59,6 +59,10 @@ def split_chains(pdb):
     mg, cal = ["MG+"], ["CA+"]
     phos = ['PHO']
     AGs = ['KAN']
+    Mats = ['UN1','AYA','ACA','NLG','C3C','C4C','C5C','Y52','CHT','CIT','CTT','ABU','CH5',
+            'GSH','MTA','SHR','TAU','BET','3PG','G6P','COA','FAD','NCA','PAU','ADN','ADP',
+            'AMP','ATP','C5P','CTN','UGA','GMP','UD1','NOS','NAD','NAI','NAD','UDP','U5P',
+            'UPG','2PG','13P','PEP','SAM','2HG','FUM','AKG','LMR','MCT','SIN']
 
     def get_type(resname):
         chaintype = (
@@ -69,6 +73,7 @@ def split_chains(pdb):
             'C' if resname in cal else
             'PHO' if resname in phos else
             'AGs' if resname in AGs else
+            'Mats' if resname in Mats else
             None
         )
         return chaintype
@@ -99,7 +104,7 @@ def split_chains(pdb):
     # save out each chain
     pre_type = None
     for i, (t, chain) in enumerate(zip(types, chains)):
-        if t in ['P', 'R', 'D', 'PHO', 'AGs']:
+        if t in ['P', 'R', 'D', 'PHO', 'AGs', 'Mats']:
             tmp_pdb = f"psfgentmp_{i}.pdb"
         elif t in ['M', 'C']:
             if t == pre_type:
@@ -196,17 +201,19 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix'):
         RNA_topology = path1.as_posix()
     protein_topology, _ = utils.load_ff('Protein')
     AGs_topology, _ = utils.load_ff('AGs')
+    Mats_topology, _ = utils.load_ff('Metabolite')
 
     # generate psf
     gen = PsfGen()
     gen.read_topology(RNA_topology)
     gen.read_topology(protein_topology)
     gen.read_topology(AGs_topology)
+    gen.read_topology(Mats_topology)
 
-    counts = {'P': 1, 'R': 1, 'D': 1, 'M': 1, 'C': 1, 'PHO': 1, 'AGs': 1}
+    counts = {'P': 1, 'R': 1, 'D': 1, 'M': 1, 'C': 1, 'PHO': 1, 'AGs': 1, 'Mats': 1}
     types = split_chains(pdb_in)
     for i, t in enumerate(types):
-        if t in ["P", "R", "D", "PHO", "AGs"]:
+        if t in ["P", "R", "D", "PHO", "AGs", "Mats"]:
             tmp_pdb = f"psfgentmp_{i}.pdb"
         else:
             tmp_pdb = f"psfgentmp_{t}.pdb"
@@ -260,12 +267,14 @@ def custom_genpsf(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix'):
         RNA_topology = path1.as_posix()
     protein_topology, _ = utils.load_ff('Protein')
     AGs_topology, _ = utils.load_ff('AGs')
+    Mats_topology, _ = utils.load_ff('Metabolite')
 
     # generate psf
     gen = PsfGen()
     gen.read_topology(RNA_topology)
     gen.read_topology(protein_topology)
     gen.read_topology(AGs_topology)
+    gen.read_topology(Mats_topology)
 
     # molecule type definitions
     aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
@@ -275,6 +284,10 @@ def custom_genpsf(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix'):
     mg, cal = ["MG+"], ["CA+"]
     phos = ['PHO']
     AGs = ['KAN']
+    Mats = ['UN1','AYA','ACA','NLG','C3C','C4C','C5C','Y52','CHT','CIT','CTT','ABU','CH5',
+            'GSH','MTA','SHR','TAU','BET','3PG','G6P','COA','FAD','NCA','PAU','ADN','ADP',
+            'AMP','ATP','C5P','CTN','UGA','GMP','UD1','NOS','NAD','NAI','NAD','UDP','U5P',
+            'UPG','2PG','13P','PEP','SAM','2HG','FUM','AKG','LMR','MCT','SIN']
 
     def get_type(resname):
         chaintype = (
@@ -285,6 +298,7 @@ def custom_genpsf(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix'):
             'C' if resname in cal else
             'PHO' if resname in phos else
             'AGs' if resname in AGs else
+            'Mats' if resname in Mats else
             None
         )
         return chaintype

@@ -144,7 +144,7 @@ metabolome = {
         'dihedrals': {},
         'impropers': {},
     },
-    'MCIT': {
+    'MCT': {
         'bonds': {
             ('M02', 'P1T'): (20.0, 2.63),
             ('P1T', 'C3E'): (20.0, 2.92),
@@ -301,7 +301,7 @@ metabolome = {
         'dihedrals': {},
         'impropers': {},
     },
-    'ACAR': {
+    'ACA': {
         'bonds': {
             ('M06', 'A2V'): (50.0, 3.28),
             ('A2V', 'M02'): (50.0, 2.48),
@@ -315,7 +315,7 @@ metabolome = {
         'dihedrals': {},
         'impropers': {},
     },
-    'CAR3': {
+    'C3C': {
         'bonds': {
             ('C3E', 'M07'): (50.0, 2.52),
             ('M07', 'A2V'): (50.0, 2.48),
@@ -334,7 +334,7 @@ metabolome = {
         },
         'impropers': {},
     },
-    'CAR4': {
+    'C4C': {
         'bonds': {
             ('M07', 'A2V'): (50.0, 2.48),
             ('A2V', 'M02'): (50.0, 2.48),
@@ -352,7 +352,7 @@ metabolome = {
         },
         'impropers': {},
     },
-    'CAR5': {
+    'C5C': {
         'bonds': {
             ('A1I', 'M07'): (20.0, 3.49),
             ('M07', 'A2V'): (50.0, 2.48),
@@ -396,7 +396,7 @@ metabolome = {
         },
         'impropers': {},
     },
-    'CYST': {
+    'CTT': {
         'bonds': {
             ('M02', 'QdK'): (50.0, 2.68),
             ('QdK', 'P1C'): (50.0, 3.56),
