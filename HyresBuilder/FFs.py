@@ -254,7 +254,8 @@ def buildSystem(psf, system, ffs, modification=None):
     Force14.addPerBondParameter('epsilon')
     for idx in range(nbforce.getNumExceptions()):
         ex = nbforce.getExceptionParameters(idx)
-        Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
+        if ex[4] != 0.0:
+            Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
     system.addForce(Force14)
 
     # 6. Add the Custom hydrogen bond force for protein backbone
@@ -917,7 +918,8 @@ def rG4sSystem(psf, system, ffs, modification=None):
     Force14.addPerBondParameter('epsilon')
     for idx in range(nbforce.getNumExceptions()):
         ex = nbforce.getExceptionParameters(idx)
-        Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
+        if ex[4] != 0.0:
+            Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
     system.addForce(Force14)
 
     print('\n# add RNA base stacking force')
@@ -1221,7 +1223,8 @@ def buildMgSystem(psf, system, ffs, modification=None):
     Force14.addPerBondParameter('epsilon')
     for idx in range(nbforce.getNumExceptions()):
         ex = nbforce.getExceptionParameters(idx)
-        Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
+        if ex[4] != 0.0:
+            Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
     system.addForce(Force14)
 
     # 6. Add the Custom hydrogen bond force for protein backbone
