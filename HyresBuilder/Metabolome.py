@@ -8,8 +8,22 @@ from openmm import *
 import numpy as np
 
 
-# parameter file for CG metabolome
+KCAL_TO_KJ: float = 4.184
+"""Multiply kcal by this to obtain kJ (exact IUPAC value)."""
+
+# ---------------------------------------------------------------------------
+# Reference parameter dictionary
+# ---------------------------------------------------------------------------
+
 metabolome = {
+    # ------------------------------------------------------------------
+    # Each residue entry has four sub-dicts:
+    #
+    #   bonds     : {(atom_i, atom_j)                : (k [kcal/mol/Å²],   b0 [Å])}
+    #   angles    : {(atom_i, atom_j, atom_k)         : (k [kcal/mol/rad²], theta0 [deg])}
+    #   dihedrals : {(atom_i, atom_j, atom_k, atom_l) : (k [kcal/mol],      n,  phase [deg])}
+    #   impropers : {(atom_i, atom_j, atom_k, atom_l) : (k [kcal/mol/rad²], _, theta0 [deg])}
+    # ------------------------------------------------------------------
     'NCA': {
         'bonds': {
             ('M1', 'M2'): (150.0, 1.95),  # P1H - A2W
@@ -532,7 +546,9 @@ metabolome = {
             ('M2', 'M1', 'C1', 'C2'): (0.1, 1, 130.0), # PHO - PHO - RS1 - RS2
             ('M2', 'M1', 'C1', 'C3'): (0.1, 1, 45.0),  # PHO - PHO - RS1 - M05
         },
-        'impropers': {},
+        'impropers': {
+            ('C1', 'M1', 'C2', 'C3'): (30.0, 0, -61.5),  # IMPH C1 M1 C2 C3
+        },
     },
     'APR': {
         'bonds': {
@@ -853,112 +869,254 @@ metabolome = {
     },
 }
 
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
 def modify_metabolite(psf, system):
+    """Overwrite bonded force parameters for CG metabolite residues in *system*.
+
+    The function iterates over every ``Force`` object registered in the OpenMM
+    *system* and, for each bonded interaction whose four (or fewer) atoms all
+    belong to the same residue and that residue is listed in :data:`metabolome`,
+    replaces the current parameters with the hand-tuned values from the
+    dictionary.
+
+    All dictionary values are converted from CHARMM units to OpenMM internal
+    units (kJ/mol, nm, radians) before being written back.  See the module
+    docstring for the full conversion table.
+
+    Parameters
+    ----------
+    psf : openmm.app.CharmmPsfFile
+        Loaded PSF object whose ``topology`` attribute provides atom-name and
+        residue-name information.  The atom ordering in the topology must match
+        the atom ordering used when *system* was created.
+    system : openmm.System
+        OpenMM system object, typically produced by
+        ``psf.createSystem(params, ...)``.  The forces inside this object are
+        modified **in place**.
+
+    Returns
+    -------
+    openmm.System
+        The same *system* object, returned for convenience so the call can be
+        chained.
+
+    Notes
+    -----
+    Force identification strategy
+        ``HarmonicBondForce`` and ``PeriodicTorsionForce`` are identified by
+        their Python type alone.  ``CustomAngleForce`` and
+        ``CustomTorsionForce`` are additionally filtered by the name set on the
+        force object (``force.getName()``).  The expected names are
+        ``"ReBAngleForce"`` and ``"CustomTorsionForce"`` respectively.  These
+        names **must** be assigned with ``force.setName(...)`` before calling
+        this function; forces without the expected name are silently skipped.
+
+    Parameter index layout for custom forces
+        *CustomAngleForce* ("ReBAngleForce"): per-angle parameters are ordered
+        ``[theta0 (rad), kt (kJ/mol/rad²)]``, i.e. index 0 = θ₀, index 1 = kₜ.
+
+        *CustomTorsionForce* ("CustomTorsionForce"): per-torsion parameters are
+        ordered ``[k (kJ/mol/rad²), theta0 (rad)]``, i.e. index 0 = k,
+        index 1 = θ₀.
+
+    Reverse-key matching
+        Bond, angle, and proper dihedral keys are matched in both forward and
+        reverse order.  Improper torsion keys are matched in the **forward
+        order only** — reversing the atom quartet changes the out-of-plane
+        center atom, yielding a physically different interaction.
+
+    Examples
+    --------
+    Minimal usage after building a CHARMM system::
+
+        import openmm as mm
+        from openmm.app import CharmmPsfFile, CharmmParameterSet
+        from Metabolome import modify_metabolite
+
+        psf    = CharmmPsfFile('system.psf')
+        params = CharmmParameterSet('toppar.str')
+        system = psf.createSystem(params)
+
+        for force in system.getForces():
+            if isinstance(force, mm.CustomAngleForce):
+                force.setName("ReBAngleForce")
+            elif isinstance(force, mm.CustomTorsionForce):
+                force.setName("CustomTorsionForce")
+
+        system = modify_metabolite(psf, system)
+    """
     topology = psf.topology
-    
+
     print("Building atom-to-residue mapping from topology...")
-    atom_map = {atom.index: (atom.residue.name, atom.name) for atom in topology.atoms()}
+    atom_map = {
+        atom.index: (atom.residue.name, atom.name)
+        for atom in topology.atoms()
+    }
     target_resnames = set(metabolome.keys())
 
     counts = {"bonds": 0, "angles": 0, "dihedrals": 0, "impropers": 0}
 
-    # Loop through all forces in the OpenMM system
+    # Track which dictionary keys were actually matched (for validation)
+    matched_keys = {
+        resname: {
+            'bonds': set(),
+            'angles': set(),
+            'dihedrals': set(),
+            'impropers': set(),
+        }
+        for resname in metabolome
+    }
+
     for force in system.getForces():
-        
-        # 1. HARMONIC BONDS
+
+        # ------------------------------------------------------------------
+        # 1. HARMONIC BONDS  (HarmonicBondForce)
+        #
+        #    Potential : E = ½ · k · (r − r₀)²
+        #    Dict units: k  [kcal/mol/Å²],  r₀ [Å]
+        #    OpenMM    : k  [kJ/mol/nm²],   r₀ [nm]
+        #
+        #    k  conversion: ×4.184 (kcal→kJ) × 100 (Å⁻²→nm⁻²) × 2 (absorb ½)
+        #                 = ×836.8
+        #    r₀ conversion: ×0.1
+        # ------------------------------------------------------------------
         if isinstance(force, HarmonicBondForce):
-            num_bonds = force.getNumBonds()
-            if num_bonds == 0:
+            if force.getNumBonds() == 0:
                 continue
-                
-            for i in range(num_bonds):
-                p1, p2, length, k = force.getBondParameters(i)
+
+            for i in range(force.getNumBonds()):
+                p1, p2, _length, _k = force.getBondParameters(i)
                 res1, name1 = atom_map[p1]
                 res2, name2 = atom_map[p2]
-                
-                if res1 == res2 and res1 in target_resnames:
-                    bond_keys = [(name1, name2), (name2, name1)]
-                    for key in bond_keys:
-                        if key in metabolome[res1]['bonds']:
-                            raw_k, raw_b0 = metabolome[res1]['bonds'][key]
-                            
-                            # Convert parameters inside the loop:
-                            # length: Angstroms -> nm (* 0.1)
-                            # k: multiplied by 2 due to OpenMM's 1/2*k*(b-b0)^2 functional form
-                            b0_new = raw_b0 * 0.1
-                            k_new = raw_k * 2.0
-                            
-                            force.setBondParameters(i, p1, p2, b0_new, k_new)
-                            counts["bonds"] += 1
-                            break
 
-        # 2. CUSTOM ANGLES ("ReBAngleForce")
+                if res1 != res2 or res1 not in target_resnames:
+                    continue
+
+                for key in ((name1, name2), (name2, name1)):
+                    if key in metabolome[res1]['bonds']:
+                        raw_k, raw_b0 = metabolome[res1]['bonds'][key]
+
+                        b0_new = raw_b0 * 0.1
+                        # ×4.184 kcal→kJ, ×100 Å⁻²→nm⁻², ×2 absorb ½
+                        k_new = raw_k * KCAL_TO_KJ * 100.0 * 2.0
+
+                        force.setBondParameters(i, p1, p2, b0_new, k_new)
+                        counts["bonds"] += 1
+                        matched_keys[res1]['bonds'].add(key)
+                        break
+
+        # ------------------------------------------------------------------
+        # 2. CUSTOM ANGLES  (CustomAngleForce named "ReBAngleForce")
+        #
+        #    Potential : E = ½ · kₜ · (θ − θ₀)²
+        #    Dict units: kₜ [kcal/mol/rad²],  θ₀ [degrees]
+        #    OpenMM    : kₜ [kJ/mol/rad²],    θ₀ [radians]
+        #
+        #    kₜ conversion: ×4.184 (kcal→kJ) × 2 (absorb ½)  = ×8.368
+        #    θ₀ conversion: ×π/180
+        #
+        #    Per-parameter index layout: [theta0, kt]  →  idx 0 = θ₀, idx 1 = kₜ
+        # ------------------------------------------------------------------
         elif isinstance(force, CustomAngleForce):
-            force_name = getattr(force, 'getName', lambda: None)()
-            if force_name != "ReBAngleForce":
+            if force.getName() != "ReBAngleForce":
                 continue
-                
-            print(f"Processing CustomAngleForce '{force_name}'...")
-            theta_idx, kt_idx = 0, 1 # Indices mapping to ("theta0", "kt") parameters
+
+            print(f"Processing CustomAngleForce '{force.getName()}'...")
+            THETA_IDX, KT_IDX = 0, 1
 
             for i in range(force.getNumAngles()):
                 p1, p2, p3, custom_params = force.getAngleParameters(i)
                 res1, name1 = atom_map[p1]
                 res2, name2 = atom_map[p2]
                 res3, name3 = atom_map[p3]
-                
-                if res1 == res2 == res3 and res1 in target_resnames:
-                    angle_keys = [(name1, name2, name3), (name3, name2, name1)]
-                    for key in angle_keys:
-                        if key in metabolome[res1]['angles']:
-                            raw_kt, raw_theta0 = metabolome[res1]['angles'][key]
-                            
-                            # Convert parameters inside the loop:
-                            # theta0: Degrees -> Radians (* pi / 180)
-                            # kt: multiplied by 2 due to OpenMM's potential math
-                            theta0_new = raw_theta0 * (math.pi / 180.0)
-                            kt_new = raw_kt * 2.0
-                            
-                            new_params = list(custom_params)
-                            new_params[theta_idx] = theta0_new
-                            new_params[kt_idx] = kt_new
-                            
-                            force.setAngleParameters(i, p1, p2, p3, tuple(new_params))
-                            counts["angles"] += 1
-                            break
 
-        # 3. PROPER DIHEDRALS (PeriodicTorsionForce)
+                if not (res1 == res2 == res3) or res1 not in target_resnames:
+                    continue
+
+                for key in ((name1, name2, name3), (name3, name2, name1)):
+                    if key in metabolome[res1]['angles']:
+                        raw_kt, raw_theta0 = metabolome[res1]['angles'][key]
+
+                        theta0_new = raw_theta0 * (math.pi / 180.0)
+                        kt_new = raw_kt * KCAL_TO_KJ * 2.0
+
+                        new_params = list(custom_params)
+                        new_params[THETA_IDX] = theta0_new
+                        new_params[KT_IDX] = kt_new
+
+                        force.setAngleParameters(i, p1, p2, p3, tuple(new_params))
+                        counts["angles"] += 1
+                        matched_keys[res1]['angles'].add(key)
+                        break
+
+        # ------------------------------------------------------------------
+        # 3. PROPER DIHEDRALS  (PeriodicTorsionForce)
+        #
+        #    Potential : E = k · (1 + cos(n · φ − φ₀))
+        #    Dict units: k [kcal/mol],  φ₀ [degrees],  n [integer]
+        #    OpenMM    : k [kJ/mol],    φ₀ [radians]
+        #
+        #    k  conversion: ×4.184  (no factor-of-2; potential has no ½)
+        #    φ₀ conversion: ×π/180
+        # ------------------------------------------------------------------
         elif isinstance(force, PeriodicTorsionForce):
             for i in range(force.getNumTorsions()):
-                p1, p2, p3, p4, periodicity, phase, k = force.getTorsionParameters(i)
+                p1, p2, p3, p4, _periodicity, _phase, _k = (
+                    force.getTorsionParameters(i)
+                )
                 res1, name1 = atom_map[p1]
                 res2, name2 = atom_map[p2]
                 res3, name3 = atom_map[p3]
                 res4, name4 = atom_map[p4]
-                
-                if res1 == res2 == res3 == res4 and res1 in target_resnames:
-                    fwd_key = (name1, name2, name3, name4)
-                    rev_key = (name4, name3, name2, name1)
-                    
-                    dihedral_dict = metabolome[res1]['dihedrals']
-                    if fwd_key in dihedral_dict or rev_key in dihedral_dict:
-                        raw_k, raw_multi, raw_phase = dihedral_dict.get(fwd_key) or dihedral_dict.get(rev_key)
-                        
-                        # Convert parameters inside the loop:
-                        # phase: Degrees -> Radians (* pi / 180)
-                        phase_new = raw_phase * (math.pi / 180.0)
-                        
-                        force.setTorsionParameters(i, p1, p2, p3, p4, raw_multi, phase_new, raw_k)
-                        counts["dihedrals"] += 1
 
-        # 4. IMPROPER TORSIONS (CustomTorsionForce named "CustomTorsionForce")
+                if not (res1 == res2 == res3 == res4) or res1 not in target_resnames:
+                    continue
+
+                fwd_key = (name1, name2, name3, name4)
+                rev_key = (name4, name3, name2, name1)
+                dihedral_dict = metabolome[res1]['dihedrals']
+
+                matched_key = None
+                if fwd_key in dihedral_dict:
+                    matched_key = fwd_key
+                elif rev_key in dihedral_dict:
+                    matched_key = rev_key
+
+                if matched_key is None:
+                    continue
+
+                params = dihedral_dict[matched_key]
+                raw_k, raw_multi, raw_phase = params
+
+                phase_new = raw_phase * (math.pi / 180.0)
+                k_new = raw_k * KCAL_TO_KJ  # no ×2: periodic form has no ½
+
+                force.setTorsionParameters(
+                    i, p1, p2, p3, p4, raw_multi, phase_new, k_new
+                )
+                counts["dihedrals"] += 1
+                matched_keys[res1]['dihedrals'].add(matched_key)
+
+        # ------------------------------------------------------------------
+        # 4. IMPROPER TORSIONS  (CustomTorsionForce named "CustomTorsionForce")
+        #
+        #    Potential : E = ½ · k · (θ − θ₀)²
+        #    Dict units: k [kcal/mol/rad²],  θ₀ [degrees]
+        #    OpenMM    : k [kJ/mol/rad²],    θ₀ [radians]
+        #
+        #    k  conversion: ×4.184 (kcal→kJ) × 2 (absorb ½)  = ×8.368
+        #    θ₀ conversion: ×π/180
+        #
+        #    Per-parameter index layout: [k, theta0]  →  idx 0 = k, idx 1 = θ₀
+        # ------------------------------------------------------------------
         elif isinstance(force, CustomTorsionForce):
-            force_name = getattr(force, 'getName', lambda: None)()
-            if force_name != "CustomTorsionForce":
+            if force.getName() != "CustomTorsionForce":
                 continue
-                
-            # Parameter ordering layout indices: 0 = k, 1 = theta0
-            k_idx, theta_idx = 0, 1 
+
+            K_IDX, THETA_IDX = 0, 1
 
             for i in range(force.getNumTorsions()):
                 p1, p2, p3, p4, custom_params = force.getTorsionParameters(i)
@@ -966,32 +1124,41 @@ def modify_metabolite(psf, system):
                 res2, name2 = atom_map[p2]
                 res3, name3 = atom_map[p3]
                 res4, name4 = atom_map[p4]
-                
-                if res1 == res2 == res3 == res4 and res1 in target_resnames:
-                    fwd_key = (name1, name2, name3, name4)
-                    rev_key = (name4, name3, name2, name1)
-                    
-                    improper_dict = metabolome[res1]['impropers']
-                    if fwd_key in improper_dict or rev_key in improper_dict:
-                        raw_k, _, raw_theta0 = improper_dict.get(fwd_key) or improper_dict.get(rev_key)
-                        
-                        # Convert parameters inside the loop:
-                        # theta0: Degrees -> Radians (* pi / 180)
-                        # k: multiplied by 2 due to OpenMM's potential math
-                        theta0_new = raw_theta0 * (math.pi / 180.0)
-                        k_new = raw_k * 2.0
-                        
-                        new_params = list(custom_params)
-                        new_params[k_idx] = k_new
-                        new_params[theta_idx] = theta0_new
-                        
-                        force.setTorsionParameters(i, p1, p2, p3, p4, tuple(new_params))
-                        counts["impropers"] += 1
 
-    print(f"\nModification summary:")
-    print(f" -> Modified {counts['bonds']} harmonic bonds.")
-    print(f" -> Modified {counts['angles']} custom angles ('ReBAngleForce').")
-    print(f" -> Modified {counts['dihedrals']} proper dihedrals.")
-    print(f" -> Modified {counts['impropers']} improper torsions.")
+                if not (res1 == res2 == res3 == res4) or res1 not in target_resnames:
+                    continue
+
+                # Impropers: forward order only (reversing changes the
+                # out-of-plane center atom)
+                fwd_key = (name1, name2, name3, name4)
+                improper_dict = metabolome[res1]['impropers']
+
+                params = improper_dict.get(fwd_key)
+                if params is None:
+                    continue
+
+                raw_k, _, raw_theta0 = params
+
+                theta0_new = raw_theta0 * (math.pi / 180.0)
+                k_new = raw_k * KCAL_TO_KJ * 2.0
+
+                new_params = list(custom_params)
+                new_params[K_IDX] = k_new
+                new_params[THETA_IDX] = theta0_new
+
+                force.setTorsionParameters(
+                    i, p1, p2, p3, p4, tuple(new_params)
+                )
+                counts["impropers"] += 1
+                matched_keys[res1]['impropers'].add(fwd_key)
+
+    # ------------------------------------------------------------------
+    # Summary
+    # ------------------------------------------------------------------
+    print("\nModification summary:")
+    print(f"  -> Modified {counts['bonds']}     harmonic bonds.")
+    print(f"  -> Modified {counts['angles']}    custom angles ('ReBAngleForce').")
+    print(f"  -> Modified {counts['dihedrals']} proper dihedrals.")
+    print(f"  -> Modified {counts['impropers']} improper torsions.")
     
     return system

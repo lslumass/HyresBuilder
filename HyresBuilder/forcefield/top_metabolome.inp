@@ -510,7 +510,7 @@ ANGL M1   C1   C3        NA   C2   C3
 DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
 DIHE NA   NB   NC   ND        M2   M1   C1   C2        M2   M1   C1   C3
 DIHE M3   M2   M1   C1        M1   C1   C3   C2
-IMPR NA   C2   NB   ND
+IMPR NA   C2   NB   ND        C1   M1   C2   C3
 
 RESI ATPH        -3.00  
 GROUP                             
