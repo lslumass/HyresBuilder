@@ -246,6 +246,7 @@ PHO   PHO   RS1   M05      0.1    1     0.0
 PHO   PHO   RS1   P1S      0.1    1    20.0
 PHO   RS1   M05   RS2      0.1    1    47.5
 PHO   RS1   RS2   M06      1.0    1  -150.0
+PHO   RS1   RS2   RA1      5.0    1  -165.0 
 RS1   RS2   M06   A2W      1.0    1  -165.0
 RS2   M06   A2W   M04      5.0    1   180.0
 M04   A2W   A2W   M06      5.0    1     0.0
