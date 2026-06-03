@@ -238,6 +238,7 @@ P1C   RS1   M05   RS2      0.1    1    45.0
 M01   RS1   RS2   RA1      0.1    1   130.0
 M01   RS1   M05   RS2      0.1    1    45.0
 M01   M05   RS2   RS1      0.1    1    15.0
+M01   PHO   PHO   RS1      0.2    1    15.0
 M01   PHO   RS1   RS2      0.1    1   130.0
 M01   PHO   RS1   M05      0.1    1     0.0
 PHO   PHO   RS1   RS2      0.1    1   130.0
