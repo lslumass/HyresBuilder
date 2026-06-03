@@ -503,7 +503,7 @@ BOND M3   M2        M2   M1
 BOND M1   C1        C1   C3        C2   C3
 BOND C1   C2        C2   NA
 BOND NA   NB        NA   ND        NB   NC        NC   ND
-ANGL M1   C1   C2        M1   C1   C3        
+ANGL M3   M2   M1        M2   M1   C1        M1   C1   C2        M1   C1   C3        
 ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
 ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
 ANGL M1   C1   C3        NA   C2   C3
