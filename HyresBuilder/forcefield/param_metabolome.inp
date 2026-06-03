@@ -69,9 +69,9 @@ RS2   M05    150.0    2.29
 P1C   RS1     50.0    4.05
 M01   RS1     50.0    3.97
 M05   M01     50.0    3.04
-M01   PHO     50.0    2.59
+M01   PHO    150.0    2.63
 PHO   RS1     50.0    3.83
-PHO   PHO     50.0    2.59
+PHO   PHO    150.0    2.63
 RS2   M06    500.0    1.47
 M06   A2W    250.0    2.35
 A2W   A2W    250.0    2.39
@@ -166,8 +166,8 @@ RS2   M05   M01      5.0      81.5
 M01   PHO   RS1      5.0     168.0
 PHO   RS1   M05      5.0     137.5
 PHO   RS1   RS2      5.0     142.0
-M01   PHO   PHO     50.0      99.0
-PHO   PHO   RS1      5.0     168.0
+M01   PHO   PHO     50.0     158.0
+PHO   PHO   RS1     10.0     116.0
 PHO   RS1   P1S      5.0     142.0
 RS1   RS2   M06     55.0     144.0
 M05   RS2   M06     55.0     126.0
@@ -238,7 +238,7 @@ P1C   RS1   M05   RS2      0.1    1    45.0
 M01   RS1   RS2   RA1      0.1    1   130.0
 M01   RS1   M05   RS2      0.1    1    45.0
 M01   M05   RS2   RS1      0.1    1    15.0
-M01   PHO   PHO   RS1      0.2    1    15.0
+M01   PHO   PHO   RS1      0.5    1     0.0
 M01   PHO   RS1   RS2      0.1    1   130.0
 M01   PHO   RS1   M05      0.1    1     0.0
 PHO   PHO   RS1   RS2      0.1    1   130.0
