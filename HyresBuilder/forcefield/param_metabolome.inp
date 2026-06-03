@@ -1,7 +1,6 @@
 * parameter file for CG metobolome
 * bonded terms are wrong, which are modulted later based on metabolome.itp
-*  
-* Date: May 30, 2026
+* * Date: May 30, 2026
 * Author: Shanlong Li
 
 BOND
@@ -12,88 +11,91 @@ BOND
 !b0: A
 !
 !atom type    Kb      b0
-P1H   A2W    150.0    1.95
+A2V   M02     20.0    2.80
+A2V   M07     50.0    3.64
+A2V   P1T    150.0    2.67
+A2V   QdK     20.0    3.12
 A2W   A2W    150.0    1.95
+A2W   A2W    250.0    2.39
 A2W   M04     10.0    2.47
-M02   P1S     20.0    2.53
-P1S   C3E     20.0    2.40
+A2W   M04     50.0    2.20
+A1I   M07     20.0    3.49
+C3E   C3E     20.0    2.18
 C3E   M02     20.0    2.32
+C3E   M02     20.0    3.57
+C3E   M02     20.0    2.28
+C3E   M02     50.0    2.81
+C3E   M06     30.0    2.67
+C3E   M07     50.0    2.52
+M01   C3E     50.0    3.81
+M01   PHO     50.0    2.73
+M01   P1S     30.0    3.02
+M01   RS1     50.0    3.27
+M01   RS1     50.0    3.97
+M02   A2V     20.0    2.95
+M02   C3E     20.0    2.28
+M02   M06     20.0    2.78
+M02   PHO     50.0    2.73
+M02   P1S     20.0    2.53
+M02   P1T     20.0    2.63
+M03   A2V     20.0    3.67
+M03   C3E     20.0    2.60
+M03   M02     50.0    2.83
+M03   M03    100.0    3.64
+M03   M05     50.0    5.17
+M03   P1C     20.0    2.74
+M03   P1C     50.0    2.65
+M03   QaD     20.0    2.80
+M05   M01     50.0    3.04
+M05   M05    250.0    3.13
+M05   M05     50.0    1.96
+M06   A2V     50.0    3.28
+M06   A2W    250.0    2.35
+M06   M03     50.0    4.14
+M06   P1T     50.0    3.50
+M06   QaD    150.0    3.27
+M06   QdK     50.0    3.55
+M06   RS1     50.0    3.76
+M07   A2V     50.0    2.48
+PHO   A2V    150.0    3.97
+PHO   PHO     65.0    2.37
+PHO   P1T     50.0    3.46
+PHO   RS1     50.0    3.94
+P1C   RS1     50.0    4.05
+P1H   A2W    150.0    1.95
+P1H   A2W    250.0    2.35
+P1S   A2V     20.0    2.70
+P1S   C3E     20.0    2.40
 M01   P1S     30.0    3.02
 P1S   M02     30.0    2.79
-M02   A2V     20.0    2.95
-A2V   QdK     20.0    3.12
-QdK   M02     20.0    2.83
-M03   C3E     20.0    2.60
-C3E   M02     20.0    3.57
-M03   A2V     20.0    3.67
-A2V   M02     20.0    2.80
-M02   C3E     20.0    2.28
-C3E   C3E     20.0    2.18
-M02   P1T     20.0    2.63
-P1T   C3E     20.0    2.92
-P1S   A2V     20.0    2.70
 P1S   M03     20.0    3.17
-M03   QaD     20.0    2.80
-M01   C3E     50.0    3.81
-C3E   M02     50.0    2.81
-M01   RS1     50.0    3.27
-RS1   M05    250.0    3.17
-M05   M05    250.0    3.13
-P1T   M06    150.0    2.93
 P1S   P1T     30.0    2.57
-P1T   RP      30.0    3.53
-RP    C3E     30.0    3.27
-C3E   M06     30.0    2.67
-M02   M06     20.0    2.78
-M06   M03     50.0    4.14
-M03   M03    100.0    3.64
-M03   P1C     20.0    2.74
-M03   M02     50.0    2.83
-QdK   RS1    150.0    2.98
-M06   QaD    150.0    3.27
-QdK   C3E     20.0    2.47
-M06   P1T     50.0    3.50
+P1T   C3E     29.2    2.92
 P1T   M02     50.0    2.50
-M06   A2V     50.0    3.28
-A2V   M07     50.0    3.64
-C3E   M07     50.0    2.52
-M07   A2V     50.0    2.48
-A1I   M07     20.0    3.49
-M06   RS1     50.0    3.76
-M06   QdK     50.0    3.55
-QdK   M02     50.0    2.84
-QdK   A2V     50.0    3.20
-QdK   C3E     50.0    2.94
-QdK   M02    100.0    2.31
-RS2   M05    150.0    2.29
-P1C   RS1     50.0    4.05
-M01   RS1     50.0    3.97
-M05   M01     50.0    3.04
-M01   PHO    150.0    2.63
-PHO   RS1     50.0    3.83
-PHO   PHO    150.0    2.63
-RS2   M06    500.0    1.47
-M06   A2W    250.0    2.35
-A2W   A2W    250.0    2.39
-A2W   M04     50.0    2.20
-RS2   P1H    500.0    1.47
-P1H   A2W    250.0    2.35
-PHO   A2V    150.0    3.97
-A2V   P1T    150.0    2.67
 P1T   M03     50.0    3.49
-M03   P1C     50.0    2.65
-PHO   P1T     50.0    3.46
-P1T   P1S     50.0    2.57
+P1T   M06    150.0    2.93
 P1T   P1H     50.0    1.95
-RS1   P1T     50.0    3.58
-RS1   M05    250.0    3.02
-RS1   M03     50.0    3.66
-M03   M05     50.0    5.17
-RS1   P1S     50.0    3.15
-RS1   M05     50.0    2.85
-M05   M05     50.0    1.96
+P1T   P1S     50.0    2.57
+P1T   RP      30.0    3.53
+QdK   A2V     20.0    3.12
+QdK   A2V     50.0    3.20
+QdK   C3E     20.0    2.47
+QdK   C3E     50.0    2.94
+QdK   M02     20.0    2.83
+QdK   M02     50.0    2.84
+QdK   M02    100.0    2.31
+QdK   RS1    150.0    2.98
+RP    C3E     30.0    3.27
 RS1   M02     50.0    3.15
-
+RS1   M03     50.0    3.66
+RS1   M05    250.0    3.17
+RS1   M05    200.0    2.39
+RS1   M05     50.0    2.85
+RS1   P1S     50.0    3.15
+RS1   P1T     50.0    3.58
+RS2   M05    100.0    2.09
+RS2   M06    500.0    1.47
+RS2   P1H    500.0    1.47
 
 THETAS
 !V = V(angle) + V(Urey-Bradley)
@@ -108,97 +110,93 @@ THETAS
 !S0: A
 !
 !atom types         Ktheta    Theta0   Kub     S0
-
-P1H   A2W   M04     25.0     135.0
-A2W   A2W   M04      0.0     165.0
-M02   P1S   C3E     25.0      86.0
-P1S   C3E   M02     15.0     161.0
-M01   P1S   M02     35.0      91.0
-M02   A2V   QdK      5.0     130.0
-A2V   QdK   M02     25.0      85.0
-M03   C3E   M02      5.0      90.0
-M03   A2V   M02      5.0      82.8
-M02   A2V   M02     10.0     134.8
-M02   C3E   C3E     30.0     105.6
-M02   C3E   M02     15.0     170.0
-M02   P1T   C3E     15.0     150.0
-M02   P1T   M02     15.0      85.0
-P1T   C3E   M02     60.0      57.5
-P1S   A2V   P1S      5.0      73.0
-A2V   P1S   M03      5.0      77.0
-P1S   M03   QaD      5.0     131.0
-M01   C3E   M02     35.0      62.0
-P1S   A2V   M01      5.0     104.0
-M01   RS1   M05      5.0     150.0
-P1S   P1T   RP       5.0     115.0
-P1T   RP    C3E      5.0     103.5
-RP    C3E   M06      5.0      95.5
-M02   M06   M03      5.0     115.0
-M06   M03   M03     10.0     132.0
-M06   M03   P1C     10.0     129.0
-M03   M03   M02     10.0     126.5
-M02   M03   P1C     10.0      82.7
-QdK   C3E   M02      0.5     106.5
-M06   P1T   M02      0.5     113.5
-M06   A2V   M02      5.0     121.0
-M06   A2V   M07      5.0      96.0
-A2V   M02   M07      5.0     116.5
-C3E   M07   A2V      5.0     115.0
-M07   A2V   M02      5.0     132.0
-M07   A2V   M06      5.0      76.5
-M02   A2V   M06      5.0     122.0
-A2V   M07   A2V      5.0     148.0
 A1I   M07   A2V      5.0     148.0
-M02   QdK   A2V     30.0      80.0
-QdK   A2V   QdK      5.0     120.0
+A2V   M02   M07      5.0     116.5
+A2V   P1S   M03      5.0      77.0
+A2V   P1T   M03      5.0     114.0
+A2V   QdK   M02     25.0      85.0
 A2V   QdK   M02      5.0     147.0
 A2V   QdK   C3E     10.0     133.0
-QdK   C3E   M02     15.0     150.0
+A2W   A2W   M04      0.0     165.0
+A2W   A2W   M04     15.0     134.0
+C3E   M07   A2V      5.0     115.0
+M01   C3E   M02     35.0      62.0
+M01   PHO   PHO     50.0     158.0
+M01   PHO   RS1      5.0     168.0
+M01   P1S   M02     35.0      91.0
+M01   RS1   M05      5.0     150.0
+M02   A2V   M02     10.0     134.8
+M02   A2V   M06      5.0     122.0
+M02   A2V   QdK      5.0     130.0
+M02   C3E   C3E     30.0     105.6
+M02   C3E   M02     15.0     170.0
+M02   M03   P1C     10.0      82.7
+M02   M06   M03      5.0     115.0
+M02   P1S   C3E     25.0      86.0
+M02   P1T   C3E     15.0     150.0
+M02   P1T   M02     15.0      85.0
+M02   QdK   A2V     30.0      80.0
 M02   QdK   P1C      5.0     102.0
-QdK   P1C   QdK      5.0     121.5
-P1S   RS1   M05      5.0     137.5
-P1S   RS1   RS2      5.0     142.0
-RA1   RS2   M05      5.0     132.0
+M03   A2V   M02      5.0      82.8
+M03   C3E   M02      5.0      90.0
+M03   M03   M02     10.0     126.5
+M03   M03   P1C     25.0     129.5
+M05   RS2   M06     55.0     126.0
+M05   RS2   P1H     55.0     126.0
+M06   A2W   M04     15.0     166.7
+M06   A2V   M02      5.0     121.0
+M06   A2V   M07      5.0      96.0
+M06   M03   M03     10.0     132.0
+M06   M03   P1C     10.0     129.0
+M06   P1T   M02      0.5     113.5
+M06   QdK   M02      5.0     105.0
+M06   RS1   M05      5.0     153.5
+M06   RS1   RS2      5.0     142.0
+M07   A2V   M02      5.0     132.0
+M07   A2V   M06      5.0      76.5
+A2V   M07   A2V      5.0     148.0
+PHO   A2V   P1T     25.0      83.0
+PHO   PHO   A2V     25.0     122.5
+PHO   PHO   P1T      5.0     110.0
+PHO   PHO   RS1     10.0     131.0
+PHO   P1T   P1S      5.0      90.0
+PHO   RS1   M02      5.0     126.0
+PHO   RS1   M03      5.0      85.0
+PHO   RS1   M05     20.0     105.5
+PHO   RS1   P1S     30.0      97.0
+PHO   RS1   P1S      5.0      90.0
+PHO   RS1   RS2      5.0     142.0
 P1C   RS1   M05      5.0     137.5
 P1C   RS1   RS2      5.0     142.0
-RS1   M05   M01      5.0     141.5
-RS2   M05   M01      5.0      81.5
-M01   PHO   RS1      5.0     168.0
-PHO   RS1   M05      5.0     137.5
-PHO   RS1   RS2      5.0     142.0
-M01   PHO   PHO     50.0     158.0
-PHO   PHO   RS1     10.0     116.0
-PHO   RS1   P1S      5.0     142.0
-RS1   RS2   M06     55.0     144.0
-M05   RS2   M06     55.0     126.0
-RS2   M06   A2W     50.0     149.0
-M06   A2W   M04     15.0     166.7
-A2W   A2W   M04     15.0     134.0
-RS1   RS2   P1H     55.0     144.0
-M05   RS2   P1H     55.0     126.0
-RS2   P1H   A2W     50.0     149.0
 P1H   A2W   M04     15.0     166.7
-PHO   PHO   A2V     25.0     122.5
-PHO   A2V   P1T     25.0      83.0
-A2V   P1T   M03      5.0     114.0
-P1T   M03   M03     10.0     136.5
-M03   M03   P1C     25.0     129.5
-PHO   PHO   P1T      5.0     110.0
-PHO   P1T   P1S      5.0      90.0
-P1T   P1S   P1T      5.0      90.0
+P1S   A2V   M01      5.0     104.0
+P1S   A2V   P1S      5.0      73.0
+P1S   C3E   M02     15.0     161.0
+P1S   M03   QaD      5.0     131.0
 P1S   P1T   P1H      5.0     145.0
+P1S   P1T   RP       5.0     115.0
+P1S   RS1   M05      5.0     137.5
+P1S   RS1   RS2      5.0     142.0
+P1T   C3E   M02     60.0      57.5
+P1T   M03   M03     10.0     136.5
 P1T   P1H   A1W     25.0      85.0
-M06   RS1   RS2      5.0     142.0
-M06   RS1   M05      5.0     153.5
+P1T   P1S   P1T      5.0      90.0
+P1T   RP    C3E      5.0     103.5
+QdK   C3E   M02      0.5     106.5
+QdK   C3E   M02     15.0     150.0
 QdK   M06   RS1      5.0     145.0
-M06   QdK   M02      5.0     105.0
-RG1   RS2   M05      5.0     132.0
+QdK   P1C   QdK      5.0     121.5
+RA1   RS2   M05     15.0     144.0
 RC1   RS2   M05      5.0     132.0
+RG1   RS2   M05      5.0     132.0
+RP    C3E   M06      5.0      95.5
+RS1   M05   M01      5.0     141.5
+RS1   RS2   M06     55.0     144.0
+RS1   RS2   P1H     55.0     144.0
+RS2   M05   M01      5.0      81.5
+RS2   M06   A2W     50.0     149.0
+RS2   P1H   A2W     50.0     149.0
 RU1   RS2   M05      5.0     132.0
-PHO   RS1   P1S      5.0      90.0
-PHO   RS1   M03      5.0      85.0
-PHO   RS1   M02      5.0     126.0
-
 
 PHI
 !
@@ -209,69 +207,69 @@ PHI
 !delta: degrees
 !
 !atom types               Kchi    n   delta
-M02   P1S   C3E   M02      0.1    1    55.0
-M02   A2V   QdK   M02      0.0    1     0.0
-M02   C3E   C3E   M02      0.0    1     0.0
-M02   P1T   C3E   M02      0.5    1   157.0
-P1S   A2V   P1S   M03      0.5    1    30.0
-A2V   P1S   M03   QaD      0.5    1    -5.0
-P1S   P1T   RP    C3E      0.2    2  -177.0
-P1T   RP    C3E   M06      0.2    2  -177.0
-M02   M06   M03   M03      0.1    1  -142.0
-M02   M06   M03   P1C      0.2    1   -22.0
-C3E   M07   A2V   M02      0.1    1    68.0
-C3E   M07   A2V   M06      0.1    1    54.5
-A2V   M07   A2V   M02      0.1    1    68.0
-A2V   M07   A2V   M06      0.1    1    54.5
 A1I   M07   A2V   M02      0.1    1    68.0
 A1I   M07   A2V   M06      0.1    1    54.5
-M02   QdK   A2V   QdK      0.0    1     0.0
-QdK   A2V   QdK   C3E      0.0    1     0.0
+A2V   M07   A2V   M02      0.1    1    68.0
+A2V   M07   A2V   M06      0.1    1    54.5
 A2V   QdK   C3E   M02      0.0    1     0.0
-QdK   A2V   QdK   M02      0.0    1   180.0
-M02   C3E   QdK   M02      0.0    1   180.0
-M02   QdK   P1C   QdK      0.1    1    15.0
-P1S   RS1   RS2   RA1      0.1    1   130.0
-P1S   RS1   M05   RS2      0.1    1    45.0
-P1C   RS1   RS2   RA1      0.1    1   130.0
-P1C   RS1   M05   RS2      0.1    1    45.0
-M01   RS1   RS2   RA1      0.1    1   130.0
-M01   RS1   M05   RS2      0.1    1    45.0
-M01   M05   RS2   RS1      0.1    1    15.0
-M01   PHO   PHO   RS1      0.5    1     0.0
-M01   PHO   RS1   RS2      0.1    1   130.0
-M01   PHO   RS1   M05      0.1    1     0.0
-PHO   PHO   RS1   RS2      0.1    1   130.0
-PHO   PHO   RS1   M05      0.1    1     0.0
-PHO   PHO   RS1   P1S      0.1    1    20.0
-PHO   RS1   M05   RS2      0.1    1    47.5
-PHO   RS1   RS2   M06      1.0    1  -150.0
-PHO   RS1   RS2   RA1      5.0    1  -165.0 
-RS1   RS2   M06   A2W      1.0    1  -165.0
-RS2   M06   A2W   M04      5.0    1   180.0
-M04   A2W   A2W   M06      5.0    1     0.0
-PHO   RS1   RS2   P1H      1.0    1  -150.0
-RS1   RS2   P1H   A2W      1.0    1  -165.0
-RS2   P1H   A2W   M04      5.0    1   180.0
-M04   A2W   A2W   P1H      5.0    1     0.0
-PHO   PHO   A2V   P1T      0.1    1     0.0
-PHO   A2V   P1T   M03      2.0    1   123.5
 A2V   P1T   M03   M03      2.0    1   -58.0
-P1T   M03   M03   P1C      1.0    3     0.0
+C3E   M07   A2V   M02      0.1    1    68.0
+C3E   M07   A2V   M06      0.1    1    54.5
+M01   M05   RS2   RS1      0.1    1    15.0
+M01   PHO   PHO   RS1      1.5    1   176.0
+M01   PHO   RS1   M05      0.1    1     0.0
+M01   PHO   RS1   RS2      0.1    1   130.0
+M01   RS1   M05   RS2      0.1    1    45.0
+M01   RS1   RS2   RA1      0.1    1   130.0
+M01   RS1   RS2   RC1      0.1    1   130.0
+M01   RS1   RS2   RG1      0.1    1   130.0
+M01   RS1   RS2   RU1      0.1    1   130.0
+M02   A2V   QdK   M02      0.0    1     0.0
+M02   C3E   C3E   M02      0.0    1     0.0
+M02   C3E   QdK   M02      0.0    1   180.0
+M02   M06   M03   M03      0.1    1  -142.0
+M02   M06   M03   P1C      0.2    1   -22.0
+M02   P1S   C3E   M02      0.1    1    55.0
+M02   P1T   C3E   M02      0.5    1   157.0
+M02   QdK   A2V   QdK      0.0    1     0.0
+M02   QdK   M06   RS1      0.2    1   -50.0
+M02   QdK   P1C   QdK      0.1    1    15.0
+M04   A2W   A2W   M06      5.0    1     0.0
+M04   A2W   A2W   P1H      5.0    1     0.0
+M05   RS2   RA1   RA2      4.0    1   103.0
+PHO   A2V   P1T   M03      2.0    1   123.5
+PHO   PHO   A2V   P1T      0.1    1     0.0
 PHO   PHO   P1T   P1S      0.1    1    15.0
+PHO   PHO   RS1   M03      1.0    1   -55.0
+PHO   PHO   RS1   M05      0.5    1    -8.0
+PHO   PHO   RS1   M05      0.2    1   -75.0
+PHO   PHO   RS1   P1S      0.1    1    20.0
+PHO   PHO   RS1   RS2      0.8    1   -61.0
 PHO   P1T   P1S   P1T      0.1    1    15.0
-P1T   P1S   P1T   P1H      0.2    1    15.0
+PHO   RS1   M05   RS2     23.0    1    92.0
+PHO   RS1   RS2   M06      1.0    1  -150.0
+PHO   RS1   RS2   P1H      1.0    1  -150.0
+PHO   RS1   RS2   RA1     11.0    1   132.0 
+P1C   RS1   M05   RS2      0.1    1    45.0
+P1C   RS1   RS2   RA1      0.1    1   130.0
+P1S   A2V   P1S   M03      0.5    1    30.0
+A2V   P1S   M03   QaD      0.5    1    -5.0
 P1S   P1T   P1H   A1W      0.2    1    45.0
 P1S   P1T   P1H   RG3      0.2    1  -135.0
-M02   QdK   M06   RS1      0.2    1   -50.0
-QdK   M06   RS1   RS2      0.2    1    80.0
-M01   RS1   RS2   RG1      0.1    1   130.0
-M01   RS1   RS2   RC1      0.1    1   130.0
+P1S   P1T   RP    C3E      0.2    2  -177.0
+P1S   RS1   M05   RS2      0.1    1    45.0
+P1S   RS1   RS2   RA1      0.1    1   130.0
 P1S   RS1   RS2   RC1      0.1    1   130.0
-M01   RS1   RS2   RU1      0.1    1   130.0
-PHO   PHO   RS1   M03      1.0    1   -55.0
-PHO   PHO   RS1   M05      0.2    1   -75.0
-
+P1T   M03   M03   P1C      1.0    3     0.0
+P1T   P1S   P1T   P1H      0.2    1    15.0
+P1T   RP    C3E   M06      0.2    2  -177.0
+QdK   A2V   QdK   C3E      0.0    1     0.0
+QdK   A2V   QdK   M02      0.0    1   180.0
+QdK   M06   RS1   RS2      0.2    1    80.0
+RS1   RS2   M06   A2W      1.0    1  -165.0
+RS1   RS2   P1H   A2W      1.0    1  -165.0
+RS2   M06   A2W   M04      5.0    1   180.0
+RS2   P1H   A2W   M04      5.0    1   180.0
 
 IMPHI
 !
@@ -283,12 +281,12 @@ IMPHI
 !
 !atom types               Kpsi        psi0
 A2W   A2W   P1H   M04     25.0    0    0.0
+M06   RS2   A2W   A2W     15.0    0    0.0
+P1H   RS2   A2W   A2W     15.0    0    0.0
 P1T   M02   C3E   M02      5.0    0    0.0
 RS1   M01   M05   M05      5.0    0    0.0
 RS2   RS1   M05   M06     15.0    0   15.0
-M06   RS2   A2W   A2W     15.0    0    0.0
 RS2   RS1   M05   P1H     15.0    0   15.0
-P1H   RS2   A2W   A2W     15.0    0    0.0
 
 
 NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
