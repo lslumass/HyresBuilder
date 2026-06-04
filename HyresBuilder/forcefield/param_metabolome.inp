@@ -291,6 +291,7 @@ M04      0.00     -0.0720      2.0591   0.00     -0.0720      2.0591 !
 M05      0.00     -0.0150      2.3268   0.00     -0.0150      2.3268 !
 M06      0.00     -0.0150      2.5008   0.00     -0.0150      2.5008 !
 M07      0.00     -0.0900      2.3689   0.00     -0.0900      2.3689 !
+SMG      0.00     -0.0200      2.0000   0.00     -0.0200      2.0000 !!
 
 NBFIX
 !                 Emin         Rmin
@@ -302,6 +303,11 @@ M04    M04       -0.0720      4.1182           !necessary, do not delete
 M05    M05       -0.0150      4.6536           !necessary, do not delete
 M06    M06       -0.0150      5.0016           !necessary, do not delete
 M07    M07       -0.0900      4.7378           !necessary, do not delete
+
+! small Mg2+ and phosphate groups
+SMG    SMG       -0.0200      4.0000           !necessary, do not delete
+SMG    M01       -0.5000      3.1000           ! ATP-Mg
+SMG    PHO       -0.5000      3.1000           !
 
 
 END

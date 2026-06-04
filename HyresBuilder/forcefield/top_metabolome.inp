@@ -2,6 +2,7 @@
 *
    20    1              
 ! bead types
+MASS   500 SMG  90.00   ! partially hydrated Mg2+
 MASS   501 M01  70.00   ! -PO4(-2)-, use RS1 of RNA backbone
 MASS   502 M02  40.00   ! -C(=O)O-, use QaD of Asp, carboxylic acid group
 MASS   503 M03  50.00   ! -C(=O)-NH-C, use M04 of Asn
@@ -19,6 +20,11 @@ DECL +C3
 
 AUTOGENERATE
 DEFA FIRS NTER LAST CTER
+
+
+RESI SMG          2.00  !
+GROUP                   !
+ATOM MG   SMG     2.00  !
 
 RESI 1MNA         0.00
 GROUP                 
