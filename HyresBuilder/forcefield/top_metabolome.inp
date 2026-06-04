@@ -424,7 +424,7 @@ DIHE NA   NB   ND   NC       -M1   C1   C2   NA        C1   C2   NA   NB
 DIHE NA   NB   NC   ND       -M1   C1   C3   C2
 IMPR NA   C2   NB   ND
 
-RESI AMP          0.00     # Phosphated AMP as the part of NADP, NADPH, etc.
+RESI APP          0.00     # Phosphated APP as the part of NADP, NADPH, etc.
 GROUP                             
 ATOM C1   RS1     0.00                
 ATOM C2   RS2     0.00 
