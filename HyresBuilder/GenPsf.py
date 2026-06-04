@@ -59,7 +59,7 @@ def split_chains(pdb):
                    "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
     rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
     dnas = ["DAD", "DGU", "DCY", "DTH", "DA", "DG", "DC", "DT"]
-    mg, cal = ["MG+"], ["CA+"]
+    mg, cal = ["MG+", "SMG"], ["CA+"]
     phos = ['PHO']
     AGs = ['KAN']
     Mats = ['UN1','AYA','ACA','NLG','C3C','C4C','C5C','Y52','CHT','CIT','CTT','ABU','CH5',
@@ -284,7 +284,7 @@ def custom_genpsf(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix'):
            "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
     rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
     dnas = ["DAD", "DGU", "DCY", "DTH", "DA", "DG", "DC", "DT"]
-    mg, cal = ["MG+"], ["CA+"]
+    mg, cal = ["MG+", "SMG"], ["CA+"]
     phos = ['PHO']
     AGs = ['KAN']
     Mats = ['UN1','AYA','ACA','NLG','C3C','C4C','C5C','Y52','CHT','CIT','CTT','ABU','CH5',
