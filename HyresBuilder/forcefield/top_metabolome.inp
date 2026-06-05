@@ -495,9 +495,9 @@ IMPR NA   C2   NB   ND
 
 RESI ATP         -4.00  
 GROUP                             
-ATOM M3   M01    -2.00
-ATOM M2   PHO    -1.00
-ATOM M1   PHO    -1.00
+ATOM P3   M01    -2.00
+ATOM P2   PHO    -1.00
+ATOM P1   PHO    -1.00
 ATOM C1   RS1     0.00
 ATOM C2   RS2     0.00
 ATOM NA   RA1     0.00
@@ -505,18 +505,18 @@ ATOM NB   RA2     0.00
 ATOM NC   RA3     0.00
 ATOM ND   RA4     0.00
 ATOM C3   M05     0.00
-BOND M3   M2        M2   M1
-BOND M1   C1        C1   C3        C2   C3
+BOND P3   P2        P2   P1
+BOND P1   C1        C1   C3        C2   C3
 BOND C1   C2        C2   NA
 BOND NA   NB        NA   ND        NB   NC        NC   ND
-ANGL M3   M2   M1        M2   M1   C1        M1   C1   C2        M1   C1   C3        
+ANGL P3   P2   P1        P2   P1   C1        P1   C1   C2        P1   C1   C3        
 ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
 ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
-ANGL M1   C1   C3        NA   C2   C3
-DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
-DIHE NA   NB   NC   ND        M2   M1   C1   C2        M2   M1   C1   C3
-DIHE M3   M2   M1   C1        M1   C1   C3   C2
-IMPR NA   C2   NB   ND        C1   M1   C2   C3
+ANGL P1   C1   C3        NA   C2   C3
+DIHE NA   NB   ND   NC        P1   C1   C2   NA        C1   C2   NA   NB
+DIHE NA   NB   NC   ND        P2   P1   C1   C2        P2   P1   C1   C3
+DIHE P3   P2   P1   C1        P1   C1   C3   C2
+IMPR NA   C2   NB   ND        C1   P1   C2   C3
 
 RESI ATPH        -3.00  
 GROUP                             
