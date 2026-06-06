@@ -1203,7 +1203,7 @@ def buildMgSystem(psf, system, ffs, modification=None):
         if atoms[idx] == 'P':
             la, lb = 0, 1
         elif atoms[idx] in {'P1', 'P2', 'P3'}:
-            la, lb = 2, 1
+            la, lb = 0, 1
         elif atoms[idx] in {'MG', 'CAL'}:
             la, lb = 0, -1
         else:
