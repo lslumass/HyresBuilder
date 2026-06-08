@@ -213,7 +213,6 @@ PHO   PHO   A2V   P1T      0.1    1     0.0
 PHO   PHO   P1T   P1S      0.1    1    15.0
 PHO   PHO   RS1   M03      1.0    1   -55.0
 PHO   PHO   RS1   M05      0.5    1    -8.0
-PHO   PHO   RS1   M05      0.2    1   -75.0
 PHO   PHO   RS1   P1S      0.1    1    20.0
 PHO   PHO   RS1   RS2      0.8    1   -61.0
 PHO   P1T   P1S   P1T      0.1    1    15.0
