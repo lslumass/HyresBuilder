@@ -83,11 +83,11 @@ sim.reporters.append(PDBReporter(f'{out}.pdb', pdb_freq))
 #sim.reporters.append(XTCReporter(f'{out}.xtc', traj_freq))      # xtc traj
 sim.reporters.append(DCDReporter(f'{out}.dcd', traj_freq))      # dcd traj
 sim.reporters.append(StateDataReporter(f'{out}.log', log_freq, progress=True, totalSteps=prod_step, step=True, temperature=True, totalEnergy=True, speed=True))
-sim.reporters.append(CheckpointReporter(f'{out}.chk', chk_freq))
+sim.reporters.append(CheckpointReporter(f'{out}_chk.xml', chk_freq, writeState=True))   # save state as checkpoint file
 
 print('\n# Production simulation running:')
 sim.integrator.setStepSize(dt_prod)
 sim.step(prod_step)
 
-sim.saveCheckpoint(f'{out}.chk')
+sim.saveState(f'{out}_chk.xml')
 print('\n# Finished!')

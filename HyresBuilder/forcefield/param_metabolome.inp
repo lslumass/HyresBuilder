@@ -293,8 +293,8 @@ M07    M07       -0.0900      4.7378           !necessary, do not delete
 
 ! small Mg2+ and phosphate groups
 SMG    SMG       -0.0200      4.0000           !necessary, do not delete
-SMG    M01       -1.5000      3.1000           ! ATP-Mg
-SMG    PHO       -1.5000      3.1000           !
+SMG    M01       -0.5000      3.1000           ! ATP-Mg
+SMG    PHO       -0.5000      3.1000           !
 
 
 END
