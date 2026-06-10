@@ -202,8 +202,8 @@ def buildSystem(psf, system, ffs, modification=None):
         ang = hmangle.getAngleParameters(angle_idx)
         bead1, bead2, bead3 = ang[0], ang[1], ang[2]
         backbons = ['N', 'H', 'C', 'O']
-        if bead1 in backbons or bead2 in backbons or bead3 in backbons:
-            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])
+        if bead1 not in backbons and bead2 not in backbons and bead3 not in backbons:
+            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
         else:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
     system.addForce(ReB)
@@ -860,8 +860,8 @@ def rG4sSystem(psf, system, ffs, modification=None):
         ang = hmangle.getAngleParameters(angle_idx)
         bead1, bead2, bead3 = ang[0], ang[1], ang[2]
         backbons = ['N', 'H', 'C', 'O']
-        if bead1 in backbons or bead2 in backbons or bead3 in backbons:
-            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])
+        if bead1 not in backbons and bead2 not in backbons and bead3 not in backbons:
+            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
         else:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
     system.addForce(ReB)
@@ -1162,8 +1162,8 @@ def buildMgSystem(psf, system, ffs, modification=None):
         ang = hmangle.getAngleParameters(angle_idx)
         bead1, bead2, bead3 = ang[0], ang[1], ang[2]
         backbons = ['N', 'H', 'C', 'O']
-        if bead1 in backbons or bead2 in backbons or bead3 in backbons:
-            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])
+        if bead1 not in backbons and bead2 not in backbons and bead3 not in backbons:
+            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
         else:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
     system.addForce(ReB)
