@@ -202,7 +202,7 @@ def buildSystem(psf, system, ffs, modification=None):
         ang = hmangle.getAngleParameters(angle_idx)
         bead1, bead2, bead3 = ang[0], ang[1], ang[2]
         backbons = ['N', 'H', 'C', 'O']
-        if bead1 in backbons and bead2 in backbons and bead3 in backbons:
+        if bead1 in backbons or bead2 in backbons or bead3 in backbons:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])
         else:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
@@ -858,16 +858,12 @@ def rG4sSystem(psf, system, ffs, modification=None):
     ReB.addPerAngleParameter("kReB")
     for angle_idx in range(hmangle.getNumAngles()):
         ang = hmangle.getAngleParameters(angle_idx)
-        if atoms[ang[0]] in ['P', 'C1', 'C2', 'NA', 'NB', 'NC', 'ND']:
-            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], 2*ang[4], 2])
-        elif atoms[ang[0]] == 'CA' and atoms[ang[1]] == 'CB':
-            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
-        elif atoms[ang[0]].startswith('K'):
-            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
-        elif atoms[ang[0]].startswith('M'):
-            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
-        else:
+        bead1, bead2, bead3 = ang[0], ang[1], ang[2]
+        backbons = ['N', 'H', 'C', 'O']
+        if bead1 in backbons or bead2 in backbons or bead3 in backbons:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])
+        else:
+            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
     system.addForce(ReB)
 
     # 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce
@@ -1164,16 +1160,12 @@ def buildMgSystem(psf, system, ffs, modification=None):
     ReB.addPerAngleParameter("kReB")
     for angle_idx in range(hmangle.getNumAngles()):
         ang = hmangle.getAngleParameters(angle_idx)
-        if atoms[ang[0]] in ['P', 'C1', 'C2', 'NA', 'NB', 'NC', 'ND']:
-            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], 2*ang[4], 2])
-        elif atoms[ang[0]] == 'CA' and atoms[ang[1]] == 'CB':
-            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
-        elif atoms[ang[0]].startswith('K'):
-            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
-        elif atoms[ang[0]].startswith('M'):
-            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
-        else:
+        bead1, bead2, bead3 = ang[0], ang[1], ang[2]
+        backbons = ['N', 'H', 'C', 'O']
+        if bead1 in backbons or bead2 in backbons or bead3 in backbons:
             ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 0])
+        else:
+            ReB.addAngle(ang[0], ang[1], ang[2], [ang[3], ang[4], 2])
     system.addForce(ReB)
 
     # 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce

@@ -8,12 +8,13 @@ MASS   502 M02  40.00   ! -C(=O)O-, use QaD of Asp, carboxylic acid group
 MASS   503 M03  50.00   ! -C(=O)-NH-C, use M04 of Asn
 MASS   504 M04  50.00   ! -C(=O)-NH2, use M04 of Asn
 MASS   505 M05  50.00   ! OH-C-C-OH, part of the sugar ring
-MASS   506 M06  50.00   ! -N(+)-(C3)
+MASS   506 M06  50.00   ! -N(+)-(C3), -S(+)-(C3)
 MASS   507 M07  50.00   ! -C(=O)-O-C-, Ester group
 MASS   508 M08  59.00   ! -NH-C(=O)-NH2, use M04 (Asn)
 
 MASS   550 MCI 150.00   ! C-C-I, Iodine-containing group, used for halogenated compounds, unquantified
 MASS   551 MSO  80.00   ! -SO4- OR -SO3-, -1 charge
+MASS   552 MSS  60.00   ! -S-S-, disulfide bond
 
 DECL -M1
 DECL -M2
