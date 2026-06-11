@@ -72,7 +72,7 @@ Shanlong Li, Xiping Gong, Yumeng Zhang, Xiaorong Liu, and Jianhan Chen
 Dates
 -----
 Created  : Mar 09, 2024
-Modified : Sep 29, 2025
+Modified : Jun 11, 2026
  
 Dependencies
 ------------
@@ -87,7 +87,7 @@ import numpy as np
 
 
 # for HyRes_iConRNA System
-def buildSystem(psf, system, ffs, modification=None):
+def buildSystem(psf, system, DH_params, modification=None):
     """
     Build the HyRes protein and/or iConRNA force field into an OpenMM system.
 
@@ -117,7 +117,7 @@ def buildSystem(psf, system, ffs, modification=None):
                              information.
         system (System): OpenMM ``System`` object created from the PSF topology,
                          to which forces will be added.
-        ffs (dict): Force field parameter dictionary. Required keys:
+        DH_params (dict): Debye-Hückel parameter dictionary. Required keys:
 
                     - ``'dh'`` (Quantity) — Debye-Hückel screening length in
                       length units (e.g. ``1.2*unit.nanometer``).
@@ -139,7 +139,7 @@ def buildSystem(psf, system, ffs, modification=None):
 
     Raises:
         ValueError: If any of the required keys (``'dh'``, ``'lmd'``, ``'er'``)
-                    are missing from ``ffs``.
+                    are missing from ``DH_params``.
 
     Example:
         >>> from openmm.app import CharmmPsfFile
@@ -147,13 +147,13 @@ def buildSystem(psf, system, ffs, modification=None):
         >>> from HyresBuilder import HyresFF
         >>> psf = CharmmPsfFile("conf.psf")
         >>> system = psf.createSystem(...)
-        >>> ffs = {'dh': 1.2*unit.nanometer, 'lmd': 0.0, 'er': 80.0}
-        >>> system = HyresFF.buildSystem(psf, system, ffs)
+        >>> DH_params = {'dh': 1.2*unit.nanometer, 'lmd': 0.0, 'er': 80.0}
+        >>> system = HyresFF.buildSystem(psf, system, DH_params)
 
         >>> # With custom modification
         >>> def my_mod(system):
         ...     pass  # add extra forces here
-        >>> system = HyresFF.buildSystem(psf, system, ffs, modification=my_mod)
+        >>> system = HyresFF.buildSystem(psf, system, DH_params, modification=my_mod)
     """
     
     print('\n################# constructe HyRes and/or iConRNA force field ####################')
@@ -161,7 +161,7 @@ def buildSystem(psf, system, ffs, modification=None):
     
     # 1. Validate force field parameters
     required_params = ['dh', 'lmd', 'er']
-    missing_params = [param for param in required_params if param not in ffs]
+    missing_params = [param for param in required_params if param not in DH_params]
     if missing_params:
         raise ValueError(f"Missing required force field parameters: {', '.join(missing_params)}")
     
@@ -209,9 +209,9 @@ def buildSystem(psf, system, ffs, modification=None):
     system.addForce(ReB)
 
     # 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce
-    dh = ffs['dh']
-    er = ffs['er']
-    lmd = ffs['lmd']
+    dh = DH_params['dh']
+    er = DH_params['er']
+    lmd = DH_params['lmd']
     # add custom nonbondedforce: CNBForce, here only charge-charge interactions
     formula = f"""138.935456/{er}*charge1*charge2/r*exp(-r/dh)*kpmg;
                   dh={dh.value_in_unit(unit.nanometer)}; kpmg=select(lb1+lb2, 1, {lmd});
@@ -452,7 +452,7 @@ def buildSystem(psf, system, ffs, modification=None):
 
 
 # original iConRNA model (PNAS, 2025)
-def iConRNASystem(psf, system, ffs, modification=None):
+def iConRNASystem(psf, system, DH_params, modification=None):
     """
     Build the original iConRNA coarse-grained RNA force field (PNAS 2025).
  
@@ -473,8 +473,8 @@ def iConRNASystem(psf, system, ffs, modification=None):
         residue name, residue index).
     system : openmm.System
         OpenMM ``System`` created from the PSF topology.  Modified in place.
-    ffs : dict
-        Force-field parameter dictionary.  Required keys:
+    DH_params : dict
+        Debye-Hückel parameter dictionary.  Required keys:
  
         ``'dh'`` : openmm.unit.Quantity
             Debye–Hückel screening length (e.g. ``1.2 * unit.nanometer``).
@@ -522,13 +522,13 @@ def iConRNASystem(psf, system, ffs, modification=None):
     >>> psf    = CharmmPsfFile("rna.psf")
     >>> params = CharmmParameterSet("rna.prm")
     >>> system = psf.createSystem(params)
-    >>> ffs    = {
+    >>> DH_params    = {
     ...     'dh'       : 1.2 * unit.nanometer,
     ...     'lmd'      : 1.0,
     ...     'er'       : 20.0,
     ...     'eps_base' : 3.0 * unit.kilocalorie_per_mole,
     ... }
-    >>> system = HyresFF.iConRNASystem(psf, system, ffs)
+    >>> system = HyresFF.iConRNASystem(psf, system, DH_params)
     """
     top = psf.topology
     # 2) constructe the force field
@@ -565,9 +565,9 @@ def iConRNASystem(psf, system, ffs, modification=None):
     system.addForce(ReB)
     
     print('\n# add custom nonbondedforce')
-    dh = ffs['dh']
-    lmd = ffs['lmd']
-    er = ffs['er']
+    dh = DH_params['dh']
+    lmd = DH_params['lmd']
+    er = DH_params['er']
     # add custom nonbondedforce: CNBForce, here only charge-charge interactions
     formula = f"""138.935456/er*charge1*charge2/r*exp(-r/dh)*kpmg;
                 dh={dh.value_in_unit(unit.nanometer)}; er={er}; kpmg=select(lb1+lb2,1,lmd); lmd={lmd}
@@ -736,7 +736,7 @@ def iConRNASystem(psf, system, ffs, modification=None):
 
 
 ###### for rG4s System with A-U/G-C/G-G pairs ######
-def rG4sSystem(psf, system, ffs, modification=None):
+def rG4sSystem(psf, system, DH_params, modification=None):
     """
     Build the rG4 force field for RNA G-quadruplex (rG4) simulations.
  
@@ -753,8 +753,8 @@ def rG4sSystem(psf, system, ffs, modification=None):
         Parsed PSF object providing topology, atom names, and residue indices.
     system : openmm.System
         OpenMM ``System`` created from the PSF topology.  Modified in place.
-    ffs : dict
-        Force-field parameter dictionary.  Required keys:
+    DH_params : dict
+        Debye-Hückel parameter dictionary.  Required keys:
  
         ``'dh'`` : openmm.unit.Quantity
             Debye–Hückel screening length (e.g. ``1.2 * unit.nanometer``).
@@ -800,7 +800,7 @@ def rG4sSystem(psf, system, ffs, modification=None):
     Raises
     ------
     KeyError
-        If any required key is absent from *ffs* (``'dh'``, ``'lmd'``, ``'er'``,
+        If any required key is absent from *DH_params* (``'dh'``, ``'lmd'``, ``'er'``,
         ``'ion_type'``).
  
     Examples
@@ -811,13 +811,13 @@ def rG4sSystem(psf, system, ffs, modification=None):
     >>> psf    = CharmmPsfFile("rg4.psf")
     >>> params = CharmmParameterSet("rg4.prm")
     >>> system = psf.createSystem(params)
-    >>> ffs    = {
+    >>> DH_params    = {
     ...     'dh'      : 1.2  * unit.nanometer,
     ...     'lmd'     : 1.0,
     ...     'er'      : 80.0,
     ...     'ion_type': 5.0  * unit.kilocalorie_per_mole,   # K+ ion strength
     ... }
-    >>> system = HyresFF.rG4sSystem(psf, system, ffs)
+    >>> system = HyresFF.rG4sSystem(psf, system, DH_params)
     """
 
     top = psf.topology
@@ -867,9 +867,9 @@ def rG4sSystem(psf, system, ffs, modification=None):
     system.addForce(ReB)
 
     # 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce
-    dh = ffs['dh']
-    er = ffs['er']
-    lmd = ffs['lmd']
+    dh = DH_params['dh']
+    er = DH_params['er']
+    lmd = DH_params['lmd']
     # add custom nonbondedforce: CNBForce, here only charge-charge interactions
     formula = f"""138.935456/ker*charge1*charge2/r*exp(-r/dh)*kpmg; dh={dh.value_in_unit(unit.nanometer)};
                   ker=select(la1+la2, {er}, 20.0); kpmg=select(lb1+lb2, 1, {lmd});
@@ -1049,7 +1049,7 @@ def rG4sSystem(psf, system, ffs, modification=None):
 
 
     # add G-G pair through CustomHbondForce
-    eps_GG = ffs['GG']*unit.kilocalorie_per_mole
+    eps_GG = DH_params['GG']*unit.kilocalorie_per_mole
     r_gg1 = 0.40*unit.nanometer     # for NB-ND
     r_gg2 = 0.42*unit.nanometer     # for NC-NC
     
@@ -1111,7 +1111,7 @@ def rG4sSystem(psf, system, ffs, modification=None):
 
 
 # for HyRes_iConRNA System with Mg-RNA interactions
-def buildMgSystem(psf, system, ffs, modification=None):
+def buildMgSystem(psf, system, DH_params, modification=None):
     """
     similar to buildSystem, but specifically for Mg/Ca-RNA interactions.
     """
@@ -1121,7 +1121,7 @@ def buildMgSystem(psf, system, ffs, modification=None):
     
     # 1. Validate force field parameters
     required_params = ['dh', 'lmd', 'er']
-    missing_params = [param for param in required_params if param not in ffs]
+    missing_params = [param for param in required_params if param not in DH_params]
     if missing_params:
         raise ValueError(f"Missing required force field parameters: {', '.join(missing_params)}")
     
@@ -1169,9 +1169,9 @@ def buildMgSystem(psf, system, ffs, modification=None):
     system.addForce(ReB)
 
     # 4. Add Debye-Hückel electrostatic interactions using CustomNonbondedForce
-    dh = ffs['dh']
-    er = ffs['er']
-    lmd = ffs['lmd']
+    dh = DH_params['dh']
+    er = DH_params['er']
+    lmd = DH_params['lmd']
     # add custom nonbondedforce: CNBForce, here only charge-charge interactions
     formula = f"""138.935456/ker*charge1*charge2/r*exp(-r/dh)*kpmg; dh={dh.value_in_unit(unit.nanometer)};
                   ker=select(la1+la2, {er}, 20.0); kpmg=select(lb1+lb2, 1, {lmd});

@@ -314,11 +314,9 @@ def setup(params, modification=None):
     print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
     print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
 
-    ffs = {
-        'temp': T,                                                  # Temperature
-        'lmd': lmd,                                                  # Charge scaling factor of P-
+    DH_params = {
+        'lmd': lmd,                                                # Charge scaling factor of P-Mg interaction
         'dh': dh,                                                  # Debye Huckel screening length
-        'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
         'er': er,                                                  # relative dielectric constant
     }
 
@@ -354,7 +352,7 @@ def setup(params, modification=None):
     print(f"switch distance: {d_switch}")
 
     # 6. construct force field
-    system = buildSystem(psf, system, ffs, modification=modification)
+    system = buildSystem(psf, system, DH_params, modification=modification)
     print("buildSystem for HyRes_iConRNA")
 
     # 7. set simulation
@@ -444,7 +442,7 @@ def setup2(args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picose
     # Mg-P interaction
     lmd = args.Mg
     print(f'er: {er}, dh: {dh}, lmd: {lmd}')
-    ffs = {
+    DH_params = {
         'temp': T,                                                  # Temperature
         'lmd': lmd,                                                  # Charge scaling factor of P-
         'dh': dh,                                                  # Debye Huckel screening length
@@ -477,7 +475,7 @@ def setup2(args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picose
 
     # 6. construct force field
     print('\n################## build system ###################')
-    system = buildSystem(psf, system, ffs)
+    system = buildSystem(psf, system, DH_params)
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
@@ -557,11 +555,9 @@ def rG4s_setup(params, GG=3.0, modification=None):
     print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
     print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
 
-    ffs = {
-        'temp': T,                                                  # Temperature
-        'lmd': lmd,                                                  # Charge scaling factor of P-
+    DH_params = {
+        'lmd': lmd,                                                  # Charge scaling factor of P-Mg
         'dh': dh,                                                  # Debye Huckel screening length
-        'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
         'er': er,                                                  # relative dielectric constant
         'GG': GG,                                                   # G-G pair interaction strength in unit.kilocalorie_per_mole
     }
@@ -597,7 +593,7 @@ def rG4s_setup(params, GG=3.0, modification=None):
     print(f"switch distance: {d_switch}")
 
     # 6. construct force field
-    system = rG4sSystem(psf, system, ffs, modification=modification)
+    system = rG4sSystem(psf, system, DH_params, modification=modification)
     print("buildSystem for HyRes_iConRNA")
 
     # 7. set simulation
@@ -739,12 +735,10 @@ def iConRNA_setup(params, modification=None):
     print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
     print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
 
-    # force field parameters
-    ffs = {
-        'temp': T,                                                   # Temperature
+    # Debye-Hückel parameters
+    DH_params = {
         'lmd': lmd,                                                  # Charge scaling factor of P-
         'dh': dh,                                                    # Debye Huckel screening length
-        'ke': 138.935456,                                            # Coulomb constant, ONE_4PI_EPS0
         'er': er,                                                    # relative dielectric constant
     }
 
@@ -781,7 +775,7 @@ def iConRNA_setup(params, modification=None):
     print(f"switch distance: {d_switch}")
 
     # 6. construct force field
-    system = iConRNASystem(psf, system, ffs, modification=modification)
+    system = iConRNASystem(psf, system, DH_params, modification=modification)
     print("iConRNASystem for iConRNA model")
 
     # 7. set simulation
@@ -862,11 +856,9 @@ def setupMg(params, modification=None):
     print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
     print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
 
-    ffs = {
-        'temp': T,                                                  # Temperature
-        'lmd': lmd,                                                  # Charge scaling factor of P-
+    DH_params = {
+        'lmd': lmd,                                                  # Charge scaling factor of P-Mg
         'dh': dh,                                                  # Debye Huckel screening length
-        'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
         'er': er,                                                  # relative dielectric constant
     }
 
@@ -902,7 +894,7 @@ def setupMg(params, modification=None):
     print(f"switch distance: {d_switch}")
 
     # 6. construct force field
-    system = buildMgSystem(psf, system, ffs, modification=modification)
+    system = buildMgSystem(psf, system, DH_params, modification=modification)
     print("buildMgSystem for HyRes_iConRNA-Mg")
 
     # 7. set simulation
