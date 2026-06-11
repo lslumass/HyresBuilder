@@ -370,7 +370,7 @@ def setup(params, modification=None):
         print("Error: The ensemble must be NPT, NVT or non. The input value is {}.".format(ensemble))
         exit(1)
 
-    integrator = LangevinMiddleIntegrator(temperature, friction, dt)
+    integrator = LangevinIntegrator(temperature, friction, dt)
     plat = Platform.getPlatformByName('CUDA')
     prop = {'Precision': 'mixed', 'DeviceIndex': gpu_id}
     sim = Simulation(top, system, integrator, plat, prop)

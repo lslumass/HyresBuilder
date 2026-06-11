@@ -67,7 +67,7 @@ module directly.
  
 Authors
 -------
-Shanlong Li, Xiping Gong, Yumeng Zhang
+Shanlong Li, Xiping Gong, Yumeng Zhang, Xiaorong Liu, and Jianhan Chen
  
 Dates
 -----
