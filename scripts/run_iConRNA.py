@@ -1,7 +1,6 @@
 """
-Date: Sep 29, 2025
-Modified: Feb 26, 2026
-Latest running script for HyRes and iConRNA simulation
+Date: Apr 16, 2026
+Latest running script for iConRNA simulation (PNAS, 2025)
 Author: Shanlong Li
 email: shanlongli@umass.edu
 """
@@ -29,7 +28,7 @@ params = parser.parse_args()
 out = params.out
 
 # simulation parameters
-dt_equil = 0.001*unit.picoseconds		                      # time step for equilibration, for bad configuration, use 0.0001 ps
+dt_equil = 0.0001*unit.picoseconds		                      # time step for equilibration, for bad configuration, use 0.0001 ps
 dt_prod = 0.008*unit.picoseconds                                # time step for production simulation
 prod_step = 250000000                                           # production steps
 equil_step = 10000                                              # equilibration steps
@@ -41,20 +40,20 @@ chk_freq = 125000                                               # frequency of c
 params.dt = dt_equil
 params.pressure = 1*unit.atmosphere                             # pressure in NPT
 params.friction = 0.1/unit.picosecond                           # friction coefficient in Langevin
-params.er_ref = 60.0                                            # dielectric constant
+params.er_ref = 20.0                                            # dielectric constant
 params.gpu_id = "0"                                             # gpu_id used for simulation
 
 ### set up system and simulation
 """
-utils.setup(params, modification)
-modification: custom function object
+utils.iConRNA_setup(params, RNA='rU', modification)
+RNA is the type of RNA to determine the RNA-P interactions, polyU is default. options: rA, rU, CAG, or a tuple for custom RNA-P interactions
 if further modify the OpenMM system, define all the changes as one function
 example:
     def mod(system):
         system.addForce(customforce)
     util.setup(params, modification=mod)
-"""        
-system, sim = utils.setup(params)
+"""
+system, sim = utils.iConRNA_setup(params)
 
 """
 if further modify the system, add this line below:
@@ -83,11 +82,11 @@ sim.reporters.append(PDBReporter(f'{out}.pdb', pdb_freq))
 #sim.reporters.append(XTCReporter(f'{out}.xtc', traj_freq))      # xtc traj
 sim.reporters.append(DCDReporter(f'{out}.dcd', traj_freq))      # dcd traj
 sim.reporters.append(StateDataReporter(f'{out}.log', log_freq, progress=True, totalSteps=prod_step, step=True, temperature=True, totalEnergy=True, speed=True))
-sim.reporters.append(CheckpointReporter(f'{out}_chk.xml', chk_freq, writeState=True))   # save state as checkpoint file
+sim.reporters.append(CheckpointReporter(f'{out}.chk', chk_freq))
 
 print('\n# Production simulation running:')
 sim.integrator.setStepSize(dt_prod)
 sim.step(prod_step)
 
-sim.saveState(f'{out}_chk.xml')
+sim.saveCheckpoint(f'{out}.chk')
 print('\n# Finished!')

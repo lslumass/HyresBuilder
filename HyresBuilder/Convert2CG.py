@@ -350,9 +350,10 @@ def split_chains(pdb):
     """Split PDB file into separate chains and identify their types."""
     aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
            "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
-    rnas = ["ADE", "GUA", "CYT", "URA"]
-    dnas = ["DAD", "DGU", "DCY", "DTH"]
-    counts = {'P': 0, 'R': 0, 'D': 0}
+    rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
+    dnas = ["DAD", "DGU", "DCY", "DTH", "DA", "DG", "DC", "DT"]
+    ags = ["KAN"]
+    counts = {'P': 0, 'R': 0, 'D': 0, 'A': 0}
 
     # HIS names
     HISs = ['HSD', 'HSE', 'HSP', 'HID', 'HIE', 'HIP']
@@ -364,6 +365,8 @@ def split_chains(pdb):
             return 'R'
         elif resname in dnas:
             return 'D'
+        elif resname in ags:
+            return 'A'
         return None
 
     # Variables to track current and previous chain identifiers
@@ -430,8 +433,13 @@ def split_chains(pdb):
                 chain_id = line[21].strip()
                 segid = line[72:76].strip()
                 resname = line[17:20].strip()
+                resname = {"A": "ADE", "G": "GUA", "C": "CYT", "U": "URA",
+                           "DA": "DAD", "DG": "DGU", "DC": "DCY", "DT": "DTH"}.get(resname, resname)
                 if resname in HISs:
                     resname = 'HIS'
+                
+                # Write the mapped resname back into the line
+                line = line[:17] + resname.ljust(3) + line[20:]
                 
                 # Select the identifier to use
                 identifier = chain_id if use_chain_id else segid
@@ -851,6 +859,139 @@ def at2icon(pdb_in, pdb_out):
     
     print(f'At2iCon conversion done, output written to {pdb_out}')
 
+def at2AGs(pdb_in, pdb_out):
+    """
+    Convert an all-atom aminoglycosides (AGs) PDB to coarse-grained PDB.
+
+    Each AGs has its specific mapping rules
+
+    Args:
+        pdb_in (str): Path to the input all-atom RNA PDB file.
+        pdb_out (str): Path to the output iConRNA coarse-grained PDB file.
+
+    Returns:
+        None. Writes a CG PDB file to ``pdb_out``.
+
+    Example:
+        >>> from HyresBuilder import Convert2CG
+        >>> Convert2CG.at2AGs("rna_aa.pdb", "rna_cg.pdb")
+    """
+    
+    def encode_serial(n):
+        """Encode integer to hybrid-36 format for PDB serial number field (5 chars)."""
+        if n < 100000:
+            return f"{n:5d}"
+
+        n -= 100000
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+        if n < 26 * (36**4):  # uppercase range
+            result = []
+            for _ in range(4):
+                n, remainder = divmod(n, 36)
+                result.append(chars[remainder])
+            result.append(chr(ord('A') + n))
+            return ''.join(reversed(result))
+
+        n -= 26 * (36**4)  # lowercase range
+        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
+        result = []
+        for _ in range(4):
+            n, remainder = divmod(n, 36)
+            result.append(chars_lower[remainder])
+        result.append(chr(ord('a') + n))
+        return ''.join(reversed(result))
+    
+    # Parse PDB file
+    atoms = []
+    with open(pdb_in, 'r') as f:
+        for line in f:
+            if line.startswith('ATOM'):
+                atoms.append({
+                    'name': line[12:16].strip(),
+                    'resname': line[17:20].strip(),
+                    'chain': line[21],
+                    'resid': int(line[22:26].strip()),
+                    'x': float(line[30:38].strip()),
+                    'y': float(line[38:46].strip()),
+                    'z': float(line[46:54].strip()),
+                    'segid': line[72:76].strip() if len(line) > 72 else ''
+                })
+    
+    # Group by segment and residue
+    segments = {}
+    for atom in atoms:
+        segid = atom['segid']
+        resid = atom['resid']
+        if segid not in segments:
+            segments[segid] = {}
+        if resid not in segments[segid]:
+            segments[segid][resid] = {
+                'resname': atom['resname'], 
+                'chain': atom['chain'], 
+                'atoms': []
+            }
+        segments[segid][resid]['atoms'].append(atom)
+    
+    # Base bead mappings for each nucleotide
+    AGs_mappings = {
+        # kanamycin A
+        'KAN': [
+            ('K1',  ['C8', 'C9', 'C10', 'O10']),
+            ('K2',  ['C11', 'C12', 'N2']),
+            ('K3',  ['C7', 'C12', 'N3']),
+            ('K4',  ['O11', 'C13', 'O12']),
+            ('K5',  ['C14', 'C15', 'N4', 'O13']),
+            ('K6',  ['C16', 'C17', 'O14']),
+            ('K7',  ['C1', 'O5', 'O9']),
+            ('K8',  ['C2', 'C3', 'O6', 'O7']),
+            ('K9',  ['C4', 'C5', 'O8']),
+            ('K10', ['C18', 'O15']),
+            ('K11', ['C6', 'N1'])
+        ],
+        # gentamicin C1a
+        'LLL': [
+            ('K1',  []),
+            ('K2',  []),
+            ('K3',  []),
+            ('K4',  []),
+            ('K5',  []),
+            ('K6',  []),
+            ('K7',  []),
+            ('K8',  []),
+            ('K9',  []),
+            ('K10', []),
+            ('K11', []),
+        ],
+    }
+    
+    atom_serial = 0
+    with open(pdb_out, 'w') as f:
+        for segid in sorted(segments.keys()):
+            for resid in sorted(segments[segid].keys()):
+                res_data = segments[segid][resid]
+                resname = res_data['resname']
+                chain = res_data['chain']
+                res_atoms = res_data['atoms']
+                
+                # Base beads
+                if resname in AGs_mappings:
+                    for bead_name, atom_names in AGs_mappings[resname]:
+                        base_atoms = [a for a in res_atoms if a['name'] in atom_names]
+                        if base_atoms:
+                            coords = np.array([[a['x'], a['y'], a['z']] for a in base_atoms])
+                            center = coords.mean(axis=0)
+                            atom_serial += 1
+                            serial_str = encode_serial(atom_serial)
+                            f.write(f"ATOM  {serial_str}  {bead_name:<4s}{resname:3s} "
+                                   f"{chain}{resid:4d}    "
+                                   f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
+                                   f"  1.00  0.00      {segid:4s}\n")
+        
+        f.write('END\n')
+    
+    print(f'at2AGs conversion done, output written to {pdb_out}')
+
 def fix_pdb_serial(pdb_file, output_file=None):
     """
     Fix PDB files where atom serial numbers exceed 99999 and have been written
@@ -961,11 +1102,13 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
     # Load topology files
     RNA_topology, _ = load_ff('RNA')
     protein_topology, _ = load_ff('Protein')
+    AGs_topology, _ = load_ff('AGs')
     
     # Set up psfgen
     gen = PsfGen()
     gen.read_topology(RNA_topology)
     gen.read_topology(protein_topology)
+    gen.read_topology(AGs_topology)
     
     # Split chains and convert
     types, segids = split_chains(pdb_in)
@@ -980,6 +1123,11 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
             gen.read_coords(segid=segid, filename=tmp_cg_pdb)
         elif mol_type == 'R':
             at2icon(tmp_pdb, tmp_cg_pdb)
+            gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, 
+                          auto_angles=False, auto_dihedrals=False)
+            gen.read_coords(segid=segid, filename=tmp_cg_pdb)
+        elif mol_type == 'A':
+            at2AGs(tmp_pdb, tmp_cg_pdb)
             gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, 
                           auto_angles=False, auto_dihedrals=False)
             gen.read_coords(segid=segid, filename=tmp_cg_pdb)

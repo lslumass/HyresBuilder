@@ -21,3 +21,13 @@ __all__ = [
     '__url__',
 ]
 
+
+try:
+    import psfgen
+except ImportError:
+    raise ImportError(
+        "psfgen is required but not installed. "
+        "Install it via conda:\n\n"
+        "    conda install -c conda-forge psfgen\n"
+    )
+

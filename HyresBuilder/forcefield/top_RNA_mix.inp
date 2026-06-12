@@ -18,8 +18,9 @@ MASS   314 RC1   42.041   ! NCC   base -N-C=C- for C, U
 MASS   315 RU1   42.041   ! NCC   base -N-C=C- for C, U
 MASS   316 RC3   28.010   ! CO    base -C(=O)- for C, U
 MASS   317 RU3   28.010   ! CO    base -C(=O)- for C, U
-MASS   318 MG    24.305   ! fully hydrated Mg2+
-MASS   319 SMG   24.305   ! chelated Mg2+
+MASS   318 MG    90.000   ! fully hydrated Mg2+
+MASS   320 CAL   90.000   ! fully hydrated Ca2+
+MASS   321 PHO   78.970   ! Polyphosphate -P(O2)O-
 
 DECL -C1
 DECL +P
@@ -47,7 +48,7 @@ ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
 ANGL C1   C2   +P
 DIHE NA   NB   ND   NC        P    C1   C2   NA        C1   C2   NA   NB
 DIHE NA   NB   NC   ND        -C1  P    C1   +P        -C1  P    C1   C2
-DIHE C2   NA   NB   NC
+!DIHE C2   NA   NB   NC
 IMPR NA   C2   NB   ND        C1   P    +P   C2
 
 
@@ -70,7 +71,7 @@ ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
 ANGL C1   C2   +P
 DIHE NA   NB   ND   NC        P    C1   C2   NA        C1   C2   NA   NB
 DIHE NA   NB   NC   ND        -C1  P    C1   +P        -C1  P    C1   C2
-DIHE C2   NA   NB   NC
+!DIHE C2   NA   NB   NC
 IMPR NA   C2   NB   ND        C1   P    +P   C2
  
 
@@ -126,17 +127,17 @@ IMPR C1   P    +P   C2
 
 RESI PHO         -1.00  !
 GROUP                   !
-ATOM P    BP     -1.00  !
+ATOM P    PHO    -1.00  !
 BOND P    +P
 
 
-RESI MG+          2.00  !                    
-GROUP                   !                       
-ATOM MG   MG      2.00  !                                                                  
+RESI MG+          2.00  !
+GROUP                   !
+ATOM MG   MG      2.00  !
 
 
-RESI SMG          2.00  !                    
+RESI CA+          2.00  !                    
 GROUP                   !                       
-ATOM MG   SMG     2.00  ! 
+ATOM CA   CAL     2.00  ! 
 
 END

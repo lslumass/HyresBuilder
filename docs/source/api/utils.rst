@@ -2,4 +2,4 @@ utils
 =====
 
 .. automodule:: HyresBuilder.utils
-   :members: load_ff, setup, US_create_windows, US_collect_cv, US_gen_metafile
+   :members: load_ff, setup, rG4s_setup, iConRNA_setup

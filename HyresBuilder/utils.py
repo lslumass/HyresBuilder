@@ -50,6 +50,7 @@ and differ only in which force field they target:
   systems; accepts a rich ``params`` namespace and an optional
   ``modification`` hook for injecting extra forces after the built-in
   terms are added.
+* :func:`iConRNA_setup` — specialised setup for original iConRNA systems
 * :func:`rG4s_setup` — specialised setup for rG4 G-quadruplex systems;
   loads the rG4s parameter file and passes an additional ``ion_type``
   energy parameter to :func:`rG4sFF.rG4sSystem`.
@@ -70,8 +71,7 @@ from openmm.unit import *
 from openmm.app import *
 from openmm import *
 import numpy as np
-from .HyresFF import *
-from .rG4sFF import *
+from .FFs import *
 
 
 def load_ff(model: str) -> tuple[str, str]:
@@ -128,6 +128,12 @@ def load_ff(model: str) -> tuple[str, str]:
     elif model == 'ATP':
         path1 = ff / "top_ATP.inp"
         path2 = ff / "param_ATP.inp"
+    elif model == 'AGs':
+        path1 = ff / "top_AGs.inp"
+        path2 = ff / "param_AGs.inp"
+    elif model == 'Metabolite':
+        path1 = ff / "top_metabolome.inp"
+        path2 = ff / "param_metabolome.inp"
     else:
         print("Error: The model type {} is not supported, only for Protein, RNA, DNA, rG4s, and ATP.".format(model))
         exit(1)
@@ -136,6 +142,22 @@ def load_ff(model: str) -> tuple[str, str]:
 
     return top_inp, param_inp
 
+def estimate_lmd(cNa, cMg, length, Rg, T):
+    # imperical estimation of nMg: doi: 10.1016/j.bpj.2010.06.029
+    # convert nMg to lmd: https://doi.org/10.1073/pnas.2504583122
+    N = length
+    Rg0 = 0.406*N + 130/(N + 11)
+    A = 0.65 + 4.2/N*(Rg/Rg0)**2
+    B = 1.8 - 9.8/N*(Rg/Rg0)**2
+    Na_Mg = 10**B * cMg**A
+    nMg = 0.47*(Na_Mg/(Na_Mg+cNa))
+
+    nMg_T = nMg + 0.0012*(T-273-30)
+    lmd = 1.265*(nMg_T/0.172)**0.625/(1+(nMg_T/0.172)**0.625)           # for er = 20.0
+    #lmd = 1.480*(nMg_T/0.172)**0.625/(1+(nMg_T/0.172)**0.625)           # for er = 60.0
+
+    return lmd
+
 def nMg2lmd(cMg, T, F=0.0, M=0.0, n=0.0, RNA='rA'):
     if RNA == 'rA':
         F, M, n = 0.54, 0.94, 0.59
@@ -143,20 +165,18 @@ def nMg2lmd(cMg, T, F=0.0, M=0.0, n=0.0, RNA='rA'):
         F, M, n = 0.48, 1.31, 0.85
     elif RNA == 'CAG':
         F, M, n = 0.53, 0.68, 0.28
-    elif RNA == 'custom':
+    else:
         if M == 0.0:
             print("Error: Please give F_Mg, M_1/2, and n if the RNA is custom type")
             exit(1)
-    else:
-        print("Error: Only rA, rU, CAG, and custom are supported RNA")
-        exit(1)
     
     if cMg == 0.0:
         lmd = 0.0
     else:
         nMg = F*(cMg/M)**n/(1+(cMg/M)**n)
         nMg_T = nMg + 0.0012*(T-273-30)
-        lmd = 1.265*(nMg_T/0.172)**0.625/(1+(nMg_T/0.172)**0.625)
+        lmd = 1.265*(nMg_T/0.172)**0.625/(1+(nMg_T/0.172)**0.625)           # for er = 20.0
+        #lmd = 1.480*(nMg_T/0.172)**0.625/(1+(nMg_T/0.172)**0.625)           # for er = 60.0
     
     return lmd
 
@@ -202,7 +222,7 @@ def setup(params, modification=None):
                                      - ``psf`` (str) — path to CHARMM PSF file.
                                      - ``temp`` (float) — temperature in Kelvin.
                                      - ``salt`` (float) — NaCl concentration in mM.
-                                     - ``Mg`` (float) — Mg²⁺ concentration in mM.
+                                     - ``lmd`` (float) — lmd for Mg²⁺-RNA interaction.
                                      - ``ens`` (str) — ensemble: ``'NPT'``,
                                        ``'NVT'``, or ``'non'`` (non-periodic).
                                      - ``box`` (list of float) — box dimensions
@@ -236,13 +256,6 @@ def setup(params, modification=None):
                     specified for a non-periodic system, or if an invalid box
                     dimension list is given.
 
-    Notes:
-        The dielectric constant is scaled as ``er = er_t(T) * er_ref / 77.6``,
-        where ``er_t(T)`` is the temperature-dependent pure-water dielectric
-        from :func:`cal_er`. The Mg²⁺-RNA lambda parameter is computed via
-        :func:`nMg2lmd` using the ``'rA'`` RNA type. The CUDA platform is used
-        with mixed precision.
-
     Example:
         >>> from HyresBuilder.utils import setup
         >>> system, sim = setup(params)
@@ -259,7 +272,7 @@ def setup(params, modification=None):
     psf_file = params.psf
     T = params.temp
     c_ion = params.salt/1000.0                                   # concentration of ions in M
-    c_Mg = params.Mg                                           # concentration of Mg in mM
+    lmd = getattr(params, "lmd", 0)                              # lmd for Mg²⁺-RNA interaction, if don't give, it's 0.
     ensemble = params.ens
 
     dt = params.dt
@@ -269,8 +282,8 @@ def setup(params, modification=None):
     gpu_id = params.gpu_id
     
     # 2. set pbc and box vector
-    if ensemble == 'non' and c_Mg != 0.0:
-        print("Error: Mg ion cannot be usde in non-periodic system.")
+    if ensemble == 'non' and lmd != 0.0:
+        print("Error: Mg ion cannot be run in non-periodic system.")
         exit(1)
     if ensemble in ['NPT', 'NVT']:
         # pbc box length
@@ -297,25 +310,23 @@ def setup(params, modification=None):
     er_t = cal_er(T)                                                   # relative electric constant
     er = er_t*er_ref/77.6
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
-    # Mg-P interaction
-    lmd = nMg2lmd(c_Mg, T, RNA='rA')
     print(f"dielectric constant: er = {er:.2f}")
     print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
     print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
-    ffs = {
-        'temp': T,                                                  # Temperature
-        'lmd': lmd,                                                  # Charge scaling factor of P-
+
+    DH_params = {
+        'lmd': lmd,                                                # Charge scaling factor of P-Mg interaction
         'dh': dh,                                                  # Debye Huckel screening length
-        'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
         'er': er,                                                  # relative dielectric constant
     }
 
     # 4. load force field files
     top_pro, param_pro = load_ff('Protein')
     top_RNA, param_RNA = load_ff('RNA')
-    #top_DNA, param_DNA = load_ff('DNA')
-    #top_ATP, param_ATP = load_ff('RNA')
-    params = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro)
+    top_DNA, param_DNA = load_ff('DNA')
+    top_AGs, param_AGs = load_ff('AGs')
+    top_mets, param_mets = load_ff('Metabolite')
+    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
@@ -327,13 +338,13 @@ def setup(params, modification=None):
 
     print('\n################## create system ###################')
     if ensemble == 'non':
-        system = psf.createSystem(params, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,
+        system = psf.createSystem(ffparams, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,
                                   nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
     else:
         psf.setBox(lx, ly, lz)
         top.setPeriodicBoxVectors((a, b, c))
         top.setUnitCellDimensions((lx, ly,lz))
-        system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds,
+        system = psf.createSystem(ffparams, nonbondedMethod=CutoffPeriodic, constraints=HBonds,
                                   nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
         system.setDefaultPeriodicBoxVectors(a, b, c)
     
@@ -341,8 +352,8 @@ def setup(params, modification=None):
     print(f"switch distance: {d_switch}")
 
     # 6. construct force field
-    system = buildSystem(psf, system, ffs, modification=modification)
-    print("HyresFF.buildSystem for custom force field")
+    system = buildSystem(psf, system, DH_params, modification=modification)
+    print("buildSystem for HyRes_iConRNA")
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
@@ -357,7 +368,7 @@ def setup(params, modification=None):
         print("Error: The ensemble must be NPT, NVT or non. The input value is {}.".format(ensemble))
         exit(1)
 
-    integrator = LangevinMiddleIntegrator(temperature, friction, dt)
+    integrator = LangevinIntegrator(temperature, friction, dt)
     plat = Platform.getPlatformByName('CUDA')
     prop = {'Precision': 'mixed', 'DeviceIndex': gpu_id}
     sim = Simulation(top, system, integrator, plat, prop)
@@ -431,7 +442,7 @@ def setup2(args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picose
     # Mg-P interaction
     lmd = args.Mg
     print(f'er: {er}, dh: {dh}, lmd: {lmd}')
-    ffs = {
+    DH_params = {
         'temp': T,                                                  # Temperature
         'lmd': lmd,                                                  # Charge scaling factor of P-
         'dh': dh,                                                  # Debye Huckel screening length
@@ -464,7 +475,7 @@ def setup2(args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picose
 
     # 6. construct force field
     print('\n################## build system ###################')
-    system = buildSystem(psf, system, ffs)
+    system = buildSystem(psf, system, DH_params)
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
@@ -489,50 +500,40 @@ def setup2(args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picose
     return system, sim
 
 
-def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
+def rG4s_setup(params, GG=3.0, modification=None):
     """
     Set up the rG4s simulation system with given parameters.
-    Parameters:
-    -----------
-    args: argparse.Namespace
-        The command line arguments containing simulation parameters.
-    dt: float
-        The time step for the integrator.
-    pressure: unit.Quantity
-        The pressure for the MonteCarloBarostat (default is 1 atm).
-    friction: unit.Quantity
-        The friction coefficient for the Langevin integrator (default is 0.1 / ps).
-    gpu_id: str
-        The GPU device index to use (default is "0").
-    Returns:
-    --------
-    system: openmm.System
-        The constructed OpenMM system.
-    sim: openmm.app.Simulation
-        The OpenMM simulation object.
+    GG: float, the strength of G-G pair interaction in unit.kilocalorie_per_mole, default is 3.0 kcal/mol,
+        adjust this value to fit the experimental Tm under different conditions.
     """
 
     print('\n################## set up simulation parameters ###################')
     # 1. input parameters
-    pdb_file = args.pdb
-    psf_file = args.psf
-    T = args.temp
-    c_ion = args.salt/1000.0                                   # concentration of ions in M
-    c_Mg = args.Mg                                           # concentration of Mg in mM
-    ensemble = args.ens
+    pdb_file = params.pdb
+    psf_file = params.psf
+    T = params.temp
+    c_ion = params.salt/1000.0                                   # concentration of ions in M
+    lmd = getattr(params, "lmd", 0)                              # lmd for Mg²⁺-RNA interaction, if don't give, it's 0.
+    ensemble = params.ens
+
+    dt = params.dt
+    er_ref = params.er_ref
+    pressure = params.pressure
+    friction = params.friction
+    gpu_id = params.gpu_id
     
     # 2. set pbc and box vector
-    if ensemble == 'non' and c_Mg != 0.0:
-        print("Error: Mg ion cannot be usde in non-periodic system.")
+    if ensemble == 'non' and lmd != 0.0:
+        print("Error: Mg ion cannot be run in non-periodic system.")
         exit(1)
     if ensemble in ['NPT', 'NVT']:
         # pbc box length
-        if len(args.box) == 1:
-            lx, ly, lz = args.box[0], args.box[0], args.box[0]
-        elif len(args.box) == 3:
-            lx = args.box[0]
-            ly = args.box[1]
-            lz = args.box[2]
+        if len(params.box) == 1:
+            lx, ly, lz = params.box[0], params.box[0], params.box[0]
+        elif len(params.box) == 3:
+            lx = params.box[0]
+            ly = params.box[1]
+            lz = params.box[2]
         else:
             print("Error: You must provide either one or three values for box.")
             exit(1)
@@ -548,44 +549,353 @@ def rG4s_setup(args, dt, pressure=1*unit.atmosphere, friction=0.1/unit.picosecon
     d_switch = 1.1*unit.nanometer                               # switch function starting distance
     temperature = T*unit.kelvin 
     er_t = cal_er(T)                                                   # relative electric constant
-    er = er_t*60.0/77.6
+    er = er_t*er_ref/77.6
     dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
-    # Mg-P interaction
-    lmd = nMg2lmd(c_Mg, T, RNA='rA')
-    print(f'er: {er}, dh: {dh}, lmd: {lmd}')
-    ffs = {
-        'temp': T,                                                  # Temperature
-        'lmd': lmd,                                                  # Charge scaling factor of P-
+    print(f"dielectric constant: er = {er:.2f}")
+    print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
+    print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
+
+    DH_params = {
+        'lmd': lmd,                                                  # Charge scaling factor of P-Mg
         'dh': dh,                                                  # Debye Huckel screening length
-        'ke': 138.935456,                                           # Coulomb constant, ONE_4PI_EPS0
         'er': er,                                                  # relative dielectric constant
-        'ion_type': args.ion*unit.kilocalorie_per_mole,                                      # ion type, K or Na
+        'GG': GG,                                                   # G-G pair interaction strength in unit.kilocalorie_per_mole
     }
 
     # 4. load force field files
-    top_RNA, param_RNA = load_ff('rG4s')
     top_pro, param_pro = load_ff('Protein')
-    params = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro)
+    top_RNA, param_RNA = load_ff('RNA')
+    #top_DNA, param_DNA = load_ff('DNA')
+    top_AGs, param_AGs = load_ff('AGs')
+    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
     pdb = PDBFile(pdb_file)
     psf = CharmmPsfFile(psf_file)
     top = psf.topology
+    print(f"coordinate file: {pdb_file}")
+    print(f"topology file: {psf_file}")
+
+    print('\n################## create system ###################')
     if ensemble == 'non':
-        system = psf.createSystem(params, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,
+        system = psf.createSystem(ffparams, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,
                                   nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
     else:
         psf.setBox(lx, ly, lz)
         top.setPeriodicBoxVectors((a, b, c))
         top.setUnitCellDimensions((lx, ly,lz))
-        system = psf.createSystem(params, nonbondedMethod=CutoffPeriodic, constraints=HBonds,
+        system = psf.createSystem(ffparams, nonbondedMethod=CutoffPeriodic, constraints=HBonds,
                                   nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
         system.setDefaultPeriodicBoxVectors(a, b, c)
+    
+    print(f"nonbonded cutoff: {cutoff}")
+    print(f"switch distance: {d_switch}")
 
     # 6. construct force field
-    print('\n################## build system ###################')
-    system = rG4sSystem(psf, system, ffs)
+    system = rG4sSystem(psf, system, DH_params, modification=modification)
+    print("buildSystem for HyRes_iConRNA")
+
+    # 7. set simulation
+    print('\n################### prepare simulation ####################')
+    if ensemble == 'NPT':
+        print('This is a NPT system')
+        system.addForce(MonteCarloBarostat(pressure, temperature, 25))
+    elif ensemble == 'NVT':
+        print('This is a NVT system')
+    elif ensemble == 'non':
+        print('This is a non-periodic system')
+    else:
+        print("Error: The ensemble must be NPT, NVT or non. The input value is {}.".format(ensemble))
+        exit(1)
+
+    integrator = LangevinMiddleIntegrator(temperature, friction, dt)
+    plat = Platform.getPlatformByName('CUDA')
+    prop = {'Precision': 'mixed', 'DeviceIndex': gpu_id}
+    sim = Simulation(top, system, integrator, plat, prop)
+    sim.context.setPositions(pdb.positions)
+    sim.context.setVelocitiesToTemperature(temperature)
+    print(f'Langevin, CUDA, {temperature}')
+    return system, sim
+
+
+def iConRNA_setup(params, modification=None):
+    """
+    Build and initialize a complete HyRes/iConRNA OpenMM simulation system.
+
+    Executes the full setup pipeline in seven stages:
+
+    1. Parse simulation parameters from ``params``.
+    2. Configure periodic boundary conditions (PBC) and box vectors.
+    3. Compute force field parameters: temperature-dependent dielectric constant,
+       Debye-Hückel screening length, and Mg²⁺-RNA charge scaling factor (lambda).
+    4. Load CHARMM topology and parameter files for protein and RNA.
+    5. Import coordinates (PDB) and topology (PSF).
+    6. Build the HyRes custom force field via :func:`HyresFF.buildSystem`.
+    7. Attach the barostat (NPT only), initialize the Langevin integrator, and
+       create the CUDA simulation context with positions and velocities.
+
+    Args:
+        params (argparse.Namespace): Simulation parameter object with the
+                                     following attributes:
+
+                                     - ``pdb`` (str) — path to input PDB file.
+                                     - ``psf`` (str) — path to CHARMM PSF file.
+                                     - ``temp`` (float) — temperature in Kelvin.
+                                     - ``salt`` (float) — NaCl concentration in mM.
+                                     - ``lmd`` (float) — lmd value for Mg²⁺-RNA interaction.
+                                     - ``ens`` (str) — ensemble: ``'NPT'``,
+                                       ``'NVT'``, or ``'non'`` (non-periodic).
+                                     - ``box`` (list of float) — box dimensions
+                                       in nm; one value for cubic, three for
+                                       orthorhombic.
+                                     - ``dt`` (Quantity) — integration time step.
+                                     - ``er_ref`` (float) — reference dielectric
+                                       used to scale the temperature-dependent er.
+                                     - ``pressure`` (Quantity) — pressure for NPT
+                                       barostat.
+                                     - ``friction`` (Quantity) — Langevin friction
+                                       coefficient.
+                                     - ``gpu_id`` (str) — CUDA device index
+                                       (e.g. ``'0'``).
+
+       modification (callable, optional): User-defined function that accepts the
+                                           ``System`` object and applies additional
+                                           force modifications. Passed directly to
+                                           :func:`HyresFF.buildSystem`. Called
+                                           after all built-in forces are added.
+                                           Default is ``None``.
+
+    Returns:
+        tuple:
+            - ``system`` (System) — the fully constructed OpenMM ``System``.
+            - ``sim`` (Simulation) — the initialized ``Simulation`` object with
+              positions and velocities set.
+
+    Raises:
+        SystemExit: If an unsupported ensemble type is provided, if Mg²⁺ is
+                    specified for a non-periodic system, or if an invalid box
+                    dimension list is given.
+
+    Example:
+        >>> from HyresBuilder.utils import setup
+        >>> system, sim = setup(params)
+
+        >>> # With a custom force modification
+        >>> def my_mod(system):
+        ...     pass  # add or remove forces here
+        >>> system, sim = setup(params, modification=my_mod)
+    """
+    
+    print('\n################## set up simulation parameters ###################')
+    # 1. input parameters
+    pdb_file = params.pdb
+    psf_file = params.psf
+    T = params.temp
+    c_ion = params.salt/1000.0                                   # concentration of ions in M
+    lmd = params.lmd                                           # lmd value for Mg²⁺-RNA interaction
+    ensemble = params.ens
+
+    dt = params.dt
+    er_ref = params.er_ref
+    pressure = params.pressure
+    friction = params.friction
+    gpu_id = params.gpu_id
+    
+    # 2. set pbc and box vector
+    if ensemble == 'non' and lmd != 0.0:
+        print("Error: Mg ion cannot be usde in non-periodic system.")
+        exit(1)
+    if ensemble in ['NPT', 'NVT']:
+        # pbc box length
+        if len(params.box) == 1:
+            lx, ly, lz = params.box[0], params.box[0], params.box[0]
+        elif len(params.box) == 3:
+            lx = params.box[0]
+            ly = params.box[1]
+            lz = params.box[2]
+        else:
+            print("Error: You must provide either one or three values for box.")
+            exit(1)
+        a = Vec3(lx, 0.0, 0.0)
+        b = Vec3(0.0, ly, 0.0)
+        c = Vec3(0.0, 0.0, lz)
+    elif ensemble not in ['NPT', 'NVT', 'non']:
+        print("Error: The ensemble must be NPT, NVT or non. The input value is {}.".format(ensemble))
+        exit(1)
+    
+    # 3. force field parameters
+    cutoff = 1.8*unit.nanometer                                 # nonbonded cutoff
+    d_switch = 1.6*unit.nanometer                               # switch function starting distance
+    temperature = T*unit.kelvin 
+    er_t = cal_er(T)                                                   # relative electric constant
+    er = er_t*er_ref/77.6
+    dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
+    print(f"dielectric constant: er = {er:.2f}")
+    print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
+    print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
+
+    # Debye-Hückel parameters
+    DH_params = {
+        'lmd': lmd,                                                  # Charge scaling factor of P-
+        'dh': dh,                                                    # Debye Huckel screening length
+        'er': er,                                                    # relative dielectric constant
+    }
+
+    # 4. load force field files
+    path1 = files("HyresBuilder") / "forcefield" / "top_RNA.inp"
+    top_RNA = path1.as_posix()
+    path2 = files("HyresBuilder") / "forcefield" / "param_RNA.inp"
+    param_RNA = path2.as_posix()
+    top_AGs, param_AGs = load_ff('AGs')
+    top_pro, param_pro = load_ff('Protein')
+    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_AGs, param_AGs, top_pro, param_pro)
+
+    print('\n################## load coordinates and topology ###################')
+    # 5. import coordinates and topology form charmm pdb and psf
+    pdb = PDBFile(pdb_file)
+    psf = CharmmPsfFile(psf_file)
+    top = psf.topology
+    print(f"coordinate file: {pdb_file}")
+    print(f"topology file: {psf_file}")
+
+    print('\n################## create system ###################')
+    if ensemble == 'non':
+        system = psf.createSystem(ffparams, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,
+                                  nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
+    else:
+        psf.setBox(lx, ly, lz)
+        top.setPeriodicBoxVectors((a, b, c))
+        top.setUnitCellDimensions((lx, ly,lz))
+        system = psf.createSystem(ffparams, nonbondedMethod=CutoffPeriodic, constraints=HBonds,
+                                  nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
+        system.setDefaultPeriodicBoxVectors(a, b, c)
+    
+    print(f"nonbonded cutoff: {cutoff}")
+    print(f"switch distance: {d_switch}")
+
+    # 6. construct force field
+    system = iConRNASystem(psf, system, DH_params, modification=modification)
+    print("iConRNASystem for iConRNA model")
+
+    # 7. set simulation
+    print('\n################### prepare simulation ####################')
+    if ensemble == 'NPT':
+        print('This is a NPT system')
+        system.addForce(MonteCarloBarostat(pressure, temperature, 25))
+    elif ensemble == 'NVT':
+        print('This is a NVT system')
+    elif ensemble == 'non':
+        print('This is a non-periodic system')
+    else:
+        print("Error: The ensemble must be NPT, NVT or non. The input value is {}.".format(ensemble))
+        exit(1)
+
+    integrator = LangevinMiddleIntegrator(temperature, friction, dt)
+    plat = Platform.getPlatformByName('CUDA')
+    prop = {'Precision': 'mixed', 'DeviceIndex': gpu_id}
+    sim = Simulation(top, system, integrator, plat, prop)
+    sim.context.setPositions(pdb.positions)
+    sim.context.setVelocitiesToTemperature(temperature)
+    print(f'Langevin, CUDA, {temperature}')
+    return system, sim
+
+
+def setupMg(params, modification=None):
+    """
+    Similar to setup(), but with a focus on Mg²⁺-RNA interactions, where
+    the er = 20 was specifically chosen to match the experimental Mg²⁺-RNA interactions.
+    other details are the same as setup().
+    """
+    
+    print('\n################## set up simulation parameters ###################')
+    # 1. input parameters
+    pdb_file = params.pdb
+    psf_file = params.psf
+    T = params.temp
+    c_ion = params.salt/1000.0                                   # concentration of ions in M
+    lmd = getattr(params, "lmd", 0)                              # lmd for Mg²⁺-RNA interaction, if don't give, it's 0.
+    ensemble = params.ens
+
+    dt = params.dt
+    er_ref = params.er_ref
+    pressure = params.pressure
+    friction = params.friction
+    gpu_id = params.gpu_id
+    
+    # 2. set pbc and box vector
+    if ensemble == 'non' and lmd != 0.0:
+        print("Error: Mg ion cannot be run in non-periodic system.")
+        exit(1)
+    if ensemble in ['NPT', 'NVT']:
+        # pbc box length
+        if len(params.box) == 1:
+            lx, ly, lz = params.box[0], params.box[0], params.box[0]
+        elif len(params.box) == 3:
+            lx = params.box[0]
+            ly = params.box[1]
+            lz = params.box[2]
+        else:
+            print("Error: You must provide either one or three values for box.")
+            exit(1)
+        a = Vec3(lx, 0.0, 0.0)
+        b = Vec3(0.0, ly, 0.0)
+        c = Vec3(0.0, 0.0, lz)
+    elif ensemble not in ['NPT', 'NVT', 'non']:
+        print("Error: The ensemble must be NPT, NVT or non. The input value is {}.".format(ensemble))
+        exit(1)
+    
+    # 3. force field parameters
+    cutoff = 1.2*unit.nanometer                                 # nonbonded cutoff
+    d_switch = 1.1*unit.nanometer                               # switch function starting distance
+    temperature = T*unit.kelvin 
+    er_t = cal_er(T)                                                   # relative electric constant
+    er = er_t*er_ref/77.6
+    dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
+    print(f"dielectric constant: er = {er:.2f}")
+    print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
+    print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
+
+    DH_params = {
+        'lmd': lmd,                                                  # Charge scaling factor of P-Mg
+        'dh': dh,                                                  # Debye Huckel screening length
+        'er': er,                                                  # relative dielectric constant
+    }
+
+    # 4. load force field files
+    top_pro, param_pro = load_ff('Protein')
+    top_RNA, param_RNA = load_ff('RNA')
+    top_DNA, param_DNA = load_ff('DNA')
+    top_AGs, param_AGs = load_ff('AGs')
+    top_mets, param_mets = load_ff('Metabolite')
+    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets)
+
+    print('\n################## load coordinates and topology ###################')
+    # 5. import coordinates and topology form charmm pdb and psf
+    pdb = PDBFile(pdb_file)
+    psf = CharmmPsfFile(psf_file)
+    top = psf.topology
+    print(f"coordinate file: {pdb_file}")
+    print(f"topology file: {psf_file}")
+
+    print('\n################## create system ###################')
+    if ensemble == 'non':
+        system = psf.createSystem(ffparams, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,
+                                  nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
+    else:
+        psf.setBox(lx, ly, lz)
+        top.setPeriodicBoxVectors((a, b, c))
+        top.setUnitCellDimensions((lx, ly,lz))
+        system = psf.createSystem(ffparams, nonbondedMethod=CutoffPeriodic, constraints=HBonds,
+                                  nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
+        system.setDefaultPeriodicBoxVectors(a, b, c)
+    
+    print(f"nonbonded cutoff: {cutoff}")
+    print(f"switch distance: {d_switch}")
+
+    # 6. construct force field
+    system = buildMgSystem(psf, system, DH_params, modification=modification)
+    print("buildMgSystem for HyRes_iConRNA-Mg")
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')

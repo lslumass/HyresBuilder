@@ -1,14 +1,14 @@
 """
 Date: Sep 29, 2025
-Modified: Feb 26, 2026
-Latest running script for HyRes and iConRNA simulation
+Modified: Apr 25, 2026
+Latest running script for rG4s-related simulations
 Author: Shanlong Li
 email: shanlongli@umass.edu
 """
 
 from __future__ import division, print_function
 import argparse
-from HyresBuilder import utils
+from HyresBuilder import utils, Rigid
 # OpenMM Imports
 from openmm.unit import *
 from openmm.app import *
@@ -25,12 +25,13 @@ parser.add_argument('-b', "--box", nargs='+', type=float, help="box dimensions i
 parser.add_argument('-s', "--salt", default=150.0, type=float, help="salt concentration in mM, default is 150.0 mM")
 parser.add_argument('-e', "--ens", default='NVT', type=str, help="simulation ensemble, NPT, NVT, or non, non is for non-periodic system")
 parser.add_argument('-m', "--Mg", default=0.0, type=float, help="Mg2+ concentration in mM")
+parser.add_argument('-g', "--GG", default=3.0, type=float, help="G-G pair interaction strength in kcal/mol, default is 3.0 kcal/mol")
 params = parser.parse_args()
 out = params.out
 
 # simulation parameters
-dt_equil = 0.001*unit.picoseconds		                      # time step for equilibration, for bad configuration, use 0.0001 ps
-dt_prod = 0.008*unit.picoseconds                                # time step for production simulation
+dt_equil = 0.0001*unit.picoseconds		                      # time step for equilibration, for bad configuration, use 0.0001 ps
+dt_prod = 0.004*unit.picoseconds                                # time step for production simulation
 prod_step = 250000000                                           # production steps
 equil_step = 10000                                              # equilibration steps
 log_freq = 1250                                                 # frequency of log file
@@ -44,17 +45,31 @@ params.friction = 0.1/unit.picosecond                           # friction coeff
 params.er_ref = 60.0                                            # dielectric constant
 params.gpu_id = "0"                                             # gpu_id used for simulation
 
+# special parameters
+params.lmd = 0.0                                                 # lmd for Mg²⁺-RNA interaction, default is 0.0 (no Mg)
+"""
+for Mg2+-containing system, calculate the lmd parameter for Mg-RNA interaction and add it to params
+if Mg2+ is not included, lmd = 0.0
+
+1. for well-defined system, e.g., similar system to be PNAS paper:
+    lmd = utils.nMg2lmd(Mg_concentration, params.temp, RNA='rA')
+2. for rough estimation:
+    lmd = utils.estimate_lmd(params.salt, Mg_concentration, RNA_lenght, RNA_Rg, params.temp)
+
+params.lmd = lmd
+"""
+
 ### set up system and simulation
 """
-utils.setup(params, modification)
+utils.setup(params, GG=params.GG, modification=modification)
 modification: custom function object
 if further modify the OpenMM system, define all the changes as one function
 example:
     def mod(system):
         system.addForce(customforce)
     util.setup(params, modification=mod)
-"""        
-system, sim = utils.setup(params)
+"""
+system, sim = utils.rG4s_setup(params, GG=params.GG)
 
 """
 if further modify the system, add this line below:
@@ -83,11 +98,11 @@ sim.reporters.append(PDBReporter(f'{out}.pdb', pdb_freq))
 #sim.reporters.append(XTCReporter(f'{out}.xtc', traj_freq))      # xtc traj
 sim.reporters.append(DCDReporter(f'{out}.dcd', traj_freq))      # dcd traj
 sim.reporters.append(StateDataReporter(f'{out}.log', log_freq, progress=True, totalSteps=prod_step, step=True, temperature=True, totalEnergy=True, speed=True))
-sim.reporters.append(CheckpointReporter(f'{out}_chk.xml', chk_freq, writeState=True))   # save state as checkpoint file
+sim.reporters.append(CheckpointReporter(f'{out}.chk', chk_freq))
 
 print('\n# Production simulation running:')
 sim.integrator.setStepSize(dt_prod)
 sim.step(prod_step)
 
-sim.saveState(f'{out}_chk.xml')
+sim.saveCheckpoint(f'{out}.chk')
 print('\n# Finished!')

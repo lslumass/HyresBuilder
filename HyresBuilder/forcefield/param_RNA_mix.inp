@@ -5,8 +5,17 @@
 * Latest: Feb 14, 2024
 
 BOND
+!
+!V(bond) = Kb(b - b0)**2
+!
+!Kb: kcal/mole/A**2
+!b0: A
+!
+!atom type   Kb         b0
+!
+
 !bonds in backbone
-RP    RS1   100.0      3.85
+RP    RS1    15.0      3.65
 RS1   RS2   100.0      2.32
 RS2   RA1   150.0      1.93   ! C2-NA for A
 RS2   RG1   150.0      1.93   ! C2-NA for G
@@ -31,48 +40,72 @@ RU1   RU2   250.0      2.49   ! U: NA-NB
 RU1   RU3   180.0      2.70   ! U: NA-NC
 RU2   RU3   150.0      2.99   ! U: NB-NC
 
-!## for polyphosphate
-RP    RP     40.6      2.70   ! P-P
+!## for polyphosphate, from https://doi.org/10.1021/acs.biomac.8b00327
+PHO   PHO    40.6      2.70   ! P-P
 
 
 THETAS
+!V = V(angle) + V(Urey-Bradley)
+!
+!V(angle) = Ktheta(Theta - Theta0)**2
+!
+!V(Urey-Bradley) = Kub(S - S0)**2
+!
+!Ktheta: kcal/mole/rad**2
+!Theta0: degrees
+!Kub: kcal/mole/A**2 (Urey-Bradley)
+!S0: A
+!
+!atom types     Ktheta    Theta0   Kub     S0
+!
+
 !angles in backbone
-RS1   RP    RS1   10.0     105.0
-RP    RS1   RP    10.0      95.0
+RS1   RP    RS1    4.0     105.0
+RP    RS1   RP     8.0      95.0
 RP    RS1   RS2    8.0     112.0
 RS1   RS2   RP    20.0      55.0
 RS1   RS2   RA1    8.0     136.0  ! C1-C2-NA for A
 RS1   RS2   RG1    8.0     136.0  ! C1-C2-NA for G
 RS1   RS2   RC1   10.0     115.0  ! C1-C2-NA for C
 RS1   RS2   RU1   10.0     115.0  ! C1-C2-NA for U
-RS2   RA1   RA2   70.0     127.0  ! C2-NA-NB for A
-RS2   RG1   RG2   70.0     127.0  ! C2-NA-NB for G
+RS2   RA1   RA2   50.0     127.0  ! C2-NA-NB for A
+RS2   RG1   RG2   50.0     127.0  ! C2-NA-NB for G
 RS2   RA1   RA4   50.0     117.0  ! C2-NA-ND for A
 RS2   RG1   RG4   40.0     116.0  ! C2-NA-ND for G
-RS2   RC1   RC3   90.0      59.0  ! C2-NA-NC for C
-RS2   RU1   RU3   90.0      59.0  ! C2-NA-NC for U
+RS2   RC1   RC3  100.0      59.0  ! C2-NA-NC for C
+RS2   RU1   RU3  100.0      59.0  ! C2-NA-NC for U
 ! internal angle for A:
-RA1   RA2   RA3   40.0      88.0  !  NA-NB-NC
-RA2   RA3   RA4   40.0      72.0  !  NB-NC-ND
-RA3   RA4   RA1   40.0      84.0  !  NC-ND-NA
+RA1   RA2   RA3  160.0      88.0  !  NA-NB-NC
+RA2   RA3   RA4  100.0      72.0  !  NB-NC-ND
+RA3   RA4   RA1  100.0      84.0  !  NC-ND-NA
 ! internal angle for G:
-RG1   RG2   RG3   40.0      88.0  !  NA-NB-NC
-RG2   RG3   RG4   40.0      83.0  !  NB-NC-ND
-RG3   RG4   RG1   40.0      72.0  !  NC-ND-NA
+RG1   RG2   RG3  160.0      88.0  !  NA-NB-NC
+RG2   RG3   RG4  100.0      83.0  !  NB-NC-ND
+RG3   RG4   RG1  100.0      72.0  !  NC-ND-NA
 
 !## for polyphosphate
-RP    RP     RP    50.0    99.0   ! P-P-P
+PHO   PHO   PHO  120.0      99.0  ! P-P-P
 
 
 PHI
+!
+!V(dihedral) = Kchi(1 + cos(n(chi) - delta))
+!
+!Kchi: kcal/mole
+!n: multiplicity
+!delta: degrees
+!
+!atom types             Kchi    n   delta
+!
+
 !phi in backbone
 RS1   RP    RS1   RP       0.2    1   -20.0
 RS1   RP    RS1   RS2      0.2    1  -120.0
 ! A/G
-RP    RS1   RS2   RA1     58.0    1  -160.0    ! P-C1-C2-NA for A 
-RP    RS1   RS2   RG1     58.0    1  -165.0    ! P-C1-C2-NA for G   
-RS1    RS2   RA1   RA2    55.0    1   160.0
-RS1    RS2   RG1   RG2    55.0    1   165.0
+RP    RS1   RS2   RA1     58.0    1  -165.0    ! P-C1-C2-NA for A 
+RP    RS1   RS2   RG1     55.0    1  -165.0    ! P-C1-C2-NA for G   
+RS1   RS2   RA1   RA2     55.0    1   165.0
+RS1   RS2   RG1   RG2     55.0    1   165.0
 !RS1   RS2   RA1   RA2     35.0    1    90.0
 !RS1   RS2   RA1   RA2     30.0    2  -165.0
 !RS1   RS2   RG1   RG2     35.0    1    90.0
@@ -86,42 +119,56 @@ RS1   RS2   RC1   RC3     55.0    1   -15.0    !
 RS1   RS2   RU1   RU3     55.0    1   -15.0    !                
 
 !phi in A
-RS2   RA1   RA2   RA3     80.0    1     0.0   !C2-NA-NB-NC
+RS2   RA1   RA2   RA3      0.0    1     0.0   !C2-NA-NB-NC
 RA1   RA2   RA4   RA3     80.0    1     0.0   !NA-NB-ND-NC
 RA1   RA2   RA3   RA4     50.0    1   180.0   !NA-NB-NC-ND
 !phi in G
-RS2   RG1   RG2   RG3     80.0    1     0.0   !C2-NA-NB-NC
-RG1   RG2   RG4   RG3     80.0    1     0.0   !NA-NB-ND-NC
-RG1   RG2   RG3   RG4     50.0    1   180.0   !NA-NB-NC-ND
+RS2   RG1   RG2   RG3      0.0    1     0.0   !C2-NA-NB-NC
+RG1   RG2   RG4   RG3     50.0    1     0.0   !NA-NB-ND-NC
+RG1   RG2   RG3   RG4     80.0    1   180.0   !NA-NB-NC-ND
 
 !## for polyphosphate
-RP    RP    RP    RP       0.5    1     0.0   ! P-P-P-P
+PHO   PHO   PHO   PHO      0.9    1     0.0   ! P-P-P-P
 
 
 IMPHI
+!
+!V(improper) = Kpsi(psi - psi0)**2
+!
+!Kpsi: kcal/mole/rad**2
+!psi0: degrees
+!note that the second column of numbers (0) is ignored
+!
+!atom types           Kpsi                   psi0
+!
+
 RS1   RP    RP    RS2     15.0    0    29.0
 !NA-C2-NB-ND for A
 RA1   RS2   RA2   RA4     40.0    0     0.0
-
 !NA-C2-NB-ND for G
-RG1   RS2   RG2   RG4     40.0    0     0.0
-
+RG1   RS2   RG2   RG4     20.0    0     0.0
 !NA-C2-NB-NC for C
-RC1   RS2   RC2   RC3     40.0    0  -180.0
-
+RC1   RS2   RC2   RC3     20.0    0  -180.0
 !NA-C2-NB-NC for U
-RU1   RS2   RU2   RU3     40.0    0  -180.0
+RU1   RS2   RU2   RU3     20.0    0  -180.0
 
 
 NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
      CUTNB 12.0  CTOFNB 12.0  CTONNB 11.0
 
-!                 Emin         Rmin/2
-!                 (kcal/mol)   (A)
+!
+!V(Lennard-Jones) = Eps,i,j[(Rmin,i,j/ri,j)**12 - 2(Rmin,i,j/ri,j)**6]
+!
+!epsilon: kcal/mole, Eps,i,j = sqrt(eps,i * eps,j)
+!Rmin/2: A, Rmin,i,j = Rmin/2,i + Rmin/2,j
+!
+!atom  ignored    epsilon      Rmin/2   ignored   eps,1-4       Rmin/2,1-4
+!
+
 !# backbone
-RP       0.00     -0.05193      2.4340   0.00     -0.05193     2.4340 !!                         2.4340 !
-RS1      0.00     -0.09922      2.2826   0.00     -0.09922     2.2826 !!                         2.2826 !
-RS2      0.00     -0.07731      2.2826   0.00     -0.07731     2.2826 !!                         2.2826 !
+RP       0.00     -0.10112      2.4340   0.00     -0.10112     2.4340 !!                         2.4340 !
+RS1      0.00     -0.11562      2.2826   0.00     -0.11562     2.2826 !!                         2.2826 !
+RS2      0.00     -0.08662      2.2826   0.00     -0.08662     2.2826 !!                         2.2826 !
 !# ADE
 RA1      0.00     -0.10193      1.8954   0.00     -0.10193     1.8954 !!                         1.9949 !
 RA2      0.00     -0.11655      1.9309   0.00     -0.11655     1.9309 !!                         2.2566 !
@@ -141,13 +188,18 @@ RU1      0.00     -0.10193      2.0452   0.00     -0.10193     2.0452 !!        
 RU2      0.00     -0.13116      1.9241   0.00     -0.13116     1.9241 !!                         2.1379 !
 RU3      0.00     -0.08731      1.7170   0.00     -0.08731     1.7170 !!                         1.9078 !
 !# others
-MG       0.00     -0.05000      3.0000   0.00     -0.05000     3.0000 !!
+MG       0.00     -0.02000      3.0000   0.00     -0.02000     3.0000 !!
+CAL      0.00     -0.02000      3.1000   0.00     -0.02000     3.1000 !!
+PHO      0.00     -0.15000      2.4340   0.00     -0.15000     2.4340 !!
 
 NBFIX
 !                 Emin         Rmin
 !                 (kcal/mol)   (A)
-RP        MG        -1.30000       5.0000
+RP        MG        -0.50000       5.0000
+RP        CAL       -0.50000       5.2000
+RP        RP        -0.08200       4.8680
 RS1       RS1       -0.09922       4.5652           !necessary, do not delete
+PHO       PHO       -0.15000       4.8680           !necessary, do not delete
 
 ! for pairing 
 RA3       RU2       -0.12000       3.5000

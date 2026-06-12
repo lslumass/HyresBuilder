@@ -1,6 +1,6 @@
 """
 Date: Sep 29, 2025
-Modified: Feb 26, 2026
+Modified: Apr 25, 2026
 Latest running script for HyRes and iConRNA simulation
 Author: Shanlong Li
 email: shanlongli@umass.edu
@@ -8,7 +8,7 @@ email: shanlongli@umass.edu
 
 from __future__ import division, print_function
 import argparse
-from HyresBuilder import utils
+from HyresBuilder import utils, Rigid
 # OpenMM Imports
 from openmm.unit import *
 from openmm.app import *
@@ -44,6 +44,20 @@ params.friction = 0.1/unit.picosecond                           # friction coeff
 params.er_ref = 60.0                                            # dielectric constant
 params.gpu_id = "0"                                             # gpu_id used for simulation
 
+# special parameters
+params.lmd = 0.0                                                 # lmd for Mg²⁺-RNA interaction, default is 0.0 (no Mg)
+"""
+for Mg2+-containing system, calculate the lmd parameter for Mg-RNA interaction and add it to params
+if Mg2+ is not included, lmd = 0.0
+
+1. for well-defined system, e.g., similar system to be PNAS paper:
+    lmd = utils.nMg2lmd(params.Mg, params.temp, RNA='rA')
+2. for rough estimation:
+    lmd = utils.estimate_lmd(params.salt, params.Mg, RNA_lenght, RNA_Rg, params.temp)
+
+params.lmd = lmd
+"""
+
 ### set up system and simulation
 """
 utils.setup(params, modification)
@@ -53,7 +67,7 @@ example:
     def mod(system):
         system.addForce(customforce)
     util.setup(params, modification=mod)
-"""        
+"""
 system, sim = utils.setup(params)
 
 """
@@ -83,11 +97,11 @@ sim.reporters.append(PDBReporter(f'{out}.pdb', pdb_freq))
 #sim.reporters.append(XTCReporter(f'{out}.xtc', traj_freq))      # xtc traj
 sim.reporters.append(DCDReporter(f'{out}.dcd', traj_freq))      # dcd traj
 sim.reporters.append(StateDataReporter(f'{out}.log', log_freq, progress=True, totalSteps=prod_step, step=True, temperature=True, totalEnergy=True, speed=True))
-sim.reporters.append(CheckpointReporter(f'{out}_chk.xml', chk_freq, writeState=True))   # save state as checkpoint file
+sim.reporters.append(CheckpointReporter(f'{out}.chk', chk_freq))
 
 print('\n# Production simulation running:')
 sim.integrator.setStepSize(dt_prod)
 sim.step(prod_step)
 
-sim.saveState(f'{out}_chk.xml')
+sim.saveCheckpoint(f'{out}.chk')
 print('\n# Finished!')
