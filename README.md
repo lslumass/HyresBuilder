@@ -1,12 +1,12 @@
 # HyresBuilder: for running HyRes and iCon simulation.   
 **HyresBuilder** is a tool for preparing HyRes protein and iConRNA simulations, developped by ChenLab.    
 **Contact:** Jianhan Chen, jianhanc@umass.edu   
-For details, please follow the related papers:    
-1. `Xiaorong Liu and Jianhan Chen, PCCP, 2017, 19, 32421. <https://pubs.rsc.org/en/content/articlelanding/2017/cp/c7cp06736d>`_
-2. `Yumeng Zhang, Xiaorong Liu, and Jianhan Chen, JCIM, 2022, 62, 4523. <https://pubs.acs.org/doi/10.1021/acs.jcim.2c00974>`_
-3. `Yumeng Zhang, Shanlong Li, Xiping Gong, and Jianhan Chen, JACS, 2024, 146, 342. <https://pubs.acs.org/doi/10.1021/jacs.3c09195>`_
-4. `Shanlong Li and Jianhan Chen, PNAS, 2025, 122, e2504583122. <https://www.pnas.org/doi/10.1073/pnas.2504583122>`_
-and follow the [docs](https://hyresbuilder.readthedocs.io)   
+For details, please follow the related papers and the [docs](https://hyresbuilder.readthedocs.io):    
+1. `[Xiaorong Liu and Jianhan Chen, PCCP, 2017, 19, 32421.](https://pubs.rsc.org/en/content/articlelanding/2017/cp/c7cp06736d)
+2. `[Yumeng Zhang, Xiaorong Liu, and Jianhan Chen, JCIM, 2022, 62, 4523.](https://pubs.acs.org/doi/10.1021/acs.jcim.2c00974>)
+3. `[Yumeng Zhang, Shanlong Li, Xiping Gong, and Jianhan Chen, JACS, 2024, 146, 342.](https://pubs.acs.org/doi/10.1021/jacs.3c09195>)
+4. `[Shanlong Li and Jianhan Chen, PNAS, 2025, 122, e2504583122.](https://www.pnas.org/doi/10.1073/pnas.2504583122>)   
+
 **Main functions:**
 1. Construct HyRes peptide structure from sequence or convert atomistic structure into HyRes model;   
 2. Construct iConRNA model from sequence or convert atomistic structure into iConRNA model;   
