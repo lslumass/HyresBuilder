@@ -1158,9 +1158,9 @@ def modify_metabolite(psf, system):
     # Summary
     # ------------------------------------------------------------------
     print("\nModification summary:")
-    print(f"  -> Modified {counts['bonds']}     harmonic bonds.")
-    print(f"  -> Modified {counts['angles']}    custom angles ('ReBAngleForce').")
-    print(f"  -> Modified {counts['dihedrals']} proper dihedrals.")
-    print(f"  -> Modified {counts['impropers']} improper torsions.")
+    print(f"  -> Modified {counts['bonds']:>8d} harmonic bonds.")
+    print(f"  -> Modified {counts['angles']:>8d} custom angles ('ReBAngleForce').")
+    print(f"  -> Modified {counts['dihedrals']:>8d} proper dihedrals.")
+    print(f"  -> Modified {counts['impropers']:>8d} improper torsions.")
     
     return system
