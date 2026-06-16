@@ -72,6 +72,8 @@ P2S   P3S    200.0      2.53  ! pSer CB-CC
 P2T   P3T    200.0      3.20  ! pThr CB-CC  
 ! special bond in pro
 N     A2P    400.0      1.86  ! pro
+! For PEG
+PEG   PEG     10.0      3.60  ! PEG-PEG, use the distance between two EO units (O-O) as b0
 
 
 THETAS
@@ -198,6 +200,8 @@ A3W   A2W   A4W   0.00     60.0   ! trp
 N     C1E   A2P   0.00     60.0   ! pro
 N     A2P   C1E   0.00     60.0   ! pro
 C1E   N     A2P   0.00     60.0   ! pro
+! For PEG
+PEG   PEG   PEG   10.0    123.0   ! PEG-PEG-PEG
 
 
 PHI
@@ -307,6 +311,8 @@ P1W   A2W   A4W   A3W     0.00    2     180.0  ! trp CC-CD-CF-CE
 ! for pro
 C     N     A2P   C1E     0.00    2     180.0  ! pro C-N-CB-CA
 N     A2P   C1E   C       0.00    2     180.0  ! pro N-CB-CA-C
+! For PEG
+PEG   PEG   PEG   PEG     0.00    2       0.0    ! PEG-PEG-PEG-PEG
 
 
 IMPHI

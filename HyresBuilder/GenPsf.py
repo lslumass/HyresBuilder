@@ -29,11 +29,10 @@ Prefix    Molecule     Example IDs
 ``P``     Protein      P001, P002, …
 ``R``     RNA          R001, R002, …
 ``D``     DNA          D001, D002, …
-``M``     Mg²⁺          M001
-``C``     Ca²⁺          C001
-``PHO``   Phosphate    PHO001, PHO002, …
+``I``     Mg²⁺,Ca²⁺    I001, I002, …
+``S``     PolyP, PEG   S001, S002, …
 ``AGs``   Antibiotics  AGs001, AGs002, …
-``Mats``  Metabolites  Mats001, Mats002, …
+``M``     Metabolites  M001, M002, …
 ========  ===========  ===============
 
 The hybrid-36 counter supports up to 68,391 chains per molecule type before
@@ -54,33 +53,36 @@ from HyresBuilder import utils
 import argparse, os, glob
 
 
+aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
+               "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
+rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
+dnas = ["DAD", "DGU", "DCY", "DTH", "DA", "DG", "DC", "DT"]
+ions = ["MG+", "SMG", "CA+"]
+polymer = ['PHO', 'PEG']
+AGs = ['KAN']
+metabolites = ['UN1','AYA','ACA','NLG','C3C','C4C','C5C','Y52','CHT','CIT','CTT','ABU','CH5',
+               'GSH','MTA','SHR','TAU','BET','3PG','G6P','COA','FAD','NCA','PAU','ADN','ADP',
+               'AMP','ATP','C5P','CTN','UGA','GMP','UD1','NOS','NAD','NAI','NAD','UDP','U5P',
+               'UPG','2PG','13P','PEP','SAM','2HG','FUM','AKG','LMR','MCT','SIN']
+
+# Prefix mapping for molecule types, used in segment ID assignment
+#         protein, RNA, DNA, IONS, polymer, animoglycosides, metabolites
+segtypes = ['P', 'R', 'D', 'I', 'S', 'AGs', 'M']
+
+def get_type(resname):
+    chaintype = (
+        'P' if resname in aas else
+        'R' if resname in rnas else
+        'D' if resname in dnas else
+        'I' if resname in ions else
+        'S' if resname in polymer else
+        'AGs' if resname in AGs else
+        'M' if resname in metabolites else
+        None
+    )
+    return chaintype
+
 def split_chains(pdb):
-    aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
-                   "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
-    rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
-    dnas = ["DAD", "DGU", "DCY", "DTH", "DA", "DG", "DC", "DT"]
-    mg, cal = ["MG+", "SMG"], ["CA+"]
-    phos = ['PHO']
-    AGs = ['KAN']
-    Mats = ['UN1','AYA','ACA','NLG','C3C','C4C','C5C','Y52','CHT','CIT','CTT','ABU','CH5',
-            'GSH','MTA','SHR','TAU','BET','3PG','G6P','COA','FAD','NCA','PAU','ADN','ADP',
-            'AMP','ATP','C5P','CTN','UGA','GMP','UD1','NOS','NAD','NAI','NAD','UDP','U5P',
-            'UPG','2PG','13P','PEP','SAM','2HG','FUM','AKG','LMR','MCT','SIN']
-
-    def get_type(resname):
-        chaintype = (
-            'P' if resname in aas else
-            'R' if resname in rnas else
-            'D' if resname in dnas else
-            'M' if resname in mg else
-            'C' if resname in cal else
-            'PHO' if resname in phos else
-            'AGs' if resname in AGs else
-            'Mats' if resname in Mats else
-            None
-        )
-        return chaintype
-
     currentKey = None
     atoms = []
     chains = []
@@ -107,9 +109,9 @@ def split_chains(pdb):
     # save out each chain
     pre_type = None
     for i, (t, chain) in enumerate(zip(types, chains)):
-        if t in ['P', 'R', 'D', 'PHO', 'AGs', 'Mats']:
+        if t in ['P', 'R', 'D', 'S', 'AGs', 'M']:
             tmp_pdb = f"psfgentmp_{i}.pdb"
-        elif t in ['M', 'C']:
+        elif t in ['I']:
             if t == pre_type:
                 continue  # skip if same ion type as previous chain
             else:
@@ -169,8 +171,10 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix'):
     - Protein chains: ``P001``, ``P002``, ...
     - RNA chains: ``R001``, ``R002``, ...
     - DNA chains: ``D001``, ``D002``, ...
-    - Mg2+ ions: ``M001``
-    - Ca2+ ions: ``C001``
+    - Mg2+, Ca2+ ions: ``I001``, ``I002``, ...
+    - Polymers (e.g. phosphate, PEG): ``S001``, ``S002``, ...
+    - Antibiotics: ``AGs001``, ``AGs002``, ...
+    - Metabolites: ``M001``, ``M002``, ...
 
     Args:
         pdb_in (str): Path to the input coarse-grained PDB file. May contain
@@ -213,10 +217,10 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix'):
     gen.read_topology(AGs_topology)
     gen.read_topology(Mats_topology)
 
-    counts = {'P': 1, 'R': 1, 'D': 1, 'M': 1, 'C': 1, 'PHO': 1, 'AGs': 1, 'Mats': 1}
+    counts = {'P': 1, 'R': 1, 'D': 1, 'I': 1, 'S': 1, 'AGs': 1, 'M': 1}
     types = split_chains(pdb_in)
     for i, t in enumerate(types):
-        if t in ["P", "R", "D", "PHO", "AGs", "Mats"]:
+        if t in ["P", "R", "D", "S", "AGs", "M"]:
             tmp_pdb = f"psfgentmp_{i}.pdb"
         else:
             tmp_pdb = f"psfgentmp_{t}.pdb"
@@ -225,7 +229,7 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix'):
         counts[t] += 1
         if t == 'P':
             gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False)
-        elif t == 'PHO':
+        elif t == 'S':
             gen.add_segment(segid=segid, pdbfile=tmp_pdb)
         else:
             gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False, auto_dihedrals=False)
@@ -278,33 +282,6 @@ def custom_genpsf(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix'):
     gen.read_topology(protein_topology)
     gen.read_topology(AGs_topology)
     gen.read_topology(Mats_topology)
-
-    # molecule type definitions
-    aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
-           "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
-    rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
-    dnas = ["DAD", "DGU", "DCY", "DTH", "DA", "DG", "DC", "DT"]
-    mg, cal = ["MG+", "SMG"], ["CA+"]
-    phos = ['PHO']
-    AGs = ['KAN']
-    Mats = ['UN1','AYA','ACA','NLG','C3C','C4C','C5C','Y52','CHT','CIT','CTT','ABU','CH5',
-            'GSH','MTA','SHR','TAU','BET','3PG','G6P','COA','FAD','NCA','PAU','ADN','ADP',
-            'AMP','ATP','C5P','CTN','UGA','GMP','UD1','NOS','NAD','NAI','NAD','UDP','U5P',
-            'UPG','2PG','13P','PEP','SAM','2HG','FUM','AKG','LMR','MCT','SIN']
-
-    def get_type(resname):
-        chaintype = (
-            'P' if resname in aas else
-            'R' if resname in rnas else
-            'D' if resname in dnas else
-            'M' if resname in mg else
-            'C' if resname in cal else
-            'PHO' if resname in phos else
-            'AGs' if resname in AGs else
-            'Mats' if resname in Mats else
-            None
-        )
-        return chaintype
     
     # loop through each pdb and add segments based on molecule type and number
     for pdb, num in zip(pdb_list, num_list):
@@ -321,7 +298,7 @@ def custom_genpsf(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix'):
                         for i in range(num):
                             segid = f"{chaintype}{encode_segid(i+1)}"
                             gen.add_segment(segid=segid, pdbfile=pdb, auto_angles=False)
-                    elif chaintype == 'PHO':
+                    elif chaintype == 'S':
                         for i in range(num):
                             segid = f"{chaintype}{encode_segid(i+1)}"
                             gen.add_segment(segid=segid, pdbfile=pdb)
