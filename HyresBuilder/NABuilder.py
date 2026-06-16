@@ -341,14 +341,9 @@ def build_peg(name, n, seed=None):
     bead name EO). The chain is built as a freely-rotating chain (FRC): every
     EO-EO bond is exactly 3.5 Å and every EO-EO-EO bond angle is fixed at
     exactly 123°, matching the C-C-O / C-O-C backbone geometry of PEG.
-    The torsion angle around each bond is drawn uniformly from [0, 2π),
-    giving realistic random-coil statistics while strictly preserving the
-    bond-angle geometry throughout the chain.
-
-    For the first bond a random direction on the unit sphere is chosen; each
-    subsequent bond vector is constructed by rotating the previous bond by
-    (180° − 123°) = 57° away from it and then spinning around the bond axis
-    by a uniformly random torsion angle.
+    
+    Self-Avoiding Constraint: Any non-adjacent bead pair is guaranteed to have 
+    a distance strictly greater than 0.5 nm (5.0 Å).
 
     Args:
         name (str): Stem of the output file. The PDB is written to ``<name>.pdb``.
@@ -362,12 +357,7 @@ def build_peg(name, n, seed=None):
 
     Raises:
         ValueError: If *name* is empty or *n* < 1.
-
-    Example:
-        >>> from HyresBuilder import RNABuilder
-        >>> RNABuilder.build_peg("mypeg", 20)
-        # output: mypeg.pdb
-        >>> RNABuilder.build_peg("mypeg_rep", 20, seed=42)  # reproducible
+        RuntimeError: If a collision-free chain cannot be generated.
     """
     import math
     import random
@@ -378,10 +368,10 @@ def build_peg(name, n, seed=None):
 
     EO_DIST  = 3.5                      # Å, EO-EO virtual bond length
     ANGLE    = 123.0                    # degrees, fixed EO-EO-EO bond angle
-    # The supplement gives the tilt of the new bond away from the old bond axis
     TILT     = math.radians(180.0 - ANGLE)   # 57°
-    COS_TILT = math.cos(TILT)          #  cos(57°) ≈  0.5446
-    SIN_TILT = math.sin(TILT)          #  sin(57°) ≈  0.8387
+    COS_TILT = math.cos(TILT)          
+    SIN_TILT = math.sin(TILT)          
+    MIN_DIST_SQ = 5.0 ** 2              # 0.5 nm = 5.0 Å; squared for faster distance math
 
     rng = random.Random(seed)
 
@@ -397,9 +387,7 @@ def build_peg(name, n, seed=None):
 
     def perp_vector(v):
         """Return an arbitrary unit vector perpendicular to v."""
-        # Pick the axis least parallel to v to avoid near-zero cross products
         ax = (0.0, 0.0, 1.0) if abs(v[0]) < 0.9 or abs(v[1]) < 0.9 else (1.0, 0.0, 0.0)
-        # Cross product v × ax
         cx = v[1] * ax[2] - v[2] * ax[1]
         cy = v[2] * ax[0] - v[0] * ax[2]
         cz = v[0] * ax[1] - v[1] * ax[0]
@@ -407,15 +395,8 @@ def build_peg(name, n, seed=None):
         return (cx / norm, cy / norm, cz / norm)
 
     def next_bond(prev_bond):
-        """Return a unit vector for the next bond.
-
-        The new bond is tilted exactly TILT radians (57°) away from prev_bond
-        and rotated by a uniformly random torsion angle around the prev_bond
-        axis, enforcing the fixed 123° EO-EO-EO bond angle exactly.
-        """
-        # Build two vectors perpendicular to prev_bond
+        """Return a unit vector for the next bond."""
         p1 = perp_vector(prev_bond)
-        # p2 = prev_bond × p1  (completes the right-handed frame)
         p2 = (
             prev_bond[1] * p1[2] - prev_bond[2] * p1[1],
             prev_bond[2] * p1[0] - prev_bond[0] * p1[2],
@@ -423,30 +404,65 @@ def build_peg(name, n, seed=None):
         )
         phi = rng.uniform(0.0, 2.0 * math.pi)   # random torsion angle
         cos_phi, sin_phi = math.cos(phi), math.sin(phi)
-        # New bond = cos(tilt)*prev_bond + sin(tilt)*(cos_phi*p1 + sin_phi*p2)
+        
         nx = COS_TILT * prev_bond[0] + SIN_TILT * (cos_phi * p1[0] + sin_phi * p2[0])
         ny = COS_TILT * prev_bond[1] + SIN_TILT * (cos_phi * p1[1] + sin_phi * p2[1])
         nz = COS_TILT * prev_bond[2] + SIN_TILT * (cos_phi * p1[2] + sin_phi * p2[2])
         return (nx, ny, nz)
 
-    # Build coordinates via freely-rotating chain
-    x, y, z = 9000.0, 9000.0, 9000.0
-    coords   = [(x, y, z)]
-    bond     = random_unit_vector()          # first bond: unconstrained direction
-    for i in range(n - 1):
-        if i > 0:
-            bond = next_bond(bond)
-        x += bond[0] * EO_DIST
-        y += bond[1] * EO_DIST
-        z += bond[2] * EO_DIST
-        coords.append((x, y, z))
+    def generate_chain():
+        """Generates the chain, restarting if it gets trapped in a steric clash."""
+        max_restarts = 1000
+        for attempt in range(max_restarts):
+            x, y, z = 9000.0, 9000.0, 9000.0
+            coords = [(x, y, z)]
+            bond = random_unit_vector()
+            stuck = False
+
+            for i in range(n - 1):
+                placed = False
+                # Try up to 50 random torsion angles for the current bead
+                for _ in range(50):
+                    if i > 0:
+                        test_bond = next_bond(bond)
+                    else:
+                        test_bond = bond
+
+                    nx = coords[-1][0] + test_bond[0] * EO_DIST
+                    ny = coords[-1][1] + test_bond[1] * EO_DIST
+                    nz = coords[-1][2] + test_bond[2] * EO_DIST
+
+                    # Excluded volume check: distance > 5.0 Å for non-adjacent beads
+                    # coords[:-1] checks all previous beads EXCEPT the immediately preceding one
+                    collision = False
+                    for cx, cy, cz in coords[:-1]:
+                        if (nx - cx)**2 + (ny - cy)**2 + (nz - cz)**2 <= MIN_DIST_SQ:
+                            collision = True
+                            break
+
+                    if not collision:
+                        bond = test_bond
+                        coords.append((nx, ny, nz))
+                        placed = True
+                        break
+
+                if not placed:
+                    stuck = True
+                    break  # Chain got trapped, break out and restart the entire chain
+
+            if not stuck:
+                return coords
+                
+        raise RuntimeError(f"Failed to build a collision-free PEG chain after {max_restarts} attempts. Try a smaller n.")
+
+    coords = generate_chain()
 
     out = f"{name}.pdb"
     with open(out, "w") as f:
         print("REMARK  iConRNA", file=f)
         print("REMARK  CREATE BY RNABUILDER/SHANLONG LI", file=f)
         print("REMARK  Ref: S. Li and J. Chen, PNAS, 2025, 122, e2504583122.", file=f)
-        print("REMARK  SEQUENCE: PEG x{}".format(n), file=f)
+        print(f"REMARK  SEQUENCE: PEG x{n}", file=f)
         for i, (cx, cy, cz) in enumerate(coords):
             atom = ["ATOM", i + 1, "EO", "PEG", "X", i + 1,
                     cx, cy, cz, 1.00, 0.00, "PEG"]

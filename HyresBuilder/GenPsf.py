@@ -229,8 +229,6 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix'):
         counts[t] += 1
         if t == 'P':
             gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False)
-        elif t == 'S':
-            gen.add_segment(segid=segid, pdbfile=tmp_pdb)
         else:
             gen.add_segment(segid=segid, pdbfile=tmp_pdb, auto_angles=False, auto_dihedrals=False)
 
