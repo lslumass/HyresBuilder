@@ -248,8 +248,13 @@ def build_polyP(name, n, seed=None):
     Each residue is a single PHO bead (P). Beads are placed via a random walk
     so that every P-P bond is exactly 2.7 Å but the chain is non-linear.
     The step direction is drawn uniformly from the unit sphere, giving a
-    realistic disordered conformation. The output PDB uses residue name
-    PHO and bead name P.
+    realistic disordered conformation with a general +z propagation and 
+    P-P-P angles strictly > 90°.
+    
+    Self-Avoiding Constraint: Excluded volume is enforced by ensuring any 
+    non-adjacent bead pair maintains a distance strictly greater than 4.0 Å. 
+    (Note: A 5.0 Å limit is not used here because the P-P bond is only 2.7 Å; 
+    a 5.0 Å constraint would physically force all bond angles to be > 135°).
 
     Args:
         name (str): Stem of the output file. The PDB is written to ``<name>.pdb``.
@@ -263,6 +268,7 @@ def build_polyP(name, n, seed=None):
 
     Raises:
         ValueError: If *name* is empty or *n* < 1.
+        RuntimeError: If a collision-free chain cannot be generated.
 
     Example:
         >>> from HyresBuilder import RNABuilder
@@ -278,6 +284,7 @@ def build_polyP(name, n, seed=None):
         raise ValueError(f"n must be >= 1, got {n}.")
 
     PP_DIST = 2.7   # Å, fixed P-P bond length
+    MIN_DIST_SQ = 4.0 ** 2  # 4.0 Å squared for faster distance math
 
     rng = random.Random(seed)
 
@@ -292,12 +299,7 @@ def build_polyP(name, n, seed=None):
             return x, y, z
 
     def next_direction(prev_dir):
-        """Return a random unit vector satisfying:
-          - dz > 0  (z always increases along the chain)
-          - dot(prev_dir, new_dir) > 0  (P-P-P angle > 90°)
-        Both constraints are enforced by rejection sampling.
-        prev_dir is None for the very first bond (only dz > 0 is required).
-        """
+        """Return a candidate random unit vector satisfying local angle constraints."""
         while True:
             d = random_unit_vector()
             if d[2] <= 0:                              # must go +z
@@ -308,27 +310,58 @@ def build_polyP(name, n, seed=None):
                     continue
             return d
 
-    # Build coordinates via constrained random walk
-    x, y, z = 9000.0, 9000.0, 9000.0
-    coords = [(x, y, z)]
-    prev_dir = None
-    for _ in range(n - 1):
-        dx, dy, dz = next_direction(prev_dir)
-        prev_dir = (dx, dy, dz)
-        x += dx * PP_DIST
-        y += dy * PP_DIST
-        z += dz * PP_DIST
-        coords.append((x, y, z))
+    def generate_chain():
+        """Generates the chain, restarting if it gets trapped in a steric clash."""
+        max_restarts = 1000
+        for attempt in range(max_restarts):
+            x, y, z = 9000.0, 9000.0, 9000.0
+            coords = [(x, y, z)]
+            prev_dir = None
+            stuck = False
+
+            for i in range(n - 1):
+                placed = False
+                # Try up to 50 local placements to satisfy the self-avoiding constraint
+                for _ in range(50):
+                    candidate_dir = next_direction(prev_dir)
+                    
+                    nx = coords[-1][0] + candidate_dir[0] * PP_DIST
+                    ny = coords[-1][1] + candidate_dir[1] * PP_DIST
+                    nz = coords[-1][2] + candidate_dir[2] * PP_DIST
+
+                    # Excluded volume check: distance > 4.0 Å for non-adjacent beads
+                    collision = False
+                    for cx, cy, cz in coords[:-1]:
+                        if (nx - cx)**2 + (ny - cy)**2 + (nz - cz)**2 <= MIN_DIST_SQ:
+                            collision = True
+                            break
+
+                    if not collision:
+                        prev_dir = candidate_dir
+                        coords.append((nx, ny, nz))
+                        placed = True
+                        break
+
+                if not placed:
+                    stuck = True
+                    break  # Chain got trapped, break out and restart the entire chain
+
+            if not stuck:
+                return coords
+                
+        raise RuntimeError(f"Failed to build a collision-free polyP chain after {max_restarts} attempts. Try a smaller n.")
+
+    # Build coordinates via constrained, self-avoiding random walk
+    coords = generate_chain()
 
     out = f"{name}.pdb"
     with open(out, "w") as f:
         print("REMARK  iConRNA", file=f)
-        print("REMARK  CREATE BY RNABUILDER/SHANLONG LI", file=f)
-        print("REMARK  Ref: S. Li and J. Chen, PNAS, 2025, 122, e2504583122.", file=f)
+        print("REMARK  CREATE BY HyResBuilder", file=f)
         print("REMARK  SEQUENCE: PHO x{}".format(n), file=f)
         for i, (cx, cy, cz) in enumerate(coords):
             atom = ["ATOM", i + 1, "P", "PHO", "X", i + 1,
-                    cx, cy, cz, 1.00, 0.00, "RNAP"]
+                    cx, cy, cz, 1.00, 0.00, "S001"]
             printcg([atom], f)
         print("END", file=f)
 
