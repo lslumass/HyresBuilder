@@ -14,8 +14,10 @@ MASS   508 M08  59.00   ! -NH-C(=O)-NH2, use M04 (Asn)
 
 MASS   550 MCI 150.00   ! C-C-I, Iodine-containing group, used for halogenated compounds, unquantified
 MASS   551 MSO  80.00   ! -SO4- OR -SO3-, -1 charge
-MASS   552 MSS  60.00   ! -S-S-, disulfide bond
+MASS   552 MSS  60.00   ! -S-S-, disulfide bond, -S=O
 MASS   553 MCL  50.00   ! C-C-Cl, unquantified
+MASS   554 MCF  50.00   ! C-C-F, unquantified
+MASS   555 MBR  50.00   ! C-C-Br, unquantified
 
 
 DECL -M1
@@ -29,9 +31,9 @@ AUTOGENERATE
 DEFA FIRS NTER LAST CTER
 
 
-RESI SMG          1.50  !
+RESI SMG          2.00  !
 GROUP                   !
-ATOM MG   SMG     1.50  !
+ATOM MG   SMG     2.00  !
 
 RESI 1MNA         0.00
 GROUP                 
