@@ -6,7 +6,7 @@ N-acetylglutamate                    NLG        Amino Acid Derivatives  [O-]C(=O
 C3-carnitine                         C3C        Amino Acid Derivatives  CCC(=O)O[C@@H](C[N+](C)(C)C)CC(=O)[O-]                                                                                                              
 C4-carnitines                        C4C        Amino Acid Derivatives  CCCC(=O)O[C@@H](C[N+](C)(C)C)CC(=O)[O-]                                                                                                             
 C5-carnitines                        C5C        Amino Acid Derivatives  CCCCC(=O)O[C@@H](C[N+](C)(C)C)CC(=O)[O-]                                                                                                            
-carnitine                            Y52        Amino Acid Derivatives  OC(C[N+](C)(C)C)CC(=O)[O-]                                                                                                                          
+carnitine                            152        Amino Acid Derivatives  OC(C[N+](C)(C)C)CC(=O)[O-]                                                                                                                          
 choline                              CHT        Amino Acid Derivatives  [NH3+]CCC(=O)N[C@H](C(=O)[O-])Cc1nc[nH]c1                                                                                                           
 citrulline                           CIT        Amino Acid Derivatives  NC(=O)NCCC[C@@H](C(=O)[O-])[NH3+]                                                                                                                   
 cystathionine                        CTT        Amino Acid Derivatives  [NH3+][C@H](C(=O)[O-])CCSC[C@@H](C(=O)[O-])[NH3+]                                                                                                   
@@ -49,3 +49,42 @@ alpha-ketoglutarate                  AKG        TCA Cycle               [O-]C(=O
 malate                               LMR        TCA Cycle               [O-]C(=O)CC(C(=O)[O-])O                                                                                                                             
 methylcitrate                        MCT        TCA Cycle               [O-]C(=O)CC(C(C(=O)[O-])C)(C(=O)[O-])O                                                                                                              
 succinate                            SIN        TCA Cycle               [O-]C(=O)CCC(=O)[O-]                                                                                                                                
+
+dimethylglycine                     DMG     aa
+7-methylguanosine                   MG7     aa
+1-Methyl-Histidine                  HIC     aa
+Adenine                             AD0
+Guanosine                           GUO     (GMP in PDB)
+Creatine                            CRN     martini (CRE)
+N-Acetylornithine                   AOR     aa
+Xanthosine                          4UO     aa
+Guanine                             GUN     
+N-acetyl-glutamine                  NLQ     aa
+Deoxyguanosine                      GNG     
+4-Hydroxyproline                    HYP     aa
+Indole-3-carboxylic acid            ICO     aa
+Phenyllactic acid                   HFA     aa  (L-form), another one is HF2 for D-form
+Malonic acid                        MLA     AA  
+Uridine                             URI
+2-keto-isovalerate                  KIV     AA
+Flavone                             FLN     AA
+cis-Aconitate                       TRA     martini (ACEN)
+N-Acetylputrescine                  X5A     aa
+Uracil                              URA0
+Phosphorylcholine                   PC      aa
+Biotin                              BTN     aa
+N6-Acetyl-L-lysine                  ALY     AA
+dCMP                                DC
+Allantoate                          1AL     AA
+UDP-D-glucose                       UPG     AA
+Glycerol-3-phosphate                G3P     Martini
+dAMP                                D5M     
+Phenylpyruvate                      PPY     AA
+Ornithine                           ORN     AA
+Deoxyinosine                        2ND     
+Cholic acid                         CHD     AA
+Hypoxanthine                        HPA     measure
+Riboflavin                          RBF     AA
+Xanthine                            XAN     measure
+Deoxycholic acid                    DXC     AA
+Thiamine                            VIB     AA

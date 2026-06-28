@@ -258,7 +258,7 @@ ATOM M3   M02    -1.00
 BOND M1   M2        M2   M3
 ANGL M1   M2   M3
 
-RESI Y52          0.00
+RESI 152          0.00
 GROUP                 
 ATOM M1   M06     1.00
 ATOM M2   P1T     0.00
