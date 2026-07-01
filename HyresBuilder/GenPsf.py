@@ -283,7 +283,7 @@ def write_merged_psf(out_path, title_lines, flags, atom_blocks, bond_blocks,
         out.write("\n")
 
         # Hardcoded dummy group block matching standard psfgen
-        out.write(f"{1:>8d} {0:>8d} !NGRP NST2\n")
+        out.write(f"{1:>7d} {0:>7d} !NGRP\n")
         out.write("       0       0       0\n\n")
 
         if ncrterm:
