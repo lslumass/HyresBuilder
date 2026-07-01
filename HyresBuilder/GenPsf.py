@@ -276,6 +276,10 @@ def write_merged_psf(out_path, title_lines, flags, atom_blocks, bond_blocks,
         _write_int_section(out, "NACC: acceptors", nacc, flat, 8)
 
         flat = [v for block in nnb_blocks for v in block]
+        if len(flat) != natom:
+            flat = [0] * natom
+            nnb_total = natom
+
         out.write(f"{nnb_total:>8d} !{nnb_label}\n")
         for k in range(0, len(flat), 8):
             out.write("".join(f"{v:>8d}" for v in flat[k:k + 8]))
@@ -283,7 +287,7 @@ def write_merged_psf(out_path, title_lines, flags, atom_blocks, bond_blocks,
         out.write("\n")
 
         # Hardcoded dummy group block matching standard psfgen
-        out.write(f"{1:>7d} {0:>7d} !NGRP\n")
+        out.write(f"{1:>8d} {0:>7d} !NGRP\n")
         out.write("       0       0       0\n\n")
 
         if ncrterm:
