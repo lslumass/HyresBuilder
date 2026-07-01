@@ -46,7 +46,6 @@ Dependencies
 * `psfgen <https://github.com/MDAnalysis/psfgen>`_ (``psfgen.PsfGen``)
 * HyresBuilder force-field topology files, loaded via ``utils.load_ff``.
 """
-
 from __future__ import annotations
 import re
 import argparse
@@ -237,11 +236,6 @@ def write_merged_psf(out_path, title_lines, flags, atom_blocks, bond_blocks,
     nnb_total = sum(len(b) for b in nnb_blocks)
     ncrterm = sum(len(b) for b in crossterm_blocks)
 
-    # Automatically promote format to EXT if atom count exceeds standard limits
-    is_ext = natom > 99999
-    if is_ext and "EXT" not in flags:
-        flags.append("EXT")
-
     with open(out_path, "w") as out:
         header = "PSF"
         if flags:
@@ -255,19 +249,12 @@ def write_merged_psf(out_path, title_lines, flags, atom_blocks, bond_blocks,
         out.write(f"{natom:>8d} !NATOM\n")
         for block in atom_blocks:
             for tok in block:
-                # Reconstruct an atom line using strictly enforced standard/extended column layout.
-                if is_ext:
-                    out.write(
-                        f"{int(tok[0]):10d} {tok[1]:<8s} {tok[2]:<8s} {tok[3]:<8s} "
-                        f"{tok[4]:<8s} {tok[5]:<6s} {float(tok[6]):10.6f} "
-                        f"{float(tok[7]):14.4f} {int(tok[8]):11d}\n"
-                    )
-                else:
-                    out.write(
-                        f"{int(tok[0]):8d} {tok[1]:<4s} {tok[2]:<4s} {tok[3]:<4s} "
-                        f"{tok[4]:<4s} {tok[5]:<4s} {float(tok[6]):10.6f} "
-                        f"{float(tok[7]):13.4f} {int(tok[8]):11d}\n"
-                    )
+                # Reconstruct an atom line in strictly enforced STANDARD column layout
+                out.write(
+                    f"{int(tok[0]):8d} {tok[1]:<4s} {tok[2]:<4s} {tok[3]:<4s} "
+                    f"{tok[4]:<4s} {tok[5]:<4s} {float(tok[6]):10.6f} "
+                    f"{float(tok[7]):13.4f} {int(tok[8]):11d}\n"
+                )
         out.write("\n")
 
         flat = [v for block in bond_blocks for pair in block for v in pair]
@@ -295,7 +282,7 @@ def write_merged_psf(out_path, title_lines, flags, atom_blocks, bond_blocks,
             out.write("\n")
         out.write("\n")
 
-        # --- HARDCODED 1 NGRP BLOCK ---
+        # Hardcoded dummy group block matching standard psfgen
         out.write(f"{1:>8d} {0:>8d} !NGRP NST2\n")
         out.write("       0       0       0\n\n")
 
@@ -397,16 +384,23 @@ def set_terminus(gen, segid, charge_status):
             exit(1)
 
 def encode_segid(n: int) -> str:
-    BASE36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    LEAD_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    if n > 68391:
-        return str(n)
+    """Encode segment number n into a 3-char string."""
     if n < 1000:
         return f"{n:03d}"
+    
     n -= 1000
-    lead = LEAD_CHARS[n // 1296]
-    rem = n % 1296
-    return f"{lead}{BASE36[rem // 36]}{BASE36[rem % 36]}"
+    # Base-62 encoding allows for 62^3 = 238,328 combinations
+    # keeping the segment ID safely within the 4-character standard limit.
+    BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    
+    if n >= 62**3:
+        return str(n + 1000) 
+        
+    c1 = BASE62[n // 3844]  # 62 * 62 = 3844
+    n = n % 3844
+    c2 = BASE62[n // 62]
+    c3 = BASE62[n % 62]
+    return f"{c1}{c2}{c3}"
 
 def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix'):
     if RNA == 'mix':
