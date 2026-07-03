@@ -31,9 +31,45 @@ AUTOGENERATE
 DEFA FIRS NTER LAST CTER
 
 
-RESI SMG          2.00  !
-GROUP                   !
-ATOM MG   SMG     2.00  !
+
+RESI HIC          0.00
+GROUP                 
+ATOM M1   M02    -1.00
+ATOM M2   QdK     1.00
+ATOM M3   A4H     0.00
+ATOM M4   P2H     0.00
+ATOM M5   RC1     0.00
+BOND M1   M2        M2   M3        M3   M4
+BOND M3   M5        M4   M5
+ANGL M1   M2   M3        M2   M3   M4        M2   M3   M5
+DIHE M2   M3   M5   M4
+
+RESI MG7          1.00  
+GROUP                             
+ATOM M1   P1S     0.00             
+ATOM C1   RS1     0.00                
+ATOM C2   RS2     0.00 
+ATOM NA   RG1     0.00  
+ATOM NB   M06     1.00  
+ATOM NC   RG3     0.00  
+ATOM ND   RG4     0.00  
+ATOM C3   M05     0.00
+BOND M1   C1        C1   C3
+BOND C1   C2        C2   NA        C2   C3
+BOND NA   NB        NA   ND        NB   NC        NC   ND
+ANGL M1   C1   C2        M1   C1   C3        
+ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
+ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
+ANGL M1   C1   C3        NA   C2   C3
+DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
+DIHE NA   NB   NC   ND
+IMPR C1   M1   C2   C3        NA   C2   NB   ND
+
+RESI DMG          0.00
+GROUP                 
+ATOM M1   M02     1.00
+ATOM M2   M06    -1.00
+BOND M1   M2
 
 RESI 1MNA         0.00
 GROUP                 
@@ -852,6 +888,9 @@ ANGL M2   M3   M4        M2   M3   M6
 DIHE M2   M1   +C1  +C2       M3   M2   M1  +C1        M1   M2   M3   M4
 DIHE M1   M2   M3   M6
 
+RESI SMG          2.00  !
+GROUP                   !
+ATOM MG   SMG     2.00  !
 ! to  be continued for other nucleotides, etc.
 
 END
