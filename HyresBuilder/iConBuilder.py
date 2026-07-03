@@ -248,8 +248,13 @@ def build_polyP(name, n, seed=None):
     Each residue is a single PHO bead (P). Beads are placed via a random walk
     so that every P-P bond is exactly 2.7 Å but the chain is non-linear.
     The step direction is drawn uniformly from the unit sphere, giving a
-    realistic disordered conformation. The output PDB uses residue name
-    PHO and bead name P.
+    realistic disordered conformation with a general +z propagation and 
+    P-P-P angles strictly > 90°.
+    
+    Self-Avoiding Constraint: Excluded volume is enforced by ensuring any 
+    non-adjacent bead pair maintains a distance strictly greater than 4.0 Å. 
+    (Note: A 5.0 Å limit is not used here because the P-P bond is only 2.7 Å; 
+    a 5.0 Å constraint would physically force all bond angles to be > 135°).
 
     Args:
         name (str): Stem of the output file. The PDB is written to ``<name>.pdb``.
@@ -263,6 +268,7 @@ def build_polyP(name, n, seed=None):
 
     Raises:
         ValueError: If *name* is empty or *n* < 1.
+        RuntimeError: If a collision-free chain cannot be generated.
 
     Example:
         >>> from HyresBuilder import RNABuilder
@@ -278,6 +284,7 @@ def build_polyP(name, n, seed=None):
         raise ValueError(f"n must be >= 1, got {n}.")
 
     PP_DIST = 2.7   # Å, fixed P-P bond length
+    MIN_DIST_SQ = 4.0 ** 2  # 4.0 Å squared for faster distance math
 
     rng = random.Random(seed)
 
@@ -292,12 +299,7 @@ def build_polyP(name, n, seed=None):
             return x, y, z
 
     def next_direction(prev_dir):
-        """Return a random unit vector satisfying:
-          - dz > 0  (z always increases along the chain)
-          - dot(prev_dir, new_dir) > 0  (P-P-P angle > 90°)
-        Both constraints are enforced by rejection sampling.
-        prev_dir is None for the very first bond (only dz > 0 is required).
-        """
+        """Return a candidate random unit vector satisfying local angle constraints."""
         while True:
             d = random_unit_vector()
             if d[2] <= 0:                              # must go +z
@@ -308,27 +310,195 @@ def build_polyP(name, n, seed=None):
                     continue
             return d
 
-    # Build coordinates via constrained random walk
-    x, y, z = 9000.0, 9000.0, 9000.0
-    coords = [(x, y, z)]
-    prev_dir = None
-    for _ in range(n - 1):
-        dx, dy, dz = next_direction(prev_dir)
-        prev_dir = (dx, dy, dz)
-        x += dx * PP_DIST
-        y += dy * PP_DIST
-        z += dz * PP_DIST
-        coords.append((x, y, z))
+    def generate_chain():
+        """Generates the chain, restarting if it gets trapped in a steric clash."""
+        max_restarts = 1000
+        for attempt in range(max_restarts):
+            x, y, z = 9000.0, 9000.0, 9000.0
+            coords = [(x, y, z)]
+            prev_dir = None
+            stuck = False
+
+            for i in range(n - 1):
+                placed = False
+                # Try up to 50 local placements to satisfy the self-avoiding constraint
+                for _ in range(50):
+                    candidate_dir = next_direction(prev_dir)
+                    
+                    nx = coords[-1][0] + candidate_dir[0] * PP_DIST
+                    ny = coords[-1][1] + candidate_dir[1] * PP_DIST
+                    nz = coords[-1][2] + candidate_dir[2] * PP_DIST
+
+                    # Excluded volume check: distance > 4.0 Å for non-adjacent beads
+                    collision = False
+                    for cx, cy, cz in coords[:-1]:
+                        if (nx - cx)**2 + (ny - cy)**2 + (nz - cz)**2 <= MIN_DIST_SQ:
+                            collision = True
+                            break
+
+                    if not collision:
+                        prev_dir = candidate_dir
+                        coords.append((nx, ny, nz))
+                        placed = True
+                        break
+
+                if not placed:
+                    stuck = True
+                    break  # Chain got trapped, break out and restart the entire chain
+
+            if not stuck:
+                return coords
+                
+        raise RuntimeError(f"Failed to build a collision-free polyP chain after {max_restarts} attempts. Try a smaller n.")
+
+    # Build coordinates via constrained, self-avoiding random walk
+    coords = generate_chain()
+
+    out = f"{name}.pdb"
+    with open(out, "w") as f:
+        print("REMARK  iConRNA", file=f)
+        print("REMARK  CREATE BY HyResBuilder", file=f)
+        print("REMARK  SEQUENCE: PHO x{}".format(n), file=f)
+        for i, (cx, cy, cz) in enumerate(coords):
+            atom = ["ATOM", i + 1, "P", "PHO", "X", i + 1,
+                    cx, cy, cz, 1.00, 0.00, "S001"]
+            printcg([atom], f)
+        print("END", file=f)
+
+
+def build_peg(name, n, seed=None):
+    """
+    Build a poly(ethylene glycol) (PEG) coarse-grained structure of n repeat units.
+
+    Each repeat unit is represented by a single EO bead (residue name PEG,
+    bead name EO). The chain is built as a freely-rotating chain (FRC): every
+    EO-EO bond is exactly 3.5 Å and every EO-EO-EO bond angle is fixed at
+    exactly 123°, matching the C-C-O / C-O-C backbone geometry of PEG.
+    
+    Self-Avoiding Constraint: Any non-adjacent bead pair is guaranteed to have 
+    a distance strictly greater than 0.5 nm (5.0 Å).
+
+    Args:
+        name (str): Stem of the output file. The PDB is written to ``<name>.pdb``.
+            Must not be empty.
+        n (int): Number of EO beads (repeat units) in the chain. Must be >= 1.
+        seed (int, optional): Random seed for reproducibility. Default is None
+            (non-reproducible).
+
+    Returns:
+        None. Writes a PDB file to ``<name>.pdb`` in the current working directory.
+
+    Raises:
+        ValueError: If *name* is empty or *n* < 1.
+        RuntimeError: If a collision-free chain cannot be generated.
+    """
+    import math
+    import random
+
+    _validate_name(name)
+    if n < 1:
+        raise ValueError(f"n must be >= 1, got {n}.")
+
+    EO_DIST  = 3.5                      # Å, EO-EO virtual bond length
+    ANGLE    = 123.0                    # degrees, fixed EO-EO-EO bond angle
+    TILT     = math.radians(180.0 - ANGLE)   # 57°
+    COS_TILT = math.cos(TILT)          
+    SIN_TILT = math.sin(TILT)          
+    MIN_DIST_SQ = 5.0 ** 2              # 0.5 nm = 5.0 Å; squared for faster distance math
+
+    rng = random.Random(seed)
+
+    def random_unit_vector():
+        """Uniform random direction on the unit sphere (Marsaglia method)."""
+        while True:
+            x = rng.uniform(-1, 1)
+            y = rng.uniform(-1, 1)
+            if x * x + y * y >= 1:
+                continue
+            z = math.sqrt(1 - x * x - y * y) * rng.choice([-1, 1])
+            return (x, y, z)
+
+    def perp_vector(v):
+        """Return an arbitrary unit vector perpendicular to v."""
+        ax = (0.0, 0.0, 1.0) if abs(v[0]) < 0.9 or abs(v[1]) < 0.9 else (1.0, 0.0, 0.0)
+        cx = v[1] * ax[2] - v[2] * ax[1]
+        cy = v[2] * ax[0] - v[0] * ax[2]
+        cz = v[0] * ax[1] - v[1] * ax[0]
+        norm = math.sqrt(cx * cx + cy * cy + cz * cz)
+        return (cx / norm, cy / norm, cz / norm)
+
+    def next_bond(prev_bond):
+        """Return a unit vector for the next bond."""
+        p1 = perp_vector(prev_bond)
+        p2 = (
+            prev_bond[1] * p1[2] - prev_bond[2] * p1[1],
+            prev_bond[2] * p1[0] - prev_bond[0] * p1[2],
+            prev_bond[0] * p1[1] - prev_bond[1] * p1[0],
+        )
+        phi = rng.uniform(0.0, 2.0 * math.pi)   # random torsion angle
+        cos_phi, sin_phi = math.cos(phi), math.sin(phi)
+        
+        nx = COS_TILT * prev_bond[0] + SIN_TILT * (cos_phi * p1[0] + sin_phi * p2[0])
+        ny = COS_TILT * prev_bond[1] + SIN_TILT * (cos_phi * p1[1] + sin_phi * p2[1])
+        nz = COS_TILT * prev_bond[2] + SIN_TILT * (cos_phi * p1[2] + sin_phi * p2[2])
+        return (nx, ny, nz)
+
+    def generate_chain():
+        """Generates the chain, restarting if it gets trapped in a steric clash."""
+        max_restarts = 1000
+        for attempt in range(max_restarts):
+            x, y, z = 9000.0, 9000.0, 9000.0
+            coords = [(x, y, z)]
+            bond = random_unit_vector()
+            stuck = False
+
+            for i in range(n - 1):
+                placed = False
+                # Try up to 50 random torsion angles for the current bead
+                for _ in range(50):
+                    if i > 0:
+                        test_bond = next_bond(bond)
+                    else:
+                        test_bond = bond
+
+                    nx = coords[-1][0] + test_bond[0] * EO_DIST
+                    ny = coords[-1][1] + test_bond[1] * EO_DIST
+                    nz = coords[-1][2] + test_bond[2] * EO_DIST
+
+                    # Excluded volume check: distance > 5.0 Å for non-adjacent beads
+                    # coords[:-1] checks all previous beads EXCEPT the immediately preceding one
+                    collision = False
+                    for cx, cy, cz in coords[:-1]:
+                        if (nx - cx)**2 + (ny - cy)**2 + (nz - cz)**2 <= MIN_DIST_SQ:
+                            collision = True
+                            break
+
+                    if not collision:
+                        bond = test_bond
+                        coords.append((nx, ny, nz))
+                        placed = True
+                        break
+
+                if not placed:
+                    stuck = True
+                    break  # Chain got trapped, break out and restart the entire chain
+
+            if not stuck:
+                return coords
+                
+        raise RuntimeError(f"Failed to build a collision-free PEG chain after {max_restarts} attempts. Try a smaller n.")
+
+    coords = generate_chain()
 
     out = f"{name}.pdb"
     with open(out, "w") as f:
         print("REMARK  iConRNA", file=f)
         print("REMARK  CREATE BY RNABUILDER/SHANLONG LI", file=f)
         print("REMARK  Ref: S. Li and J. Chen, PNAS, 2025, 122, e2504583122.", file=f)
-        print("REMARK  SEQUENCE: PHO x{}".format(n), file=f)
+        print(f"REMARK  SEQUENCE: PEG x{n}", file=f)
         for i, (cx, cy, cz) in enumerate(coords):
-            atom = ["ATOM", i + 1, "P", "PHO", "X", i + 1,
-                    cx, cy, cz, 1.00, 0.00, "RNAP"]
+            atom = ["ATOM", i + 1, "EO", "PEG", "X", i + 1,
+                    cx, cy, cz, 1.00, 0.00, "PEG"]
             printcg([atom], f)
         print("END", file=f)
 
@@ -342,7 +512,8 @@ def main():
         'sequence in one-letter codes; '
         'RNA: A/U/C/G (e.g. AUCGAUCG or A100); '
         'DNA: lowercase d prefix (e.g. dATCG or dA100); '
-        'polyP: P followed by count (e.g. P10)'
+        'polyP: P followed by count (e.g. P10); '
+        'PEG: EO followed by count (e.g. EO20)'
     ))
 
     args = parser.parse_args()
@@ -375,6 +546,9 @@ def main():
         if motif.upper() == 'P':
             build_polyP(args.name, count)
             print(f"PolyP structure saved to {args.name}.pdb")
+        elif motif.upper() == 'EO':
+            build_peg(args.name, count)
+            print(f"PEG structure saved to {args.name}.pdb")
         else:
             rna_seq = (motif.upper() * ((count // len(motif)) + 1))[:count]
             build_rna(args.name, rna_seq)
@@ -391,7 +565,8 @@ def main():
         "Invalid sequence format.\n"
         "  RNA:   pure letter sequence, e.g. AUCGAUCG or A100\n"
         "  DNA:   lowercase d prefix, e.g. dATCGATCG or dA100\n"
-        "  polyP: P followed by count, e.g. P10"
+        "  polyP: P followed by count, e.g. P10\n"
+        "  PEG:   EO followed by count, e.g. EO20"
     )
 
 
