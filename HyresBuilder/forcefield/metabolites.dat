@@ -53,14 +53,14 @@ succinate                            SIN        TCA Cycle               [O-]C(=O
 dimethylglycine                     DMG     aa
 7-methylguanosine                   MG7     aa
 1-Methyl-Histidine                  HIC     aa
-Adenine                             AD0
-Guanosine                           GUO     (GMP in PDB)
-Creatine                            CRN     martini (CRE)
+Adenine                             AD0     (ADE in PDB), follow ADE base
+Guanosine                           GRS     (GMP in PDB)
+Creatine                            CRN     aa
 N-Acetylornithine                   AOR     aa
 Xanthosine                          4UO     aa
 Guanine                             GUN     
 N-acetyl-glutamine                  NLQ     aa
-Deoxyguanosine                      GNG     
+Deoxyguanosine                      GNG     AA
 4-Hydroxyproline                    HYP     aa
 Indole-3-carboxylic acid            ICO     aa
 Phenyllactic acid                   HFA     aa  (L-form), another one is HF2 for D-form
@@ -70,13 +70,12 @@ Uridine                             URI
 Flavone                             FLN     AA
 cis-Aconitate                       TRA     martini (ACEN)
 N-Acetylputrescine                  X5A     aa
-Uracil                              URA0
+Uracil                              U0      (URA in PDB)
 Phosphorylcholine                   PC      aa
 Biotin                              BTN     aa
 N6-Acetyl-L-lysine                  ALY     AA
 dCMP                                DC
 Allantoate                          1AL     AA
-UDP-D-glucose                       UPG     AA
 Glycerol-3-phosphate                G3P     Martini
 dAMP                                D5M     
 Phenylpyruvate                      PPY     AA

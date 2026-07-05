@@ -44,7 +44,8 @@ params.pressure = 1*unit.atmosphere                             # pressure in NP
 params.friction = 0.1/unit.picosecond                           # friction coefficient in Langevin
 params.er_ref = 60.0                                            # dielectric constant
 params.gpu_id = "0"                                             # gpu_id used for simulation
-params.lmd = 0
+params.lmd = 0.0
+
 ### set up system and simulation
 """
 utils.setup(params, modification)
@@ -55,8 +56,10 @@ example:
         system.addForce(customforce)
     util.setup(params, modification=mod)
 """        
+def mod(system):
+    modify_metabolite(CharmmPsfFile(params.psf), system)
 
-system, sim = utils.setup(params)
+system, sim = utils.setup(params, modification=mod)
 
 """
 if further modify the system, add this line below:
