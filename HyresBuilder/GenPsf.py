@@ -309,7 +309,12 @@ metabolites = ['UN1', 'AYA', 'ACA', 'NLG', 'C3C', 'C4C', 'C5C', 'Y52', 'CHT', 'C
                'CTT', 'ABU', 'CH5', 'GSH', 'MTA', 'SHR', 'TAU', 'BET', '3PG', 'G6P',
                'COA', 'FAD', 'NCA', 'PAU', 'ADN', 'ADP', 'AMP', 'ATP', 'C5P', 'CTN',
                'UGA', 'GMP', 'UD1', 'NOS', 'NAD', 'NAI', 'NAD', 'UDP', 'U5P', 'UPG',
-               '2PG', '13P', 'PEP', 'SAM', '2HG', 'FUM', 'AKG', 'LMR', 'MCT', 'SIN', 'DGU']
+               '2PG', '13P', 'PEP', 'SAM', '2HG', 'FUM', 'AKG', 'LMR', 'MCT', 'SIN',
+               'DGU', "DMG", "MG7", "HIC", "AD0", "GRS", "CRN", "AOR", "4UO", "GUN",
+               "NLQ", "GNG", "HYP", "ICO", "HFA", "MLA", "URI", "KIV", "FLN", "TRA",
+               "X5A", "U0",  "PC",  "BTN", "ALY", "DC",  "1AL", "G3P", "D5M", "PPY",
+               "ORN", "2ND", "CHD", "HPA", "RBF", "XAN", "DXC", "VIB",
+               ]
 
 segtypes = ['P', 'R', 'D', 'I', 'S', 'AGs', 'M']
 
