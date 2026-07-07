@@ -91,7 +91,7 @@ ATOM G7   G47     0.00
 ATOM G8   G08    +1.00
 ATOM G9   G09     0.00
 GROUP
-ATOM G10  P2H    +1.00
+ATOM G10  QdK    +1.00
 GROUP
 ATOM G11  QdK    +1.00
 BOND G1   G2        G1   G3        G1   G4        G1   G7
@@ -100,7 +100,7 @@ BOND G5   G10       G7   G8        G7   G9        G8   G9
 BOND G9   G11
 ANGL G2   G1   G7        G3   G1   G4        G4   G1   G7
 ANGL G1   G4   G5        G1   G4   G6        G4   G5   G10
-ANGL G4   G6   G10       G1   G7   G8        G1   G7   G9
+ANGL G1   G7   G8        G1   G7   G9
 ANGL G7   G9   G11!       G8   G9   G11
 DIHE G2   G1   G7   G9        G1   G2   G7   G8        G1   G3   G4   G6
 DIHE G3   G1   G4   G5        G4   G6   G5   G10       G8   G7   G9   G11
@@ -130,10 +130,10 @@ BOND S2   S3        S4   S5        S4   S6        S5   S6
 BOND S5   S10       S6   S11       S7   S8        S7   S9
 BOND S8   S9        S8   S12       S9   S13
 ANGL S2   S1   S7        S3   S1   S4        S4   S1   S7
-ANGL S1   S4   S5        S1   S4   S6        S4   S5   S10
-ANGL S6   S5   S10       S4   S6   S11       S5   S6   S11
+ANGL S1   S4   S5        S1   S4   S6!        S6   S5   S10
+ANGL S4   S5   S10       S5   S6   S11!       S4   S6   S11
 ANGL S1   S7   S8        S1   S7   S9        S7   S8   S12
-ANGL S9   S8   S12       S7   S9   S13       S8   S9   S13
+ANGL S9   S8   S12       S7   S9   S13!       S8   S9   S13
 DIHE S2   S1   S7   S9        S1   S2   S7   S8        S1   S3   S4   S6
 DIHE S3   S1   S4   S5        S6   S4   S5   S10       S4   S5   S6   S11
 DIHE S9   S7   S8   S12       S8   S7   S9   S13
