@@ -31,12 +31,217 @@ AUTOGENERATE
 DEFA FIRS NTER LAST CTER
 
 
+RESI D5M         -2.00  
+GROUP                             
+ATOM M1   M01    -2.00             
+ATOM C1   DS1     0.00                
+ATOM C2   DS2     0.00 
+ATOM NA   DA1     0.00  
+ATOM NB   DA2     0.00  
+ATOM NC   DA3     0.00  
+ATOM ND   DA4     0.00  
+ATOM C3   P1T     0.00
+BOND M1   C1        C1   C3
+BOND C1   C2        C2   NA        C2   C3
+BOND NA   NB        NA   ND        NB   NC        NC   ND
+ANGL M1   C1   C2        M1   C1   C3        
+ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
+ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
+ANGL M1   C1   C3        NA   C2   C3
+DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
+DIHE NA   NB   NC   ND
+IMPR C1   M1   C2   C3        NA   C2   NB   ND
 
+RESI G3P         -2.00
+GROUP                 
+ATOM M1   P1S     0.00
+ATOM M2   P1T     0.00
+ATOM M3   M01    -1.00
+BOND M1   M2        M2   M3
+ANGL M1   M2   M3
 
+RESI DC          -2.00
+GROUP                 
+ATOM M1   M01    -2.00
+ATOM C1   DS1     0.00
+ATOM C2   DS2     0.00
+ATOM NA   DC1     0.00
+ATOM NB   DC2     0.00
+ATOM NC   DC3     0.00
+ATOM C3   P1T     0.00
+BOND M1   C1        C1   C2        C1   C3        C2   C3
+BOND C2   NA        NA   NB        NA   NC        NB   NC
+ANGL M1   C1   C2        M1   C1   C3
+ANGL C1   C2   NA        C2   NA   NC        C3   C2   NA
+DIHE M1   C1   C2   NA        C1   C2   NA   NC
+IMPR NA   C2   NB   NC        C1   M1   C2   C3
 
+RESI TRA         -3.00
+GROUP                 
+ATOM M1   M02    -1.00
+ATOM M2   A2V     0.00
+ATOM M3   M02    -1.00
+ATOM M4   M02    -1.00
+BOND M1   M2        M2   M3        M2   M4
+ANGL M1   M2   M3       M1   M2   M4         M3   M2   M4
+DIHE M1   M2   M4   M3
 
+RESI GNG          0.00  
+GROUP                             
+ATOM M1   P1S     0.00             
+ATOM C1   DS1     0.00                
+ATOM C2   DS2     0.00 
+ATOM NA   DG1     0.00  
+ATOM NB   DG2     0.00  
+ATOM NC   DG3     0.00  
+ATOM ND   DG4     0.00  
+ATOM C3   P1T     0.00
+BOND M1   C1        C1   C3
+BOND C1   C2        C2   NA        C2   C3
+BOND NA   NB        NA   ND        NB   NC        NC   ND
+ANGL M1   C1   C2        M1   C1   C3        
+ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
+ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
+ANGL M1   C1   C3        NA   C2   C3
+DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
+DIHE NA   NB   NC   ND
+IMPR C1   M1   C2   C3        NA   C2   NB   ND
 
+RESI VIB          1.00
+GROUP                 
+ATOM M1   P1T     0.00
+ATOM M2   A2V     0.00
+ATOM M3   C3E     0.00
+ATOM M4   QdK     1.00
+ATOM M5   A1F     0.00
+ATOM M6   RC1     0.00
+ATOM M7   RG4     0.00
+BOND M1   M2        M2   M3        M2   M4        M3   M4
+BOND M4   M5        M5   M6        M5   M7        M6   M7
+ANGL M1   M2   M3       M1   M2   M4       M2   M4   M5
+ANGL M3   M4   M5       M4   M5   M6       M4   M5   M7
+DIHE M1   M2   M3   M4        M2   M3   M4   M5
+DIHE M2   M4   M5   M6        M2   M4   M5   M7
+DIHE M4   M5   M7   M6
 
+RESI CHD         -1.00
+GROUP                 
+ATOM M1   P1T     0.00
+ATOM M2   C3E     0.00
+ATOM M3   A2V     0.00
+ATOM M4   P1T     0.00
+ATOM M5   C3E     0.00
+ATOM M6   P1T     0.00
+ATOM M7   A2V     0.00
+ATOM M8   A2V     0.00
+ATOM M9   A2V     0.00
+ATOM M10  QaD    -1.00
+BOND M1   M2        M1   M3        M2   M3        M3   M4
+BOND M3   M5        M4   M5        M5   M6        M5   M7
+BOND M6   M7        M7   M8        M8   M9        M9   M10
+BOND M1   M5
+ANGL M2   M3   M5       M1   M3   M4       M3   M5   M6
+ANGL M4   M5   M7       M5   M7   M8       M6   M7   M8
+ANGL M7   M8   M9       M8   M9   M10
+DIHE M3   M4   M5   M7        M3   M5   M6   M7        M4   M5   M7   M6
+DIHE M4   M5   M7   M8        M5   M6   M7   M8        M5   M7   M8   M9
+DIHE M6   M7   M8   M9        M7   M8   M9   M10
+
+RESI DXC         -1.00
+GROUP                 
+ATOM M1   P1T     0.00
+ATOM M2   C3E     0.00
+ATOM M3   A2V     0.00
+ATOM M4   C3E     0.00
+ATOM M5   C3E     0.00
+ATOM M6   P1T     0.00
+ATOM M7   A2V     0.00
+ATOM M8   A2V     0.00
+ATOM M9   A2V     0.00
+ATOM M10  QaD    -1.00
+BOND M1   M2        M1   M3        M2   M3        M3   M4
+BOND M3   M5        M4   M5        M5   M6        M5   M7
+BOND M6   M7        M7   M8        M8   M9        M9   M10
+BOND M1   M5
+ANGL M2   M3   M5       M1   M3   M4       M3   M5   M6
+ANGL M4   M5   M7       M5   M7   M8       M6   M7   M8
+ANGL M7   M8   M9       M8   M9   M10
+DIHE M3   M4   M5   M7        M3   M5   M6   M7        M4   M5   M7   M6
+DIHE M4   M5   M7   M8        M5   M6   M7   M8        M5   M7   M8   M9
+DIHE M6   M7   M8   M9        M7   M8   M9   M10
+
+RESI RBF          0.00
+GROUP                 
+ATOM M1   P1S     0.00
+ATOM M2   P1S     0.00
+ATOM M3   P1S     0.00
+ATOM M4   P1T     0.00
+ATOM M5   RC1     0.00
+ATOM M6   A1F     0.00
+ATOM M7   A2F     0.00
+ATOM M8   RC1     0.00
+ATOM M9   RA1     0.00
+ATOM M10  RA1     0.00
+BOND M1   M2        M2   M3        M3   M4        M4   M5
+BOND M5   M6        M6   M7        M7   M8        M8   M9
+BOND M9   M10       M10  M5        M5   M8        M6   M8
+BOND M5   M9
+ANGL M1   M2   M3       M2   M3   M4       M3   M4   M5
+ANGL M4   M5   M6       M4   M5   M7
+DIHE M1   M2   M3   M4        M2   M3   M4   M5        M3   M4   M5   M6
+DIHE M3   M4   M5   M10       M4   M5   M6   M7        M5   M6   M7   M8
+DIHE M6   M5   M8   M10       M5   M10  M9   M8
+
+RESI PPY         -1.00
+GROUP                 
+ATOM M1   M02    -1.00
+ATOM M2   RC3     0.00
+ATOM M3   A1F     0.00
+ATOM M4   A2F     0.00
+ATOM M5   A3F     0.00
+BOND M1   M2        M2   M3        M3   M4        M3   M5
+BOND M4   M5
+ANGL M1   M2   M3       M2   M3   M4       M2   M3   M5
+DIHE M1   M2   M3   M4        M1   M2   M3   M5
+DIHE M2   M3   M4   M5
+
+RESI 1AL         -1.00
+GROUP                 
+ATOM M1   M08     0.00
+ATOM M2   QaD    -1.00
+ATOM M3   M08     0.00
+BOND M1   M2        M2   M3
+ANGL M1   M2   M3
+
+RESI BTN         -1.00
+GROUP                 
+ATOM M1   M02    -1.00
+ATOM M2   A2V     0.00
+ATOM M3   C3E     0.00
+ATOM M4   C3E     0.00
+ATOM M5   M08     0.00
+BOND M1   M2        M2   M3        M3   M4        M3   M5
+BOND M4   M5        M5   M6
+ANGL M1   M2   M3       M2   M3   M4       M2   M3   M5
+ANGL M3   M5   M6       M4   M5   M6
+DIHE M1   M2   M3   M4        M1   M2   M3   M5
+DIHE M2   M3   M4   M5        M2   M3   M5   M6
+IMPR M5   M3   M4   M6
+
+RESI PC          -1.00
+GROUP                 
+ATOM M1   M01    -2.00
+ATOM M2   C3E     0.00
+ATOM M3   M06     1.00
+BOND M1   M2        M2   M3
+ANGL M1   M2   M3
+
+RESI U0           0.00
+GROUP                 
+ATOM M1   A2W     0.00
+ATOM M2   RU1     0.00
+ATOM M3   RU1     0.00
+BOND M1   M2        M1   M3        M2   M3 
 
 RESI X5A          1.00
 GROUP                 
@@ -99,7 +304,7 @@ RESI HFA         -1.00
 GROUP                 
 ATOM M1   M02    -1.00
 ATOM M2   P1S     0.00
-ATOM M3   A1F     1.00
+ATOM M3   A1F     0.00
 ATOM M4   A2F     0.00
 ATOM M5   A3F     0.00
 BOND M1   M2        M2   M3        M3   M4        M3   M5

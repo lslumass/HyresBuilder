@@ -80,7 +80,7 @@ Glycerol-3-phosphate                G3P     Martini
 dAMP                                D5M     
 Phenylpyruvate                      PPY     AA
 Ornithine                           ORN     AA
-Deoxyinosine                        2ND     
+Deoxyinosine                        2ND     follow GNG
 Cholic acid                         CHD     AA
 Hypoxanthine                        HPA     measure
 Riboflavin                          RBF     AA
