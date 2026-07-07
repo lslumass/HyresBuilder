@@ -124,7 +124,7 @@ ATOM S10  QdR    +1.00
 ATOM S11  QdR    +1.00
 GROUP
 ATOM S12  P1S     0.00
-ATOM S13  P2H    +1.00
+ATOM S13  QdK    +1.00
 BOND S1   S2        S1   S3        S1   S4        S1   S7
 BOND S2   S3        S4   S5        S4   S6        S5   S6
 BOND S5   S10       S6   S11       S7   S8        S7   S9
