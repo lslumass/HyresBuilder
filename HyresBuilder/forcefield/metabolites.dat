@@ -30,7 +30,7 @@ ATP                                  ATP        Nucleotides             O[C@@H]1
 CMP                                  C5P        Nucleotides             O[C@@H]1[C@H](O)[C@H](O[C@H]1n1ccc(nc1=O)N)COP(=O)([O-])[O-]                                                                                        
 Cytidine                             CTN        Nucleotides             OC[C@H]1O[C@H]([C@@H]([C@@H]1O)O)n1ccc(nc1=O)N                                                                                                      
 UDP-glucuronic acid                  UGA        Nucleotides             O[C@@H]1[C@@H](COP(=O)(OP(=O)(O[C@H]2O[C@H](C(=O)[O-])[C@H]([C@@H]([C@H]2O)O)O)[O-])[O-])O[C@H]([C@@H]1O)n1ccc(=O)[nH]c1=O                          
-GMP                                  GMP        Nucleotides             O[C@@H]1[C@H](O)[C@H](O[C@H]1n1cnc2c1nc(N)[nH]c2=O)COP(=O)([O-])[O-]                                                                                
+GMP                                  5GP         Nucleotides             O[C@@H]1[C@H](O)[C@H](O[C@H]1n1cnc2c1nc(N)[nH]c2=O)COP(=O)([O-])[O-]                                                                                
 UDP-GlcNAc                           UD1        Nucleotides             OC[C@H]1O[C@H](OP(=O)(OP(=O)(OC[C@H]2O[C@H]([C@@H]([C@@H]2O)O)n2ccc(=O)[nH]c2=O)[O-])[O-])[C@@H]([C@H]([C@@H]1O)O)NC(=O)C                           
 inosine                              NOS        Nucleotides             OC[C@H]1O[C@H]([C@@H]([C@@H]1O)O)n1cnc2c1[nH]cnc2=O                                                                                                 
 NAD+                                 NAD        Nucleotides             O[C@@H]1[C@H](O)[C@H](O[C@H]1[n+]1cccc(c1)C(=O)N)COP(=O)(OP(=O)(OC[C@H]1O[C@H]([C@@H]([C@@H]1O)O)n1cnc2c1ncnc2N)[O-])[O-]                           
@@ -74,7 +74,7 @@ Uracil                              U0      (URA in PDB)
 Phosphorylcholine                   PC      aa
 Biotin                              BTN     aa
 N6-Acetyl-L-lysine                  ALY     AA
-dCMP                                DC
+dCMP                                DCM     AA
 Allantoate                          1AL     AA
 Glycerol-3-phosphate                G3P     Martini
 dAMP                                D5M     
@@ -87,3 +87,4 @@ Riboflavin                          RBF     AA
 Xanthine                            XAN     measure
 Deoxycholic acid                    DXC     AA
 Thiamine                            VIB     AA
+Deoxyadenosine                      3D1     AA

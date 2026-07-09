@@ -85,9 +85,9 @@ G23   G01   G47   35.0      70.0  ! G2-G1-G7, G3-G1-G4
 G47   G01   G47   25.0     153.0  ! G4-G1-G7
 G01   G47   G05   25.0     133.0  ! G1-G4-G5
 G47   G05   QdK   20.0     141.0  ! G4-G5-G10
-G01   G47   G08   10.0     110.0  ! G1-G7-G8
+G01   G47   G08   20.0     110.0  ! G1-G7-G8
 G01   G47   G09   45.0     149.0  ! G1-G7-G9
-G47   G09   QdK   75.0     109.0  ! G7-G9-G11
+G47   G09   QdK   35.0     109.0  ! G7-G9-G11
 !G08   G09   QdK   48.0     157.0  ! G8-G9-G11
 ! angles for Streptomycin (SRY)
 S02   S01   S07   16.0      65.0
@@ -188,6 +188,8 @@ NBFIX
 !                 Emin         Rmin
 !                 (kcal/mol)   (A)
 K01    K01       -0.0502      5.0750           !necessary, do not delete
+G01    G01       -0.0502      5.0750           !necessary, do not delete
+S01    S01       -0.1200      4.5118           !necessary, do not delete
 
 !# QdR/QdK-RNA cation-pi interactions
 QdR       RA1       -0.13000       4.5000 

@@ -31,15 +31,87 @@ AUTOGENERATE
 DEFA FIRS NTER LAST CTER
 
 
+RESI 3D1          0.00  
+GROUP                             
+ATOM M1   P1S     0.00             
+ATOM C1   RS1     0.00                
+ATOM C2   RS2     0.00 
+ATOM NA   RA1     0.00  
+ATOM NB   RA2     0.00  
+ATOM NC   RA3     0.00  
+ATOM ND   RA4     0.00  
+ATOM C3   P1T     0.00
+BOND M1   C1        C1   C3
+BOND C1   C2        C2   NA        C2   C3
+BOND NA   NB        NA   ND        NB   NC        NC   ND
+ANGL M1   C1   C2        M1   C1   C3        
+ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
+ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
+ANGL M1   C1   C3        NA   C2   C3
+DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
+DIHE NA   NB   NC   ND
+IMPR C1   M1   C2   C3        NA   C2   NB   ND
+
+RESI ORN          1.00
+GROUP                 
+ATOM M1   M02    -1.00
+ATOM M2   QdK     1.00
+ATOM M3   C3E     0.00
+ATOM M4   QdK     1.00
+BOND M1   M2        M2   M3        M3   M4
+ANGL M1   M2   M3
+DIHE M1   M2   M3   M4
+
+RESI XAN          0.00
+GROUP                 
+ATOM NA   P1H     0.00
+ATOM NB   RG2     0.00
+ATOM NC   RG3     0.00
+ATOM ND   RG3     0.00
+BOND NA   NB        NB   NC        NC   ND      NA   ND
+ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
+DIHE NA   NB   ND   NC        NA   NB   NC   ND
+
+RESI 2ND          0.00  
+GROUP                             
+ATOM M1   P1S     0.00             
+ATOM C1   RS1     0.00                
+ATOM C2   RS2     0.00 
+ATOM NA   RA1     0.00  
+ATOM NB   RA2     0.00  
+ATOM NC   RG3     0.00  
+ATOM ND   RA4     0.00  
+ATOM C3   P1T     0.00
+BOND M1   C1        C1   C3
+BOND C1   C2        C2   NA        C2   C3
+BOND NA   NB        NA   ND        NB   NC        NC   ND
+ANGL M1   C1   C2        M1   C1   C3        
+ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
+ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
+ANGL M1   C1   C3        NA   C2   C3
+DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
+DIHE NA   NB   NC   ND
+IMPR NA   C2   NB   ND        C1   M1   C2   C3
+
+RESI ALY          0.00
+GROUP                 
+ATOM M1   M02    -1.00
+ATOM M2   QdK     1.00
+ATOM M3   A1L     0.00
+ATOM M4   M03     0.00
+BOND M1   M2        M2   M3        M3   M4
+ANGL M1   M2   M3       M2   M3   M4
+DIHE M1   M2   M3   M4
+
 RESI D5M         -2.00  
 GROUP                             
 ATOM M1   M01    -2.00             
-ATOM C1   DS1     0.00                
-ATOM C2   DS2     0.00 
-ATOM NA   DA1     0.00  
-ATOM NB   DA2     0.00  
-ATOM NC   DA3     0.00  
-ATOM ND   DA4     0.00  
+ATOM C1   RS1     0.00                
+ATOM C2   RS2     0.00 
+ATOM NA   RA1     0.00  
+ATOM NB   RA2     0.00  
+ATOM NC   RA3     0.00  
+ATOM ND   RA4     0.00  
 ATOM C3   P1T     0.00
 BOND M1   C1        C1   C3
 BOND C1   C2        C2   NA        C2   C3
@@ -60,14 +132,14 @@ ATOM M3   M01    -1.00
 BOND M1   M2        M2   M3
 ANGL M1   M2   M3
 
-RESI DC          -2.00
+RESI DCM         -2.00
 GROUP                 
 ATOM M1   M01    -2.00
-ATOM C1   DS1     0.00
-ATOM C2   DS2     0.00
-ATOM NA   DC1     0.00
-ATOM NB   DC2     0.00
-ATOM NC   DC3     0.00
+ATOM C1   RS1     0.00
+ATOM C2   RS2     0.00
+ATOM NA   RA1     0.00
+ATOM NB   RA2     0.00
+ATOM NC   RA3     0.00
 ATOM C3   P1T     0.00
 BOND M1   C1        C1   C2        C1   C3        C2   C3
 BOND C2   NA        NA   NB        NA   NC        NB   NC
@@ -89,12 +161,12 @@ DIHE M1   M2   M4   M3
 RESI GNG          0.00  
 GROUP                             
 ATOM M1   P1S     0.00             
-ATOM C1   DS1     0.00                
-ATOM C2   DS2     0.00 
-ATOM NA   DG1     0.00  
-ATOM NB   DG2     0.00  
-ATOM NC   DG3     0.00  
-ATOM ND   DG4     0.00  
+ATOM C1   RS1     0.00                
+ATOM C2   RS2     0.00 
+ATOM NA   RA1     0.00  
+ATOM NB   RA2     0.00  
+ATOM NC   RA3     0.00  
+ATOM ND   RA4     0.00  
 ATOM C3   P1T     0.00
 BOND M1   C1        C1   C3
 BOND C1   C2        C2   NA        C2   C3
@@ -104,7 +176,7 @@ ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
 ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
 ANGL M1   C1   C3        NA   C2   C3
 DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
-DIHE NA   NB   NC   ND
+DIHE NA   NB   NC   ND        
 IMPR C1   M1   C2   C3        NA   C2   NB   ND
 
 RESI VIB          1.00
@@ -694,7 +766,7 @@ RESI 152          0.00
 GROUP                 
 ATOM M1   M06     1.00
 ATOM M2   P1T     0.00
-ATOM M3   M02    -1.00
+ATOM M3   QaD    -1.00
 BOND M1   M2        M2   M3
 ANGL M1   M2   M3
 
@@ -1119,7 +1191,7 @@ DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
 DIHE NA   NB   NC   ND
 IMPR NA   C2   NB   ND        C1   M1   C2   C3
 
-RESI GMP         -2.00  
+RESI 5GP         -2.00  
 GROUP                             
 ATOM M1   M01    -2.00             
 ATOM C1   RS1     0.00                

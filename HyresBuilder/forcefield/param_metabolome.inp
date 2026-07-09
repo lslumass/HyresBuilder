@@ -270,7 +270,6 @@ NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
 !atom  ignored    epsilon      Rmin/2   ignored   eps,1-4       Rmin/2,1-4
 !
 
-! for Kanamycin A (KAN)
 M01      0.00     -0.0519      2.4340   0.00     -0.0519      2.4340
 M02      0.00     -0.0150      2.0982   0.00     -0.0150      2.0982
 M03      0.00     -0.0720      2.2759   0.00     -0.0720      2.2759
