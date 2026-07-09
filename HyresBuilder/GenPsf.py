@@ -305,7 +305,7 @@ dnas = ["DAD", "DCY", "DTH", "DA", "DG", "DC", "DT"]
 ions = ["MG+", "SMG", "CA+"]
 polymer = ['PHO', 'PEG']
 AGs = ['KAN', 'LLL', 'SRY']
-metabolites = ['UN1', 'AYA', 'ACA', 'NLG', 'C3C', 'C4C', 'C5C', 'Y52', 'CHT', 'CIT',
+metabolites = ['UN1', 'AYA', 'ACA', 'NLG', 'C3C', 'C4C', 'C5C', '152', 'CHT', 'CIT',
                'CTT', 'ABU', 'CH5', 'GSH', 'MTA', 'SHR', 'TAU', 'BET', '3PG', 'G6P',
                'COA', 'FAD', 'NCA', 'PAU', 'ADN', 'ADP', 'AMP', 'ATP', 'C5P', 'CTN',
                'UGA', 'GMP', 'UD1', 'NOS', 'NAD', 'NAI', 'NAD', 'UDP', 'U5P', 'UPG',
