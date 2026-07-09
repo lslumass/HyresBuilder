@@ -98,9 +98,9 @@ BOND G1   G2        G1   G3        G1   G4        G1   G7
 BOND G2   G3        G4   G5        G4   G6        G5   G6
 BOND G5   G10       G7   G8        G7   G9        G8   G9
 BOND G9   G11
-ANGL G2   G1   G7        G3   G1   G4
-ANGL G1   G4   G5        G4   G5   G10
-ANGL G1   G7   G8!        G1   G7   G9
+ANGL G2   G1   G7        G3   G1   G4        G4   G1   G7
+ANGL G1   G4   G5        G1   G4   G6        G4   G5   G10
+ANGL G1   G7   G8        G1   G7   G9
 ANGL G7   G9   G11!       G8   G9   G11
 DIHE G2   G1   G7   G9        G4   G3   G1   G7        G2   G3   G1   G4
 DIHE G3   G1   G4   G5        G4   G6   G5   G10       G8   G7   G9   G11
