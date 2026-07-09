@@ -308,7 +308,7 @@ AGs = ['KAN', 'LLL', 'SRY']
 metabolites = ['UN1', 'AYA', 'ACA', 'NLG', 'C3C', 'C4C', 'C5C', '152', 'CHT', 'CIT',
                'CTT', 'ABU', 'CH5', 'GSH', 'MTA', 'SHR', 'TAU', 'BET', '3PG', 'G6P',
                'COA', 'FAD', 'NCA', 'PAU', 'ADN', 'ADP', 'AMP', 'ATP', 'C5P', 'CTN',
-               'UGA', 'GMP', 'UD1', 'NOS', 'NAD', 'NAI', 'NAD', 'UDP', 'U5P', 'UPG',
+               'UGA', '5GP', 'UD1', 'NOS', 'NAD', 'NAI', 'NAD', 'UDP', 'U5P', 'UPG',
                '2PG', '13P', 'PEP', 'SAM', '2HG', 'FUM', 'AKG', 'LMR', 'MCT', 'SIN',
                'DGU', "DMG", "MG7", "HIC", "AD0", "GRS", "CRN", "AOR", "4UO", "GUN",
                "NLQ", "GNG", "HYP", "ICO", "HFA", "MLA", "URI", "KIV", "FLN", "TRA",
