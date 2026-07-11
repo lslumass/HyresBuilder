@@ -457,6 +457,7 @@ RS1   PHO   RS2   M05     30.0    0  -61.5
 RS2   RS1   M05   M06     15.0    0   15.0
 RS2   RS1   M05   P1H     15.0    0   15.0
 !! trick impropers
+A1W   P1H   A2W   M04      0.0    0    0.0
 A3K   M02   QdK   M03      0.0    0    0.0
 C3E   M02   P5N   M03      0.0    0    0.0
 M03   P1H   A2W   M03      0.0    0    0.0

@@ -553,7 +553,7 @@ RESI NCA          0.00
 GROUP                 
 ATOM M1   P1H     0.00
 ATOM M2   A2W     0.00
-ATOM M3   A2W     0.00
+ATOM M3   A1W     0.00
 ATOM M4   M04     0.00
 BOND M1   M2        M1   M3        M2   M3        M3   M4
 ANGL M1   M3   M4        M2   M3   M4
