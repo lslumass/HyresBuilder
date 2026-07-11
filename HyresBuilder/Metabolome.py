@@ -35,10 +35,8 @@ metabolome = {
             ('M1', 'M3', 'M4'): (25.0, 135.0), # P1H - A1W - M04
             ('M2', 'M3', 'M4'): (0.0, 165.0),  # A2W - A1W - M04
         },
-        'dihedrals': {},
-        'impropers': {
-            ('M3', 'M1', 'M2', 'M4'): (25.0, 0, 0.0), # IMPH M3 M1 M2 M4
-        },
+        'dihedrals': {('M2', 'M1', 'M3', 'M4'): (5, 1, 0.0),},
+        'impropers': {},
     },
     '2HG': {
         'bonds': {

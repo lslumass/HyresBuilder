@@ -380,6 +380,7 @@ A1F   RS2   A1F   A2F      0.0    1   180.0
 A1F   RS2   RC3   A1F      0.0    1   180.0
 A1W   P1W   A2W   A3W      0.0    1   180.0
 A1W   P1W   A2W   A4W      0.0    1   180.0
+A2W   P1H   A1W   M04      0.0    0   180.0
 A2F   A3F   A1F   RS2      0.0    1   180.0
 A2V   A2V   A2V   QaD      0.0    1   180.0
 A2V   C3E   C3E   A2V      0.0    1   180.0

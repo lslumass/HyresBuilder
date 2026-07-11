@@ -556,8 +556,8 @@ ATOM M2   A2W     0.00
 ATOM M3   A1W     0.00
 ATOM M4   M04     0.00
 BOND M1   M2        M1   M3        M2   M3        M3   M4
-ANGL M1   M3   M4        M2   M3   M4
-IMPH M3   M1   M2   M4
+ANGL M1   M3   M4
+DIHE M2   M1   M3   M4
 
 RESI 2HG         -2.00
 GROUP                 
