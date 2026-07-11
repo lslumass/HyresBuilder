@@ -86,12 +86,14 @@ C3E   A2V      0.0    1.00
 C3E   M08      0.0    1.00
 C3E   P5N      0.0    1.00
 M02   A1W      0.0    1.00
+M02   A3K      0.0    1.00
 M02   QaD      0.0    1.00
 M02   QdR      0.0    1.00
 M02   RC3      0.0    1.00
 M03   A3K      0.0    1.00
 M06   RG3      0.0    1.00
 M08   QaD      0.0    1.00
+P1H   A1W      0.0    1.00
 P1H   RA2      0.0    1.00
 P1H   RG2      0.0    1.00
 P1H   RG3      0.0    1.00
@@ -253,6 +255,7 @@ M02   RC3   A2V      0.0     180.0
 M03   A3K   QdK      0.0     180.0
 M03   P1T   M02      0.0     180.0
 M06   RG3   RG4      0.0     180.0
+M06   P1T   QaD      0.0     180.0
 M08   QaD   M08      0.0     180.0
 P1H   A2W   M03      0.0     180.0
 P1H   RA2   RA3      0.0     180.0
@@ -418,8 +421,6 @@ P1T   RP    C3E   M06      0.0    1   180.0
 P1W   A2W   A3W   A4W      0.0    1   180.0
 QdK   A1F   RG4   RC1      0.0    1   180.0
 QdK   A4H   RC1   P2H      0.0    1   180.0
-RA1   RA2   RA3   RA4      0.0    1   180.0
-RA1   RA2   RA4   RA3      0.0    1   180.0
 RA1   RA2   RA4   RG3      0.0    1   180.0
 RA1   RA2   RG3   RA4      0.0    1   180.0
 RC1   A1F   A2F   RC1      0.0    1   180.0
@@ -428,13 +429,8 @@ RC3   A1F   A2F   A3F      0.0    1   180.0
 RG1   M06   RG3   RG4      0.0    1   180.0
 RG1   M06   RG4   RG3      0.0    1   180.0
 RG1   RG2   RG3   RG3      0.0    1   180.0
-RG1   RG2   RG3   RG4      0.0    1   180.0
-RG1   RG2   RG4   RG3      0.0    1   180.0
-RS1   RS2   RA1   RA2      0.0    1   180.0
 RS1   RS2   RA1   RA3      0.0    1   180.0
 RS1   RS2   RG1   M06      0.0    1   180.0
-RS1   RS2   RG1   RG2      0.0    1   180.0
-RS1   RS2   RU1   RU3      0.0    1   180.0
 RS2   RC3   A1F   A2F      0.0    1   180.0
 
 
@@ -456,18 +452,17 @@ RS1   PHO   RS2   M05     30.0    0  -61.5
 RS2   RS1   M05   M06     15.0    0   15.0
 RS2   RS1   M05   P1H     15.0    0   15.0
 !! trick impropers
-RS1   P1S   RS2   P1T      0.0    0    0.0
-RA1   RS2   RA2   RA3      0.0    0    0.0
-M08   C3E   C3E   M06      0.0    0    0.0
-C3E   M02   P5N   M03      0.0    0    0.0
-RG1   RS2   RG2   RG3      0.0    0    0.0
 A3K   M02   QdK   M03      0.0    0    0.0
-RG1   RS2   M06   RG4      0.0    0    0.0
+C3E   M02   P5N   M03      0.0    0    0.0
 M03   P1H   A2W   M03      0.0    0    0.0
 M04   P1H   A2W   M04      0.0    0    0.0
-P1T   M02   C3E   M02      0.0    0    0.0
-RS1   M01   M05   M05      0.0    0    0.0
-RS1   PHO   RS2   M05      0.0    0    0.0
+M08   C3E   C3E   M06      0.0    0    0.0
+RA1   RS2   RA2   RA3      0.0    0    0.0
+RG1   RS2   M06   RG4      0.0    0    0.0
+RG1   RS2   RG2   RG3      0.0    0    0.0
+RS1   M01   RS2   P1T      0.0    0    0.0
+RS1   P1S   RS2   P1T      0.0    0    0.0
+RS1   P1S   RS2   M05      0.0    0    0.0
 
 
 NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
