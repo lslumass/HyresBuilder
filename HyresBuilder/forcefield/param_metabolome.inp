@@ -420,6 +420,7 @@ P1T   A2V   A2V   A2V      0.0    1   180.0
 P1T   A2V   C3E   QdK      0.0    1   180.0
 P1T   C3E   A2V   A2V      0.0    1   180.0
 P1T   C3E   A2V   P1T      0.0    1   180.0
+P1T   PHO   PHO   RS1      0.0    1   180.0
 P1T   RC1   A1F   A2F      0.0    1   180.0
 P1T   RP    C3E   M06      0.0    1   180.0
 P1W   A2W   A3W   A4W      0.0    1   180.0
