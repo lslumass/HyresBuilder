@@ -746,6 +746,12 @@ def iConRNASystem(psf, system, DH_params, modification=None):
     # delete the NonbondedForce and HarmonicAngleForce
     system.removeForce(nbforce_index)
     system.removeForce(hmangle_index)
+
+    # 9. set unique ForceGroup id for each force
+    forces = system.getForces()
+    for i, force in enumerate(forces):
+        force.setForceGroup(i)
+
     return system
 
 
