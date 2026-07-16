@@ -35,7 +35,7 @@ from openmm.app import *
 from openmm import *
 
 
-def posres_CA(system, pdb, residue_list=None, limited_range=None):
+def posres_CAs(system, pdb, residue_list=None, limited_range=None, kpos=200.0):
     """
     Apply positional restraints to CA atoms selected by residue index.
 
@@ -56,6 +56,7 @@ def posres_CA(system, pdb, residue_list=None, limited_range=None):
                                                 this range are restrained.
                                                 If ``None``, all CA atoms in
                                                 ``residue_list`` are restrained.
+        kpos (float, optional): Spring constant for the positional restraints in kJ/mol/nm². Default is 200.0.
 
     Returns:
         None. Modifies ``system`` in place by adding a ``Ca_position_restraint``
@@ -65,8 +66,8 @@ def posres_CA(system, pdb, residue_list=None, limited_range=None):
         >>> from openmm.app import PDBFile
         >>> from HyresBuilder import addRestraints
         >>> pdb = PDBFile("conf.pdb")
-        >>> addRestraints.posres_CA(system, pdb, residue_list=[1, 2, 3, 4, 5])
-        >>> addRestraints.posres_CA(system, pdb, residue_list=[1, 2, 3],
+        >>> addRestraints.posres_CAs(system, pdb, residue_list=[1, 2, 3, 4, 5], kpos=300.0)
+        >>> addRestraints.posres_CAs(system, pdb, residue_list=[1, 2, 3],
         ...                         limited_range=(0, 500))
     """
     
@@ -74,7 +75,7 @@ def posres_CA(system, pdb, residue_list=None, limited_range=None):
     ### set position restraints CA atoms
     restraint = CustomExternalForce('kpos*((x-x0)^2+(y-y0)^2+(z-z0)^2)')
     restraint.setName("Ca_position_restraint")
-    restraint.addGlobalParameter('kpos', 200.0*kilojoule_per_mole/unit.nanometer)
+    restraint.addGlobalParameter('kpos', kpos*kilojoule_per_mole/unit.nanometer)
     restraint.addPerParticleParameter('x0')
     restraint.addPerParticleParameter('y0')
     restraint.addPerParticleParameter('z0')
@@ -91,7 +92,7 @@ def posres_CA(system, pdb, residue_list=None, limited_range=None):
                 restraint.addParticle(atom.index, pdb.positions[atom.index])
     system.addForce(restraint)
 
-def posres_CAs(system, pdb, grp):
+def posres(system, pdb, grp, kpos=200.0):
     """
     Apply positional restraints to CA atoms selected by atom index.
 
@@ -106,6 +107,7 @@ def posres_CAs(system, pdb, grp):
         pdb (PDBFile): OpenMM ``PDBFile`` object providing topology and reference
                        positions (e.g. ``PDBFile('conf.pdb')``).
         grp (list of int): Atom indices to restrain.
+        kpos (float, optional): Spring constant for the positional restraints in kJ/mol/nm². Default is 200.0.
 
     Returns:
         None. Modifies ``system`` in place by adding a ``Ca_position_restraint``
@@ -115,14 +117,14 @@ def posres_CAs(system, pdb, grp):
         >>> from openmm.app import PDBFile
         >>> from HyresBuilder import addRestraints
         >>> pdb = PDBFile("conf.pdb")
-        >>> addRestraints.posres_CAs(system, pdb, grp=[0, 5, 10, 15])
+        >>> addRestraints.posres_CAs(system, pdb, grp=[0, 5, 10, 15], kpos=300.0)
     """
 
     # add restraint
     ### set position restraints CA atoms
     restraint = CustomExternalForce('kpos*((x-x0)^2+(y-y0)^2+(z-z0)^2)')
     restraint.setName("Ca_position_restraint")
-    restraint.addGlobalParameter('kpos', 200.0*kilojoule_per_mole/unit.nanometer)
+    restraint.addGlobalParameter('kpos', kpos*kilojoule_per_mole/unit.nanometer)
     restraint.addPerParticleParameter('x0')
     restraint.addPerParticleParameter('y0')
     restraint.addPerParticleParameter('z0')

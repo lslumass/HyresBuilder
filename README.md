@@ -11,6 +11,8 @@ For details, please follow the related papers and the [docs](https://hyresbuilde
 2. Construct iConRNA model from sequence or convert atomistic structure into iConRNA model;   
 3. Set up HyRes and/or iConRNA force fields;   
 
+# Run a demo [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lslumass/HyresBuilder/blob/dev/HyRes_Quickstart.ipynb)   
+
 ## Dependencies:
 1. [OpenMM](https://openmm.org/)
 2. [psfgen-python](https://psfgen.robinbetz.com/) (install through "conda install -c conda-forge psfgen")

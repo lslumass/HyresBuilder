@@ -304,14 +304,19 @@ rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
 dnas = ["DAD", "DCY", "DTH", "DA", "DG", "DC", "DT"]
 ions = ["MG+", "SMG", "CA+"]
 polymer = ['PHO', 'PEG']
-AGs = ['KAN']
-metabolites = ['UN1', 'AYA', 'ACA', 'NLG', 'C3C', 'C4C', 'C5C', 'Y52', 'CHT', 'CIT',
+metabolites = ['KAN', 'LLL', 'SRY', # aminoglycosides
+               'UN1', 'AYA', 'ACA', 'NLG', 'C3C', 'C4C', 'C5C', '152', 'CHT', 'CIT',
                'CTT', 'ABU', 'CH5', 'GSH', 'MTA', 'SHR', 'TAU', 'BET', '3PG', 'G6P',
                'COA', 'FAD', 'NCA', 'PAU', 'ADN', 'ADP', 'AMP', 'ATP', 'C5P', 'CTN',
-               'UGA', 'GMP', 'UD1', 'NOS', 'NAD', 'NAI', 'NAD', 'UDP', 'U5P', 'UPG',
-               '2PG', '13P', 'PEP', 'SAM', '2HG', 'FUM', 'AKG', 'LMR', 'MCT', 'SIN', 'DGU']
+               'UGA', '5GP', 'UD1', 'NOS', 'NAD', 'NAI', 'NAD', 'UDP', 'U5P', 'UPG',
+               '2PG', '13P', 'PEP', 'SAM', '2HG', 'FUM', 'AKG', 'LMR', 'MCT', 'SIN',
+               'DGU', "DMG", "MG7", "HIC", "AD0", "GRS", "CRN", "AOR", "4UO", "GUN",
+               "NLQ", "GNG", "HYP", "ICO", "HFA", "MLA", "URI", "KIV", "FLN", "TRA",
+               "X5A", "U0",  "PC",  "BTN", "ALY", "DCM", "1AL", "G3P", "D5M", "PPY",
+               "ORN", "2ND", "CHD", "HPA", "RBF", "XAN", "DXC", "VIB", "3D1",
+               ]
 
-segtypes = ['P', 'R', 'D', 'I', 'S', 'AGs', 'M']
+segtypes = ['P', 'R', 'D', 'I', 'S', 'M']
 
 def get_type(resname):
     chaintype = (
@@ -320,7 +325,6 @@ def get_type(resname):
         'D' if resname in dnas else
         'I' if resname in ions else
         'S' if resname in polymer else
-        'AGs' if resname in AGs else
         'M' if resname in metabolites else
         None
     )
@@ -352,7 +356,7 @@ def split_chains(pdb):
 
     pre_type = None
     for i, (t, chain) in enumerate(zip(types, chains)):
-        if t in ['P', 'R', 'D', 'S', 'AGs', 'M']:
+        if t in ['P', 'R', 'D', 'S', 'M']:
             tmp_pdb = f"psfgentmp_{i}.pdb"
         elif t in ['I']:
             if t == pre_type:
@@ -422,10 +426,10 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix'):
     gen.read_topology(AGs_topology)
     gen.read_topology(Mats_topology)
 
-    counts = {'P': 1, 'R': 1, 'D': 1, 'I': 1, 'S': 1, 'AGs': 1, 'M': 1}
+    counts = {'P': 1, 'R': 1, 'D': 1, 'I': 1, 'S': 1, 'M': 1}
     types = split_chains(pdb_in)
     for i, t in enumerate(types):
-        if t in ["P", "R", "D", "S", "AGs", "M"]:
+        if t in ["P", "R", "D", "S", "M"]:
             tmp_pdb = f"psfgentmp_{i}.pdb"
         else:
             tmp_pdb = f"psfgentmp_{t}.pdb"
@@ -539,7 +543,7 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
     title_lines, flags = None, None
     global_offset = 0
 
-    counts = {'P': 0, 'R': 0, 'D': 0, 'I': 0, 'S': 0, 'AGs': 0, 'M': 0}
+    counts = {'P': 0, 'R': 0, 'D': 0, 'I': 0, 'S': 0, 'M': 0}
 
     workdir = tempfile.mkdtemp(prefix="genpsf_fast_")
     try:

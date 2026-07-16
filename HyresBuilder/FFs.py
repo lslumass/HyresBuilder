@@ -593,9 +593,23 @@ def iConRNASystem(psf, system, DH_params, modification=None):
         perP = [particle[0], lb]
         CNBForce.addParticle(perP)
     
-    CNBForce.createExclusionsFromBonds(bondlist, 2)
+    CNBForce.createExclusionsFromBonds(bondlist, 3)
     system.addForce(CNBForce)
-    
+
+    # Add 1-4 nonbonded interaction through custombondforece
+    formula = f"""(4.0*epsilon*six*(six-1.0)+(138.935456/er*charge)/r*exp(-r/dh));
+              six=(sigma/r)^6; er={er}; dh={dh.value_in_unit(unit.nanometer)}
+              """
+    Force14 = CustomBondForce(formula)
+    Force14.setName('1-4 interaction')
+    Force14.addPerBondParameter('charge')
+    Force14.addPerBondParameter('sigma')
+    Force14.addPerBondParameter('epsilon')
+    for idx in range(nbforce.getNumExceptions()):
+        ex = nbforce.getExceptionParameters(idx)
+        if ex[4] != 0.0:
+            Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
+    system.addForce(Force14)
     
     print('\n# add base stacking force')
     # base stakcing and paring
@@ -732,6 +746,12 @@ def iConRNASystem(psf, system, DH_params, modification=None):
     # delete the NonbondedForce and HarmonicAngleForce
     system.removeForce(nbforce_index)
     system.removeForce(hmangle_index)
+
+    # 9. set unique ForceGroup id for each force
+    forces = system.getForces()
+    for i, force in enumerate(forces):
+        force.setForceGroup(i)
+
     return system
 
 
