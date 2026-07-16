@@ -32,10 +32,10 @@ out = params.out
 # simulation parameters
 dt_equil = 0.0001*unit.picoseconds		                      # time step for equilibration, for bad configuration, use 0.0001 ps
 dt_prod = 0.008*unit.picoseconds                                # time step for production simulation
-prod_step = 25000000                                           # production steps
+prod_step = 12500000                                           # production steps
 equil_step = 10000                                              # equilibration steps
 log_freq = 1250                                                 # frequency of log file
-traj_freq = 500                                # frequency of trajectory file
+traj_freq = 50000                                # frequency of trajectory file
 pdb_freq = 12500000                                             # frequency of pdb_traj file
 chk_freq = 125000                                               # frequency of checkpoint file
 
