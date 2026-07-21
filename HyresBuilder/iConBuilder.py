@@ -131,7 +131,7 @@ def readRNAmap(seq):
 
 def readDNAmap(seq):
     atoms = []
-    nos = {'A': 'DAD', 'G': 'DGU', 'C': 'DCY', 'T': 'DTH'}
+    nos = {'A': 'DA', 'G': 'DG', 'C': 'DC', 'T': 'DT'}
     for index, name, rx, ry, rz in maps[seq]:
         atom = ['ATOM', index, name, nos[seq], 'X', 1, rx, ry, rz, 1.00, 0.00, 'DNA']
         atoms.append(atom)

@@ -124,7 +124,7 @@ DC1   DS2   DC2   DC3     20.0    0   -180.0   ! this was set to 7kcal/mol, chan
 DT1   DS2   DT3  DT2      20.0    0      0.0  
 
 
-NONBONDED  NBXMOD 3  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
+NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
      CUTNB 12.0  CTOFNB 12.0  CTONNB 11.  EPS 1.0  E14FAC 0.4  WMIN 1.5 
 
 !                 Emin         Rmin/2
@@ -158,7 +158,7 @@ NBFIX
 !                 Emin         Rmin
 !                 (kcal/mol)   (A)
 DP        MG        -0.50000       5.0000
-RP        CAL       -0.50000       5.2000
+DP        CAL       -0.50000       5.2000
 DS1       DS1       -0.08434       4.5652           !necessary, do not delete
 
 ! for pairing 
