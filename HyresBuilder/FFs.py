@@ -1748,7 +1748,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
                 c_p.append(int(atom.index))
     # add A-T pair through CustomHbondForce
     eps_DAT = eps_base*scales['DA-DT']
-    r_Dat = 0.327*unit.nanometer #A3-T2
+    r_Dat = 0.39*unit.nanometer #A3-T2
     r_Dat2 = 0.43*unit.nanometer #A4-T3
     
     if num_A != 0 and num_T != 0:
