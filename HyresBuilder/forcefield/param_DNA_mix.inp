@@ -65,7 +65,7 @@ DS2   DA1   DA4   65.0     117.0  ! C2-NA-ND for A
 DS2   DG1   DG2   60.0     129.9  ! C2-NA-NB for G
 DS2   DG1   DG4   45.0     117.0  ! C2-NA-ND for G
 DS2   DC1   DC3   75.0      61.0  ! C2-NA-NC for C
-DS2   DT1   DT3   75.0      87.8  ! C2-NA-NC for T 
+DS2   DT1   DT3   75.0      61.0  ! C2-NA-NC for T 
 
 ! internal angle for A:
 DA1   DA2   DA3   50.0      90.0  !  NA-NB-NC
