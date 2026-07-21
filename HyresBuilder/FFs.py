@@ -1636,7 +1636,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
     eps_base = 4.0*unit.kilocalorie_per_mole
     scales = {'DAA':1.0, 'DAG':1.0, 'DAC':0.8, 'DAT':1.0, 'DGA':1.0, 'DGG':1.0, 'DGC':1.0, 'DGT':1.0,
             'DCA':0.4, 'DCG':0.4, 'DCC':0.4, 'DCT':0.4, 'DTA':0.4, 'DTG':0.4, 'DTC':0.6, 'DTT':0.4,
-            'DA-DT':1.628*0.64/1.7, 'DC-DG':1.628*0.64}
+            'DA-DT':0.81, 'DC-DG':1.04}
     # H bond: 'DA-T':0.9375*0.665, 'DC-G':1.628*0.665; AT is increased to 1:1.5
     # optimal stacking distance
     r0s = {'DAA':0.35, 'DAG':0.38, 'DAC':0.36, 'DAT':0.34,'DGA':0.35, 'DGG':0.37,  'DGC':0.37, 'DGT':0.35,
