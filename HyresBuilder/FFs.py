@@ -1703,7 +1703,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
     a_b, a_c, a_d = [], [], []
     g_b, g_c, g_d = [], [], []
     c_a, c_b, c_c, t_a, t_b, t_c = [], [], [], [], [], []
-    a_p, g_p, c_p, t_p = [], [], [], []
+    a_a, g_a, c_p, t_p = [], [], [], []
     num_A, num_G, num_C, num_T = 0, 0, 0, 0
     for atom in psf.topology.atoms():
         if atom.residue.name == 'DA':
@@ -1714,8 +1714,8 @@ def iConDNASystem(psf, system, DH_params, modification=None):
                 a_b.append(int(atom.index))
             elif atom.name == 'ND':
                 a_d.append(int(atom.index))
-            elif atom.name == 'P':
-                a_p.append(int(atom.index))
+            elif atom.name == 'NA':
+                a_a.append(int(atom.index))
         elif atom.residue.name == 'DG':
             num_G += 1
             if atom.name == 'NC':
@@ -1724,8 +1724,8 @@ def iConDNASystem(psf, system, DH_params, modification=None):
                 g_b.append(int(atom.index))
             elif atom.name == 'ND':
                 g_d.append(int(atom.index))
-            elif atom.name == 'P':
-                g_p.append(int(atom.index))
+            elif atom.name == 'NA':
+                g_a.append(int(atom.index))
         elif atom.residue.name == 'DT':
             num_T += 1
             if atom.name == 'NA':
@@ -1754,7 +1754,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
     if num_A != 0 and num_T != 0:
         formula = f"""eps_DAT*(5.0*(r_Dat/r)^12-6.0*(r_Dat/r)^10 + 5*(r_Dat2/r2)^12-6.0*(r_Dat2/r2)^10)*step(cos5)*cos5;
                   r=distance(a1,d1); r2=distance(a3,d2); cos5=-cos(phi)^3; phi=min(min(abs(phi1),abs(phi2)),abs(phi3));
-                  phi1 = dihedral(a3,a1,d2,d1); phi2 = angle(a2,a1,d1); phi3 = dihedral(d3,d2,a1,a3);
+                  phi1 = dihedral(a3,a2,d2,d1); phi2 = angle(a2,a1,d1); phi3 = dihedral(d3,d2,d1,a3);
                   eps_DAT={eps_DAT.value_in_unit(unit.kilojoule_per_mole)};
                   r_Dat={r_Dat.value_in_unit(unit.nanometer)}; r_Dat2={r_Dat2.value_in_unit(unit.nanometer)}
                   """
@@ -1765,7 +1765,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
 
         for idx in range(len(a_c)):
             # pairAT.addAcceptor(a_d[idx], a_b[idx], a_c[idx])
-            pairDAT.addAcceptor(a_c[idx], a_b[idx], a_d[idx]) #from iConRNA
+            pairDAT.addAcceptor(a_c[idx], a_b[idx], a_a[idx]) #from iConRNA
         for idx in range(len(t_b)):
             # pairAT.addDonor(t_c[idx], t_b[idx], -1)
             pairDAT.addDonor(t_b[idx], t_c[idx], t_a[idx]) #from iConRNA
@@ -1780,7 +1780,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
     if num_C != 0 and num_G != 0:
         formula = f"""eps_DCG*(5.0*(r_Dcg/r)^12-6.0*(r_Dcg/r)^10 + 5*(r_Dcg2/r2)^12-6.0*(r_Dcg2/r2)^10)*step(cos5)*cos5;
                   r=distance(a1,d1); r2=distance(a3,d2); cos5=-cos(phi)^3; phi=min(min(abs(phi1),abs(phi2)),abs(phi3));
-                  phi1 = dihedral(a3,a1,d2,d1); phi2 = angle(a2,a1,d1); phi3 = dihedral(d3,d2,a1,a3);
+                  phi1 = dihedral(a3,a2,d2,d1); phi2 = angle(a2,a1,d1); phi3 = dihedral(d3,d2,d1,a3);
                   eps_DCG={eps_DCG.value_in_unit(unit.kilojoule_per_mole)};
                   r_Dcg={r_Dcg.value_in_unit(unit.nanometer)}; r_Dcg2={r_Dcg2.value_in_unit(unit.nanometer)}
                   """
@@ -1789,7 +1789,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
         pairDCG.setNonbondedMethod(nbforce.getNonbondedMethod())
         pairDCG.setCutoffDistance(0.7*unit.nanometer)
         for idx in range(len(g_c)):
-            pairDCG.addAcceptor(g_c[idx], g_b[idx], g_d[idx])
+            pairDCG.addAcceptor(g_c[idx], g_b[idx], g_a[idx])
         for idx in range(len(c_b)):
             pairDCG.addDonor(c_b[idx], c_c[idx], c_a[idx])
         system.addForce(pairDCG)
