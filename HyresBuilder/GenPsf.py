@@ -1,8 +1,8 @@
 """
-PSF file generation for HyRes and iConRNA coarse-grained systems.
+PSF file generation for HyRes and iCon coarse-grained systems.
 
 This module constructs CHARMM-style PSF topology files from coarse-grained
-PDB structures produced by the HyRes (protein) and iConRNA (RNA) force fields.
+PDB structures produced by the HyRes (protein) and iCon (RNA, DNA, Metabolite) force fields.
 It handles mixed systems containing any combination of protein, RNA, DNA,
 Mg²⁺, and Ca²⁺ chains in a single input PDB, automatically detecting molecule
 types by chain identity and assigning structured segment IDs before invoking
@@ -301,7 +301,7 @@ def write_merged_psf(out_path, title_lines, flags, atom_blocks, bond_blocks,
 aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
        "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
 rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
-dnas = ["DAD", "DCY", "DTH", "DA", "DG", "DC", "DT"]
+dnas = ["DAD", "DCY", "DTH", "DGU", "DA", "DG", "DC", "DT"]
 ions = ["MG+", "SMG", "CA+"]
 polymer = ['PHO', 'PEG']
 metabolites = ['KAN', 'LLL', 'SRY', # aminoglycosides
@@ -417,12 +417,14 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix'):
         path1 = files("HyresBuilder") / "forcefield" / "top_RNA.inp"
         RNA_topology = path1.as_posix()
     protein_topology, _ = utils.load_ff('Protein')
+    DNA_topology, _ = utils.load_ff('DNA')
     AGs_topology, _ = utils.load_ff('AGs')
     Mats_topology, _ = utils.load_ff('Metabolite')
 
     gen = PsfGen()
     gen.read_topology(RNA_topology)
     gen.read_topology(protein_topology)
+    gen.read_topology(DNA_topology)
     gen.read_topology(AGs_topology)
     gen.read_topology(Mats_topology)
 
@@ -456,12 +458,14 @@ def custom_genpsf(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix'):
         path1 = files("HyresBuilder") / "forcefield" / "top_RNA.inp"
         RNA_topology = path1.as_posix()
     protein_topology, _ = utils.load_ff('Protein')
+    DNA_topology, _ = utils.load_ff('DNA')
     AGs_topology, _ = utils.load_ff('AGs')
     Mats_topology, _ = utils.load_ff('Metabolite')
 
     gen = PsfGen()
     gen.read_topology(RNA_topology)
     gen.read_topology(protein_topology)
+    gen.read_topology(DNA_topology)
     gen.read_topology(AGs_topology)
     gen.read_topology(Mats_topology)
 
@@ -532,6 +536,7 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
         path1 = files("HyresBuilder") / "forcefield" / "top_RNA.inp"
         RNA_topology = path1.as_posix()
     protein_topology, _ = utils.load_ff('Protein')
+    DNA_topology, _ = utils.load_ff('DNA')
     AGs_topology, _ = utils.load_ff('AGs')
     Mats_topology, _ = utils.load_ff('Metabolite')
 
@@ -566,6 +571,7 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
             gen = PsfGen()
             gen.read_topology(RNA_topology)
             gen.read_topology(protein_topology)
+            gen.read_topology(DNA_topology)
             gen.read_topology(AGs_topology)
             gen.read_topology(Mats_topology)
 
