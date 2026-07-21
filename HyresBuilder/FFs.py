@@ -1754,7 +1754,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
     if num_A != 0 and num_T != 0:
         formula = f"""eps_DAT*(5.0*(r_Dat/r)^12-6.0*(r_Dat/r)^10 + 5*(r_Dat2/r2)^12-6.0*(r_Dat2/r2)^10)*step(cos5)*cos5;
                   r=distance(a1,d1); r2=distance(a3,d2); cos5=-cos(phi)^3; phi=min(phi1, phi2);
-                  phi1 = angle(a2,a1,d1); phi2 = angle(d3,d2,a3);
+                  phi1 = angle(a2,a1,d1); phi2 = angle(d3,d2,a3)+0.25;
                   eps_DAT={eps_DAT.value_in_unit(unit.kilojoule_per_mole)};
                   r_Dat={r_Dat.value_in_unit(unit.nanometer)}; r_Dat2={r_Dat2.value_in_unit(unit.nanometer)}
                   """
@@ -1780,7 +1780,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
     if num_C != 0 and num_G != 0:
         formula = f"""eps_DCG*(5.0*(r_Dcg/r)^12-6.0*(r_Dcg/r)^10 + 5*(r_Dcg2/r2)^12-6.0*(r_Dcg2/r2)^10)*step(cos5)*cos5;
                   r=distance(a1,d1); r2=distance(a3,d2); cos5=-cos(phi)^3; phi=min(phi1, phi2);
-                  phi1 = angle(a2,a1,d1); phi2 = angle(d3,d2,a3);
+                  phi1 = angle(a2,a1,d1); phi2 = angle(d3,d2,a3)+0.25;
                   eps_DCG={eps_DCG.value_in_unit(unit.kilojoule_per_mole)};
                   r_Dcg={r_Dcg.value_in_unit(unit.nanometer)}; r_Dcg2={r_Dcg2.value_in_unit(unit.nanometer)}
                   """
