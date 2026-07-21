@@ -1696,7 +1696,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
             fstack.addBond(sps[i+1][0], [sps[i+1][1], sps[i+1][2]])
 
     print('    add ', fstack.getNumBonds(), 'stacking pairs')
-    system.addForce(fstack)
+    #system.addForce(fstack)
     
     # base pairing
     print('\n# add base pair force')
