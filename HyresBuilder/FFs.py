@@ -1792,7 +1792,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
             pairDCG.addAcceptor(g_c[idx], g_b[idx], g_d[idx])
         for idx in range(len(c_b)):
             pairDCG.addDonor(c_b[idx], c_c[idx], c_a[idx])
-        system.addForce(pairDCG)
+        #system.addForce(pairDCG)
         print(pairDCG.getNumAcceptors(), pairDCG.getNumDonors(), 'D_CG')
  
     # further modification defined in running scripts
