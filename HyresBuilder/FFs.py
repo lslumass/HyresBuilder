@@ -1734,7 +1734,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
                 t_b.append(int(atom.index))
             elif atom.name == 'NC':
                 t_c.append(int(atom.index))
-            elif atom.name == 'P':
+            elif atom.name == 'C2':
                 t_p.append(int(atom.index))
         elif atom.residue.name == 'DC':
             num_C += 1
@@ -1744,7 +1744,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
                 c_b.append(int(atom.index))
             elif atom.name == 'NC':
                 c_c.append(int(atom.index))
-            elif atom.name == 'P':
+            elif atom.name == 'C2':
                 c_p.append(int(atom.index))
     # add A-T pair through CustomHbondForce
     eps_DAT = eps_base*scales['DA-DT']
