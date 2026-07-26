@@ -1013,7 +1013,7 @@ ATOM P2   PHO    -1.00
 ATOM P1   PHO    -1.00
 ATOM C1   RS1     0.00
 ATOM C2   RS2     0.00
-ATOM NA   RA1     0.00
+ATOM NA   RA2     0.00
 ATOM NB   RA2     0.00
 ATOM NC   RA3     0.00
 ATOM ND   RA4     0.00
