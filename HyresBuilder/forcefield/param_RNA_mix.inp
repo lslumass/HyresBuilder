@@ -224,7 +224,7 @@ A2W       RC1       -0.65000       4.5000
 A2W       RU1       -0.86000       4.5000
 
 !# ARG/LYS-base cation-pi interactions
-QdR       RA1       -0.13000       4.5000
+!QdR       RA1       -0.13000       4.5000
 QdR       RG1       -0.43000       4.5000
 QdR       RC1       -0.38000       4.5000
 QdR       RU1       -0.09000       4.5000
