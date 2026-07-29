@@ -375,7 +375,7 @@ def split_chains(pdb):
     rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
     dnas = ["DAD", "DGU", "DCY", "DTH", "DA", "DG", "DC", "DT"]
     ags = ["KAN"]
-    counts = {'P': 0, 'R': 0, 'D': 0, 'A': 0}
+    counts = {'P': 1, 'R': 1, 'D': 1, 'A': 1}
 
     # HIS names
     HISs = ['HSD', 'HSE', 'HSP', 'HID', 'HIE', 'HIP']
