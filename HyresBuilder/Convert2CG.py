@@ -174,7 +174,19 @@ def add_backbone_hydrogen(pdb_file, output_file):
         """Format an ATOM line in PDB format."""
         serial_str = encode_serial(serial)
         resseq_str = encode_resseq(residue_seq)
-        return (f"ATOM  {serial_str}  {atom_name:3s} {residue_name:3s} {chain_id}{resseq_str}    "
+        # PDB columns 13-16 are a fixed 4-character atom-name field. Names of
+        # 1-3 characters are written with a leading blank (column 13) and
+        # left-justified after it; names of exactly 4 characters fill the
+        # whole field. This keeps every column after the name (altLoc,
+        # resName, chainID, resSeq, ...) at a fixed position no matter how
+        # long the atom name is - previously a 3-char-wide field silently
+        # let 4-character names (e.g. hydrogens like "HD11") overflow by one
+        # column, shifting resName and corrupting downstream parsing.
+        if len(atom_name) >= 4:
+            name_field = atom_name[:4]
+        else:
+            name_field = f" {atom_name:<3s}"
+        return (f"ATOM  {serial_str} {name_field} {residue_name:3s} {chain_id}{resseq_str}    "
                 f"{coords[0]:8.3f}{coords[1]:8.3f}{coords[2]:8.3f}{occupancy:>6s}{temp_factor:>6s}"
                 f"          {element:>2s}\n")
     
@@ -304,7 +316,14 @@ def add_backbone_hydrogen(pdb_file, output_file):
             # Skip proline (PRO) residues - they don't have backbone H
             if atom['residue'] == 'PRO':
                 continue
-            
+
+            # Skip residues that already have a backbone amide hydrogen
+            # (some structures have H/HN on some residues but not others,
+            # e.g. partially-protonated or mixed-source PDBs)
+            if 'H' in res_atoms or 'HN' in res_atoms:
+                h_added.add(key)
+                continue
+
             # Check if we have necessary atoms (N, CA, C)
             if 'CA' in res_atoms:
                 h_added.add(key)
