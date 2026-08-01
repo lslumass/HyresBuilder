@@ -368,8 +368,71 @@ def add_backbone_hydrogen(pdb_file, output_file):
     return output_file
 
 
-def split_chains(pdb):
-    """Split PDB file into separate chains and identify their types."""
+def _renumber_chain(chain_lines):
+    """Renumber residues in a single chain's ATOM lines to start from 1.
+
+    Checks the first residue's resSeq; if it's already 1, the lines are
+    returned unchanged. Otherwise every residue is renumbered sequentially
+    starting from 1, using each unique (resSeq, iCode) pair encountered (in
+    file order) to detect residue boundaries so insertion codes are handled
+    correctly. Residue counts beyond 9999 fall back to hybrid-36 encoding,
+    consistent with the rest of this module.
+    """
+    def encode_resseq(n):
+        if n < 10000:
+            return f"{n:4d}"
+        n -= 10000
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        if n < 26 * (36**3):
+            result = []
+            for _ in range(3):
+                n, remainder = divmod(n, 36)
+                result.append(chars[remainder])
+            result.append(chr(ord('A') + n))
+            return ''.join(reversed(result))
+        n -= 26 * (36**3)
+        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
+        result = []
+        for _ in range(3):
+            n, remainder = divmod(n, 36)
+            result.append(chars_lower[remainder])
+        result.append(chr(ord('a') + n))
+        return ''.join(reversed(result))
+
+    if not chain_lines:
+        return chain_lines
+
+    try:
+        first_resseq = int(chain_lines[0][22:26].strip())
+    except ValueError:
+        first_resseq = None
+
+    if first_resseq == 1:
+        # Already starts from 1 - leave this segment untouched
+        return chain_lines
+
+    new_lines = []
+    old_key = None
+    new_resid = 0
+    for line in chain_lines:
+        key = (line[22:26], line[26])
+        if key != old_key:
+            new_resid += 1
+            old_key = key
+        new_lines.append(line[:22] + encode_resseq(new_resid) + line[26:])
+    return new_lines
+
+
+def split_chains(pdb, renumber=False):
+    """Split PDB file into separate chains and identify their types.
+
+    Args:
+        pdb (str): Path to the input PDB file.
+        renumber (bool, optional): If ``True``, checks each segment's
+            starting residue number and, if it doesn't already start from 1,
+            renumbers that segment's residues sequentially from 1. Segments
+            that already start from 1 are left untouched. Default ``False``.
+    """
     aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
            "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
     rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
@@ -490,6 +553,8 @@ def split_chains(pdb):
 
     # Save each chain to temporary file
     for i, chain in enumerate(chains):
+        if renumber:
+            chain = _renumber_chain(chain)
         with open(f"aa2cgtmp_{i}_aa.pdb", 'w') as f:
             for line in chain:
                 f.write(line)
@@ -1264,7 +1329,7 @@ def fix_pdb_serial(pdb_file, output_file=None):
     print(f"Fixed serial numbers for {serial} atoms. Output saved to {output_file}")
     return output_file
 
-def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
+def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, renumber=False):
     """
     Convert an all-atom PDB to a coarse-grained PDB and PSF file.
 
@@ -1288,6 +1353,12 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
 
         cleanup (bool, optional): If ``True``, removes intermediate temporary
                                   PDB files after conversion. Default is ``True``.
+        renumber (bool, optional): If ``True``, checks each chain/segment's
+                                  starting residue number and, if it doesn't
+                                  already start from 1, renumbers that
+                                  segment's residues sequentially from 1.
+                                  Segments already starting from 1 are left
+                                  unchanged. Default is ``False``.
 
     Returns:
         tuple: A 2-tuple ``(pdb_file, psf_file)`` with paths to the output
@@ -1317,7 +1388,7 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
     gen.read_topology(AGs_topology)
     
     # Split chains and convert
-    types, segids = split_chains(pdb_in)
+    types, segids = split_chains(pdb_in, renumber=renumber)
     
     for i, (mol_type, segid) in enumerate(zip(types, segids)):
         tmp_pdb = f"aa2cgtmp_{i}_aa.pdb"
@@ -1384,15 +1455,18 @@ def main():
                         help='add backbone amide hydrogen (H-N only), default False')
     parser.add_argument('--terminal', '-t', type=str, default='neutral',
                         help='Charge status of terminus: neutral, charged, NT, CT')
+    parser.add_argument('--renumber', action='store_true',
+                        help='renumber each segment\'s residues to start from 1 '
+                             'if it does not already, default False')
 
     args = parser.parse_args()
     warnings.filterwarnings('ignore', category=UserWarning)
 
     if args.hydrogen:
         pdb_addH = add_backbone_hydrogen(args.aa, f'{args.aa[:-4]}_addH.pdb')
-        at2cg(pdb_addH, args.cg, terminal=args.terminal)
+        at2cg(pdb_addH, args.cg, terminal=args.terminal, renumber=args.renumber)
     else:
-        at2cg(args.aa, args.cg, terminal=args.terminal)
+        at2cg(args.aa, args.cg, terminal=args.terminal, renumber=args.renumber)
 
 if __name__ == '__main__':
     main()
