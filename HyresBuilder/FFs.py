@@ -586,7 +586,7 @@ def iConRNASystem(psf, system, DH_params, modification=None):
         particle = nbforce.getParticleParameters(idx)
         if atoms[idx] == 'P':
             lb = 1
-        elif atoms[idx] == 'MG':
+        elif atoms[idx] in ['MG', 'CAL']:
             lb = -1
         else:
             lb = 2
