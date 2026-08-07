@@ -35,8 +35,8 @@ Three functions are provided at increasing levels of abstraction:
 * :func:`createRigidBodies` — low-level; accepts pre-built lists of atom
   indices directly.
 * :func:`resolveBodiesToIndices` — mid-level; resolves PSF segment IDs and
-  residue ranges (as inclusive ``(start, end)`` tuples or explicit lists)
-  into atom index lists.
+  residue ranges (as inclusive ``(start, end)`` tuples, a list of such range
+  tuples, or explicit lists) into atom index lists.
 * :func:`createRigidSegments` — high-level; combines the two steps above,
   accepting PSF and PDB file paths or pre-loaded objects and a concise
   segment-body specification.
@@ -81,7 +81,10 @@ def resolveBodiesToIndices(psf, segment_bodies):
         Each tuple defines one rigid body:
           - segid (str): the segment ID as it appears in the PSF file.
           - residue_list: either
-              * a (start, end) tuple of inclusive author residue numbers, or
+              * a (start, end) tuple of inclusive author residue numbers,
+              * a list of (start, end) range tuples, to combine several
+                contiguous stretches into one body (e.g. to exclude a loop
+                region from the middle of a longer range), or
               * an explicit list of author residue numbers [27, 28, 30, ...].
 
         Examples::
@@ -92,7 +95,10 @@ def resolveBodiesToIndices(psf, segment_bodies):
             # explicit list – only these three residues in segment P042
             ('P042', [10, 11, 50])
 
-            # mix both styles across multiple bodies
+            # list of range tuples – residues 10-100 excluding the 40-50 loop
+            ('P001', [(10, 39), (51, 100)])
+
+            # mix all styles across multiple bodies
             [('P001', (27, 95)), ('P002', (27, 95)), ('P003', [30, 31, 32])]
 
     Returns
@@ -117,7 +123,15 @@ def resolveBodiesToIndices(psf, segment_bodies):
 
         # Normalise residue_list into a set of ints for O(1) membership test
         if isinstance(residue_list, tuple) and len(residue_list) == 2:
+            # single (start, end) range tuple
             res_set = set(range(int(residue_list[0]), int(residue_list[1]) + 1))
+        elif (isinstance(residue_list, list) and residue_list
+              and all(isinstance(r, tuple) and len(r) == 2 for r in residue_list)):
+            # list of (start, end) range tuples, e.g. [(10, 39), (51, 100)]
+            # lets multiple contiguous stretches (e.g. excluding a loop) form one body
+            res_set = set()
+            for start, end in residue_list:
+                res_set.update(range(int(start), int(end) + 1))
         else:
             res_set = {int(r) for r in residue_list}
 
@@ -156,7 +170,8 @@ def createRigidSegments(system, psf, pdb, segment_bodies):
         Positions are extracted from this file.
     segment_bodies : list of (segid, residue_list) tuples
         Each tuple defines one rigid body.
-        residue_list can be a (start, end) range tuple or an explicit list of residue numbers.
+        residue_list can be a (start, end) range tuple, a list of such range
+        tuples, or an explicit list of residue numbers.
 
     Example
     -------
