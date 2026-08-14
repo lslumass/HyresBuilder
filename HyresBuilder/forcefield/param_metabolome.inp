@@ -77,6 +77,7 @@ A1F   RG4      0.0    1.00
 A1L   M03      0.0    1.00
 A1W   A1W      0.0    1.00
 A1W   M04      0.0    1.00
+A1W   P1W      0.0    1.00
 A2F   RC1      0.0    1.00
 A2V   A2V      0.0    1.00
 A2V   A3K      0.0    1.00
@@ -96,8 +97,10 @@ M03   A3K      0.0    1.00
 M06   RG3      0.0    1.00
 M08   QaD      0.0    1.00
 P1H   A1W      0.0    1.00
+P1H   P1W      0.0    1.00
 P1H   P1H      0.0    1.00
 P1H   RA2      0.0    1.00
+P1H   RG1      0.0    1.00
 P1H   RG2      0.0    1.00
 P1H   RG3      0.0    1.00
 P1H   RG4      0.0    1.00
@@ -265,6 +268,7 @@ M08   QaD   M08      0.0     180.0
 P1H   A1W   M04      0.0     180.0
 P1H   A2W   M03      0.0     180.0
 P1H   RA2   RA3      0.0     180.0
+P1H   RG1   RG3      0.0     180.0
 P1H   RG2   RG3      0.0     180.0
 P1S   A1F   A2F      0.0     180.0
 P1S   A1F   A3F      0.0     180.0
@@ -295,6 +299,8 @@ RC3   A1F   A2F      0.0     180.0
 RC3   A1F   A3F      0.0     180.0
 RG1   M06   RG3      0.0     180.0
 RG1   RG2   RG4      0.0     180.0
+RG1   RG3   RG3      0.0     180.0
+RG1   RG3   RG4      0.0     180.0
 RG2   RG3   RG3      0.0     180.0
 RG3   RA4   RA1      0.0     180.0
 RG3   RG3   P1H      0.0     180.0
@@ -411,6 +417,9 @@ M02   RC3   A1F   A3F      0.0    1   180.0
 M06   M03   M03   M02      0.0    1   180.0
 P1H   RA2   RA3   RA4      0.0    1   180.0
 P1H   RA2   RA4   RA3      0.0    1   180.0
+P1H   RG1   RG3   RG3      0.0    1   180.0
+P1H   RG1   RG3   RG4      0.0    1   180.0
+P1H   RG1   RG4   RG3      0.0    1   180.0
 P1H   RG2   RG3   RG3      0.0    1   180.0
 P1H   RG2   RG3   RG4      0.0    1   180.0
 P1H   RG2   RG4   RG3      0.0    1   180.0
@@ -428,6 +437,7 @@ P1T   PHO   PHO   RS1      0.0    1   180.0
 P1T   RC1   A1F   A2F      0.0    1   180.0
 P1T   RP    C3E   M06      0.0    1   180.0
 P1W   A2W   A3W   A4W      0.0    1   180.0
+P1W   P1H   A1W   M04      0.0    1   180.0
 QdK   A1F   RG4   RC1      0.0    1   180.0
 QdK   A4H   RC1   P2H      0.0    1   180.0
 RA1   RA2   RA4   RG3      0.0    1   180.0
@@ -490,11 +500,11 @@ NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
 M01      0.00     -0.0519      2.4340   0.00     -0.0519      2.4340
 M02      0.00     -0.0150      2.0982   0.00     -0.0150      2.0982
 M03      0.00     -0.0720      2.2759   0.00     -0.0720      2.2759
-M04      0.00     -0.0720      2.0591   0.00     -0.0720      2.0591 !
+M04      0.00     -0.0360      2.0591   0.00     -0.0360      2.0591 !
 M05      0.00     -0.0150      2.3268   0.00     -0.0150      2.3268 !
 M06      0.00     -0.0150      2.5008   0.00     -0.0150      2.5008 !
 M07      0.00     -0.0900      2.3689   0.00     -0.0900      2.3689 !
-M08      0.00     -0.0720      2.2600   0.00     -0.0720      2.2600
+M08      0.00     -0.0360      2.2600   0.00     -0.0360      2.2600
 MCI      0.00     -0.1594      2.4900   0.00     -0.1594      2.4900
 MSO      0.00     -0.0800      2.3200   0.00     -0.0800      2.3200
 MSS      0.00     -0.1200      2.2600   0.00     -0.1200      2.2600
@@ -509,11 +519,11 @@ NBFIX
 M01    M01       -0.0519      4.8680           !necessary, do not delete
 M02    M02       -0.0150      4.1964           !necessary, do not delete
 M03    M03       -0.0720      4.5518           !necessary, do not delete
-M04    M04       -0.0720      4.1182           !necessary, do not delete
+M04    M04       -0.0360      4.1182           !necessary, do not delete
 M05    M05       -0.0150      4.6536           !necessary, do not delete
 M06    M06       -0.0150      5.0016           !necessary, do not delete
 M07    M07       -0.0900      4.7378           !necessary, do not delete
-M08    M08       -0.0720      4.5200           !necessary, do not delete
+M08    M08       -0.0360      4.5200           !necessary, do not delete
 MCI    MCI       -0.1594      4.9800           !necessary, do not delete
 MSO    MSO       -0.0800      4.6400           !necessary, do not delete
 MSS    MSS       -0.1200      4.5200           !necessary, do not delete

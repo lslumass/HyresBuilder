@@ -5,12 +5,12 @@
 MASS   500 SMG  90.00   ! partially hydrated Mg2+
 MASS   501 M01  70.00   ! -PO4(-2)-, use RS1 of RNA backbone
 MASS   502 M02  40.00   ! -C(=O)O-, use QaD of Asp, carboxylic acid group
-MASS   503 M03  50.00   ! -C(=O)-NH-C, use M04 of Asn
-MASS   504 M04  50.00   ! -C(=O)-NH2, use M04 of Asn
+MASS   503 M03  50.00   ! -C(=O)-NH-C, use Asn
+MASS   504 M04  50.00   ! -C(=O)-NH2, use 0.5Asn
 MASS   505 M05  50.00   ! OH-C-C-OH, part of the sugar ring
 MASS   506 M06  50.00   ! -N(+)-(C3), -S(+)-(C3)
 MASS   507 M07  50.00   ! -C(=O)-O-C-, Ester group, -C(=O)-N-C-
-MASS   508 M08  59.00   ! -NH-C(=O)-NH2, use M04 (Asn)
+MASS   508 M08  59.00   ! -NH-C(=O)-NH2, use 0.5*ASN
 
 MASS   550 MCI 150.00   ! C-C-I, Iodine-containing group, used for halogenated compounds, unquantified
 MASS   551 MSO  80.00   ! -SO4- OR -SO3-, -1 charge
@@ -65,7 +65,7 @@ DIHE M1   M2   M3   M4
 RESI XAN          0.00
 GROUP                 
 ATOM NA   P1H     0.00
-ATOM NB   RG2     0.00
+ATOM NB   RG1     0.00
 ATOM NC   RG3     0.00
 ATOM ND   RG3     0.00
 BOND NA   NB        NB   NC        NC   ND      NA   ND
@@ -423,7 +423,7 @@ IMPR M2   M1   M3   M4
 RESI GUN          0.00
 GROUP                 
 ATOM NA   P1H     0.00
-ATOM NB   RG2     0.00
+ATOM NB   RG1     0.00
 ATOM NC   RG3     0.00
 ATOM ND   RG4     0.00
 BOND NA   NB        NB   NC        NC   ND      NA   ND
@@ -552,7 +552,7 @@ IMPH M3   M1   M2   M4
 RESI NCA          0.00
 GROUP                 
 ATOM M1   P1H     0.00
-ATOM M2   A2W     0.00
+ATOM M2   P1W     0.00
 ATOM M3   A1W     0.00
 ATOM M4   M04     0.00
 BOND M1   M2        M1   M3        M2   M3        M3   M4
