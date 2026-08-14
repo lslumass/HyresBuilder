@@ -25,7 +25,7 @@ C3E   M07     50.0    2.52
 M01   C3E     50.0    3.81
 M01   PHO     50.0    2.73
 M01   P1S     30.0    3.02
-M01   RS1     50.0    3.27
+M01   MS1     50.0    3.27
 M02   M06     20.0    2.78
 M02   PHO     50.0    2.73
 M02   P1S     20.0    2.53
@@ -45,11 +45,11 @@ M06   M03     50.0    4.14
 M06   P1T     50.0    3.50
 M06   QaD    150.0    3.27
 M06   QdK     50.0    3.55
-M06   RS1     50.0    3.76
+M06   MS1     50.0    3.76
 PHO   A2V    150.0    3.97
 PHO   P1T     50.0    3.46
-PHO   RS1     50.0    3.94
-P1C   RS1     50.0    4.05
+PHO   MS1     50.0    3.94
+P1C   MS1     50.0    4.05
 P1H   A2W    150.0    1.95
 P1S   A2V     20.0    2.70
 P1S   C3E     20.0    2.40
@@ -61,16 +61,23 @@ P1T   P1H     50.0    1.95
 P1T   RP      30.0    3.53
 QdK   C3E     20.0    2.47
 QdK   M02     20.0    2.83
-QdK   RS1    150.0    2.98
+QdK   MS1    150.0    2.98
 RP    C3E     30.0    3.27
-RS1   M02     50.0    3.15
-RS1   M03     50.0    3.66
-RS1   M05    200.0    2.39
-RS1   P1S     50.0    3.15
-RS1   P1T     50.0    3.58
-RS2   M05    100.0    2.09
-RS2   M06    500.0    1.47
-RS2   P1H    500.0    1.47
+MS1   M02     50.0    3.15
+MS1   M03     50.0    3.66
+MS1   M05    200.0    2.39
+MS1   P1S     50.0    3.15
+MS1   P1T     50.0    3.58
+MS2   M05    100.0    2.09
+MS2   M06    500.0    1.47
+MS2   P1H    500.0    1.47
+
+RP    MS1    15.0      3.65
+MS1   MS2   100.0      2.32
+MS2   RA1   150.0      1.93
+MS2   RG1   150.0      1.93
+MS2   RC1   150.0      2.53
+MS2   RU1   150.0      2.53
 !! trick bonds
 A1F   RC1      0.0    1.00
 A1F   RG4      0.0    1.00
@@ -126,8 +133,8 @@ RG1   RG3      0.0    1.00
 RG2   RG4      0.0    1.00
 RG3   RA4      0.0    1.00
 RG3   RG3      0.0    1.00
-RS2   P1T      0.0    1.00
-RS2   RC3      0.0    1.00
+MS2   P1T      0.0    1.00
+MS2   RC3      0.0    1.00
 RU1   RU1      0.0    1.00
 
 
@@ -154,9 +161,9 @@ A2W   A2W   M04      0.0     165.0
 C3E   M07   A2V      5.0     115.0
 M01   C3E   M02     35.0      62.0
 M01   PHO   PHO     60.0     158.0
-M01   PHO   RS1      5.0     168.0
+M01   PHO   MS1      5.0     168.0
 M01   P1S   M02     35.0      91.0
-M01   RS1   M05      5.0     150.0
+M01   MS1   M05      5.0     150.0
 M02   A2V   M02     10.0     134.8
 M02   A2V   M06      5.0     122.0
 M02   A2V   QdK      5.0     130.0
@@ -172,30 +179,30 @@ M03   A2V   M02      5.0      82.8
 M03   C3E   M02      5.0      90.0
 M03   M03   M02     10.0     126.5
 M03   M03   P1C     25.0     129.5
-M05   RS2   M06     55.0     126.0
-M05   RS2   P1H     55.0     126.0
+M05   MS2   M06     55.0     126.0
+M05   MS2   P1H     55.0     126.0
 M06   A2W   M04     15.0     166.7
 M06   A2V   M07      5.0      96.0
 M06   M03   M03     10.0     132.0
 M06   M03   P1C     10.0     129.0
 M06   P1T   M02      0.5     113.5
 M06   QdK   M02      5.0     105.0
-M06   RS1   M05      5.0     153.5
-M06   RS1   RS2      5.0     142.0
+M06   MS1   M05      5.0     153.5
+M06   MS1   MS2      5.0     142.0
 M07   A2V   M02      5.0     132.0
 A2V   M07   A2V      5.0     148.0
 PHO   A2V   P1T     25.0      83.0
 PHO   PHO   A2V     25.0     122.5
 PHO   PHO   P1T      5.0     110.0
-PHO   PHO   RS1     10.0     132.0
+PHO   PHO   MS1     10.0     132.0
 PHO   P1T   P1S      5.0      90.0
-PHO   RS1   M02      5.0     126.0
-PHO   RS1   M03      5.0      85.0
-PHO   RS1   M05     20.0     105.5
-PHO   RS1   P1S     30.0      97.0
-PHO   RS1   RS2     30.0      97.0
-P1C   RS1   M05      5.0     137.5
-P1C   RS1   RS2      5.0     142.0
+PHO   MS1   M02      5.0     126.0
+PHO   MS1   M03      5.0      85.0
+PHO   MS1   M05     20.0     105.5
+PHO   MS1   P1S     30.0      97.0
+PHO   MS1   MS2     30.0      97.0
+P1C   MS1   M05      5.0     137.5
+P1C   MS1   MS2      5.0     142.0
 P1H   A2W   M04     15.0     166.7
 P1S   A2V   M01      5.0     104.0
 P1S   A2V   P1S      5.0      73.0
@@ -203,32 +210,47 @@ P1S   C3E   M02     15.0     161.0
 P1S   M03   QaD      5.0     131.0
 P1S   P1T   P1H      5.0     145.0
 P1S   P1T   RP       5.0     115.0
-P1S   RS1   M05      5.0     137.5
-P1S   RS1   RS2      5.0     142.0
+P1S   MS1   M05      5.0     137.5
+P1S   MS1   MS2      5.0     142.0
 P1T   C3E   M02     60.0      57.5
 P1T   M03   M03     10.0     136.5
 P1T   P1H   A1W     25.0      85.0
 P1T   P1S   P1T      5.0      90.0
 P1T   RP    C3E      5.0     103.5
 QdK   C3E   M02      0.5     106.5
-QdK   M06   RS1      5.0     145.0
+QdK   M06   MS1      5.0     145.0
 QdK   P1C   QdK      5.0     121.5
-RA1   RS2   M05     15.0     144.0
-RC1   RS2   M05      5.0     132.0
-RG1   RS2   M05      5.0     132.0
+RA1   MS2   M05     15.0     144.0
+RC1   MS2   M05      5.0     132.0
+RG1   MS2   M05      5.0     132.0
 RP    C3E   M06      5.0      95.5
-RS1   M05   M01      5.0     141.5
-RS1   RS2   M06     55.0     144.0
-RS1   RS2   P1H     55.0     144.0
-RS2   M05   M01      5.0      81.5
-RS2   M06   A2W     50.0     149.0
-RS2   P1H   A2W     50.0     149.0
-RU1   RS2   M05      5.0     132.0
+MS1   M05   M01      5.0     141.5
+MS1   MS2   M06     55.0     144.0
+MS1   MS2   P1H     55.0     144.0
+MS2   M05   M01      5.0      81.5
+MS2   M06   A2W     50.0     149.0
+MS2   P1H   A2W     50.0     149.0
+RU1   MS2   M05      5.0     132.0
+
+MS1   RP    MS1    4.0     105.0
+RP    MS1   RP     8.0      95.0
+RP    MS1   MS2    8.0     112.0
+MS1   MS2   RP    20.0      55.0
+MS1   MS2   RA1    8.0     136.0
+MS1   MS2   RG1    8.0     136.0
+MS1   MS2   RC1   10.0     115.0
+MS1   MS2   RU1   10.0     115.0
+MS2   RA1   RA2   50.0     127.0
+MS2   RG1   RG2   50.0     127.0
+MS2   RA1   RA4   50.0     117.0
+MS2   RG1   RG4   40.0     116.0
+MS2   RC1   RC3  100.0      59.0
+MS2   RU1   RU3  100.0      59.0
 !! trick angles
-A1F   RS2   A1F      0.0     180.0
-A1F   RS2   RC3      0.0     180.0
+A1F   MS2   A1F      0.0     180.0
+A1F   MS2   RC3      0.0     180.0
 A1W   A2W   A3W      0.0     180.0
-A2F   A1F   RS2      0.0     180.0
+A2F   A1F   MS2      0.0     180.0
 A2V   A2V   A2V      0.0     180.0
 A2V   A2V   QaD      0.0     180.0
 A2V   A3K   M02      0.0     180.0
@@ -238,14 +260,14 @@ A2V   C3E   P1T      0.0     180.0
 A2V   QdK   A1F      0.0     180.0
 A2W   A2W   M03      0.0     180.0
 A2W   A1W   M04      0.0     180.0
-A3F   A1F   RS2      0.0     180.0
+A3F   A1F   MS2      0.0     180.0
 C3E   A2V   A2V      0.0     180.0
 C3E   A2V   C3E      0.0     180.0
 C3E   QdK   A1F      0.0     180.0
 M01   C3E   M06      0.0     180.0
 M01   P1T   M02      0.0     180.0
-M01   RS1   P1T      0.0     180.0
-M01   RS1   RS2      0.0     180.0
+M01   MS1   P1T      0.0     180.0
+M01   MS1   MS2      0.0     180.0
 M02   A1W   A2W      0.0     180.0
 M02   A1W   P1W      0.0     180.0
 M02   A2V   A3K      0.0     180.0
@@ -276,7 +298,7 @@ P1S   P1S   P1S      0.0     180.0
 P1S   P1S   P1T      0.0     180.0
 P1S   P1T   M01      0.0     180.0
 P1S   P1T   RC1      0.0     180.0
-P1S   RS1   P1T      0.0     180.0
+P1S   MS1   P1T      0.0     180.0
 P1T   A2V   A2V      0.0     180.0
 P1T   A2V   C3E      0.0     180.0
 P1T   A2V   P1T      0.0     180.0
@@ -292,7 +314,7 @@ QdK   A1L   M03      0.0     180.0
 QdK   A4H   P2H      0.0     180.0
 QdK   A4H   RC1      0.0     180.0
 RA1   RA2   RG3      0.0     180.0
-RA1   RS2   P1T      0.0     180.0
+RA1   MS2   P1T      0.0     180.0
 RA2   RG3   RA4      0.0     180.0
 RA3   RA4   P1H      0.0     180.0
 RC3   A1F   A2F      0.0     180.0
@@ -306,8 +328,8 @@ RG3   RA4   RA1      0.0     180.0
 RG3   RG3   P1H      0.0     180.0
 RG3   RG3   RG1      0.0     180.0
 RG3   RG4   P1H      0.0     180.0
-RS2   RG1   M06      0.0     180.0
-RS2   RG1   RG3      0.0     180.0
+MS2   RG1   M06      0.0     180.0
+MS2   RG1   RG3      0.0     180.0
 
 
 PHI
@@ -328,15 +350,15 @@ A2V   P1S   M03   QaD      0.5    1    -5.0
 A2V   P1T   M03   M03      2.0    1   -58.0
 C3E   M07   A2V   M02      0.1    1    68.0
 C3E   M07   A2V   M06      0.1    1    54.5
-M01   M05   RS2   RS1      0.1    1    15.0
-M01   PHO   PHO   RS1      1.5    1   176.0
-M01   PHO   RS1   M05      0.1    1     0.0
-M01   PHO   RS1   RS2      0.1    1   130.0
-M01   RS1   M05   RS2      0.1    1    45.0
-M01   RS1   RS2   RA1      0.1    1   130.0
-M01   RS1   RS2   RC1      0.1    1   130.0
-M01   RS1   RS2   RG1      0.1    1   130.0
-M01   RS1   RS2   RU1      0.1    1   130.0
+M01   M05   MS2   MS1      0.1    1    15.0
+M01   PHO   PHO   MS1      1.5    1   176.0
+M01   PHO   MS1   M05      0.1    1     0.0
+M01   PHO   MS1   MS2      0.1    1   130.0
+M01   MS1   M05   MS2      0.1    1    45.0
+M01   MS1   MS2   RA1      0.1    1   130.0
+M01   MS1   MS2   RC1      0.1    1   130.0
+M01   MS1   MS2   RG1      0.1    1   130.0
+M01   MS1   MS2   RU1      0.1    1   130.0
 M02   A2V   QdK   M02      0.0    1     0.0
 M02   C3E   C3E   M02      0.0    1     0.0
 M02   C3E   QdK   M02      0.0    1   180.0
@@ -345,49 +367,62 @@ M02   M06   M03   P1C      0.2    1   -22.0
 M02   P1S   C3E   M02      0.1    1    55.0
 M02   P1T   C3E   M02      0.5    1   157.0
 M02   QdK   A2V   QdK      0.0    1     0.0
-M02   QdK   M06   RS1      0.2    1   -50.0
+M02   QdK   M06   MS1      0.2    1   -50.0
 M02   QdK   P1C   QdK      0.1    1    15.0
 M04   A2W   A2W   M06      5.0    1     0.0
 M04   A2W   A2W   P1H      5.0    1     0.0
-M05   RS2   RA1   RA2      4.0    1   103.0
+M05   MS2   RA1   RA2      4.0    1   103.0
 PHO   A2V   P1T   M03      2.0    1   123.5
 PHO   PHO   A2V   P1T      0.1    1     0.0
 PHO   PHO   P1T   P1S      0.1    1    15.0
-PHO   PHO   RS1   M03      1.0    1   -55.0
-PHO   PHO   RS1   M05      0.5    1    -8.0
-PHO   PHO   RS1   P1S      0.1    1    20.0
-PHO   PHO   RS1   RS2      0.8    1   -61.0
+PHO   PHO   MS1   M03      1.0    1   -55.0
+PHO   PHO   MS1   M05      0.5    1    -8.0
+PHO   PHO   MS1   P1S      0.1    1    20.0
+PHO   PHO   MS1   MS2      0.8    1   -61.0
 PHO   P1T   P1S   P1T      0.1    1    15.0
-PHO   RS1   M05   RS2     24.0    1    92.0
-PHO   RS1   RS2   M06      1.0    1  -150.0
-PHO   RS1   RS2   P1H      1.0    1  -150.0
-PHO   RS1   RS2   RA1     11.0    1   132.0 
-P1C   RS1   M05   RS2      0.1    1    45.0
-P1C   RS1   RS2   RA1      0.1    1   130.0
+PHO   MS1   M05   MS2     24.0    1    92.0
+PHO   MS1   MS2   M06      1.0    1  -150.0
+PHO   MS1   MS2   P1H      1.0    1  -150.0
+PHO   MS1   MS2   RA1     11.0    1   132.0 
+P1C   MS1   M05   MS2      0.1    1    45.0
+P1C   MS1   MS2   RA1      0.1    1   130.0
 P1S   A2V   P1S   M03      0.5    1    30.0
 P1S   P1T   P1H   A1W      0.2    1    45.0
 P1S   P1T   P1H   RG3      0.2    1  -135.0
 P1S   P1T   RP    C3E      0.2    2  -177.0
-P1S   RS1   M05   RS2      0.1    1    45.0
-P1S   RS1   RS2   RA1      0.1    1   130.0
-P1S   RS1   RS2   RC1      0.1    1   130.0
+P1S   MS1   M05   MS2      0.1    1    45.0
+P1S   MS1   MS2   RA1      0.1    1   130.0
+P1S   MS1   MS2   RC1      0.1    1   130.0
 P1T   M03   M03   P1C      1.0    3     0.0
 P1T   P1S   P1T   P1H      0.2    1    15.0
 P1T   RP    C3E   M06      0.2    2  -177.0
 QdK   A2V   QdK   C3E      0.0    1     0.0
-QdK   M06   RS1   RS2      0.2    1    80.0
-RS1   RS2   M06   A2W      1.0    1  -165.0
-RS1   RS2   P1H   A2W      1.0    1  -165.0
-RS2   M06   A2W   M04      5.0    1   180.0
-RS2   P1H   A2W   M04      5.0    1   180.0
+QdK   M06   MS1   MS2      0.2    1    80.0
+MS1   MS2   M06   A2W      1.0    1  -165.0
+MS1   MS2   P1H   A2W      1.0    1  -165.0
+MS2   M06   A2W   M04      5.0    1   180.0
+MS2   P1H   A2W   M04      5.0    1   180.0
+
+MS1   RP    MS1   RP       0.2    1   -20.0
+MS1   RP    MS1   MS2      0.2    1  -120.0
+RP    MS1   MS2   RA1     58.0    1  -165.0 
+RP    MS1   MS2   RG1     55.0    1  -165.0 
+MS1   MS2   RA1   RA2     55.0    1   165.0
+MS1   MS2   RG1   RG2     55.0    1   165.0
+RP    MS1   MS2   RC1     55.0    1  -165.0
+RP    MS1   MS2   RU1     55.0    1  -165.0
+MS1   MS2   RC1   RC3     55.0    1   -15.0
+MS1   MS2   RU1   RU3     55.0    1   -15.0
+MS2   RA1   RA2   RA3      0.0    1     0.0
+MS2   RG1   RG2   RG3      0.0    1     0.0
 !! trick dihedrals
 A1F   RC1   RC1   RA1      0.0    1   180.0
-A1F   RS2   A1F   A2F      0.0    1   180.0
-A1F   RS2   RC3   A1F      0.0    1   180.0
+A1F   MS2   A1F   A2F      0.0    1   180.0
+A1F   MS2   RC3   A1F      0.0    1   180.0
 A1W   P1W   A2W   A3W      0.0    1   180.0
 A1W   P1W   A2W   A4W      0.0    1   180.0
 A2W   P1H   A1W   M04      0.0    0   180.0
-A2F   A3F   A1F   RS2      0.0    1   180.0
+A2F   A3F   A1F   MS2      0.0    1   180.0
 A2V   A2V   A2V   QaD      0.0    1   180.0
 A2V   C3E   C3E   A2V      0.0    1   180.0
 A2V   C3E   C3E   M08      0.0    1   180.0
@@ -395,8 +430,8 @@ A2V   C3E   QdK   A1F      0.0    1   180.0
 A2V   P1T   C3E   A2V      0.0    1   180.0
 A2V   QdK   A1F   RC1      0.0    1   180.0
 A2V   QdK   A1F   RG4      0.0    1   180.0
-A3F   A1F   RS2   A1F      0.0    1   180.0
-A3F   A1F   RS2   RC3      0.0    1   180.0
+A3F   A1F   MS2   A1F      0.0    1   180.0
+A3F   A1F   MS2   RC3      0.0    1   180.0
 C3E   A2V   A2V   A2V      0.0    1   180.0
 C3E   C3E   A2V   A2V      0.0    1   180.0
 C3E   C3E   A2V   P1T      0.0    1   180.0
@@ -427,13 +462,13 @@ P1S   A1F   A2F   A3F      0.0    1   180.0
 P1S   P1S   P1T   RC1      0.0    1   180.0
 P1S   P1T   RC1   A1F      0.0    1   180.0
 P1S   P1T   RC1   RA1      0.0    1   180.0
-P1S   RS1   RS2   RG1      0.0    1   180.0
-P1S   RS1   RS2   RU1      0.0    1   180.0
+P1S   MS1   MS2   RG1      0.0    1   180.0
+P1S   MS1   MS2   RU1      0.0    1   180.0
 P1T   A2V   A2V   A2V      0.0    1   180.0
 P1T   A2V   C3E   QdK      0.0    1   180.0
 P1T   C3E   A2V   A2V      0.0    1   180.0
 P1T   C3E   A2V   P1T      0.0    1   180.0
-P1T   PHO   PHO   RS1      0.0    1   180.0
+P1T   PHO   PHO   MS1      0.0    1   180.0
 P1T   RC1   A1F   A2F      0.0    1   180.0
 P1T   RP    C3E   M06      0.0    1   180.0
 P1W   A2W   A3W   A4W      0.0    1   180.0
@@ -448,9 +483,9 @@ RC3   A1F   A2F   A3F      0.0    1   180.0
 RG1   M06   RG3   RG4      0.0    1   180.0
 RG1   M06   RG4   RG3      0.0    1   180.0
 RG1   RG2   RG3   RG3      0.0    1   180.0
-RS1   RS2   RA1   RA3      0.0    1   180.0
-RS1   RS2   RG1   M06      0.0    1   180.0
-RS2   RC3   A1F   A2F      0.0    1   180.0
+MS1   MS2   RA1   RA3      0.0    1   180.0
+MS1   MS2   RG1   M06      0.0    1   180.0
+MS2   RC3   A1F   A2F      0.0    1   180.0
 
 
 IMPHI
@@ -463,13 +498,19 @@ IMPHI
 !
 !atom types               Kpsi        psi0
 A2W   A2W   P1H   M04     25.0    0    0.0
-M06   RS2   A2W   A2W     15.0    0    0.0
-P1H   RS2   A2W   A2W     15.0    0    0.0
+M06   MS2   A2W   A2W     15.0    0    0.0
+P1H   MS2   A2W   A2W     15.0    0    0.0
 P1T   M02   C3E   M02      5.0    0    0.0
-RS1   M01   M05   M05      5.0    0    0.0
-RS1   PHO   RS2   M05     30.0    0  -61.5
-RS2   RS1   M05   M06     15.0    0   15.0
-RS2   RS1   M05   P1H     15.0    0   15.0
+MS1   M01   M05   M05      5.0    0    0.0
+MS1   PHO   MS2   M05     30.0    0  -61.5
+MS2   MS1   M05   M06     15.0    0   15.0
+MS2   MS1   M05   P1H     15.0    0   15.0
+
+MS1   RP    RP    MS2     15.0    0    29.0
+RA1   MS2   RA2   RA4     40.0    0     0.0
+RG1   MS2   RG2   RG4     20.0    0     0.0
+RC1   MS2   RC2   RC3     20.0    0  -180.0
+RU1   MS2   RU2   RU3     20.0    0  -180.0
 !! trick impropers
 A1W   P1H   A2W   M04      0.0    0    0.0
 A3K   M02   QdK   M03      0.0    0    0.0
@@ -477,12 +518,12 @@ C3E   M02   P5N   M03      0.0    0    0.0
 M03   P1H   A2W   M03      0.0    0    0.0
 M04   P1H   A2W   M04      0.0    0    0.0
 M08   C3E   C3E   M06      0.0    0    0.0
-RA1   RS2   RA2   RA3      0.0    0    0.0
-RG1   RS2   M06   RG4      0.0    0    0.0
-RG1   RS2   RG2   RG3      0.0    0    0.0
-RS1   M01   RS2   P1T      0.0    0    0.0
-RS1   P1S   RS2   P1T      0.0    0    0.0
-RS1   P1S   RS2   M05      0.0    0    0.0
+RA1   MS2   RA2   RA3      0.0    0    0.0
+RG1   MS2   M06   RG4      0.0    0    0.0
+RG1   MS2   RG2   RG3      0.0    0    0.0
+MS1   M01   MS2   P1T      0.0    0    0.0
+MS1   P1S   MS2   P1T      0.0    0    0.0
+MS1   P1S   MS2   M05      0.0    0    0.0
 
 
 NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
@@ -497,7 +538,7 @@ NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
 !atom  ignored    epsilon      Rmin/2   ignored   eps,1-4       Rmin/2,1-4
 !
 
-M01      0.00     -0.0519      2.4340   0.00     -0.0519      2.4340
+M01      0.00     -0.0350      2.4340   0.00     -0.0250      2.4340
 M02      0.00     -0.0150      2.0982   0.00     -0.0150      2.0982
 M03      0.00     -0.0720      2.2759   0.00     -0.0720      2.2759
 M04      0.00     -0.0360      2.0591   0.00     -0.0360      2.0591 !
@@ -505,6 +546,8 @@ M05      0.00     -0.0150      2.3268   0.00     -0.0150      2.3268 !
 M06      0.00     -0.0150      2.5008   0.00     -0.0150      2.5008 !
 M07      0.00     -0.0900      2.3689   0.00     -0.0900      2.3689 !
 M08      0.00     -0.0360      2.2600   0.00     -0.0360      2.2600
+MS1      0.00     -0.0592      2.2826   0.00     -0.0592      2.2826
+MS2      0.00     -0.0566      2.2826   0.00     -0.0566      2.2826
 MCI      0.00     -0.1594      2.4900   0.00     -0.1594      2.4900
 MSO      0.00     -0.0800      2.3200   0.00     -0.0800      2.3200
 MSS      0.00     -0.1200      2.2600   0.00     -0.1200      2.2600
@@ -524,6 +567,8 @@ M05    M05       -0.0150      4.6536           !necessary, do not delete
 M06    M06       -0.0150      5.0016           !necessary, do not delete
 M07    M07       -0.0900      4.7378           !necessary, do not delete
 M08    M08       -0.0360      4.5200           !necessary, do not delete
+MS1    MS1       -0.0592      4.5652           !necessary, do not delete
+MS2    MS2       -0.0566      4.5652           !necessary, do not delete
 MCI    MCI       -0.1594      4.9800           !necessary, do not delete
 MSO    MSO       -0.0800      4.6400           !necessary, do not delete
 MSS    MSS       -0.1200      4.5200           !necessary, do not delete
