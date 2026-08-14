@@ -508,7 +508,7 @@ ATOM M1   M02    -1.00
 ATOM M2   QdK     1.00
 ATOM M3   A4H     0.00
 ATOM M4   P2H     0.00
-ATOM M5   RC1     0.00
+ATOM M5   P2H     0.00
 BOND M1   M2        M2   M3        M3   M4
 BOND M3   M5        M4   M5
 ANGL M1   M2   M3        M2   M3   M4        M2   M3   M5
