@@ -153,7 +153,7 @@ IMPR NA   C2   NB   NC        C1   M1   C2   C3
 RESI TRA         -3.00
 GROUP                 
 ATOM M1   M02    -1.00
-ATOM M2   A2V     0.00
+ATOM M2   A3R     0.00
 ATOM M3   M02    -1.00
 ATOM M4   M02    -1.00
 BOND M1   M2        M2   M3        M2   M4
