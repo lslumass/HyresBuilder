@@ -3,14 +3,16 @@
    20    1              
 ! bead types
 MASS   500 SMG  90.00   ! partially hydrated Mg2+
-MASS   501 M01  70.00   ! -PO4(-2)-, use RS1 of RNA backbone
+MASS   501 M01  70.00   ! -PO4(-2)-
 MASS   502 M02  40.00   ! -C(=O)O-, use QaD of Asp, carboxylic acid group
-MASS   503 M03  50.00   ! -C(=O)-NH-C, use M04 of Asn
-MASS   504 M04  50.00   ! -C(=O)-NH2, use M04 of Asn
+MASS   503 M03  50.00   ! -C(=O)-NH-C, use Asn
+MASS   504 M04  50.00   ! -C(=O)-NH2, use 0.5Asn
 MASS   505 M05  50.00   ! OH-C-C-OH, part of the sugar ring
 MASS   506 M06  50.00   ! -N(+)-(C3), -S(+)-(C3)
 MASS   507 M07  50.00   ! -C(=O)-O-C-, Ester group, -C(=O)-N-C-
-MASS   508 M08  59.00   ! -NH-C(=O)-NH2, use M04 (Asn)
+MASS   508 M08  59.00   ! -NH-C(=O)-NH2, use 0.5*ASN
+MASS   509 MS1  48.00   ! BC1   C1 for ribose ring
+MASS   510 MS2  51.00   ! BC2   C2 for ribose ring
 
 MASS   550 MCI 150.00   ! C-C-I, Iodine-containing group, used for halogenated compounds, unquantified
 MASS   551 MSO  80.00   ! -SO4- OR -SO3-, -1 charge
@@ -34,8 +36,8 @@ DEFA FIRS NTER LAST CTER
 RESI 3D1          0.00  
 GROUP                             
 ATOM M1   P1S     0.00             
-ATOM C1   RS1     0.00                
-ATOM C2   RS2     0.00 
+ATOM C1   MS1     0.00                
+ATOM C2   MS2     0.00 
 ATOM NA   RA1     0.00  
 ATOM NB   RA2     0.00  
 ATOM NC   RA3     0.00  
@@ -65,7 +67,7 @@ DIHE M1   M2   M3   M4
 RESI XAN          0.00
 GROUP                 
 ATOM NA   P1H     0.00
-ATOM NB   RG2     0.00
+ATOM NB   RG1     0.00
 ATOM NC   RG3     0.00
 ATOM ND   RG3     0.00
 BOND NA   NB        NB   NC        NC   ND      NA   ND
@@ -75,8 +77,8 @@ DIHE NA   NB   ND   NC        NA   NB   NC   ND
 RESI 2ND          0.00  
 GROUP                             
 ATOM M1   P1S     0.00             
-ATOM C1   RS1     0.00                
-ATOM C2   RS2     0.00 
+ATOM C1   MS1     0.00                
+ATOM C2   MS2     0.00 
 ATOM NA   RA1     0.00  
 ATOM NB   RA2     0.00  
 ATOM NC   RG3     0.00  
@@ -106,8 +108,8 @@ DIHE M1   M2   M3   M4
 RESI D5M         -2.00  
 GROUP                             
 ATOM M1   M01    -2.00             
-ATOM C1   RS1     0.00                
-ATOM C2   RS2     0.00 
+ATOM C1   MS1     0.00                
+ATOM C2   MS2     0.00 
 ATOM NA   RA1     0.00  
 ATOM NB   RA2     0.00  
 ATOM NC   RA3     0.00  
@@ -135,8 +137,8 @@ ANGL M1   M2   M3
 RESI DCM         -2.00
 GROUP                 
 ATOM M1   M01    -2.00
-ATOM C1   RS1     0.00
-ATOM C2   RS2     0.00
+ATOM C1   MS1     0.00
+ATOM C2   MS2     0.00
 ATOM NA   RA1     0.00
 ATOM NB   RA2     0.00
 ATOM NC   RA3     0.00
@@ -151,7 +153,7 @@ IMPR NA   C2   NB   NC        C1   M1   C2   C3
 RESI TRA         -3.00
 GROUP                 
 ATOM M1   M02    -1.00
-ATOM M2   A2V     0.00
+ATOM M2   A3R     0.00
 ATOM M3   M02    -1.00
 ATOM M4   M02    -1.00
 BOND M1   M2        M2   M3        M2   M4
@@ -161,8 +163,8 @@ DIHE M1   M2   M4   M3
 RESI GNG          0.00  
 GROUP                             
 ATOM M1   P1S     0.00             
-ATOM C1   RS1     0.00                
-ATOM C2   RS2     0.00 
+ATOM C1   MS1     0.00                
+ATOM C2   MS2     0.00 
 ATOM NA   RA1     0.00  
 ATOM NB   RA2     0.00  
 ATOM NC   RA3     0.00  
@@ -328,7 +330,7 @@ GROUP
 ATOM M1   A2F     0.00
 ATOM M2   A3F     0.00
 ATOM M3   A1F     0.00
-ATOM M4   RS2     0.00
+ATOM M4   MS2     0.00
 ATOM M5   RC3     0.00
 ATOM M6   A1F     0.00
 ATOM M7   A2F     0.00
@@ -353,8 +355,8 @@ ANGL M1   M2   M3
 RESI URI          0.00
 GROUP                 
 ATOM M1   P1S     0.00
-ATOM C1   RS1     0.00
-ATOM C2   RS2     0.00
+ATOM C1   MS1     0.00
+ATOM C2   MS2     0.00
 ATOM NA   RU1     0.00
 ATOM NB   RU2     0.00
 ATOM NC   RU3     0.00
@@ -423,7 +425,7 @@ IMPR M2   M1   M3   M4
 RESI GUN          0.00
 GROUP                 
 ATOM NA   P1H     0.00
-ATOM NB   RG2     0.00
+ATOM NB   RG1     0.00
 ATOM NC   RG3     0.00
 ATOM ND   RG4     0.00
 BOND NA   NB        NB   NC        NC   ND      NA   ND
@@ -433,8 +435,8 @@ DIHE NA   NB   ND   NC        NA   NB   NC   ND
 RESI 4UO          0.00  
 GROUP                             
 ATOM M1   P1S     0.00             
-ATOM C1   RS1     0.00                
-ATOM C2   RS2     0.00 
+ATOM C1   MS1     0.00                
+ATOM C2   MS2     0.00 
 ATOM NA   RG1     0.00  
 ATOM NB   RG2     0.00  
 ATOM NC   RG3     0.00  
@@ -472,8 +474,8 @@ ANGL M1   M2   M3
 RESI GRS          0.00  
 GROUP                             
 ATOM M1   P1S     0.00             
-ATOM C1   RS1     0.00                
-ATOM C2   RS2     0.00 
+ATOM C1   MS1     0.00                
+ATOM C2   MS2     0.00 
 ATOM NA   RG1     0.00  
 ATOM NB   RG2     0.00  
 ATOM NC   RG3     0.00  
@@ -506,7 +508,7 @@ ATOM M1   M02    -1.00
 ATOM M2   QdK     1.00
 ATOM M3   A4H     0.00
 ATOM M4   P2H     0.00
-ATOM M5   RC1     0.00
+ATOM M5   P2H     0.00
 BOND M1   M2        M2   M3        M3   M4
 BOND M3   M5        M4   M5
 ANGL M1   M2   M3        M2   M3   M4        M2   M3   M5
@@ -515,8 +517,8 @@ DIHE M1   M2   M3   M4        M2   M3   M5   M4
 RESI MG7          1.00  
 GROUP                             
 ATOM M1   P1S     0.00             
-ATOM C1   RS1     0.00                
-ATOM C2   RS2     0.00 
+ATOM C1   MS1     0.00                
+ATOM C2   MS2     0.00 
 ATOM NA   RG1     0.00  
 ATOM NB   M06     1.00  
 ATOM NC   RG3     0.00  
@@ -552,7 +554,7 @@ IMPH M3   M1   M2   M4
 RESI NCA          0.00
 GROUP                 
 ATOM M1   P1H     0.00
-ATOM M2   A2W     0.00
+ATOM M2   P1W     0.00
 ATOM M3   A1W     0.00
 ATOM M4   M04     0.00
 BOND M1   M2        M1   M3        M2   M3        M3   M4
@@ -705,7 +707,7 @@ ANGL M1   M2   M3
 RESI G6P         -2.00
 GROUP                 
 ATOM M1   M01    -2.00
-ATOM M2   RS1     0.00
+ATOM M2   MS1     0.00
 ATOM M3   M05     0.00
 ATOM M4   M05     0.00
 BOND M1   M2        M2   M3        M2   M4        M3   M4
@@ -745,7 +747,7 @@ DIHE M1   M2   M3   M4       M1   M2   M3   M6       M2   M3   M4   M5
 RESI TAU          0.00
 GROUP                 
 ATOM M1   QdK     1.00
-ATOM M2   RS1    -1.00
+ATOM M2   MS1    -1.00
 BOND M1   M2
 
 RESI BET          0.00
@@ -857,8 +859,8 @@ DIHE M1   M2   M3   M4       M2   M3   M4   M5
 RESI ADN          0.00  
 GROUP                             
 ATOM M1   P1S     0.00             
-ATOM C1   RS1     0.00                
-ATOM C2   RS2     0.00 
+ATOM C1   MS1     0.00                
+ATOM C2   MS2     0.00 
 ATOM NA   RA1     0.00  
 ATOM NB   RA2     0.00  
 ATOM NC   RA3     0.00  
@@ -878,8 +880,8 @@ IMPR NA   C2   NB   ND        C1   M1   C2   C3
 RESI MTA          0.00  
 GROUP                             
 ATOM M1   P1C     0.00             
-ATOM C1   RS1     0.00                
-ATOM C2   RS2     0.00 
+ATOM C1   MS1     0.00                
+ATOM C2   MS2     0.00 
 ATOM NA   RA1     0.00  
 ATOM NB   RA2     0.00  
 ATOM NC   RA3     0.00  
@@ -899,8 +901,8 @@ IMPR NA   C2   NB   ND
 RESI AMP         -2.00  
 GROUP                             
 ATOM M1   M01    -2.00             
-ATOM C1   RS1     0.00                
-ATOM C2   RS2     0.00 
+ATOM C1   MS1     0.00                
+ATOM C2   MS2     0.00 
 ATOM NA   RA1     0.00  
 ATOM NB   RA2     0.00  
 ATOM NC   RA3     0.00  
@@ -919,8 +921,8 @@ IMPR NA   C2   NB   ND
 
 RESI AP1          0.00     # AMP as the part of ADPR, NAD, NADH, SAM, FAD, etc.
 GROUP                             
-ATOM C1   RS1     0.00                
-ATOM C2   RS2     0.00 
+ATOM C1   MS1     0.00                
+ATOM C2   MS2     0.00 
 ATOM NA   RA1     0.00  
 ATOM NB   RA2     0.00  
 ATOM NC   RA3     0.00  
@@ -939,8 +941,8 @@ IMPR NA   C2   NB   ND
 
 RESI APP          0.00     # Phosphated APP as the part of NADP, NADPH, etc.
 GROUP                             
-ATOM C1   RS1     0.00                
-ATOM C2   RS2     0.00 
+ATOM C1   MS1     0.00                
+ATOM C2   MS2     0.00 
 ATOM NA   RA1     0.00  
 ATOM NB   RA2     0.00  
 ATOM NC   RA3     0.00  
@@ -962,8 +964,8 @@ RESI ADP         -3.00
 GROUP                             
 ATOM M2   M01    -2.00
 ATOM M1   PHO    -1.00
-ATOM C1   RS1     0.00
-ATOM C2   RS2     0.00
+ATOM C1   MS1     0.00
+ATOM C2   MS2     0.00
 ATOM NA   RA1     0.00
 ATOM NB   RA2     0.00
 ATOM NC   RA3     0.00
@@ -986,8 +988,8 @@ RESI ADPH        -2.00
 GROUP                             
 ATOM M2   RP     -1.00
 ATOM M1   PHO    -1.00
-ATOM C1   RS1     0.00
-ATOM C2   RS2     0.00
+ATOM C1   MS1     0.00
+ATOM C2   MS2     0.00
 ATOM NA   RA1     0.00
 ATOM NB   RA2     0.00
 ATOM NC   RA3     0.00
@@ -1011,8 +1013,8 @@ GROUP
 ATOM P3   M01    -2.00
 ATOM P2   PHO    -1.00
 ATOM P1   PHO    -1.00
-ATOM C1   RS1     0.00
-ATOM C2   RS2     0.00
+ATOM C1   MS1     0.00
+ATOM C2   MS2     0.00
 ATOM NA   RA1     0.00
 ATOM NB   RA2     0.00
 ATOM NC   RA3     0.00
@@ -1036,8 +1038,8 @@ GROUP
 ATOM M3   RP     -1.00
 ATOM M2   PHO    -1.00
 ATOM M1   PHO    -1.00
-ATOM C1   RS1     0.00
-ATOM C2   RS2     0.00
+ATOM C1   MS1     0.00
+ATOM C2   MS2     0.00
 ATOM NA   RA1     0.00
 ATOM NB   RA2     0.00
 ATOM NC   RA3     0.00
@@ -1061,7 +1063,7 @@ RESI APR         -2.00     ! APR: APR-AP1
 GROUP                             
 ATOM M1   PHO    -1.00
 ATOM M2   PHO    -1.00
-ATOM M3   RS1     0.00
+ATOM M3   MS1     0.00
 ATOM M4   P1S     0.00
 ATOM M5   M05     0.00
 BOND M1   +C1       M1   M2        M2   M3
@@ -1075,8 +1077,8 @@ RESI NAD         -1.00     ! NAD+: NAD-AP1, NADP+: NAD-APP
 GROUP                             
 ATOM M1   PHO    -1.00
 ATOM M2   PHO    -1.00
-ATOM M3   RS1     0.00
-ATOM M4   RS2     0.00
+ATOM M3   MS1     0.00
+ATOM M4   MS2     0.00
 ATOM M5   M05     0.00
 ATOM M6   M06     1.00
 ATOM M7   A2W     0.00
@@ -1100,8 +1102,8 @@ RESI NAI         -2.00     ! NADH: NADH-AP1, NADPH: NADH-APP
 GROUP                             
 ATOM M1   PHO    -1.00
 ATOM M2   PHO    -1.00
-ATOM M3   RS1     0.00
-ATOM M4   RS2     0.00
+ATOM M3   MS1     0.00
+ATOM M4   MS2     0.00
 ATOM M5   M05     0.00
 ATOM M6   P1H     1.00
 ATOM M7   A2W     0.00
@@ -1173,8 +1175,8 @@ DIHE M2   M1   +C1  +C2      +C1   M1   M2   M3
 RESI NOS          0.00  
 GROUP                             
 ATOM M1   P1S     0.00             
-ATOM C1   RS1     0.00                
-ATOM C2   RS2     0.00 
+ATOM C1   MS1     0.00                
+ATOM C2   MS2     0.00 
 ATOM NA   RA1     0.00  
 ATOM NB   RA2     0.00  
 ATOM NC   RG3     0.00  
@@ -1194,8 +1196,8 @@ IMPR NA   C2   NB   ND        C1   M1   C2   C3
 RESI 5GP         -2.00  
 GROUP                             
 ATOM M1   M01    -2.00             
-ATOM C1   RS1     0.00                
-ATOM C2   RS2     0.00 
+ATOM C1   MS1     0.00                
+ATOM C2   MS2     0.00 
 ATOM NA   RG1     0.00  
 ATOM NB   RG2     0.00  
 ATOM NC   RG3     0.00  
@@ -1215,8 +1217,8 @@ IMPR NA   C2   NB   ND
 RESI C5P         -2.00
 GROUP                 
 ATOM M1   M01    -2.00
-ATOM C1   RS1     0.00
-ATOM C2   RS2     0.00
+ATOM C1   MS1     0.00
+ATOM C2   MS2     0.00
 ATOM NA   RC1     0.00
 ATOM NB   RC2     0.00
 ATOM NC   RC3     0.00
@@ -1231,8 +1233,8 @@ IMPR NA   C2   NB   NC
 RESI CTN          0.00
 GROUP                 
 ATOM M1   P1S     0.00
-ATOM C1   RS1     0.00
-ATOM C2   RS2     0.00
+ATOM C1   MS1     0.00
+ATOM C2   MS2     0.00
 ATOM NA   RC1     0.00
 ATOM NB   RC2     0.00
 ATOM NC   RC3     0.00
@@ -1247,8 +1249,8 @@ IMPR NA   C2   NB   NC        C1   M1   C2   C3
 RESI U5P         -2.00
 GROUP                 
 ATOM M1   M01    -2.00
-ATOM C1   RS1     0.00
-ATOM C2   RS2     0.00
+ATOM C1   MS1     0.00
+ATOM C2   MS2     0.00
 ATOM NA   RU1     0.00
 ATOM NB   RU2     0.00
 ATOM NC   RU3     0.00
@@ -1262,8 +1264,8 @@ IMPR NA   C2   NB   NC
 
 RESI UP1          0.00     ! UMP as the part of UD1, UPG, UGA, etc.
 GROUP                 
-ATOM C1   RS1     0.00
-ATOM C2   RS2     0.00
+ATOM C1   MS1     0.00
+ATOM C2   MS2     0.00
 ATOM NA   RU1     0.00
 ATOM NB   RU2     0.00
 ATOM NC   RU3     0.00
@@ -1279,8 +1281,8 @@ RESI UDP         -3.00
 GROUP                 
 ATOM M2   M01    -2.00
 ATOM M1   PHO    -1.00
-ATOM C1   RS1     0.00
-ATOM C2   RS2     0.00
+ATOM C1   MS1     0.00
+ATOM C2   MS2     0.00
 ATOM NA   RU1     0.00
 ATOM NB   RU2     0.00
 ATOM NC   RU3     0.00
@@ -1297,8 +1299,8 @@ RESI UDPH        -2.00
 GROUP                 
 ATOM M2   PHO    -1.00
 ATOM M1   PHO    -1.00
-ATOM C1   RS1     0.00
-ATOM C2   RS2     0.00
+ATOM C1   MS1     0.00
+ATOM C2   MS2     0.00
 ATOM NA   RU1     0.00
 ATOM NB   RU2     0.00
 ATOM NC   RU3     0.00
@@ -1315,7 +1317,7 @@ RESI UD1         -2.00     ! UD1: UD1-UP1
 GROUP                             
 ATOM M1   PHO    -1.00
 ATOM M2   PHO    -1.00
-ATOM M3   RS1     0.00
+ATOM M3   MS1     0.00
 ATOM M4   P1T     0.00
 ATOM M5   M05     0.00
 ATOM M6   M03     0.00
@@ -1330,7 +1332,7 @@ RESI UPG         -2.00     ! UPG: UPG-UP1
 GROUP                             
 ATOM M1   PHO    -1.00
 ATOM M2   PHO    -1.00
-ATOM M3   RS1     0.00
+ATOM M3   MS1     0.00
 ATOM M4   M05     0.00
 ATOM M5   M05     0.00
 ATOM M6   P1S     0.00
@@ -1345,7 +1347,7 @@ RESI UGA         -3.00     ! UGA: UGA-UP1
 GROUP                             
 ATOM M1   PHO    -1.00
 ATOM M2   PHO    -1.00
-ATOM M3   RS1     0.00
+ATOM M3   MS1     0.00
 ATOM M4   M05     0.00
 ATOM M5   M05     0.00
 ATOM M6   M02     0.00

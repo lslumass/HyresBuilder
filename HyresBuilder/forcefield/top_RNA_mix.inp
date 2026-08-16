@@ -138,6 +138,6 @@ ATOM MG   MG      2.00  !
 
 RESI CA+          2.00  !                    
 GROUP                   !                       
-ATOM CA   CAL     2.00  ! 
+ATOM CAL  CAL     2.00  ! 
 
 END

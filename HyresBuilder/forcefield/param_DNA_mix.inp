@@ -65,7 +65,7 @@ DS2   DA1   DA4   65.0     117.0  ! C2-NA-ND for A
 DS2   DG1   DG2   60.0     129.9  ! C2-NA-NB for G
 DS2   DG1   DG4   45.0     117.0  ! C2-NA-ND for G
 DS2   DC1   DC3   75.0      61.0  ! C2-NA-NC for C
-DS2   DT1   DT3   75.0      87.8  ! C2-NA-NC for T 
+DS2   DT1   DT3   75.0      61.0  ! C2-NA-NC for T 
 
 ! internal angle for A:
 DA1   DA2   DA3   50.0      90.0  !  NA-NB-NC
@@ -124,7 +124,7 @@ DC1   DS2   DC2   DC3     20.0    0   -180.0   ! this was set to 7kcal/mol, chan
 DT1   DS2   DT3  DT2      20.0    0      0.0  
 
 
-NONBONDED  NBXMOD 3  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
+NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
      CUTNB 12.0  CTOFNB 12.0  CTONNB 11.  EPS 1.0  E14FAC 0.4  WMIN 1.5 
 
 !                 Emin         Rmin/2
@@ -158,30 +158,30 @@ NBFIX
 !                 Emin         Rmin
 !                 (kcal/mol)   (A)
 DP        MG        -0.50000       5.0000
-RP        CAL       -0.50000       5.2000
+DP        CAL       -0.50000       5.2000
 DS1       DS1       -0.08434       4.5652           !necessary, do not delete
 
 ! for pairing 
 DC2       DG3       -0.12669       3.3100
 DC3       DG4       -0.10337       4.0100           !reduce from 4.6
-DA3       DT2       -0.12669       3.2700
+DA3       DT2       -0.12669       3.6000
 ! DA4 DT3 is not set with NBfix because the Hbond distance is greater than stacking 
 
 !# Aromatic-base pi-pi interactions
 A2F       DA1       -0.83000       4.5000
 A2F       DG1       -0.83000       4.5000
 A2F       DC1       -0.77000       4.5000
-A2F       DT1       -0.81000       4.5000
+A2F       DT1       -0.80000       4.5000
 
 A2Y       DA1       -0.91000       4.5000
 A2Y       DG1       -1.01000       4.5000
 A2Y       DC1       -0.69000       4.5000
-A2Y       DT1       -0.91000       4.5000
+A2Y       DT1       -0.75000       4.5000
 
 A2W       DA1       -0.91000       4.5000
 A2W       DG1       -1.01000       4.5000
 A2W       DC1       -0.69000       4.5000
-A2W       DT1       -0.91000       4.5000
+A2W       DT1       -0.75000       4.5000
 
 !# ARG/LYS-base cation-pi interactions
 QdR       DA1       -0.13000       4.5000
@@ -190,26 +190,26 @@ QdR       DC1       -0.38000       4.5000
 QdR       DT1       -0.09000       4.5000
 
 !# QdK       RA1    --- too weak, IGNORE ---
-QdK       RG1       -0.22000       4.5000
-QdK       RC1       -0.27000       4.5000
-QdK       RU1       -0.17000       4.5000
+QdK       DG1       -0.22000       4.5000
+QdK       DC1       -0.27000       4.5000
+QdK       DT1       -0.07000       4.5000
 
 !# Gln/Asn-base interactions
 P4Q       DA1       -0.11000       4.5000
 P4Q       DG1       -0.45000       4.5000
 P4Q       DC1       -0.45000       4.5000
-P4Q       DT1       -0.41000       4.5000
+P4Q       DT1       -0.31000       4.5000
 
 P5N       DA1       -0.41000       4.5000
 P5N       DG1       -0.44000       4.5000
 P5N       DC1       -0.34000       4.5000
-P5N       DT1       -0.25000       4.5000
+P5N       DT1       -0.20000       4.5000
 
 !# Asp/Glu-base interactions
 QaD       DA1       -0.09000       4.5000
 QaD       DG1       -0.26000       4.5000
 QaD       DC1       -0.31000       4.5000
-QaD       DT1       -0.21000       4.5000
+QaD       DT1       -0.11000       4.5000
 
 QaE       DA1       -0.19000       4.5000
 QaE       DG1       -0.43000       4.5000

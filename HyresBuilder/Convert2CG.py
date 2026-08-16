@@ -18,7 +18,10 @@ Conversion models
 * **iConRNA (RNA)** — each nucleotide is mapped to a phosphate bead (P), two
   sugar beads (C1 at C4′, C2 at C1′), and two to four base beads (NA–ND),
   all placed at the geometric center of their contributing all-atom coordinates.
-  Supported nucleotides: ADE, GUA, CYT, URA (:func:`at2icon`).
+  Supported nucleotides: ADE, GUA, CYT, URA (:func:`at2RNA`).
+* **iConRNA (DNA)** — the same bead topology as the RNA model (P, C1, C2,
+  NA–ND), applied to deoxyribonucleotides. Supported nucleotides: DA, DG,
+  DC, DT (:func:`at2DNA`).
 
 Pipeline overview
 -----------------
@@ -28,8 +31,8 @@ The top-level entry point :func:`at2cg` orchestrates the full workflow:
    (:func:`add_backbone_hydrogen`).
 2. Split the input PDB into per-chain temporary files and detect molecule
    types (:func:`split_chains`).
-3. Apply the appropriate CG mapping per chain (:func:`at2hyres` or
-   :func:`at2icon`).
+3. Apply the appropriate CG mapping per chain (:func:`at2hyres`,
+   :func:`at2RNA`, or :func:`at2DNA`).
 4. Build topology and write PSF via ``psfgen``, set terminus charge states
    (:func:`set_terminus`), and re-encode any atom serial numbers exceeding
    99,999 in hybrid-36 format (:func:`fix_pdb_serial`).
@@ -171,7 +174,19 @@ def add_backbone_hydrogen(pdb_file, output_file):
         """Format an ATOM line in PDB format."""
         serial_str = encode_serial(serial)
         resseq_str = encode_resseq(residue_seq)
-        return (f"ATOM  {serial_str}  {atom_name:3s} {residue_name:3s} {chain_id}{resseq_str}    "
+        # PDB columns 13-16 are a fixed 4-character atom-name field. Names of
+        # 1-3 characters are written with a leading blank (column 13) and
+        # left-justified after it; names of exactly 4 characters fill the
+        # whole field. This keeps every column after the name (altLoc,
+        # resName, chainID, resSeq, ...) at a fixed position no matter how
+        # long the atom name is - previously a 3-char-wide field silently
+        # let 4-character names (e.g. hydrogens like "HD11") overflow by one
+        # column, shifting resName and corrupting downstream parsing.
+        if len(atom_name) >= 4:
+            name_field = atom_name[:4]
+        else:
+            name_field = f" {atom_name:<3s}"
+        return (f"ATOM  {serial_str} {name_field} {residue_name:3s} {chain_id}{resseq_str}    "
                 f"{coords[0]:8.3f}{coords[1]:8.3f}{coords[2]:8.3f}{occupancy:>6s}{temp_factor:>6s}"
                 f"          {element:>2s}\n")
     
@@ -301,7 +316,14 @@ def add_backbone_hydrogen(pdb_file, output_file):
             # Skip proline (PRO) residues - they don't have backbone H
             if atom['residue'] == 'PRO':
                 continue
-            
+
+            # Skip residues that already have a backbone amide hydrogen
+            # (some structures have H/HN on some residues but not others,
+            # e.g. partially-protonated or mixed-source PDBs)
+            if 'H' in res_atoms or 'HN' in res_atoms:
+                h_added.add(key)
+                continue
+
             # Check if we have necessary atoms (N, CA, C)
             if 'CA' in res_atoms:
                 h_added.add(key)
@@ -346,14 +368,77 @@ def add_backbone_hydrogen(pdb_file, output_file):
     return output_file
 
 
-def split_chains(pdb):
-    """Split PDB file into separate chains and identify their types."""
+def _renumber_chain(chain_lines):
+    """Renumber residues in a single chain's ATOM lines to start from 1.
+
+    Checks the first residue's resSeq; if it's already 1, the lines are
+    returned unchanged. Otherwise every residue is renumbered sequentially
+    starting from 1, using each unique (resSeq, iCode) pair encountered (in
+    file order) to detect residue boundaries so insertion codes are handled
+    correctly. Residue counts beyond 9999 fall back to hybrid-36 encoding,
+    consistent with the rest of this module.
+    """
+    def encode_resseq(n):
+        if n < 10000:
+            return f"{n:4d}"
+        n -= 10000
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        if n < 26 * (36**3):
+            result = []
+            for _ in range(3):
+                n, remainder = divmod(n, 36)
+                result.append(chars[remainder])
+            result.append(chr(ord('A') + n))
+            return ''.join(reversed(result))
+        n -= 26 * (36**3)
+        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
+        result = []
+        for _ in range(3):
+            n, remainder = divmod(n, 36)
+            result.append(chars_lower[remainder])
+        result.append(chr(ord('a') + n))
+        return ''.join(reversed(result))
+
+    if not chain_lines:
+        return chain_lines
+
+    try:
+        first_resseq = int(chain_lines[0][22:26].strip())
+    except ValueError:
+        first_resseq = None
+
+    if first_resseq == 1:
+        # Already starts from 1 - leave this segment untouched
+        return chain_lines
+
+    new_lines = []
+    old_key = None
+    new_resid = 0
+    for line in chain_lines:
+        key = (line[22:26], line[26])
+        if key != old_key:
+            new_resid += 1
+            old_key = key
+        new_lines.append(line[:22] + encode_resseq(new_resid) + line[26:])
+    return new_lines
+
+
+def split_chains(pdb, renumber=False):
+    """Split PDB file into separate chains and identify their types.
+
+    Args:
+        pdb (str): Path to the input PDB file.
+        renumber (bool, optional): If ``True``, checks each segment's
+            starting residue number and, if it doesn't already start from 1,
+            renumbers that segment's residues sequentially from 1. Segments
+            that already start from 1 are left untouched. Default ``False``.
+    """
     aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
            "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
     rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
     dnas = ["DAD", "DGU", "DCY", "DTH", "DA", "DG", "DC", "DT"]
     ags = ["KAN"]
-    counts = {'P': 0, 'R': 0, 'D': 0, 'A': 0}
+    counts = {'P': 1, 'R': 1, 'D': 1, 'A': 1}
 
     # HIS names
     HISs = ['HSD', 'HSE', 'HSP', 'HID', 'HIE', 'HIP']
@@ -433,8 +518,7 @@ def split_chains(pdb):
                 chain_id = line[21].strip()
                 segid = line[72:76].strip()
                 resname = line[17:20].strip()
-                resname = {"A": "ADE", "G": "GUA", "C": "CYT", "U": "URA",
-                           "DA": "DAD", "DG": "DGU", "DC": "DCY", "DT": "DTH"}.get(resname, resname)
+                resname = {"A": "ADE", "G": "GUA", "C": "CYT", "U": "URA"}.get(resname, resname)
                 if resname in HISs:
                     resname = 'HIS'
                 
@@ -469,6 +553,8 @@ def split_chains(pdb):
 
     # Save each chain to temporary file
     for i, chain in enumerate(chains):
+        if renumber:
+            chain = _renumber_chain(chain)
         with open(f"aa2cgtmp_{i}_aa.pdb", 'w') as f:
             for line in chain:
                 f.write(line)
@@ -686,7 +772,7 @@ def at2hyres(pdb_in, pdb_out):
     print(f"At2Hyres conversion done, output written to {pdb_out}")
 
 
-def at2icon(pdb_in, pdb_out):
+def at2RNA(pdb_in, pdb_out):
     """
     Convert an all-atom RNA PDB to an iConRNA coarse-grained PDB.
 
@@ -709,7 +795,7 @@ def at2icon(pdb_in, pdb_out):
 
     Example:
         >>> from HyresBuilder import Convert2CG
-        >>> Convert2CG.at2icon("rna_aa.pdb", "rna_cg.pdb")
+        >>> Convert2CG.at2RNA("rna_aa.pdb", "rna_cg.pdb")
     """
     
     def encode_serial(n):
@@ -857,7 +943,190 @@ def at2icon(pdb_in, pdb_out):
         
         f.write('END\n')
     
-    print(f'At2iCon conversion done, output written to {pdb_out}')
+    print(f'At2RNA conversion done, output written to {pdb_out}')
+
+
+def at2DNA(pdb_in, pdb_out):
+    """
+    Convert an all-atom DNA PDB to an iConRNA-style coarse-grained PDB.
+
+    Uses the same CG bead topology as :func:`at2RNA` (P, C1, C2, and
+    NA–ND base beads, all placed at the geometric center of their
+    contributing all-atom coordinates), applied to deoxyribonucleotides.
+
+    - **P** — phosphate group (P, O1P, O2P, O5', O3' from previous residue)
+    - **C1** — sugar bead at C4'
+    - **C2** — sugar bead at C1'
+    - **NA/NB/NC/ND** — base beads (number depends on nucleotide type)
+
+    Supported nucleotides: DA, DG, DC, DT, corresponding respectively to the
+    RNA nucleotides ADE, GUA, CYT, URA. Thymine (DT) additionally carries the
+    5-methyl group (C7 and its hydrogens) folded into its NB base bead, since
+    DT lacks the O2' present in ribonucleotides (irrelevant to this CG
+    mapping, which does not use O2').
+
+    Args:
+        pdb_in (str): Path to the input all-atom DNA PDB file.
+        pdb_out (str): Path to the output coarse-grained PDB file.
+
+    Returns:
+        None. Writes a CG PDB file to ``pdb_out``.
+
+    Example:
+        >>> from HyresBuilder import Convert2CG
+        >>> Convert2CG.at2DNA("dna_aa.pdb", "dna_cg.pdb")
+    """
+    
+    def encode_serial(n):
+        """Encode integer to hybrid-36 format for PDB serial number field (5 chars)."""
+        if n < 100000:
+            return f"{n:5d}"
+
+        n -= 100000
+        chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+        if n < 26 * (36**4):  # uppercase range
+            result = []
+            for _ in range(4):
+                n, remainder = divmod(n, 36)
+                result.append(chars[remainder])
+            result.append(chr(ord('A') + n))
+            return ''.join(reversed(result))
+
+        n -= 26 * (36**4)  # lowercase range
+        chars_lower = '0123456789abcdefghijklmnopqrstuvwxyz'
+        result = []
+        for _ in range(4):
+            n, remainder = divmod(n, 36)
+            result.append(chars_lower[remainder])
+        result.append(chr(ord('a') + n))
+        return ''.join(reversed(result))
+    
+    # Parse PDB file
+    atoms = []
+    with open(pdb_in, 'r') as f:
+        for line in f:
+            if line.startswith('ATOM'):
+                atoms.append({
+                    'name': line[12:16].strip(),
+                    'resname': line[17:20].strip(),
+                    'chain': line[21],
+                    'resid': int(line[22:26].strip()),
+                    'x': float(line[30:38].strip()),
+                    'y': float(line[38:46].strip()),
+                    'z': float(line[46:54].strip()),
+                    'segid': line[72:76].strip() if len(line) > 72 else ''
+                })
+    
+    # Group by segment and residue
+    segments = {}
+    for atom in atoms:
+        segid = atom['segid']
+        resid = atom['resid']
+        if segid not in segments:
+            segments[segid] = {}
+        if resid not in segments[segid]:
+            segments[segid][resid] = {
+                'resname': atom['resname'], 
+                'chain': atom['chain'], 
+                'atoms': []
+            }
+        segments[segid][resid]['atoms'].append(atom)
+    
+    # Base bead mappings for each deoxyribonucleotide.
+    # Same topology as the RNA model (ADE->DA, GUA->DG, CYT->DC, URA->DT),
+    # with DT's 5-methyl group (C7/H71/H72/H73) folded into its NB bead in
+    # place of RNA's corresponding uracil H5 atom.
+    base_mappings = {
+        'DA': [
+            ('NA', ['N9', 'C4']),
+            ('NB', ['C8', 'H8', 'N7', 'C5']),
+            ('NC', ['C6', 'N1', 'N6', 'H61', 'H62']),
+            ('ND', ['C2', 'H2', 'N3'])
+        ],
+        'DG': [
+            ('NA', ['N9', 'C4']),
+            ('NB', ['C8', 'H8', 'N7', 'C5']),
+            ('NC', ['C6', 'N1', 'H1', 'O6']),
+            ('ND', ['C2', 'N2', 'H21', 'H22', 'N3'])
+        ],
+        'DC': [
+            ('NA', ['N1', 'C5', 'H5', 'C6', 'H6']),
+            ('NB', ['C4', 'N4', 'H41', 'H42', 'N3']),
+            ('NC', ['C2', 'O2'])
+        ],
+        'DT': [
+            ('NA', ['N1', 'C5', 'C6', 'H6']),
+            ('NB', ['C4', 'O4', 'N3', 'H3', 'C7', 'H71', 'H72', 'H73']),
+            ('NC', ['C2', 'O2'])
+        ]
+    }
+    
+    atom_serial = 0
+    with open(pdb_out, 'w') as f:
+        for segid in sorted(segments.keys()):
+            for resid in sorted(segments[segid].keys()):
+                res_data = segments[segid][resid]
+                resname = res_data['resname']
+                chain = res_data['chain']
+                res_atoms = res_data['atoms']
+                
+                # P bead (phosphate group)
+                p_atoms = [a for a in res_atoms if a['name'] in ["P", "O1P", "O2P", "O5'"]]
+                # Add O3' from previous residue
+                if resid - 1 in segments[segid]:
+                    prev_atoms = segments[segid][resid - 1]['atoms']
+                    p_atoms.extend([a for a in prev_atoms if a['name'] == "O3'"])
+                
+                if p_atoms:
+                    coords = np.array([[a['x'], a['y'], a['z']] for a in p_atoms])
+                    center = coords.mean(axis=0)
+                    atom_serial += 1
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"ATOM  {serial_str}  P   {resname:3s} {chain}{resid:4d}    "
+                           f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
+                           f"  1.00  0.00      {segid:4s}\n")
+                
+                # C1 bead (C4' sugar)
+                c1_atoms = [a for a in res_atoms if a['name'] == "C4'"]
+                if c1_atoms:
+                    coords = np.array([[a['x'], a['y'], a['z']] for a in c1_atoms])
+                    center = coords.mean(axis=0)
+                    atom_serial += 1
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"ATOM  {serial_str}  C1  {resname:3s} {chain}{resid:4d}    "
+                           f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
+                           f"  1.00  0.00      {segid:4s}\n")
+                
+                # C2 bead (C1' sugar)
+                c2_atoms = [a for a in res_atoms if a['name'] == "C1'"]
+                if c2_atoms:
+                    coords = np.array([[a['x'], a['y'], a['z']] for a in c2_atoms])
+                    center = coords.mean(axis=0)
+                    atom_serial += 1
+                    serial_str = encode_serial(atom_serial)
+                    f.write(f"ATOM  {serial_str}  C2  {resname:3s} {chain}{resid:4d}    "
+                           f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
+                           f"  1.00  0.00      {segid:4s}\n")
+                
+                # Base beads
+                if resname in base_mappings:
+                    for bead_name, atom_names in base_mappings[resname]:
+                        base_atoms = [a for a in res_atoms if a['name'] in atom_names]
+                        if base_atoms:
+                            coords = np.array([[a['x'], a['y'], a['z']] for a in base_atoms])
+                            center = coords.mean(axis=0)
+                            atom_serial += 1
+                            serial_str = encode_serial(atom_serial)
+                            f.write(f"ATOM  {serial_str}  {bead_name:2s}  {resname:3s} "
+                                   f"{chain}{resid:4d}    "
+                                   f"{center[0]:8.3f}{center[1]:8.3f}{center[2]:8.3f}"
+                                   f"  1.00  0.00      {segid:4s}\n")
+        
+        f.write('END\n')
+    
+    print(f'At2DNA conversion done, output written to {pdb_out}')
+
 
 def at2AGs(pdb_in, pdb_out):
     """
@@ -1060,20 +1329,20 @@ def fix_pdb_serial(pdb_file, output_file=None):
     print(f"Fixed serial numbers for {serial} atoms. Output saved to {output_file}")
     return output_file
 
-def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
+def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, renumber=False):
     """
     Convert an all-atom PDB to a coarse-grained PDB and PSF file.
 
-    Automatically detects molecule types (protein or RNA) by chain, then
-    applies :func:`at2hyres` for protein chains and :func:`at2icon` for RNA
-    chains. Topology and connectivity are handled by psfgen, which also writes
-    the PSF file. Atom serial numbers exceeding 99,999 are re-encoded in
-    hybrid-36 format. Temporary intermediate files are removed after conversion
-    unless ``cleanup=False``.
+    Automatically detects molecule types (protein, RNA, or DNA) by chain,
+    then applies :func:`at2hyres` for protein chains, :func:`at2RNA` for RNA
+    chains, and :func:`at2DNA` for DNA chains. Topology and connectivity are
+    handled by psfgen, which also writes the PSF file. Atom serial numbers
+    exceeding 99,999 are re-encoded in hybrid-36 format. Temporary
+    intermediate files are removed after conversion unless ``cleanup=False``.
 
     Args:
         pdb_in (str): Path to the input all-atom PDB file. May contain mixed
-                      protein and RNA chains.
+                      protein, RNA, and DNA chains.
         pdb_out (str): Path to the output coarse-grained PDB file.
         terminal (str, optional): Charge status of protein termini. Options:
 
@@ -1084,6 +1353,12 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
 
         cleanup (bool, optional): If ``True``, removes intermediate temporary
                                   PDB files after conversion. Default is ``True``.
+        renumber (bool, optional): If ``True``, checks each chain/segment's
+                                  starting residue number and, if it doesn't
+                                  already start from 1, renumbers that
+                                  segment's residues sequentially from 1.
+                                  Segments already starting from 1 are left
+                                  unchanged. Default is ``False``.
 
     Returns:
         tuple: A 2-tuple ``(pdb_file, psf_file)`` with paths to the output
@@ -1101,17 +1376,19 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
     
     # Load topology files
     RNA_topology, _ = load_ff('RNA')
+    DNA_topology, _ = load_ff('DNA')
     protein_topology, _ = load_ff('Protein')
     AGs_topology, _ = load_ff('AGs')
     
     # Set up psfgen
     gen = PsfGen()
     gen.read_topology(RNA_topology)
+    gen.read_topology(DNA_topology)
     gen.read_topology(protein_topology)
     gen.read_topology(AGs_topology)
     
     # Split chains and convert
-    types, segids = split_chains(pdb_in)
+    types, segids = split_chains(pdb_in, renumber=renumber)
     
     for i, (mol_type, segid) in enumerate(zip(types, segids)):
         tmp_pdb = f"aa2cgtmp_{i}_aa.pdb"
@@ -1122,7 +1399,12 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True):
             gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, auto_angles=False)
             gen.read_coords(segid=segid, filename=tmp_cg_pdb)
         elif mol_type == 'R':
-            at2icon(tmp_pdb, tmp_cg_pdb)
+            at2RNA(tmp_pdb, tmp_cg_pdb)
+            gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, 
+                          auto_angles=False, auto_dihedrals=False)
+            gen.read_coords(segid=segid, filename=tmp_cg_pdb)
+        elif mol_type == 'D':
+            at2DNA(tmp_pdb, tmp_cg_pdb)
             gen.add_segment(segid=segid, pdbfile=tmp_cg_pdb, 
                           auto_angles=False, auto_dihedrals=False)
             gen.read_coords(segid=segid, filename=tmp_cg_pdb)
@@ -1173,15 +1455,18 @@ def main():
                         help='add backbone amide hydrogen (H-N only), default False')
     parser.add_argument('--terminal', '-t', type=str, default='neutral',
                         help='Charge status of terminus: neutral, charged, NT, CT')
+    parser.add_argument('--renumber', action='store_true',
+                        help='renumber each segment\'s residues to start from 1 '
+                             'if it does not already, default False')
 
     args = parser.parse_args()
     warnings.filterwarnings('ignore', category=UserWarning)
 
     if args.hydrogen:
         pdb_addH = add_backbone_hydrogen(args.aa, f'{args.aa[:-4]}_addH.pdb')
-        at2cg(pdb_addH, args.cg, terminal=args.terminal)
+        at2cg(pdb_addH, args.cg, terminal=args.terminal, renumber=args.renumber)
     else:
-        at2cg(args.aa, args.cg, terminal=args.terminal)
+        at2cg(args.aa, args.cg, terminal=args.terminal, renumber=args.renumber)
 
 if __name__ == '__main__':
     main()

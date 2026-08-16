@@ -33,7 +33,7 @@ DECL +C1
 AUTOGENERATE
 DEFA FIRS NTER LAST CTER
 
-RESI DAD         -1.00  !                               
+RESI DA          -1.00  !                               
 GROUP                   !                 NB-NC                    
 ATOM P    DP     -1.00  !                 |  |                                              
 GROUP                   !                 NA-ND                      
@@ -56,7 +56,7 @@ DIHE NA   NB   NC   ND        P    C1   +P   +C1      -C1    P   C1   C2
 IMPR NA   C2   NB   ND        C1   P    +P   C2
 
 
-RESI DGU         -1.00  ! 
+RESI DG          -1.00  ! 
 GROUP                   !                 NB-NC                    
 ATOM P    DP     -1.00  !                 |  |                                              
 GROUP                   !                 NA-ND                      
@@ -79,7 +79,7 @@ DIHE NA   NB   NC   ND        P    C1   +P   +C1      -C1    P   C1   C2
 IMPR NA   C2   NB   ND        C1   P    +P   C2
  
 
-RESI DCY         -1.00  ! 
+RESI DC          -1.00  ! 
 GROUP                   !                    NB                    
 ATOM P    DP     -1.00  !                   / \                                                
 GROUP                   !                 NA---NC                      
@@ -100,7 +100,7 @@ DIHE -C1    P   C1   C2
 IMPR NA   C2   NB   NC        C1   P    +P   C2
  
  
-RESI DTH         -1.00  !                    
+RESI DT          -1.00  !                    
 GROUP                   !                    NB                    
 ATOM P    DP     -1.00  !                   / \                                                
 GROUP                   !                 NA---NC                      
