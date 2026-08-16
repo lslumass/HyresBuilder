@@ -1,5 +1,5 @@
 # HyresBuilder: for running HyRes and iCon simulation.   
-**HyresBuilder** is a tool for preparing HyRes protein and iConRNA simulations, developped by ChenLab.    
+**HyresBuilder** is a tool for preparing HyRes and iCon simulations, developped by ChenLab.    
 For details, please follow the related papers and the [docs](https://hyresbuilder.readthedocs.io):    
 1. [Xiaorong Liu and Jianhan Chen, PCCP, 2017, 19, 32421.](https://pubs.rsc.org/en/content/articlelanding/2017/cp/c7cp06736d)
 2. [Yumeng Zhang, Xiaorong Liu, and Jianhan Chen, JCIM, 2022, 62, 4523.](https://pubs.acs.org/doi/10.1021/acs.jcim.2c00974>)
@@ -8,8 +8,8 @@ For details, please follow the related papers and the [docs](https://hyresbuilde
 
 **Main functions:**
 1. Construct HyRes peptide structure from sequence or convert atomistic structure into HyRes model;   
-2. Construct iConRNA model from sequence or convert atomistic structure into iConRNA model;   
-3. Set up HyRes and/or iConRNA force fields;   
+2. Construct iConNA model from sequence or convert atomistic structure into iConNA model;   
+3. Set up HyRes and/or iConNA force fields;   
 
 # Run a demo [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lslumass/HyresBuilder/blob/dev/HyRes_Quickstart.ipynb)   
 
