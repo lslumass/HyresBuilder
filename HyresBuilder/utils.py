@@ -108,9 +108,13 @@ def itp2charmm(itp):
     atom_types = {}
     total_charge = 0.0
     for atom in sections['ATOM']:
-        name, atype, charge = atom[0], atom[1], float(atom[2])
-        atom_types[name] = atype
-        total_charge += charge
+        if len(atom) >= 3:
+            name, atype = atom[0], atom[1]
+            charge = float(atom[2].replace('+', ''))
+            atom_types[name] = atype
+            total_charge += charge
+        else:
+            print(f"Warning: Atom entry has fewer than 3 fields: {atom}")
 
     # --- 1. Generate the TOP file lines ---
     top_lines = []
@@ -118,19 +122,24 @@ def itp2charmm(itp):
     top_lines.append("GROUP")
     
     for atom in sections['ATOM']:
-        top_lines.append(f"ATOM {atom[0]:<4} {atom[1]:<6} {float(atom[2]):>8.2f}")
+        if len(atom) >= 3:
+            top_lines.append(f"ATOM {atom[0]:<4} {atom[1]:<6} {float(atom[2].replace('+', '')):>8.2f}")
         
     for bond in sections['BOND']:
-        top_lines.append(f"BOND {bond[0]:<4} {bond[1]:<4}")
+        if len(bond) >= 4:
+            top_lines.append(f"BOND {bond[0]:<4} {bond[1]:<4}")
         
     for angl in sections['ANGL']:
-        top_lines.append(f"ANGL {angl[0]:<4} {angl[1]:<4} {angl[2]:<4}")
+        if len(angl) >= 3:
+            top_lines.append(f"ANGL {angl[0]:<4} {angl[1]:<4} {angl[2]:<4}")
         
     for dihe in sections['DIHE']:
-        top_lines.append(f"DIHE {dihe[0]:<4} {dihe[1]:<4} {dihe[2]:<4} {dihe[3]:<4}")
+        if len(dihe) >= 4:
+            top_lines.append(f"DIHE {dihe[0]:<4} {dihe[1]:<4} {dihe[2]:<4} {dihe[3]:<4}")
         
     for impr in sections['IMPR']:
-        top_lines.append(f"IMPR {impr[0]:<4} {impr[1]:<4} {impr[2]:<4} {impr[3]:<4}")
+        if len(impr) >= 4:
+            top_lines.append(f"IMPR {impr[0]:<4} {impr[1]:<4} {impr[2]:<4} {impr[3]:<4}")
 
     top_content = "\n".join(top_lines)
 
@@ -143,26 +152,42 @@ def itp2charmm(itp):
     par_lines.append("BOND")
     par_lines.append("!type     Kb  b0")
     for bond in sections['BOND']:
-        t1, t2 = atom_types[bond[0]], atom_types[bond[1]]
-        par_lines.append(f"{t1:<5} {t2:<7} {bond[2]:>4} {bond[3]:>7}")
+        if len(bond) >= 4:
+            try:
+                t1, t2 = atom_types[bond[0]], atom_types[bond[1]]
+                par_lines.append(f"{t1:<5} {t2:<7} {bond[2]:>4} {bond[3]:>7}")
+            except KeyError as e:
+                print(f"Warning: Atom type not found for bond {bond}: {e}")
         
     par_lines.append("\nTHETAS")
     par_lines.append("!atom types         Ktheta    Theta0   Kub     S0")
     for angl in sections['ANGL']:
-        t1, t2, t3 = atom_types[angl[0]], atom_types[angl[1]], atom_types[angl[2]]
-        par_lines.append(f"{t1:<5} {t2:<5} {t3:<7} {angl[3]:>5} {angl[4]:>9} {angl[5]:>5} {angl[6]:>5}")
+        if len(angl) >= 7:
+            try:
+                t1, t2, t3 = atom_types[angl[0]], atom_types[angl[1]], atom_types[angl[2]]
+                par_lines.append(f"{t1:<5} {t2:<5} {t3:<7} {angl[3]:>5} {angl[4]:>9} {angl[5]:>5} {angl[6]:>5}")
+            except KeyError as e:
+                print(f"Warning: Atom type not found for angle {angl}: {e}")
         
     par_lines.append("\nPHI")
     par_lines.append("!atom types               Kchi    n   delta")
     for dihe in sections['DIHE']:
-        t1, t2, t3, t4 = atom_types[dihe[0]], atom_types[dihe[1]], atom_types[dihe[2]], atom_types[dihe[3]]
-        par_lines.append(f"{t1:<5} {t2:<5} {t3:<5} {t4:<7} {dihe[4]:>4} {dihe[5]:>4} {dihe[6]:>6}")
+        if len(dihe) >= 7:
+            try:
+                t1, t2, t3, t4 = atom_types[dihe[0]], atom_types[dihe[1]], atom_types[dihe[2]], atom_types[dihe[3]]
+                par_lines.append(f"{t1:<5} {t2:<5} {t3:<5} {t4:<7} {dihe[4]:>4} {dihe[5]:>4} {dihe[6]:>6}")
+            except KeyError as e:
+                print(f"Warning: Atom type not found for dihedral {dihe}: {e}")
         
     par_lines.append("\nIMPHI")
     par_lines.append("!atom types               Kpsi        psi0")
     for impr in sections['IMPR']:
-        t1, t2, t3, t4 = atom_types[impr[0]], atom_types[impr[1]], atom_types[impr[2]], atom_types[impr[3]]
-        par_lines.append(f"{t1:<5} {t2:<5} {t3:<5} {t4:<7} {impr[4]:>4}    {impr[5]}    {impr[6]:>3}")
+        if len(impr) >= 7:
+            try:
+                t1, t2, t3, t4 = atom_types[impr[0]], atom_types[impr[1]], atom_types[impr[2]], atom_types[impr[3]]
+                par_lines.append(f"{t1:<5} {t2:<5} {t3:<5} {t4:<7} {impr[4]:>4}    {impr[5]}    {impr[6]:>3}")
+            except KeyError as e:
+                print(f"Warning: Atom type not found for improper {impr}: {e}")
 
     # Append the comprehensive NONBONDED and NBFIX lists verbatim from the reference format
     par_lines.append("""
