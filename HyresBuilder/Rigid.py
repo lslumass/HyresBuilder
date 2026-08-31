@@ -449,6 +449,7 @@ def createRigidBodies(system, positions, bodies):
             r = [p-cm for p in pos]
             avgR = unit.sqrt(unit.sum([unit.dot(x, x) for x in r])/len(particles))
             rank = sorted(range(len(particles)), key=lambda i: abs(unit.norm(r[i])-avgR))
+            realParticles = None
             for p in combinations(rank, 4):
                 # Select masses for the "real" particles.  If any is negative, reject this set of particles
                 # and keep going.
@@ -461,13 +462,32 @@ def createRigidBodies(system, positions, bodies):
                     matrix[2][i] = particleR[2]
                     matrix[3][i] = 1.0
                 rhs = np.array([0.0, 0.0, 0.0, unit.sum(mass).value_in_unit(unit.amu)])
-                weights = lin.solve(matrix, rhs)
+                try:
+                    weights = lin.solve(matrix, rhs)
+                except lin.LinAlgError:
+                    # The four chosen particles are coplanar (or collinear) --
+                    # common for planar small molecules like aromatic rings --
+                    # so the mass/COM system is rank-deficient rather than
+                    # having no solution.  Fall back to a least-squares solve
+                    # and only accept it if it still satisfies the mass/COM
+                    # constraints to a tight tolerance.
+                    weights, _, _, _ = lin.lstsq(matrix, rhs, rcond=None)
+                    if not np.allclose(matrix.dot(weights), rhs, atol=1e-8):
+                        continue
                 if all(w > 0.0 for w in weights):
                     # We have a good set of particles.
                     
                     realParticles = [particles[i] for i in p]
                     realParticleMasses = [float(w) for w in weights]*unit.amu
                     break
+            if realParticles is None:
+                raise ValueError(
+                    f"Could not select four 'real' particles with positive mass "
+                    f"weights for rigid body {particles}. This usually means the "
+                    f"atom group is planar or otherwise degenerate in a way that "
+                    f"no four-particle combination can reproduce its total mass "
+                    f"and center of mass with positive weights. Consider "
+                    f"double-checking the atom selection for this body.")
         
         # Set particle masses.
         
@@ -484,6 +504,7 @@ def createRigidBodies(system, positions, bodies):
         # Select which three particles to use for defining virtual sites.
         
         bestNorm = 0
+        vsiteParticles = None
         for p1, p2, p3 in combinations(realParticles, 3):
             d12 = (positions[p2]-positions[p1]).value_in_unit(unit.nanometer)
             d13 = (positions[p3]-positions[p1]).value_in_unit(unit.nanometer)
@@ -491,6 +512,12 @@ def createRigidBodies(system, positions, bodies):
             if crossNorm > bestNorm:
                 bestNorm = crossNorm
                 vsiteParticles = (p1, p2, p3)
+        if vsiteParticles is None:
+            raise ValueError(
+                f"Could not find three non-collinear 'real' particles to define "
+                f"the virtual-site frame for rigid body {particles}. This means "
+                f"all of the real particles selected for this body lie on a "
+                f"single line.")
         
         # Create virtual sites.
         
