@@ -162,10 +162,15 @@ def itp2charmm(itp):
     par_lines.append("\nTHETAS")
     par_lines.append("!atom types         Ktheta    Theta0   Kub     S0")
     for angl in sections['ANGL']:
-        if len(angl) >= 7:
+        if len(angl) >= 5: # Changed from 7 to allow angles without Urey-Bradley terms
             try:
                 t1, t2, t3 = atom_types[angl[0]], atom_types[angl[1]], atom_types[angl[2]]
-                par_lines.append(f"{t1:<5} {t2:<5} {t3:<7} {angl[3]:>5} {angl[4]:>9} {angl[5]:>5} {angl[6]:>5}")
+                # If Urey-Bradley terms exist (7 fields)
+                if len(angl) >= 7:
+                    par_lines.append(f"{t1:<5} {t2:<5} {t3:<7} {angl[3]:>5} {angl[4]:>9} {angl[5]:>5} {angl[6]:>5}")
+                # If only Ktheta and Theta0 exist (5 fields)
+                else:
+                    par_lines.append(f"{t1:<5} {t2:<5} {t3:<7} {angl[3]:>5} {angl[4]:>9}")
             except KeyError as e:
                 print(f"Warning: Atom type not found for angle {angl}: {e}")
         
