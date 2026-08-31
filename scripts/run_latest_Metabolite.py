@@ -57,6 +57,20 @@ example:
         system.addForce(customforce)
     util.setup(params, modification=mod)
 """        
+psf = CharmmPsfFile(params.psf)
+pdb = PDBFile(params.pdb)
+mets = 1
+bodies = []
+for m in mets:
+    body = []
+    segid = f"M{m+1:03}"
+    for chain in psf.topology.chains():
+        if chain.id == segid:
+            for res in chain.residues():
+                for atom in res.atoms():
+                    body.append(atom.index)
+    bodies.append(body)
+
 def mod(system):
     modify_metabolite(CharmmPsfFile(params.psf), system, custom=params.custom)
 

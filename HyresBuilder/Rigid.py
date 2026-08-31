@@ -30,16 +30,24 @@ a well-conditioned out-of-plane coordinate frame.
 
 Interface levels
 ----------------
-Three functions are provided at increasing levels of abstraction:
+Four functions are provided at increasing levels of abstraction:
 
 * :func:`createRigidBodies` — low-level; accepts pre-built lists of atom
   indices directly.
 * :func:`resolveBodiesToIndices` — mid-level; resolves PSF segment IDs and
   residue ranges (as inclusive ``(start, end)`` tuples, a list of such range
   tuples, or explicit lists) into atom index lists.
-* :func:`createRigidSegments` — high-level; combines the two steps above,
-  accepting PSF and PDB file paths or pre-loaded objects and a concise
-  segment-body specification.
+* :func:`createRigidSegments` — high-level; accepts PSF and PDB file paths or
+  pre-loaded objects plus a single residue-range pattern ("27-95") and a set
+  of segment-ID ranges ("P001-P080"), and applies the same residue-based
+  rigid-body definition to every matching segment. Intended for
+  residue-structured molecules (proteins, nucleic acids, fibrils) described
+  by a PSF.
+* :func:`RigidSmallMols` — high-level; for systems with many (potentially
+  thousands of) small-molecule segments in a PSF, e.g. 'M001', 'M002', ...
+  Accepts a PSF/PDB and a single atom-index pattern ("10-15,20-25") plus a
+  set of segment-ID ranges ("M001-M010,M020-M030"), and applies the same
+  rigid-body definition to every matching segment in one call.
 
 Limitations
 -----------
@@ -68,6 +76,20 @@ import openmm.unit as unit
 import numpy as np
 import numpy.linalg as lin
 from itertools import combinations
+
+
+def _loadPsfPdb(psf=None, pdb=None):
+    """Normalise `psf`/`pdb` arguments that may be file paths or already-loaded
+    objects into (CharmmPsfFile, PDBFile) objects. Either argument can be
+    omitted (pass None) if a function only needs one of the two.
+    """
+    if psf is not None and isinstance(psf, str):
+        from openmm.app import CharmmPsfFile
+        psf = CharmmPsfFile(psf)
+    if pdb is not None and isinstance(pdb, str):
+        from openmm.app import PDBFile
+        pdb = PDBFile(pdb)
+    return psf, pdb
 
 
 def resolveBodiesToIndices(psf, segment_bodies):
@@ -107,10 +129,8 @@ def resolveBodiesToIndices(psf, segment_bodies):
         Each inner list contains the atom indices that form one rigid body,
         ready to pass directly to createRigidBodies().
     """
-    from openmm.app import CharmmPsfFile
     import warnings
-    if isinstance(psf, str):
-        psf = CharmmPsfFile(psf)
+    psf, _ = _loadPsfPdb(psf=psf)
 
     # Build a fast lookup: segid -> chain object
     chain_map = {chain.id: chain for chain in psf.topology.chains()}
@@ -154,10 +174,14 @@ def resolveBodiesToIndices(psf, segment_bodies):
     return bodies
 
 
-def createRigidSegments(system, psf, pdb, segment_bodies):
-    """Resolve segment/residue definitions from a PSF/PDB and apply rigid bodies.
+def createRigidSegments(system, psf, pdb, residues, segments):
+    """Apply the same residue-range rigid-body definition to many PSF segments
+    at once, e.g. every chain of a repeated fibril or multimer.
 
-    Combines resolveBodiesToIndices() and createRigidBodies() in one call.
+    You give one residue pattern (which author residue numbers to include from
+    *each* segment) and a set of segment names/ranges to apply it to; one
+    rigid body is created per matching segment, using resolveBodiesToIndices()
+    internally to turn residues into atom indices.
 
     Parameters
     ----------
@@ -168,10 +192,20 @@ def createRigidSegments(system, psf, pdb, segment_bodies):
     pdb : str or openmm.app.PDBFile
         Either a path to a PDB file (str) or an already-loaded PDBFile object.
         Positions are extracted from this file.
-    segment_bodies : list of (segid, residue_list) tuples
-        Each tuple defines one rigid body.
-        residue_list can be a (start, end) range tuple, a list of such range
-        tuples, or an explicit list of residue numbers.
+    residues : str
+        Comma-separated author residue numbers/ranges to include from *each*
+        matching segment, e.g. "1-10,20-80" or "27,28,30". Applied identically
+        to every segment in `segments`.
+    segments : str
+        Comma-separated segment-ID ranges to apply this to, e.g.
+        "P001-P080" (segments P001 through P080) or an explicit list like
+        "P001,P005,P010". Numeric ranges keep the zero-padding width of the
+        range's start ID.
+
+    Returns
+    -------
+    numBodies : int
+        The number of rigid bodies (matching segments) that were created.
 
     Example
     -------
@@ -179,18 +213,174 @@ def createRigidSegments(system, psf, pdb, segment_bodies):
 
         from Rigid import createRigidSegments
 
-        segment_bodies = [(f'P{i+1:03}', (27, 95)) for i in range(80)]
-        createRigidSegments(system, 'conf.psf', 'conf.pdb', segment_bodies)
+        # Residues 27-95 of every chain P001 through P080, as one rigid body each.
+        createRigidSegments(system, 'conf.psf', 'conf.pdb',
+                             residues="27-95", segments="P001-P080")
     """
-    from openmm.app import PDBFile
-    if isinstance(pdb, str):
-        pdb = PDBFile(pdb)
+    psf, pdb = _loadPsfPdb(psf=psf, pdb=pdb)
     positions = pdb.positions
 
-    bodies = resolveBodiesToIndices(psf, segment_bodies)
-    print(f"[Rigid] Resolved {len(bodies)} rigid bodies from {len(segment_bodies)} definitions.")
-    createRigidBodies(system, positions, bodies)
+    segIDs = _parseSegmentRange(segments)
+    resNums = _parseIndexRanges(residues)
+    segment_bodies = [(segid, resNums) for segid in segIDs]
 
+    bodies = resolveBodiesToIndices(psf, segment_bodies)
+    print(f"[Rigid] Resolved {len(bodies)} rigid bodies from {len(segIDs)} segment(s) "
+          f"with residues '{residues}'.")
+    createRigidBodies(system, positions, bodies)
+    return len(bodies)
+
+
+def _parseIndexRanges(spec):
+    """Parse a comma-separated string of integers/ranges, e.g. "10-15,20-25,30"
+    into a sorted list of unique ints: [10, 11, 12, 13, 14, 15, 20, ..., 25, 30].
+    """
+    indices = []
+    for token in spec.split(','):
+        token = token.strip()
+        if not token:
+            continue
+        if '-' in token:
+            start, end = token.split('-')
+            indices.extend(range(int(start), int(end) + 1))
+        else:
+            indices.append(int(token))
+    return sorted(set(indices))
+
+
+def _parseSegmentRange(spec):
+    """Parse a comma-separated string of segment IDs/ranges, e.g.
+    "M001-M010,M020-M030,X5" into an ordered list of segment ID strings.
+    Ranges are expanded numerically, preserving the zero-padding width of the
+    range's start ID (e.g. "M001-M010" -> M001, M002, ..., M010).
+    """
+    import re as _re
+    segids = []
+    for token in spec.split(','):
+        token = token.strip()
+        if not token:
+            continue
+        if '-' in token:
+            start_tok, end_tok = token.split('-')
+            m_start = _re.match(r'^(.*?)(\d+)$', start_tok)
+            m_end = _re.match(r'^(.*?)(\d+)$', end_tok)
+            if not m_start or not m_end:
+                raise ValueError(f"Could not parse segment range '{token}'. "
+                                  f"Expected a numeric suffix, e.g. 'M001-M010'.")
+            prefix, startNumStr = m_start.groups()
+            _, endNumStr = m_end.groups()
+            width = len(startNumStr)
+            for n in range(int(startNumStr), int(endNumStr) + 1):
+                segids.append(f"{prefix}{str(n).zfill(width)}")
+        else:
+            segids.append(token)
+    seen = set()
+    ordered = []
+    for s in segids:
+        if s not in seen:
+            seen.add(s)
+            ordered.append(s)
+    return ordered
+
+
+def RigidSmallMols(system, psf, pdb, atoms=None, segments=None):
+    """Build rigid bodies for many small-molecule copies at once, using PSF
+    segment names -- the typical setup for systems with hundreds or thousands
+    of identical small-molecule segments (e.g. 'M001', 'M002', ... 'M999').
+
+    You give one atom-index pattern (which atoms of *each* segment to make
+    rigid) and a set of segment names/ranges to apply it to; one rigid body
+    is created per matching segment.
+
+    Parameters
+    ----------
+    system : openmm.System
+        The System to modify.
+    psf : str or openmm.app.CharmmPsfFile
+        Either a path to a PSF file (str) or an already-loaded CharmmPsfFile object.
+    pdb : str or openmm.app.PDBFile
+        Either a path to a PDB file (str) or an already-loaded PDBFile object.
+        Positions are extracted from this file.
+    atoms : str, optional
+        Comma-separated atom indices/ranges *within each segment*, e.g.
+        "10-15,20-25" or "3,7,9". These follow standard PSF/molecule atom
+        numbering (1-based, in the order atoms are listed for that segment),
+        the same pattern applied to every matching segment. If omitted, every
+        atom in each matching segment is used (the whole small molecule is
+        made rigid).
+    segments : str
+        Comma-separated segment-ID ranges to apply this to, e.g.
+        "M001-M010,M020-M030" (segments M001 through M010, and M020 through
+        M030) or an explicit list like "M001,M005,M010". Numeric ranges keep
+        the zero-padding width of the range's start ID.
+
+    Returns
+    -------
+    numBodies : int
+        The number of rigid bodies (matching segments) that were created.
+
+    Example
+    -------
+    ::
+
+        from Rigid import RigidSmallMols
+
+        # Rigidify atoms 10-15 and 20-25 (PSF numbering, within each segment)
+        # of every segment M001 through M010 and M020 through M030.
+        RigidSmallMols(system, 'conf.psf', 'conf.pdb',
+                        atoms="10-15,20-25", segments="M001-M010,M020-M030")
+
+        # Make the whole molecule rigid for every M001-M500 segment.
+        RigidSmallMols(system, 'conf.psf', 'conf.pdb', segments="M001-M500")
+    """
+    import warnings
+
+    psf, pdb = _loadPsfPdb(psf=psf, pdb=pdb)
+    positions = pdb.positions
+
+    if segments is None:
+        raise ValueError("`segments` must be provided, e.g. segments=\"M001-M010\".")
+    segIDs = _parseSegmentRange(segments)
+
+    localIndices = None
+    if atoms is not None:
+        # `atoms` follows PSF/molecule numbering, i.e. 1-based.
+        localIndices = [i - 1 for i in _parseIndexRanges(atoms)]
+
+    chain_map = {chain.id: chain for chain in psf.topology.chains()}
+
+    bodies = []
+    missing = []
+    skipped = []
+    for segid in segIDs:
+        if segid not in chain_map:
+            missing.append(segid)
+            continue
+        atomIndices = [atom.index for atom in chain_map[segid].atoms()]
+        if localIndices is None:
+            body = atomIndices
+        else:
+            if max(localIndices) >= len(atomIndices):
+                skipped.append(segid)
+                continue
+            body = [atomIndices[i] for i in localIndices]
+        if len(body) >= 2:
+            bodies.append(body)
+
+    if missing:
+        warnings.warn(f"{len(missing)} segment(s) not found in PSF and were skipped: "
+                      f"{missing[:10]}{'...' if len(missing) > 10 else ''}")
+    if skipped:
+        warnings.warn(f"{len(skipped)} segment(s) skipped because `atoms` indices "
+                      f"exceeded their atom count: "
+                      f"{skipped[:10]}{'...' if len(skipped) > 10 else ''}")
+    if not bodies:
+        raise ValueError("No rigid bodies were built -- check `segments` and `atoms`.")
+
+    print(f"[Rigid] Applying rigid-body definition to {len(bodies)} segment(s) "
+          f"matching '{segments}'.")
+    createRigidBodies(system, positions, bodies)
+    return len(bodies)
 
 def createRigidBodies(system, positions, bodies):
     """Modify a System to turn specified sets of particles into rigid bodies.
