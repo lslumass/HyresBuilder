@@ -1697,9 +1697,13 @@ def _load_custom(custom):
     """Resolve *custom* into a metabolome-style dict by reading their .itp files, or None if custom is None."""
     if custom is None:
         return None
-    
+
+    if isinstance(custom, str):
+        # Allow a comma-separated string, e.g. "ABC,UVW"
+        custom = [res.strip() for res in custom.split(",") if res.strip()]
+
     if not isinstance(custom, (list, tuple)):
-        raise ValueError("custom argument must be a list or tuple of residue strings (e.g., ('ABC', 'XYZ'))")
+        raise ValueError("custom argument must be a list, tuple, or comma-separated string of residue strings (e.g., ('ABC', 'XYZ') or 'ABC,XYZ')")
         
     converted = {}
     for res in custom:
