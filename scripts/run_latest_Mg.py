@@ -68,7 +68,7 @@ example:
         system.addForce(customforce)
     util.setup(params, modification=mod)
 """
-system, sim = utils.setup(params)
+system, sim = utils.setupMg(params)
 
 """
 if further modify the system, add this line below:

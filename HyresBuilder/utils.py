@@ -947,7 +947,26 @@ def iConRNA_setup(params, modification=None):
     param_RNA = path2.as_posix()
     top_AGs, param_AGs = load_ff('AGs')
     top_pro, param_pro = load_ff('Protein')
-    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_AGs, param_AGs, top_pro, param_pro)
+    top_DNA, param_DNA = load_ff('DNA')
+    top_mets, param_mets = load_ff('Metabolite')
+    top_list = [top_pro, top_RNA, top_DNA, top_AGs, top_mets]
+    param_list = [param_pro, param_RNA, param_DNA, param_AGs, param_mets]
+    if params.custom:
+        custom_list = [mol.strip() for mol in params.custom.split(',')]
+        custom_tops = []
+        custom_pars = []
+        for mol in custom_list:
+            itp_file =f'{mol}.itp'
+            if not os.path.isfile(itp_file):
+                print(f"Error: The custom itp file {itp_file} does not exist.")
+                exit(1)
+            itp2charmm(itp_file)
+            custom_tops.append(f"{mol}.top")
+            custom_pars.append(f"{mol}.par")
+
+        top_list = top_list + custom_tops
+        param_list = custom_pars + param_list
+    ffparams = CharmmParameterSet(*top_list, *param_list)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
