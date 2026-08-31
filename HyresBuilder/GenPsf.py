@@ -343,7 +343,7 @@ def prepare_custom_metabolites(metabolite_names, verbose=True):
                 print(f"Converting {itp_file} to CHARMM format...")
             
             # Convert .itp to .top and .par using utils.itp2charmm
-            utils.itp2charmm(itp_file, top_file, par_file)
+            utils.itp2charmm(itp_file)
             
             if not os.path.exists(top_file):
                 print(f"Error: Failed to generate {top_file}")
