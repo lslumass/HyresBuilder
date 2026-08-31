@@ -1,0 +1,27 @@
+[ RESI ]
+PRL
+
+[ ATOM ]
+;name type  charge
+M1   A2Y     0.00
+M2   P1Y     0.00
+M3   RA2    +1.00
+M4   A1Y     0.00
+M5   A2Y     0.00
+M6   P1Y     0.00
+
+[ BOND ]
+;name name Kb b0
+M1   M2   0   0
+
+[ ANGL ]
+;name name name Ktheta Theta0   Kub   S0
+M1   M2   M3   0   0
+
+[ DIHE ]
+;name name name name Kchi n delta0
+M1   M2   M3   M4   0   1   0
+
+[ IMPR ]
+;name name name name Kpsi 0 psi0
+M1   M2   M4   M5   0   0   0

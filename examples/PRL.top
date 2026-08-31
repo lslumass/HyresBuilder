@@ -1,0 +1,20 @@
+RESI 5GP         -2.00  
+GROUP                             
+ATOM M1   M01    -2.00             
+ATOM C1   MS1     0.00                
+ATOM C2   MS2     0.00 
+ATOM NA   RG1     0.00  
+ATOM NB   RG2     0.00  
+ATOM NC   RG3     0.00  
+ATOM ND   RG4     0.00  
+ATOM C3   M05     0.00
+BOND M1   C1        C1   C3
+BOND C1   C2        C2   NA        C2   C3
+BOND NA   NB        NA   ND        NB   NC        NC   ND
+ANGL M1   C1   C2        M1   C1   C3        
+ANGL C1   C2   NA        C2   NA   NB        C2   NA   ND
+ANGL NA   NB   NC        NB   NC   ND        NC   ND   NA
+ANGL M1   C1   C3        NA   C2   C3
+DIHE NA   NB   ND   NC        M1   C1   C2   NA        C1   C2   NA   NB
+DIHE NA   NB   NC   ND
+IMPR NA   C2   NB   ND

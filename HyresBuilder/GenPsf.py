@@ -8,6 +8,12 @@ Mg²⁺, and Ca²⁺ chains in a single input PDB, automatically detecting molec
 types by chain identity and assigning structured segment IDs before invoking
 ``psfgen`` to build and write the topology.
 
+MODIFICATION: Added support for custom metabolites with topology file conversion.
+For each custom metabolite (e.g., ABC), the code:
+  1. Looks for ABC.itp in current directory
+  2. Converts ABC.itp to ABC.top and ABC.par using utils.itp2charmm
+  3. Loads ABC.top into psfgen
+
 Workflow
 --------
 1. Parse the input CG PDB and split it into per-chain temporary files,
@@ -41,10 +47,16 @@ overflowing.
 A command-line interface is exposed via :func:`main` and registered as the
 ``GenPsf`` entry point.
 
+MODIFICATIONS:
+1. Merged --fast and --custom flags
+2. Removed --verify flag
+3. Renamed --metabolites to --custom
+
 Dependencies
 ------------
 * `psfgen <https://github.com/MDAnalysis/psfgen>`_ (``psfgen.PsfGen``)
 * HyresBuilder force-field topology files, loaded via ``utils.load_ff``.
+* For custom metabolites: ABC.itp files converted via ``utils.itp2charmm``.
 """
 from __future__ import annotations
 import re
@@ -249,7 +261,6 @@ def write_merged_psf(out_path, title_lines, flags, atom_blocks, bond_blocks,
         out.write(f"{natom:>8d} !NATOM\n")
         for block in atom_blocks:
             for tok in block:
-                # Reconstruct an atom line in strictly enforced STANDARD column layout
                 out.write(
                     f"{int(tok[0]):8d} {tok[1]:<4s} {tok[2]:<4s} {tok[3]:<4s} "
                     f"{tok[4]:<4s} {tok[5]:<4s} {float(tok[6]):10.6f} "
@@ -286,7 +297,6 @@ def write_merged_psf(out_path, title_lines, flags, atom_blocks, bond_blocks,
             out.write("\n")
         out.write("\n")
 
-        # Hardcoded dummy group block matching standard psfgen
         out.write(f"{1:>8d} {0:>7d} !NGRP\n")
         out.write("       0       0       0\n\n")
 
@@ -295,7 +305,63 @@ def write_merged_psf(out_path, title_lines, flags, atom_blocks, bond_blocks,
             _write_int_section(out, "NCRTERM: cross-terms", ncrterm, flat, 8)
 
 # ===========================================================================
-# SECTION 2: Main PSF Generation Logic
+# SECTION 2: Custom Metabolite Topology Preparation
+# ===========================================================================
+
+def prepare_custom_metabolites(metabolite_names, verbose=True):
+    """
+    Convert custom metabolite .itp files to CHARMM topology files.
+    
+    For each metabolite name (e.g., 'ABC'), looks for ABC.itp in current directory,
+    converts it to ABC.top and ABC.par using utils.itp2charmm.
+    
+    Parameters
+    ----------
+    metabolite_names : list of str
+        List of metabolite codes (e.g., ['ABC', 'UVW'])
+    verbose : bool
+        Print status messages
+    
+    Returns
+    -------
+    list of str
+        Paths to generated .top files ready to load into psfgen
+    """
+    custom_top_files = []
+    
+    for met_name in metabolite_names:
+        itp_file = f"{met_name}.itp"
+        top_file = f"{met_name}.top"
+        par_file = f"{met_name}.par"
+        
+        if not os.path.exists(itp_file):
+            print(f"Error: {itp_file} not found for metabolite '{met_name}'")
+            sys.exit(1)
+        
+        try:
+            if verbose:
+                print(f"Converting {itp_file} to CHARMM format...")
+            
+            # Convert .itp to .top and .par using utils.itp2charmm
+            utils.itp2charmm(itp_file, top_file, par_file)
+            
+            if not os.path.exists(top_file):
+                print(f"Error: Failed to generate {top_file}")
+                sys.exit(1)
+            
+            custom_top_files.append(top_file)
+            
+            if verbose:
+                print(f"Generated: {top_file} and {par_file}")
+        
+        except Exception as e:
+            print(f"Error converting {itp_file}: {e}")
+            sys.exit(1)
+    
+    return custom_top_files
+
+# ===========================================================================
+# SECTION 3: Main PSF Generation Logic
 # ===========================================================================
 
 aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
@@ -304,7 +370,7 @@ rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
 dnas = ["DAD", "DCY", "DTH", "DGU", "DA", "DG", "DC", "DT"]
 ions = ["MG+", "SMG", "CA+"]
 polymer = ['PHO', 'PEG']
-metabolites = ['KAN', 'LLL', 'SRY', # aminoglycosides
+metabolites = ['KAN', 'LLL', 'SRY',
                'UN1', 'AYA', 'ACA', 'NLG', 'C3C', 'C4C', 'C5C', '152', 'CHT', 'CIT',
                'CTT', 'ABU', 'CH5', 'GSH', 'MTA', 'SHR', 'TAU', 'BET', '3PG', 'G6P',
                'COA', 'FAD', 'NCA', 'PAU', 'ADN', 'ADP', 'AMP', 'ATP', 'C5P', 'CTN',
@@ -397,20 +463,18 @@ def encode_segid(n: int) -> str:
         return f"{n:03d}"
     
     n -= 1000
-    # Base-62 encoding allows for 62^3 = 238,328 combinations
-    # keeping the segment ID safely within the 4-character standard limit.
     BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     
     if n >= 62**3:
         return str(n + 1000) 
         
-    c1 = BASE62[n // 3844]  # 62 * 62 = 3844
+    c1 = BASE62[n // 3844]
     n = n % 3844
     c2 = BASE62[n // 62]
     c3 = BASE62[n % 62]
     return f"{c1}{c2}{c3}"
 
-def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix'):
+def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix', custom_top_files=None):
     if RNA == 'mix':
         RNA_topology, _ = utils.load_ff('RNA')
     elif RNA == 'icon':
@@ -427,6 +491,11 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix'):
     gen.read_topology(DNA_topology)
     gen.read_topology(AGs_topology)
     gen.read_topology(Mats_topology)
+    
+    # Load custom metabolite topologies if provided
+    if custom_top_files:
+        for top_file in custom_top_files:
+            gen.read_topology(top_file)
 
     counts = {'P': 1, 'R': 1, 'D': 1, 'I': 1, 'S': 1, 'M': 1}
     types = split_chains(pdb_in)
@@ -450,54 +519,6 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix'):
     gen.write_psf(filename=psf_out)
     for file_path in glob.glob("psfgentmp_*.pdb"):
         os.remove(file_path)
-
-def custom_genpsf(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix'):
-    if RNA == 'mix':
-        RNA_topology, _ = utils.load_ff('RNA')
-    elif RNA == 'icon':
-        path1 = files("HyresBuilder") / "forcefield" / "top_RNA.inp"
-        RNA_topology = path1.as_posix()
-    protein_topology, _ = utils.load_ff('Protein')
-    DNA_topology, _ = utils.load_ff('DNA')
-    AGs_topology, _ = utils.load_ff('AGs')
-    Mats_topology, _ = utils.load_ff('Metabolite')
-
-    gen = PsfGen()
-    gen.read_topology(RNA_topology)
-    gen.read_topology(protein_topology)
-    gen.read_topology(DNA_topology)
-    gen.read_topology(AGs_topology)
-    gen.read_topology(Mats_topology)
-
-    for pdb, num in zip(pdb_list, num_list):
-        num = int(num)
-        with open(pdb, 'r') as f:
-            for line in f:
-                if line.startswith('ATOM'):
-                    resname = line[17:20].strip()
-                    chaintype = get_type(resname)
-                    if chaintype is None:
-                        print(f"Unknown molecule type for residue {resname} in file {pdb}")
-                        exit(1)
-                    elif chaintype == 'P':
-                        for i in range(num):
-                            segid = f"{chaintype}{encode_segid(i+1)}"
-                            gen.add_segment(segid=segid, pdbfile=pdb, auto_angles=False)
-                    elif chaintype == 'S':
-                        for i in range(num):
-                            segid = f"{chaintype}{encode_segid(i+1)}"
-                            gen.add_segment(segid=segid, pdbfile=pdb)
-                    else:
-                        for i in range(num):
-                            segid = f"{chaintype}{encode_segid(i+1)}"
-                            gen.add_segment(segid=segid, pdbfile=pdb, auto_angles=False, auto_dihedrals=False)
-                    break 
-
-    for segid in gen.get_segids():
-        if terminal != "neutral":
-            set_terminus(gen, segid, terminal)
-
-    gen.write_psf(filename=psf_out)
 
 def _apply_terminus_to_template(atoms, charge_status):
     resid_order = []
@@ -529,7 +550,7 @@ def _apply_terminus_to_template(atoms, charge_status):
         print("Error: Only 'neutral', 'charged', 'NT', and 'CT' charge status are supported.")
         exit(1)
 
-def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix', verbose=True):
+def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix', custom_top_files=None, verbose=True):
     if RNA == 'mix':
         RNA_topology, _ = utils.load_ff('RNA')
     elif RNA == 'icon':
@@ -574,6 +595,11 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
             gen.read_topology(DNA_topology)
             gen.read_topology(AGs_topology)
             gen.read_topology(Mats_topology)
+            
+            # Load custom metabolite topologies if provided
+            if custom_top_files:
+                for top_file in custom_top_files:
+                    gen.read_topology(top_file)
 
             tmpl_segid = f"{chaintype}{encode_segid(counts[chaintype] + 1)}"
             if chaintype == 'P':
@@ -623,7 +649,6 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
                 
             for c in range(num):
                 new_segid = segid_for(c)
-                # Fixed line:
                 title_lines.append(remark_template.replace("{segid}", new_segid))
 
             global_offset += num * tmpl.natom
@@ -650,60 +675,19 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
         print(f"[fast] wrote {psf_out}: {total_atoms} atoms total")
 
 # ===========================================================================
-# SECTION 3: Verification Utility
-# ===========================================================================
-
-def verify_fast_replication(pdbs, num=10, terminal='neutral'):
-    num_list = [num] * len(pdbs)
-
-    print(f"Running ORIGINAL custom_genpsf on {pdbs} x{num} each...")
-    custom_genpsf(pdbs, num_list, "verify_slow.psf", terminal=terminal)
-
-    print(f"Running FAST custom_genpsf_fast on {pdbs} x{num} each...")
-    custom_genpsf_fast(pdbs, num_list, "verify_fast.psf", terminal=terminal)
-
-    slow = parse_psf("verify_slow.psf")
-    fast = parse_psf("verify_fast.psf")
-
-    checks = [
-        ("natom", slow.natom, fast.natom),
-        ("nbond", len(slow.bonds), len(fast.bonds)),
-        ("nangle", len(slow.angles), len(fast.angles)),
-        ("ndihedral", len(slow.dihedrals), len(fast.dihedrals)),
-        ("nimproper", len(slow.impropers), len(fast.impropers)),
-    ]
-
-    ok = True
-    for name, a, b in checks:
-        status = "OK" if a == b else "MISMATCH"
-        if a != b:
-            ok = False
-        print(f"  {name:12s} slow={a:>8d}  fast={b:>8d}  {status}")
-
-    slow_charges = sorted(float(a[6]) for a in slow.atoms)
-    fast_charges = sorted(float(a[6]) for a in fast.atoms)
-    charge_ok = slow_charges == fast_charges
-    print(f"  {'charges':12s} {'matched' if charge_ok else 'MISMATCH'}")
-    ok = ok and charge_ok
-
-    slow_masses = sorted(float(a[7]) for a in slow.atoms)
-    fast_masses = sorted(float(a[7]) for a in fast.atoms)
-    mass_ok = slow_masses == fast_masses
-    print(f"  {'masses':12s} {'matched' if mass_ok else 'MISMATCH'}")
-    ok = ok and mass_ok
-
-    if ok:
-        print("\nPASSED: fast and original methods agree on this small case.")
-    else:
-        print("\nFAILED: outputs differ -- do NOT use the fast path until this is resolved.")
-
-    return ok
-
-# ===========================================================================
 # SECTION 4: Command-Line Interface
 # ===========================================================================
 
 def main():
+    """
+    MODIFIED: Command-line interface for PSF generation.
+    
+    MODIFICATIONS:
+    1. --fast flag now automatically enables custom mode behavior
+       (merged --custom and --fast)
+    2. Removed --verify flag completely
+    3. Renamed --metabolites to --custom
+    """
     parser = argparse.ArgumentParser(
         description="generate PSF for Hyres/iCon systems",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -716,45 +700,51 @@ def main():
                         default='neutral')
     parser.add_argument("--icon", action='store_true',
                         help="Use iConRNA topologies instead of HyRes_iConRNA topologies")
-    parser.add_argument("--custom", action='store_true',
-                        help="Custom model with specified pdb files and numbers")
-    parser.add_argument("-p", "--pdb_list", nargs='+',
-                        help="List of PDB files for custom model (ignored if --custom not set)")
-    parser.add_argument("-n", "--num_list", nargs='+',
-                        help="List of numbers of each molecule type for custom model (ignored if --custom not set)")
     parser.add_argument("--fast", action='store_true',
-                        help="Use the fast replication path for --custom mode")
-    parser.add_argument("--verify", action='store_true',
-                        help="Run verification: compare fast vs original on a small case (n=10).")
+                        help="Use fast replication path with custom PDB files and numbers (requires -p and -n)")
+    parser.add_argument("-p", "--pdb_list", nargs='+',
+                        help="List of PDB files for custom model (required when --fast is set)")
+    parser.add_argument("-n", "--num_list", nargs='+',
+                        help="List of numbers of each molecule type for custom model (required when --fast is set)")
+    parser.add_argument("--custom", type=str,
+                        help="Add custom metabolite residues (comma-separated, e.g., 'ABC,UVW')")
     args = parser.parse_args()
 
-    if args.verify:
-        if not args.pdb_list:
-            print("Error: --verify requires -p (pdb_list) to be set.")
-            sys.exit(1)
-        success = verify_fast_replication(args.pdb_list, num=10, terminal=args.ter)
-        sys.exit(0 if success else 1)
+    # Handle custom metabolites if --custom flag is provided
+    custom_top_files = None
+    if args.custom:
+        custom_mets = [m.strip() for m in args.custom.split(',')]
+        for met in custom_mets:
+            if met not in metabolites:
+                metabolites.append(met)
+                if len(custom_mets) <= 5:
+                    print(f"Added metabolite: '{met}'")
+            else:
+                print(f"Note: '{met}' already in metabolites list")
+        
+        # Convert .itp files to CHARMM topology files
+        print(f"Preparing topology files for custom metabolites...")
+        custom_top_files = prepare_custom_metabolites(custom_mets, verbose=True)
+        print(f"Successfully prepared {len(custom_top_files)} custom topology files\n")
 
-    if args.icon:
-        if args.custom:
-            if args.fast:
-                custom_genpsf_fast(args.pdb_list, args.num_list, args.psf,
-                                   terminal=args.ter, RNA='icon')
-            else:
-                custom_genpsf(args.pdb_list, args.num_list, args.psf,
-                              terminal=args.ter, RNA='icon')
-        else:
-            genpsf(args.pdb, args.psf, terminal=args.ter, RNA='icon')
+    if args.fast:
+        # Validate required arguments
+        if not args.pdb_list or not args.num_list:
+            print("Error: --fast requires -p/--pdb_list and -n/--num_list arguments")
+            sys.exit(1)
+        
+        # Determine RNA mode
+        rna_mode = 'icon' if args.icon else 'mix'
+        
+        # Run fast custom mode
+        custom_genpsf_fast(args.pdb_list, args.num_list, args.psf,
+                          terminal=args.ter, RNA=rna_mode, 
+                          custom_top_files=custom_top_files)
     else:
-        if args.custom:
-            if args.fast:
-                custom_genpsf_fast(args.pdb_list, args.num_list, args.psf,
-                                   terminal=args.ter)
-            else:
-                custom_genpsf(args.pdb_list, args.num_list, args.psf,
-                              terminal=args.ter)
-        else:
-            genpsf(args.pdb, args.psf, terminal=args.ter)
+        # Standard mode: single PDB file
+        rna_mode = 'icon' if args.icon else 'mix'
+        genpsf(args.pdb, args.psf, terminal=args.ter, RNA=rna_mode,
+               custom_top_files=custom_top_files)
 
     for file_path in glob.glob("psfgentmp_*.pdb"):
         os.remove(file_path)

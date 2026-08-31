@@ -2,10 +2,12 @@
 This module is for parsing the bonded parameter file for CG metabolites.
 bonded parameters are first generated based on the parameter file, and then modulated.
 """
+import os
 from openmm.unit import *
 from openmm.app import *
 from openmm import *
 import numpy as np
+import math
 
 
 KCAL_TO_KJ: float = 4.184
@@ -1649,7 +1651,69 @@ metabolome = {
 # Public API
 # ---------------------------------------------------------------------------
 
-def modify_metabolite(psf, system):
+def _parse_itp_file(filename):
+    """Parse a single .itp file and return the dict structure."""
+    if not os.path.exists(filename):
+        print(f"Warning: {filename} not found.")
+        return None, None
+        
+    res_data = {'bonds': {}, 'angles': {}, 'dihedrals': {}, 'impropers': {}}
+    res_name = None
+    section = None
+    
+    with open(filename, 'r') as f:
+        for line in f:
+            # Strip comments and whitespace
+            line = line.split(';')[0].strip()
+            if not line:
+                continue
+                
+            if line.startswith('[') and line.endswith(']'):
+                section = line[1:-1].strip()
+                continue
+                
+            if section == 'RESI':
+                res_name = line.strip()
+            elif section == 'BOND':
+                parts = line.split()
+                if len(parts) >= 4:
+                    res_data['bonds'][(parts[0], parts[1])] = (float(parts[2]), float(parts[3]))
+            elif section == 'ANGL':
+                parts = line.split()
+                if len(parts) >= 5:
+                    res_data['angles'][(parts[0], parts[1], parts[2])] = (float(parts[3]), float(parts[4]))
+            elif section == 'DIHE':
+                parts = line.split()
+                if len(parts) >= 7:
+                    res_data['dihedrals'][(parts[0], parts[1], parts[2], parts[3])] = (float(parts[4]), int(parts[5]), float(parts[6]))
+            elif section == 'IMPR':
+                parts = line.split()
+                if len(parts) >= 7:
+                    res_data['impropers'][(parts[0], parts[1], parts[2], parts[3])] = (float(parts[4]), int(parts[5]), float(parts[6]))
+                    
+    return res_name, res_data
+
+def _load_custom(custom):
+    """Resolve *custom* into a metabolome-style dict by reading their .itp files, or None if custom is None."""
+    if custom is None:
+        return None
+    
+    if not isinstance(custom, (list, tuple)):
+        raise ValueError("custom argument must be a list or tuple of residue strings (e.g., ('ABC', 'XYZ'))")
+        
+    converted = {}
+    for res in custom:
+        filename = f"{res}.itp"
+        res_name, res_data = _parse_itp_file(filename)
+        
+        # Use the name defined in [RESI] if present, otherwise fallback to the filename prefix
+        key = res_name if res_name else res
+        if key and res_data:
+            converted[key] = res_data
+            
+    return converted
+
+def modify_metabolite(psf, system, custom=None, merge=True):
     """Overwrite bonded force parameters for CG metabolite residues in *system*.
 
     The function iterates over every ``Force`` object registered in the OpenMM
@@ -1672,6 +1736,13 @@ def modify_metabolite(psf, system):
         OpenMM system object, typically produced by
         ``psf.createSystem(params, ...)``.  The forces inside this object are
         modified **in place**.
+    custom : tuple or list of str, optional
+        A list of custom metabolite names to load from local .itp files (e.g., ("ABC", "XYZ")).
+        If not provided, the default :data:`metabolome` dictionary is used.
+    merge : bool, optional
+        If True (default), the loaded *custom* data is merged with the default
+        :data:`metabolome` dictionary, with *custom* taking precedence.  If False,
+        the default dictionary is ignored and only *custom* data is used.
 
     Returns
     -------
@@ -1722,16 +1793,25 @@ def modify_metabolite(psf, system):
             elif isinstance(force, mm.CustomTorsionForce):
                 force.setName("CustomTorsionForce")
 
-        system = modify_metabolite(psf, system)
+        system = modify_metabolite(psf, system, custom=("PRL",))
     """
     topology = psf.topology
+
+    user_lib = _load_custom(custom)
+    if user_lib is None:
+        active_metabolome = metabolome
+    elif merge:
+        active_metabolome = metabolome.copy()
+        active_metabolome.update(user_lib)
+    else:
+        active_metabolome = user_lib
 
     print("Building atom-to-residue mapping from topology...")
     atom_map = {
         atom.index: (atom.residue.name, atom.name)
         for atom in topology.atoms()
     }
-    target_resnames = set(metabolome.keys())
+    target_resnames = set(active_metabolome.keys())
 
     counts = {"bonds": 0, "angles": 0, "dihedrals": 0, "impropers": 0}
 
@@ -1743,21 +1823,13 @@ def modify_metabolite(psf, system):
             'dihedrals': set(),
             'impropers': set(),
         }
-        for resname in metabolome
+        for resname in active_metabolome
     }
 
     for force in system.getForces():
 
         # ------------------------------------------------------------------
         # 1. HARMONIC BONDS  (HarmonicBondForce)
-        #
-        #    Potential : E = ½ · k · (r − r₀)²
-        #    Dict units: k  [kcal/mol/Å²],  r₀ [Å]
-        #    OpenMM    : k  [kJ/mol/nm²],   r₀ [nm]
-        #
-        #    k  conversion: ×4.184 (kcal→kJ) × 100 (Å⁻²→nm⁻²) × 2 (absorb ½)
-        #                 = ×836.8
-        #    r₀ conversion: ×0.1
         # ------------------------------------------------------------------
         if isinstance(force, HarmonicBondForce):
             if force.getNumBonds() == 0:
@@ -1772,8 +1844,8 @@ def modify_metabolite(psf, system):
                     continue
 
                 for key in ((name1, name2), (name2, name1)):
-                    if key in metabolome[res1]['bonds']:
-                        raw_k, raw_b0 = metabolome[res1]['bonds'][key]
+                    if key in active_metabolome[res1]['bonds']:
+                        raw_k, raw_b0 = active_metabolome[res1]['bonds'][key]
 
                         b0_new = raw_b0 * 0.1
                         # ×4.184 kcal→kJ, ×100 Å⁻²→nm⁻², ×2 absorb ½
@@ -1786,15 +1858,6 @@ def modify_metabolite(psf, system):
 
         # ------------------------------------------------------------------
         # 2. CUSTOM ANGLES  (CustomAngleForce named "ReBAngleForce")
-        #
-        #    Potential : E = ½ · kₜ · (θ − θ₀)²
-        #    Dict units: kₜ [kcal/mol/rad²],  θ₀ [degrees]
-        #    OpenMM    : kₜ [kJ/mol/rad²],    θ₀ [radians]
-        #
-        #    kₜ conversion: ×4.184 (kcal→kJ) × 2 (absorb ½)  = ×8.368
-        #    θ₀ conversion: ×π/180
-        #
-        #    Per-parameter index layout: [theta0, kt]  →  idx 0 = θ₀, idx 1 = kₜ
         # ------------------------------------------------------------------
         elif isinstance(force, CustomAngleForce):
             if force.getName() != "ReBAngleForce":
@@ -1813,8 +1876,8 @@ def modify_metabolite(psf, system):
                     continue
 
                 for key in ((name1, name2, name3), (name3, name2, name1)):
-                    if key in metabolome[res1]['angles']:
-                        raw_kt, raw_theta0 = metabolome[res1]['angles'][key]
+                    if key in active_metabolome[res1]['angles']:
+                        raw_kt, raw_theta0 = active_metabolome[res1]['angles'][key]
 
                         theta0_new = raw_theta0 * (math.pi / 180.0)
                         kt_new = raw_kt * KCAL_TO_KJ * 2.0
@@ -1830,13 +1893,6 @@ def modify_metabolite(psf, system):
 
         # ------------------------------------------------------------------
         # 3. PROPER DIHEDRALS  (PeriodicTorsionForce)
-        #
-        #    Potential : E = k · (1 + cos(n · φ − φ₀))
-        #    Dict units: k [kcal/mol],  φ₀ [degrees],  n [integer]
-        #    OpenMM    : k [kJ/mol],    φ₀ [radians]
-        #
-        #    k  conversion: ×4.184  (no factor-of-2; potential has no ½)
-        #    φ₀ conversion: ×π/180
         # ------------------------------------------------------------------
         elif isinstance(force, PeriodicTorsionForce):
             for i in range(force.getNumTorsions()):
@@ -1853,7 +1909,7 @@ def modify_metabolite(psf, system):
 
                 fwd_key = (name1, name2, name3, name4)
                 rev_key = (name4, name3, name2, name1)
-                dihedral_dict = metabolome[res1]['dihedrals']
+                dihedral_dict = active_metabolome[res1]['dihedrals']
 
                 matched_key = None
                 if fwd_key in dihedral_dict:
@@ -1878,15 +1934,6 @@ def modify_metabolite(psf, system):
 
         # ------------------------------------------------------------------
         # 4. IMPROPER TORSIONS  (CustomTorsionForce named "CustomTorsionForce")
-        #
-        #    Potential : E = ½ · k · (θ − θ₀)²
-        #    Dict units: k [kcal/mol/rad²],  θ₀ [degrees]
-        #    OpenMM    : k [kJ/mol/rad²],    θ₀ [radians]
-        #
-        #    k  conversion: ×4.184 (kcal→kJ) × 2 (absorb ½)  = ×8.368
-        #    θ₀ conversion: ×π/180
-        #
-        #    Per-parameter index layout: [k, theta0]  →  idx 0 = k, idx 1 = θ₀
         # ------------------------------------------------------------------
         elif isinstance(force, CustomTorsionForce):
             if force.getName() != "CustomTorsionForce":
@@ -1907,7 +1954,7 @@ def modify_metabolite(psf, system):
                 # Impropers: forward order only (reversing changes the
                 # out-of-plane center atom)
                 fwd_key = (name1, name2, name3, name4)
-                improper_dict = metabolome[res1]['impropers']
+                improper_dict = active_metabolome[res1]['impropers']
 
                 params = improper_dict.get(fwd_key)
                 if params is None:

@@ -1363,4 +1363,46 @@ GROUP                   !
 ATOM MG   SMG     2.00  !
 ! to  be continued for other nucleotides, etc.
 
+
+
+!!! drug molecules !!!
+
+RESI PRL         +1.00     !Proflavine, rigid body
+GROUP                 
+ATOM M1   A2Y     0.00
+ATOM M2   P1Y     0.00
+ATOM M3   RA2    +1.00
+ATOM M4   A1Y     0.00
+ATOM M5   A2Y     0.00
+ATOM M6   P1Y     0.00
+
+RESI PYR         +1.00     !Pyrvinium, almost rigid body, but with some flexibility
+GROUP                 
+ATOM M1   A2F     0.00
+ATOM M2   A3F     0.00
+ATOM M3   A1F     0.00
+GROUP
+ATOM M4   RA2     0.00
+ATOM M5   A1F     0.00
+ATOM M6   A1F     0.00
+ATOM M7   A2F     0.00
+GROUP
+ATOM M8   RA2    +1.00
+ATOM M9   A1F     0.00
+ATOM M10  A2F     0.00
+ATOM M11  A1F     0.00
+ATOM M12  A1F     0.00
+ATOM M13  RA2     0.00
+BOND M1   M2        M1   M3        M2   M3        M3   M4
+! BOND M4   M5        M4   M6        M5   M6        M6   M7
+! BOND M7   M8        M8   M9        M8   M10       M9   M10
+! BOND M10  M11       M10  M12       M11  M12       M12  M13
+ANGL M1   M3   M4
+! ANGL M1   M3   M4        M3   M4   M5        M4   M6   M7        M6   M7   M8
+! ANGL M7   M8   M9        M9   M10  M12       M8   M10  M11       M11  M12  M13
+DIHE M1   M3   M4   M5        M2   M1   M3   M4
+! DIHE M1   M3   M4   M5        M2   M1   M3   M4        M3   M4   M5   M6
+! DIHE M5   M4   M6   M7        M4   M6   M7   M9        M7   M8   M9   M10
+
+
 END

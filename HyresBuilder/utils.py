@@ -71,7 +71,157 @@ from openmm.unit import *
 from openmm.app import *
 from openmm import *
 import numpy as np
+import re
+import os
 from .FFs import *
+
+
+def itp2charmm(itp):
+    """
+    Parses an ITP file, generates CHARMM-style TOP and PAR content,
+    and writes them to respective files named after the RESI.
+    """
+    
+    # Read the ITP File
+    with open(itp, 'r') as f:
+        itp_content = f.read()
+        
+    sections = {'RESI': [], 'ATOM': [], 'BOND': [], 'ANGL': [], 'DIHE': [], 'IMPR': []}
+    current_section = None
+    
+    for line in itp_content.split('\n'):
+        line = line.split(';')[0].strip()
+        if not line:
+            continue
+            
+        match = re.match(r'\[\s*([A-Z]+)\s*\]', line)
+        if match:
+            current_section = match.group(1)
+            continue
+            
+        if current_section and current_section in sections:
+            sections[current_section].append(line.split())
+
+    # Extract the residue name to use for file naming and the PAR header
+    resi_name = sections['RESI'][0][0] if sections['RESI'] else "RESI"
+    
+    atom_types = {}
+    total_charge = 0.0
+    for atom in sections['ATOM']:
+        name, atype, charge = atom[0], atom[1], float(atom[2])
+        atom_types[name] = atype
+        total_charge += charge
+
+    # --- 1. Generate the TOP file lines ---
+    top_lines = []
+    top_lines.append(f"RESI {resi_name:<8} {total_charge:>8.2f}")
+    top_lines.append("GROUP")
+    
+    for atom in sections['ATOM']:
+        top_lines.append(f"ATOM {atom[0]:<4} {atom[1]:<6} {float(atom[2]):>8.2f}")
+        
+    for bond in sections['BOND']:
+        top_lines.append(f"BOND {bond[0]:<4} {bond[1]:<4}")
+        
+    for angl in sections['ANGL']:
+        top_lines.append(f"ANGL {angl[0]:<4} {angl[1]:<4} {angl[2]:<4}")
+        
+    for dihe in sections['DIHE']:
+        top_lines.append(f"DIHE {dihe[0]:<4} {dihe[1]:<4} {dihe[2]:<4} {dihe[3]:<4}")
+        
+    for impr in sections['IMPR']:
+        top_lines.append(f"IMPR {impr[0]:<4} {impr[1]:<4} {impr[2]:<4} {impr[3]:<4}")
+
+    top_content = "\n".join(top_lines)
+
+    # --- 2. Generate the PAR file lines ---
+    par_lines = []
+    
+    # Replace {RESI name}
+    par_lines.append(f"* parameter file for {resi_name}\n")
+    
+    par_lines.append("BOND")
+    par_lines.append("!type     Kb  b0")
+    for bond in sections['BOND']:
+        t1, t2 = atom_types[bond[0]], atom_types[bond[1]]
+        par_lines.append(f"{t1:<5} {t2:<7} {bond[2]:>4} {bond[3]:>7}")
+        
+    par_lines.append("\nTHETAS")
+    par_lines.append("!atom types         Ktheta    Theta0   Kub     S0")
+    for angl in sections['ANGL']:
+        t1, t2, t3 = atom_types[angl[0]], atom_types[angl[1]], atom_types[angl[2]]
+        par_lines.append(f"{t1:<5} {t2:<5} {t3:<7} {angl[3]:>5} {angl[4]:>9} {angl[5]:>5} {angl[6]:>5}")
+        
+    par_lines.append("\nPHI")
+    par_lines.append("!atom types               Kchi    n   delta")
+    for dihe in sections['DIHE']:
+        t1, t2, t3, t4 = atom_types[dihe[0]], atom_types[dihe[1]], atom_types[dihe[2]], atom_types[dihe[3]]
+        par_lines.append(f"{t1:<5} {t2:<5} {t3:<5} {t4:<7} {dihe[4]:>4} {dihe[5]:>4} {dihe[6]:>6}")
+        
+    par_lines.append("\nIMPHI")
+    par_lines.append("!atom types               Kpsi        psi0")
+    for impr in sections['IMPR']:
+        t1, t2, t3, t4 = atom_types[impr[0]], atom_types[impr[1]], atom_types[impr[2]], atom_types[impr[3]]
+        par_lines.append(f"{t1:<5} {t2:<5} {t3:<5} {t4:<7} {impr[4]:>4}    {impr[5]}    {impr[6]:>3}")
+
+    # Append the comprehensive NONBONDED and NBFIX lists verbatim from the reference format
+    par_lines.append("""
+NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
+     CUTNB 12.0  CTOFNB 12.0  CTONNB 11.0
+
+M01      0.00     -0.0350      2.4340   0.00     -0.0250      2.4340
+M02      0.00     -0.0150      2.0982   0.00     -0.0150      2.0982
+M03      0.00     -0.0720      2.2759   0.00     -0.0720      2.2759
+M04      0.00     -0.0360      2.0591   0.00     -0.0360      2.0591 !
+M05      0.00     -0.0150      2.3268   0.00     -0.0150      2.3268 !
+M06      0.00     -0.0150      2.5008   0.00     -0.0150      2.5008 !
+M07      0.00     -0.0900      2.3689   0.00     -0.0900      2.3689 !
+M08      0.00     -0.0360      2.2600   0.00     -0.0360      2.2600
+MS1      0.00     -0.0592      2.2826   0.00     -0.0592      2.2826
+MS2      0.00     -0.0566      2.2826   0.00     -0.0566      2.2826
+MCI      0.00     -0.1594      2.4900   0.00     -0.1594      2.4900
+MSO      0.00     -0.0800      2.3200   0.00     -0.0800      2.3200
+MSS      0.00     -0.1200      2.2600   0.00     -0.1200      2.2600
+MCL      0.00     -0.1594      2.3400   0.00     -0.1594      2.3400
+MCF      0.00     -0.1594      2.1900   0.00     -0.1594      2.1900
+MBR      0.00     -0.1594      2.4000   0.00     -0.1594      2.4000
+SMG      0.00     -0.0200      2.0000   0.00     -0.0200      2.0000 !!
+
+NBFIX
+!                 Emin         Rmin
+!                 (kcal/mol)   (A)
+M01    M01       -0.0519      4.8680           !necessary, do not delete
+M02    M02       -0.0150      4.1964           !necessary, do not delete
+M03    M03       -0.0720      4.5518           !necessary, do not delete
+M04    M04       -0.0360      4.1182           !necessary, do not delete
+M05    M05       -0.0150      4.6536           !necessary, do not delete
+M06    M06       -0.0150      5.0016           !necessary, do not delete
+M07    M07       -0.0900      4.7378           !necessary, do not delete
+M08    M08       -0.0360      4.5200           !necessary, do not delete
+MS1    MS1       -0.0592      4.5652           !necessary, do not delete
+MS2    MS2       -0.0566      4.5652           !necessary, do not delete
+MCI    MCI       -0.1594      4.9800           !necessary, do not delete
+MSO    MSO       -0.0800      4.6400           !necessary, do not delete
+MSS    MSS       -0.1200      4.5200           !necessary, do not delete
+MCL    MCL       -0.1594      4.6800           !necessary, do not delete
+MCF    MCF       -0.1594      4.3800           !necessary, do not delete
+MBR    MBR       -0.1594      4.8000           !necessary, do not delete
+
+END""")
+
+    par_content = "\n".join(par_lines)
+    
+    # --- 3. Output to Files ---
+    top_filename = f"{resi_name}.top"
+    par_filename = f"{resi_name}.par"
+    
+    with open(top_filename, 'w') as f:
+        f.write(top_content)
+        
+    with open(par_filename, 'w') as f:
+        f.write(par_content)
+        
+    print(f"Convert itp to {top_filename} and {par_filename}")
 
 
 def load_ff(model: str) -> tuple[str, str]:
@@ -326,7 +476,25 @@ def setup(params, modification=None):
     top_DNA, param_DNA = load_ff('DNA')
     top_AGs, param_AGs = load_ff('AGs')
     top_mets, param_mets = load_ff('Metabolite')
-    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets)
+    top_list = [top_pro, top_RNA, top_DNA, top_AGs, top_mets]
+    param_list = [param_pro, param_RNA, param_DNA, param_AGs, param_mets]
+    if params.custom:
+        custom_list = [mol.strip() for mol in params.custom.split(',')]
+        custom_tops = []
+        custom_pars = []
+        for mol in custom_list:
+            itp_file =f'{mol}.itp'
+            if not os.path.isfile(itp_file):
+                print(f"Error: The custom itp file {itp_file} does not exist.")
+                exit(1)
+            itp2charmm(itp_file)
+            custom_tops.append(f"{mol}.top")
+            custom_pars.append(f"{mol}.par")
+
+        top_list = top_list + custom_tops
+        param_list = custom_pars + param_list
+    ffparams = CharmmParameterSet(*top_list, *param_list)
+    # ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
