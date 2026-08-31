@@ -1802,6 +1802,9 @@ def modify_metabolite(psf, system, custom=None, merge=True):
     topology = psf.topology
 
     user_lib = _load_custom(custom)
+    if user_lib is not None:
+        print(f"  -> Custom residues loaded from .itp files: {', '.join(user_lib.keys())}")
+
     if user_lib is None:
         active_metabolome = metabolome
     elif merge:
@@ -1983,8 +1986,6 @@ def modify_metabolite(psf, system, custom=None, merge=True):
     # Summary
     # ------------------------------------------------------------------
     print("\nModification summary:")
-    if custom is not None:
-        print(f"  -> Custom residues loaded from .itp files: {', '.join(custom)}")
     print(f"  -> Modified {counts['bonds']:>8d} harmonic bonds.")
     print(f"  -> Modified {counts['angles']:>8d} custom angles ('ReBAngleForce').")
     print(f"  -> Modified {counts['dihedrals']:>8d} proper dihedrals.")
