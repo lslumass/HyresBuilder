@@ -458,16 +458,26 @@ def set_terminus(gen, segid, charge_status):
             exit(1)
 
 def encode_segid(n: int) -> str:
-    """Encode segment number n into a 3-char string."""
+    """Encode segment number n into a 3-char string.
+
+    n < 1000 uses plain zero-padded decimal ("001".."999"). n >= 1000
+    switches to base62, offset so it never regenerates a code already
+    used by the decimal range above (the previous version subtracted
+    exactly 1000 before converting, which just replayed "000".."999"
+    again since the base62 alphabet starts with the digits 0-9 -
+    causing segid collisions like encode_segid(1) == encode_segid(1001)).
+    """
     if n < 1000:
         return f"{n:03d}"
-    
-    n -= 1000
+
     BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    
+    # Shift past the all-digit prefix range so we never collide with
+    # the "000".."999" codes already produced above.
+    n = n - 1000 + 62**3 - 36**3
+
     if n >= 62**3:
-        return str(n + 1000) 
-        
+        return str(n + 1000)
+
     c1 = BASE62[n // 3844]
     n = n % 3844
     c2 = BASE62[n // 62]
