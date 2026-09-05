@@ -460,28 +460,33 @@ def set_terminus(gen, segid, charge_status):
 def encode_segid(n: int) -> str:
     """Encode segment number n into a 3-char string.
 
-    n < 1000 uses plain zero-padded decimal ("001".."999"). n >= 1000
-    switches to base62, offset so it never regenerates a code already
-    used by the decimal range above (the previous version subtracted
-    exactly 1000 before converting, which just replayed "000".."999"
-    again since the base62 alphabet starts with the digits 0-9 -
-    causing segid collisions like encode_segid(1) == encode_segid(1001)).
+    Tier 1 (n=1..999):       plain decimal      "001".."999"
+    Tier 2 (n=1000..3599):   letter + 2 digits  "A00".."Z99"
+    Tier 3 (n=3600..103543): lowercase-led base62 - guaranteed not to
+        collide with tiers 1/2 since only tier 3 codes start with a
+        lowercase letter (tier 1 starts with a digit, tier 2 with an
+        uppercase letter).
+    Beyond n=103543: plain numeric fallback (only reached by
+        extremely large systems).
     """
     if n < 1000:
         return f"{n:03d}"
 
+    if n < 3600:
+        m = n - 1000
+        letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[m // 100]
+        rest = m % 100
+        return f"{letter}{rest:02d}"
+
     BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    # Shift past the all-digit prefix range so we never collide with
-    # the "000".."999" codes already produced above.
-    n = n - 1000 + 62**3 - 36**3
+    m = n - 3600
+    if m >= 26 * 62 * 62:
+        return str(n)
 
-    if n >= 62**3:
-        return str(n + 1000)
-
-    c1 = BASE62[n // 3844]
-    n = n % 3844
-    c2 = BASE62[n // 62]
-    c3 = BASE62[n % 62]
+    c1 = "abcdefghijklmnopqrstuvwxyz"[m // 3844]
+    m = m % 3844
+    c2 = BASE62[m // 62]
+    c3 = BASE62[m % 62]
     return f"{c1}{c2}{c3}"
 
 def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix', custom_top_files=None):
