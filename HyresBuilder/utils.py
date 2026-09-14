@@ -1314,3 +1314,96 @@ def iConDNA_setup(params, modification=None):
     sim.context.setVelocitiesToTemperature(temperature)
     print(f'Langevin, CUDA, {temperature}')
     return system, sim
+
+
+def crowding_effect(system: System, crowding_factor: float = 1.0) -> None:
+    """
+    Modify the NBFIX-style CustomNonbondedForce ("LJ Force w/ NBFIX") in an
+    OpenMM System so its LJ epsilon is scaled by a global parameter,
+    "crowding_factor", mimicking PEG (or other) crowding effects.
+
+    Original energy:  (a/r6)^2 - b/r6
+    Scaled energy:    (a*sqrt(crowding_factor)/r6)^2 - b*crowding_factor/r6
+
+    Since `a` and `b` are both linear in epsilon, this multiplies the
+    effective LJ epsilon by `crowding_factor` uniformly, while leaving
+    sigma (the potential minimum location) unchanged.
+
+    IMPORTANT: must be called BEFORE creating a Context/Simulation.
+    Global parameter additions and energy function changes on a Force are
+    only picked up when the Context is created — calling this after a
+    Context/Simulation already exists will have no effect on the running
+    simulation.
+
+    Parameters
+    ----------
+    system : System
+        The System containing the target CustomNonbondedForce. Modified in-place.
+    crowding_factor : float
+        Initial value of the "crowding_factor" global parameter (must be >= 0).
+        1.0 = unscaled/original epsilon; >1 strengthens LJ attraction/repulsion
+        proportionally; <1 weakens it; 0 disables LJ entirely.
+
+    Raises
+    ------
+    ValueError
+        If the target force isn't found, is found more than once, already
+        has a "crowding_factor" parameter, or crowding_factor is negative.
+    
+    Example
+    -------
+    >>> crowding_effect(system, crowding_factor=1.0)
+    """
+    if crowding_factor < 0:
+        raise ValueError(f"crowding_factor must be >= 0, got {crowding_factor}")
+
+    force_name = "LJ Force w/ NBFIX"
+    param_name = "crowding_factor"
+
+    matches = [
+        f for f in system.getForces()
+        if isinstance(f, CustomNonbondedForce) and f.getName() == force_name
+    ]
+
+    if not matches:
+        available = sorted({f.getName() for f in system.getForces()})
+        raise ValueError(
+            f"No CustomNonbondedForce named '{force_name}' found in System. "
+            f"Forces present: {available}"
+        )
+    if len(matches) > 1:
+        raise ValueError(
+            f"Expected exactly one CustomNonbondedForce named '{force_name}', "
+            f"found {len(matches)}. Force names must be unique for this to work reliably."
+        )
+
+    target_force = matches[0]
+
+    existing_params = {
+        target_force.getGlobalParameterName(i)
+        for i in range(target_force.getNumGlobalParameters())
+    }
+    if param_name in existing_params:
+        raise ValueError(
+            f"Global parameter '{param_name}' already exists on '{force_name}'. "
+            "crowding_effect() may have already been called on this System."
+        )
+
+    original_energy = target_force.getEnergyFunction()
+
+    new_energy = (
+        f"(a*sqrt({param_name})/r6)^2 - b*{param_name}/r6; "
+        "r6=r^6; a=acoef(type1, type2); b=bcoef(type1, type2)"
+    )
+
+    target_force.setEnergyFunction(new_energy)
+    target_force.addGlobalParameter(param_name, crowding_factor)
+
+    print(
+        f"[crowding_effect] '{force_name}': energy function updated, "
+        f"'{param_name}' added (initial value = {crowding_factor}).\n"
+        f"  Original energy: {original_energy}\n"
+        f"  New energy:      {new_energy}"
+    )
+
+    return target_force
