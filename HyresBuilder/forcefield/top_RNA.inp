@@ -21,6 +21,10 @@ MASS   317 RU3   28.010   ! CO    base -C(=O)- for C, U
 MASS   318 MG    90.000   ! fully hydrated Mg2+
 MASS   319 SMG   24.305   ! chelated Mg2+
 MASS   320 CAL   90.000   ! fully hydrated Ca2+
+MASS   321 POT   90.000   ! fully hydrated K+  
+MASS   322 SOD   90.000   ! fully hydrated Na+
+MASS   323 LIT   90.000   ! fully hydrated Li+
+MASS   324 PHO   78.970   ! Polyphosphate -P(O2)O-
 
 DECL -C1
 DECL +P
@@ -127,7 +131,7 @@ IMPR C1   P    +P   C2
 
 RESI PHO         -1.00  !
 GROUP                   !
-ATOM P    RP     -1.00  !
+ATOM P    PHO    -1.00  !
 BOND P    +P
 
 
@@ -144,5 +148,17 @@ ATOM MG   SMG     2.00  !
 RESI CA+          2.00  !
 GROUP                   !
 ATOM CAL  CAL     2.00  !
+
+RESI K+           1.00  !
+GROUP                   !
+ATOM K    POT     1.00  !
+
+RESI NA+          1.00  !
+GROUP                   !
+ATOM NA   SOD     1.00  !
+
+RESI Li+          1.00  !
+GROUP                   !
+ATOM LI   LIT     1.00  !
 
 END

@@ -41,7 +41,7 @@ RU1   RU3   180.0      2.70   ! U: NA-NC
 RU2   RU3   150.0      2.99   ! U: NB-NC
 
 !## for polyphosphate, from https://doi.org/10.1021/acs.biomac.8b00327
-RP    RP     40.6      2.70   ! P-P
+PHO   PHO    40.6      2.70   ! P-P
 
 
 THETAS
@@ -84,7 +84,7 @@ RG2   RG3   RG4   40.0      83.0  !  NB-NC-ND
 RG3   RG4   RG1   40.0      72.0  !  NC-ND-NA
 
 !## for polyphosphate
-RP    RP     RP    60.0    99.0   ! P-P-P
+PHO   PHO   PHO  120.0      99.0  ! P-P-P
 
 
 PHI
@@ -128,7 +128,7 @@ RG1   RG2   RG4   RG3     80.0    1     0.0   !NA-NB-ND-NC
 RG1   RG2   RG3   RG4     50.0    1   180.0   !NA-NB-NC-ND
 
 !## for polyphosphate
-RP    RP    RP    RP       0.9    1     0.0   ! P-P-P-P
+PHO   PHO   PHO   PHO      0.9    1     0.0   ! P-P-P-P
 
 
 IMPHI
@@ -190,13 +190,31 @@ RU3      0.00     -0.08731      1.7170   0.00     -0.08731     1.7170 !!        
 !# others
 MG       0.00     -0.10000      3.0000   0.00     -0.10000     3.0000 !!
 CAL      0.00     -0.02000      3.1000   0.00     -0.02000     3.1000
+POT      0.00     -0.02000      3.6000   0.00     -0.02000     3.6000
+SOD      0.00     -0.02000      3.2000   0.00     -0.02000     3.2000
+LIT      0.00     -0.02000      2.7000   0.00     -0.02000     2.7000
+PHO      0.00     -0.05000      2.4340   0.00     -0.05000     2.4340 !!
+
 
 NBFIX
 !                 Emin         Rmin
 !                 (kcal/mol)   (A)
-RP        MG        -0.50000       5.0000
-RP        CAL       -0.80000       5.2000
 RS1       RS1       -0.09922       4.5652           !necessary, do not delete
+PHO       PHO       -0.05000       4.8680
+
+! Phosphate-ion interactions
+RP        MG        -0.50000       5.0000
+RP        CAL       -0.60000       5.2000
+RP        POT       -0.10000       5.5000
+RP        SOD       -0.20000       5.3000
+RP        LIT       -0.30000       4.8000
+
+! polyP-ion interactions
+PHO       MG        -0.50000       5.0000
+PHO       CAL       -0.60000       5.2000
+PHO       POT       -0.10000       5.5000
+PHO       SOD       -0.20000       5.3000
+PHO       LIT       -0.30000       4.8000
 
 ! for pairing 
 RA3       RU2       -0.12000       3.5000
@@ -205,20 +223,20 @@ RG4       RC3       -0.10000       3.8000
 RA4       RU3       -0.10000       4.0000
 
 !# Aromatic-base pi-pi interactions
-A2F       RA1       -0.83000       4.5000
-A2F       RG1       -0.83000       4.5000
-A2F       RC1       -0.77000       4.5000
-A2F       RU1       -0.81000       4.5000
+A2F       RA1       -0.78000       4.5000
+A2F       RG1       -0.78000       4.5000
+A2F       RC1       -0.72000       4.5000
+A2F       RU1       -0.76000       4.5000
 
-A2Y       RA1       -0.91000       4.5000
-A2Y       RG1       -1.01000       4.5000
-A2Y       RC1       -0.69000       4.5000
-A2Y       RU1       -0.91000       4.5000
+A2Y       RA1       -0.86000       4.5000
+A2Y       RG1       -0.96000       4.5000
+A2Y       RC1       -0.65000       4.5000
+A2Y       RU1       -0.86000       4.5000
 
-A2W       RA1       -0.91000       4.5000
-A2W       RG1       -1.01000       4.5000
-A2W       RC1       -0.69000       4.5000
-A2W       RU1       -0.91000       4.5000
+A2W       RA1       -0.86000       4.5000
+A2W       RG1       -0.96000       4.5000
+A2W       RC1       -0.65000       4.5000
+A2W       RU1       -0.86000       4.5000
 
 !# ARG/LYS-base cation-pi interactions
 QdR       RA1       -0.13000       4.5000
