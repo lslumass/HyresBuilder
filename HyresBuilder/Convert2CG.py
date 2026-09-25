@@ -21,7 +21,7 @@ Conversion models
   Supported nucleotides: ADE, GUA, CYT, URA (:func:`at2RNA`).
 * **iConRNA (DNA)** — the same bead topology as the RNA model (P, C1, C2,
   NA–ND), applied to deoxyribonucleotides. Supported nucleotides: DA, DG,
-  DC, DT (:func:`at2DNA`).
+  DC, DT, plus the CHARMM-style aliases DAD, DGU, DCY, DTH (:func:`at2DNA`).
 
 Pipeline overview
 -----------------
@@ -29,17 +29,27 @@ The top-level entry point :func:`at2cg` orchestrates the full workflow:
 
 1. Optionally add backbone amide hydrogens to the all-atom input
    (:func:`add_backbone_hydrogen`).
-2. Split the input PDB into per-chain temporary files and detect molecule
+2. Optionally rewrite CHARMM-style nucleic acid residue names so DNA chains
+   are distinguishable from RNA (:func:`fix_charmm_dna_resnames`).
+3. Split the input PDB into per-chain temporary files and detect molecule
    types (:func:`split_chains`).
-3. Apply the appropriate CG mapping per chain (:func:`at2hyres`,
+4. Apply the appropriate CG mapping per chain (:func:`at2hyres`,
    :func:`at2RNA`, or :func:`at2DNA`).
-4. Build topology and write PSF via ``psfgen``, set terminus charge states
+5. Build topology and write PSF via ``psfgen``, set terminus charge states
    (:func:`set_terminus`), and re-encode any atom serial numbers exceeding
    99,999 in hybrid-36 format (:func:`fix_pdb_serial`).
-5. Optionally remove intermediate temporary files.
+6. Optionally remove intermediate temporary files.
 
 A command-line interface is exposed via :func:`main` and registered as the
 ``Convert2CG`` entry point.
+
+CHARMM residue names
+--------------------
+CHARMM PDB files use the same residue names for RNA and DNA bases (ADE, GUA,
+CYT, THY), so a DNA chain cannot be distinguished from an RNA chain by residue
+name alone. Passing ``charmm=True`` to :func:`at2cg` (or ``--charmm`` on the
+command line) renames ADE→DAD, GUA→DGU, CYT→DCY, THY→DTH before chain
+splitting, so those chains are typed as DNA and routed to :func:`at2DNA`.
 
 Hybrid-36 serial encoding
 --------------------------
@@ -365,6 +375,70 @@ def add_backbone_hydrogen(pdb_file, output_file):
         f.writelines(output_lines)
     
     print(f"Added backbone hydrogen atoms. Output saved to {output_file}")
+    return output_file
+
+
+# CHARMM uses the same residue names for RNA and DNA bases (ADE/GUA/CYT/THY).
+# Map them onto the DNA names recognized by split_chains() and at2DNA().
+_CHARMM_DNA_RESNAMES = {'ADE': 'DAD', 'GUA': 'DGU', 'CYT': 'DCY', 'THY': 'DTH'}
+
+
+def fix_charmm_dna_resnames(pdb_file, output_file=None):
+    """
+    Rewrite CHARMM-style nucleic acid residue names to explicit DNA names.
+
+    CHARMM PDB files use the same residue names for RNA and DNA bases, so a
+    DNA chain is written as ADE/GUA/CYT/THY rather than DA/DG/DC/DT. This
+    helper renames them to the DNA aliases understood by :func:`split_chains`
+    and :func:`at2DNA`::
+
+        ADE -> DAD    GUA -> DGU    CYT -> DCY    THY -> DTH
+
+    Note:
+        The mapping is unconditional, so apply this only to files whose nucleic
+        acid chains are DNA. A CHARMM file containing genuine RNA chains would
+        have those chains mis-typed as DNA.
+
+    Parameters:
+    -----------
+    pdb_file : str
+        Path to the input PDB file.
+    output_file : str, optional
+        Path to the output PDB file. If None, the input file is overwritten
+        in-place.
+
+    Returns:
+    --------
+    str : Path to the written PDB file.
+
+    Example:
+        >>> from HyresBuilder import Convert2CG
+        >>> Convert2CG.fix_charmm_dna_resnames("charmm_dna.pdb", "dna_fixed.pdb")
+    """
+    if output_file is None:
+        output_file = pdb_file
+
+    out_lines = []
+    n_renamed = 0
+
+    with open(pdb_file, 'r') as f:
+        lines = f.readlines()
+
+    for line in lines:
+        if line.startswith(('ATOM  ', 'HETATM')):
+            resname = line[17:20].strip().upper()
+            new_resname = _CHARMM_DNA_RESNAMES.get(resname)
+            if new_resname is not None:
+                # resName occupies PDB columns 18-20 (0-indexed 17:20)
+                line = line[:17] + f"{new_resname:<3s}" + line[20:]
+                n_renamed += 1
+        out_lines.append(line)
+
+    with open(output_file, 'w') as f:
+        f.writelines(out_lines)
+
+    print(f"CHARMM DNA residue names fixed for {n_renamed} atoms. "
+          f"Output saved to {output_file}")
     return output_file
 
 
@@ -960,10 +1034,11 @@ def at2DNA(pdb_in, pdb_out):
     - **NA/NB/NC/ND** — base beads (number depends on nucleotide type)
 
     Supported nucleotides: DA, DG, DC, DT, corresponding respectively to the
-    RNA nucleotides ADE, GUA, CYT, URA. Thymine (DT) additionally carries the
-    5-methyl group (C7 and its hydrogens) folded into its NB base bead, since
-    DT lacks the O2' present in ribonucleotides (irrelevant to this CG
-    mapping, which does not use O2').
+    RNA nucleotides ADE, GUA, CYT, URA. The CHARMM-style aliases DAD, DGU,
+    DCY, and DTH are also accepted (see :func:`fix_charmm_dna_resnames`).
+    Thymine (DT/DTH) additionally carries the 5-methyl group (C7 and its
+    hydrogens) folded into its NB base bead, since DT lacks the O2' present in
+    ribonucleotides (irrelevant to this CG mapping, which does not use O2').
 
     Args:
         pdb_in (str): Path to the input all-atom DNA PDB file.
@@ -1061,6 +1136,11 @@ def at2DNA(pdb_in, pdb_out):
             ('NC', ['C2', 'O2'])
         ]
     }
+
+    # CHARMM-style 3-letter DNA names share the same bead mappings.
+    for _alias, _canonical in (('DAD', 'DA'), ('DGU', 'DG'),
+                               ('DCY', 'DC'), ('DTH', 'DT')):
+        base_mappings[_alias] = base_mappings[_canonical]
     
     atom_serial = 0
     with open(pdb_out, 'w') as f:
@@ -1329,7 +1409,8 @@ def fix_pdb_serial(pdb_file, output_file=None):
     print(f"Fixed serial numbers for {serial} atoms. Output saved to {output_file}")
     return output_file
 
-def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, renumber=False):
+def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, renumber=False,
+          charmm=False):
     """
     Convert an all-atom PDB to a coarse-grained PDB and PSF file.
 
@@ -1359,6 +1440,13 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, renumber=False):
                                   segment's residues sequentially from 1.
                                   Segments already starting from 1 are left
                                   unchanged. Default is ``False``.
+        charmm (bool, optional): If ``True``, treat the input as a CHARMM-style
+                                  PDB in which DNA bases share the RNA residue
+                                  names, and rename ADE→DAD, GUA→DGU,
+                                  CYT→DCY, THY→DTH before chain splitting so
+                                  those chains are detected as DNA. Only use
+                                  this when the nucleic acid chains really are
+                                  DNA. Default is ``False``.
 
     Returns:
         tuple: A 2-tuple ``(pdb_file, psf_file)`` with paths to the output
@@ -1372,6 +1460,8 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, renumber=False):
         >>> pdb, psf = Convert2CG.at2cg("system_aa.pdb", "system_cg.pdb")
         >>> pdb, psf = Convert2CG.at2cg("system_aa.pdb", "system_cg.pdb",
         ...                              terminal="charged")
+        >>> pdb, psf = Convert2CG.at2cg("charmm_dna.pdb", "dna_cg.pdb",
+        ...                              charmm=True)
     """
     
     # Load topology files
@@ -1387,6 +1477,13 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, renumber=False):
     gen.read_topology(protein_topology)
     gen.read_topology(AGs_topology)
     
+    # CHARMM-style PDBs name DNA bases like RNA (ADE/GUA/CYT/THY); rename them
+    # to DAD/DGU/DCY/DTH so split_chains() types these chains as DNA.
+    if charmm:
+        charmm_pdb = "aa2cgtmp_charmm_aa.pdb"
+        fix_charmm_dna_resnames(pdb_in, charmm_pdb)
+        pdb_in = charmm_pdb
+
     # Split chains and convert
     types, segids = split_chains(pdb_in, renumber=renumber)
     
@@ -1458,15 +1555,22 @@ def main():
     parser.add_argument('--renumber', action='store_true',
                         help='renumber each segment\'s residues to start from 1 '
                              'if it does not already, default False')
+    parser.add_argument('--charmm', action='store_true',
+                        help='input is a CHARMM-style PDB whose DNA bases are '
+                             'named like RNA; rename ADE->DAD, GUA->DGU, '
+                             'CYT->DCY, THY->DTH before conversion so the '
+                             'chains are treated as DNA, default False')
 
     args = parser.parse_args()
     warnings.filterwarnings('ignore', category=UserWarning)
 
     if args.hydrogen:
         pdb_addH = add_backbone_hydrogen(args.aa, f'{args.aa[:-4]}_addH.pdb')
-        at2cg(pdb_addH, args.cg, terminal=args.terminal, renumber=args.renumber)
+        at2cg(pdb_addH, args.cg, terminal=args.terminal,
+              renumber=args.renumber, charmm=args.charmm)
     else:
-        at2cg(args.aa, args.cg, terminal=args.terminal, renumber=args.renumber)
+        at2cg(args.aa, args.cg, terminal=args.terminal,
+              renumber=args.renumber, charmm=args.charmm)
 
 if __name__ == '__main__':
     main()
