@@ -380,7 +380,7 @@ def add_backbone_hydrogen(pdb_file, output_file):
 
 # CHARMM uses the same residue names for RNA and DNA bases (ADE/GUA/CYT/THY).
 # Map them onto the DNA names recognized by split_chains() and at2DNA().
-_CHARMM_DNA_RESNAMES = {'ADE': 'DAD', 'GUA': 'DGU', 'CYT': 'DCY', 'THY': 'DTH'}
+_CHARMM_DNA_RESNAMES = {'ADE': 'DA', 'GUA': 'DG', 'CYT': 'DC', 'THY': 'DT'}
 
 
 def fix_charmm_dna_resnames(pdb_file, output_file=None):
