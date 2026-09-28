@@ -216,7 +216,7 @@ def _dsspCodes(psf, pdb):
     return list(md.compute_dssp(traj, simplified=True)[0])
 
 
-def createRigidSegments(system, psf, pdb, residues, segments, loop=False, CA=False):
+def createRigidSegments(system, psf, pdb, residues, segments, loop=True, CA=False):
     """Apply the same residue-range rigid-body definition to many PSF segments
     at once, e.g. every chain of a repeated fibril or multimer.
 
