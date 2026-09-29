@@ -250,7 +250,7 @@ def buildSystem(psf, system, DH_params, modification=None):
     Force14.addPerBondParameter('epsilon')
     for idx in range(nbforce.getNumExceptions()):
         ex = nbforce.getExceptionParameters(idx)
-        if ex[4] != 0.0:
+        if ex[4].value_in_unit(unit.kilojoule_per_mole) != 0.0:
             Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
     system.addForce(Force14)
 
@@ -265,6 +265,8 @@ def buildSystem(psf, system, DH_params, modification=None):
             Os.append(int(atom.index))
         if atom.name == "C":
             Cs.append(int(atom.index))
+
+    assert len(Ns) == len(Hs), f"N/H mismatch: {len(Ns)} N vs {len(Hs)} H"
     
     if len(Ns) != 0:
         sigma_hb = 0.29*unit.nanometer
@@ -279,6 +281,7 @@ def buildSystem(psf, system, DH_params, modification=None):
         HBforce.setCutoffDistance(0.45*unit.nanometers)
         for idx in range(len(Hs)):
             HBforce.addDonor(Ns[idx], Hs[idx], -1)
+        for idx in range(len(Os)):
             HBforce.addAcceptor(Os[idx], -1, -1)
         if HBforce.getNumAcceptors() != 0 and HBforce.getNumDonors() != 0:
             system.addForce(HBforce)
@@ -607,7 +610,7 @@ def iConRNASystem(psf, system, DH_params, modification=None):
     Force14.addPerBondParameter('epsilon')
     for idx in range(nbforce.getNumExceptions()):
         ex = nbforce.getExceptionParameters(idx)
-        if ex[4] != 0.0:
+        if ex[4].value_in_unit(unit.kilojoule_per_mole) != 0.0:
             Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
     system.addForce(Force14)
     
@@ -930,7 +933,7 @@ def rG4sSystem(psf, system, DH_params, modification=None):
     Force14.addPerBondParameter('epsilon')
     for idx in range(nbforce.getNumExceptions()):
         ex = nbforce.getExceptionParameters(idx)
-        if ex[4] != 0.0:
+        if ex[4].value_in_unit(unit.kilojoule_per_mole) != 0.0:
             Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
     system.addForce(Force14)
 
@@ -1233,7 +1236,7 @@ def buildMgSystem(psf, system, DH_params, modification=None):
     Force14.addPerBondParameter('epsilon')
     for idx in range(nbforce.getNumExceptions()):
         ex = nbforce.getExceptionParameters(idx)
-        if ex[4] != 0.0:
+        if ex[4].value_in_unit(unit.kilojoule_per_mole) != 0.0:
             Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
     system.addForce(Force14)
 
@@ -1248,7 +1251,9 @@ def buildMgSystem(psf, system, DH_params, modification=None):
             Os.append(int(atom.index))
         if atom.name == "C":
             Cs.append(int(atom.index))
-    
+
+    assert len(Ns) == len(Hs), f"N/H mismatch: {len(Ns)} N vs {len(Hs)} H"
+
     if len(Ns) != 0:
         sigma_hb = 0.29*unit.nanometer
         eps_hb = 2.2*unit.kilocalorie_per_mole
@@ -1262,6 +1267,7 @@ def buildMgSystem(psf, system, DH_params, modification=None):
         HBforce.setCutoffDistance(0.45*unit.nanometers)
         for idx in range(len(Hs)):
             HBforce.addDonor(Ns[idx], Hs[idx], -1)
+        for idx in range(len(Os)):
             HBforce.addAcceptor(Os[idx], -1, -1)
         if HBforce.getNumAcceptors() != 0 and HBforce.getNumDonors() != 0:
             system.addForce(HBforce)
@@ -1598,7 +1604,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
     Force14.addPerBondParameter('epsilon')
     for idx in range(nbforce.getNumExceptions()):
         ex = nbforce.getExceptionParameters(idx)
-        if ex[4] != 0.0:
+        if ex[4].value_in_unit(unit.kilojoule_per_mole) != 0.0:
             Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
     system.addForce(Force14)
 
@@ -1614,6 +1620,8 @@ def iConDNASystem(psf, system, DH_params, modification=None):
         if atom.name == "C":
             Cs.append(int(atom.index))
     
+    assert len(Ns) == len(Hs), f"N/H mismatch: {len(Ns)} N vs {len(Hs)} H"
+
     if len(Ns) != 0:
         sigma_hb = 0.29*unit.nanometer
         eps_hb = 2.2*unit.kilocalorie_per_mole
@@ -1627,6 +1635,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
         HBforce.setCutoffDistance(0.45*unit.nanometers)
         for idx in range(len(Hs)):
             HBforce.addDonor(Ns[idx], Hs[idx], -1)
+        for idx in range(len(Os)):
             HBforce.addAcceptor(Os[idx], -1, -1)
         if HBforce.getNumAcceptors() != 0 and HBforce.getNumDonors() != 0:
             system.addForce(HBforce)
