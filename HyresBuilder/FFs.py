@@ -250,7 +250,7 @@ def buildSystem(psf, system, DH_params, modification=None):
     Force14.addPerBondParameter('epsilon')
     for idx in range(nbforce.getNumExceptions()):
         ex = nbforce.getExceptionParameters(idx)
-        if ex[4] != 0.0:
+        if ex[4].value_in_unit(unit.kilojoule_per_mole) != 0.0:
             Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
     system.addForce(Force14)
 
@@ -437,14 +437,14 @@ def buildSystem(psf, system, DH_params, modification=None):
 #                pairGU.addDonor(u_b[idx], -1, -1)
 #            system.addForce(pairGU)
 #            print(pairGU.getNumAcceptors(), pairGU.getNumDonors(), 'GU')
-
-    # further modification defined in running scripts
-    if callable(modification):
-        modification(system)
         
     # 8. Delete the NonbondedForce and HarmonicAngleForce
     for idx in sorted([nbforce_index, hmangle_index], reverse=True):
         system.removeForce(idx)
+
+    # further modification defined in running scripts
+    if callable(modification):
+        modification(system)
 
     # 9. set unique ForceGroup id for each force
     forces = system.getForces()
@@ -610,7 +610,7 @@ def iConRNASystem(psf, system, DH_params, modification=None):
     Force14.addPerBondParameter('epsilon')
     for idx in range(nbforce.getNumExceptions()):
         ex = nbforce.getExceptionParameters(idx)
-        if ex[4] != 0.0:
+        if ex[4].value_in_unit(unit.kilojoule_per_mole) != 0.0:
             Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
     system.addForce(Force14)
     
@@ -741,14 +741,14 @@ def iConRNASystem(psf, system, DH_params, modification=None):
             pairCG.addDonor(c_b[idx], c_c[idx], -1)
         system.addForce(pairCG)
         print(pairCG.getNumAcceptors(), pairCG.getNumDonors(), 'CG')
-    
-    # further modification defined in running scripts
-    if callable(modification):
-        modification(system)
-        
+            
     # delete the NonbondedForce and HarmonicAngleForce
     for idx in sorted([nbforce_index, hmangle_index], reverse=True):
         system.removeForce(idx)
+
+    # further modification defined in running scripts
+    if callable(modification):
+        modification(system)
 
     # 9. set unique ForceGroup id for each force
     forces = system.getForces()
@@ -933,7 +933,7 @@ def rG4sSystem(psf, system, DH_params, modification=None):
     Force14.addPerBondParameter('epsilon')
     for idx in range(nbforce.getNumExceptions()):
         ex = nbforce.getExceptionParameters(idx)
-        if ex[4] != 0.0:
+        if ex[4].value_in_unit(unit.kilojoule_per_mole) != 0.0:
             Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
     system.addForce(Force14)
 
@@ -1123,13 +1123,15 @@ def rG4sSystem(psf, system, DH_params, modification=None):
 
         print(pairGG.getNumAcceptors(), pairGG.getNumDonors(), 'GG')
 
-    # further modification defined in running scripts
-    if callable(modification):
-        modification(system)
 
     # delete the NonbondedForce and HarmonicAngleForce
     for idx in sorted([nbforce_index, hmangle_index], reverse=True):
         system.removeForce(idx)
+
+    # further modification defined in running scripts
+    if callable(modification):
+        modification(system)
+
     return system
 
 
@@ -1236,7 +1238,7 @@ def buildMgSystem(psf, system, DH_params, modification=None):
     Force14.addPerBondParameter('epsilon')
     for idx in range(nbforce.getNumExceptions()):
         ex = nbforce.getExceptionParameters(idx)
-        if ex[4] != 0.0:
+        if ex[4].value_in_unit(unit.kilojoule_per_mole) != 0.0:
             Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
     system.addForce(Force14)
 
@@ -1423,14 +1425,14 @@ def buildMgSystem(psf, system, DH_params, modification=None):
 #                pairGU.addDonor(u_b[idx], -1, -1)
 #            system.addForce(pairGU)
 #            print(pairGU.getNumAcceptors(), pairGU.getNumDonors(), 'GU')
-
-    # further modification defined in running scripts
-    if callable(modification):
-        modification(system)
         
     # 8. Delete the NonbondedForce and HarmonicAngleForce
     for idx in sorted([nbforce_index, hmangle_index], reverse=True):
         system.removeForce(idx)
+
+    # further modification defined in running scripts
+    if callable(modification):
+        modification(system)
 
     # 9. set unique ForceGroup id for each force
     forces = system.getForces()
@@ -1604,7 +1606,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
     Force14.addPerBondParameter('epsilon')
     for idx in range(nbforce.getNumExceptions()):
         ex = nbforce.getExceptionParameters(idx)
-        if ex[4] != 0.0:
+        if ex[4].value_in_unit(unit.kilojoule_per_mole) != 0.0:
             Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
     system.addForce(Force14)
 
@@ -1804,14 +1806,14 @@ def iConDNASystem(psf, system, DH_params, modification=None):
         system.addForce(pairDCG)
         print(pairDCG.getNumAcceptors(), pairDCG.getNumDonors(), 'D_CG')
  
-    # further modification defined in running scripts
-    if callable(modification):
-        modification(system)
-        
     # 8. Delete the NonbondedForce and HarmonicAngleForce
     for idx in sorted([nbforce_index, hmangle_index], reverse=True):
         system.removeForce(idx)
 
+    # further modification defined in running scripts
+    if callable(modification):
+        modification(system)
+        
     # 9. set unique ForceGroup id for each force
     forces = system.getForces()
     for i, force in enumerate(forces):
