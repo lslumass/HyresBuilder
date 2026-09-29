@@ -95,7 +95,7 @@ print('Potential energy before: ', sim.context.getState(getEnergy=True).getPoten
 sim.minimizeEnergy(maxIterations=500000, tolerance=0.01)
 print('Potential energy after: ', sim.context.getState(getEnergy=True).getPotentialEnergy())
 
-print('\n# Equilibriation running:')
+print('\n# Equilibration running:')
 sim.step(equil_step)
 
 ## save a pdb traj using large step, xtc/dcd traj using small step, and log file

@@ -266,6 +266,8 @@ def buildSystem(psf, system, DH_params, modification=None):
         if atom.name == "C":
             Cs.append(int(atom.index))
     
+    assert len(Ns) == len(Hs), f"N/H mismatch: {len(Ns)} N vs {len(Hs)} H"
+
     if len(Ns) != 0:
         sigma_hb = 0.29*unit.nanometer
         eps_hb = 2.2*unit.kilocalorie_per_mole
@@ -279,6 +281,7 @@ def buildSystem(psf, system, DH_params, modification=None):
         HBforce.setCutoffDistance(0.45*unit.nanometers)
         for idx in range(len(Hs)):
             HBforce.addDonor(Ns[idx], Hs[idx], -1)
+        for idx in range(len(Os)):
             HBforce.addAcceptor(Os[idx], -1, -1)
         if HBforce.getNumAcceptors() != 0 and HBforce.getNumDonors() != 0:
             system.addForce(HBforce)
@@ -1249,6 +1252,8 @@ def buildMgSystem(psf, system, DH_params, modification=None):
         if atom.name == "C":
             Cs.append(int(atom.index))
     
+    assert len(Ns) == len(Hs), f"N/H mismatch: {len(Ns)} N vs {len(Hs)} H"
+
     if len(Ns) != 0:
         sigma_hb = 0.29*unit.nanometer
         eps_hb = 2.2*unit.kilocalorie_per_mole
@@ -1262,6 +1267,7 @@ def buildMgSystem(psf, system, DH_params, modification=None):
         HBforce.setCutoffDistance(0.45*unit.nanometers)
         for idx in range(len(Hs)):
             HBforce.addDonor(Ns[idx], Hs[idx], -1)
+        for idx in range(len(Os)):
             HBforce.addAcceptor(Os[idx], -1, -1)
         if HBforce.getNumAcceptors() != 0 and HBforce.getNumDonors() != 0:
             system.addForce(HBforce)
@@ -1614,6 +1620,8 @@ def iConDNASystem(psf, system, DH_params, modification=None):
         if atom.name == "C":
             Cs.append(int(atom.index))
     
+    assert len(Ns) == len(Hs), f"N/H mismatch: {len(Ns)} N vs {len(Hs)} H"
+
     if len(Ns) != 0:
         sigma_hb = 0.29*unit.nanometer
         eps_hb = 2.2*unit.kilocalorie_per_mole
@@ -1627,6 +1635,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
         HBforce.setCutoffDistance(0.45*unit.nanometers)
         for idx in range(len(Hs)):
             HBforce.addDonor(Ns[idx], Hs[idx], -1)
+        for idx in range(len(Os)):
             HBforce.addAcceptor(Os[idx], -1, -1)
         if HBforce.getNumAcceptors() != 0 and HBforce.getNumDonors() != 0:
             system.addForce(HBforce)
