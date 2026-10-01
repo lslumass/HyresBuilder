@@ -61,7 +61,7 @@ def _exclusions(system, topology=None):
         elif isinstance(f, mm.HarmonicAngleForce):
             pairs += [f.getAngleParameters(k)[0:3:2] for k in range(f.getNumAngles())]
         elif isinstance(f, mm.CustomAngleForce):
-            pairs += [f.getAngleParameters(k)[0][0:3:2] for k in range(f.getNumAngles())]
+            pairs += [f.getAngleParameters(k)[0:3:2] for k in range(f.getNumAngles())]
         elif isinstance(f, (mm.PeriodicTorsionForce, mm.RBTorsionForce)):
             get = f.getTorsionParameters
             pairs += [get(k)[0:4:3] for k in range(f.getNumTorsions())]
