@@ -7,7 +7,7 @@ Main Functions:
 - construct CG model from sequence
 """
 
-__version__ = "3.5.0"
+__version__ = "4.0.0"
 __author__ = "Shanlong Li"
 __email__ = "shanlongli@umass.edu"
 __license__ = 'MIT'
