@@ -253,6 +253,24 @@ def freeze_amyloid(system, pdb, alignment_file):
 #def freeze_residues(system, pdb, residue_list):
 
 
+def _com_offset_expr(system):
+    """Energy-expression definitions of the COM offset (dx, dy, dz) from (cx, cy, cz).
+
+    The group centre of a periodic CustomCentroidBondForce can come back in any
+    periodic image (the CUDA platform wraps positions into the box), so the offset
+    is taken with the minimum-image convention of the orthorhombic box; periodicdistance()
+    is not available in CustomCentroidBondForce. For a non-periodic system it is the
+    plain difference.
+    """
+    if not system.usesPeriodicBoundaryConditions():
+        return "dx=x1-cx; dy=y1-cy; dz=z1-cz", False
+    a, b, c = system.getDefaultPeriodicBoxVectors()
+    lx, ly, lz = a[0].value_in_unit(unit.nanometer), b[1].value_in_unit(unit.nanometer), c[2].value_in_unit(unit.nanometer)
+    return (f"dx=x1-cx-{lx}*floor((x1-cx)/{lx}+0.5); "
+            f"dy=y1-cy-{ly}*floor((y1-cy)/{ly}+0.5); "
+            f"dz=z1-cz-{lz}*floor((z1-cz)/{lz}+0.5)"), True
+
+
 def comres_xyz(system, pdb, groups):
     """
     Apply a center-of-mass (COM) restraint in all three (x, y, z) dimensions.
@@ -294,14 +312,15 @@ def comres_xyz(system, pdb, groups):
         return [cx, cy, cz]
 
     print('com of selected residues:', com(groups))
-    com_xyz = CustomCentroidBondForce(1, 'kxyz*((x1 - cx)^2 + (y1 - cy)^2 + (z1 - cz)^2);')
+    offset, periodic = _com_offset_expr(system)
+    com_xyz = CustomCentroidBondForce(1, f'kxyz*(dx^2 + dy^2 + dz^2); {offset}')
     com_xyz.setName("COM_xyz_restraint")
     com_xyz.addGroup(groups)
     com_xyz.addGlobalParameter('kxyz', 500.0*kilojoule_per_mole/(unit.nanometer**2))
     com_xyz.addPerBondParameter('cx')
     com_xyz.addPerBondParameter('cy')
     com_xyz.addPerBondParameter('cz')
-    com_xyz.setUsesPeriodicBoundaryConditions(True)
+    com_xyz.setUsesPeriodicBoundaryConditions(periodic)
     com_xyz.addBond([0], com(groups))
     system.addForce(com_xyz)
 
@@ -346,19 +365,20 @@ def comres_2d(system, dimension, groups, pdb, k=1000):
 
     # ── Build energy expression ────────────────────────────────────────────────
     expr_map = {
-        'yz': ('k2d * pointdistance(x1, y1, z1, x1, cy, cz)^2', {'cy': cy, 'cz': cz}),
-        'xz': ('k2d * pointdistance(x1, y1, z1, cx, y1, cz)^2', {'cx': cx, 'cz': cz}),
-        'xy': ('k2d * pointdistance(x1, y1, z1, cx, cy, z1)^2', {'cx': cx, 'cy': cy}),
+        'yz': ('k2d * (dy^2 + dz^2)', {'cx': 0.0*unit.nanometer, 'cy': cy, 'cz': cz}),
+        'xz': ('k2d * (dx^2 + dz^2)', {'cx': cx, 'cy': 0.0*unit.nanometer, 'cz': cz}),
+        'xy': ('k2d * (dx^2 + dy^2)', {'cx': cx, 'cy': cy, 'cz': 0.0*unit.nanometer}),
     }
     expr, values = expr_map[dimension]
 
     # ── Build force ────────────────────────────────────────────────────────────
-    force_2d = CustomCentroidBondForce(1, expr)
+    offset, periodic = _com_offset_expr(system)
+    force_2d = CustomCentroidBondForce(1, f'{expr}; {offset}')
     force_2d.addGroup(groups)
     force_2d.addGlobalParameter('k2d', k*kilojoule_per_mole/(unit.nanometer**2))
     for name, value in values.items():
         force_2d.addGlobalParameter(name, value)
-    force_2d.setUsesPeriodicBoundaryConditions(True)
+    force_2d.setUsesPeriodicBoundaryConditions(periodic)
     force_2d.addBond([0])
 
     system.addForce(force_2d)
