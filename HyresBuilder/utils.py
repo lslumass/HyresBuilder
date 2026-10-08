@@ -63,7 +63,7 @@ Dependencies
 ------------
 * `OpenMM <https://openmm.org>`_ (``openmm``, ``openmm.app``, ``openmm.unit``)
 * `NumPy <https://numpy.org>`_ (``numpy``)
-* HyresBuilder submodules: ``HyresFF``, ``rG4sFF``
+* HyresBuilder submodules: ``FFs``, ``rG4sFF``
 """
 
 from importlib.resources import files
@@ -275,6 +275,8 @@ def load_ff(model: str) -> tuple[str, str]:
                        with a dedicated parameter file (``param_rG4s``)
                      - ``'ATP'`` — ATP force field
                        (``top_ATP`` / ``param_ATP``)
+                     - ``'Polymer'`` — CG polymers such as qPDMAEMA
+                       (``top_polymer`` / ``param_polymer``)
 
     Returns:
         tuple[str, str]: A 2-tuple of absolute paths:
@@ -314,8 +316,11 @@ def load_ff(model: str) -> tuple[str, str]:
     elif model == 'Metabolite':
         path1 = ff / "top_metabolome.inp"
         path2 = ff / "param_metabolome.inp"
+    elif model == 'Polymer':
+        path1 = ff / "top_polymer.inp"
+        path2 = ff / "param_polymer.inp"
     else:
-        print("Error: The model type {} is not supported, only for Protein, RNA, DNA, rG4s, and ATP.".format(model))
+        print("Error: The model type {} is not supported, only for Protein, RNA, DNA, rG4s, ATP, AGs, Metabolite, and Polymer.".format(model))
         exit(1)
 
     top_inp, param_inp = path1.as_posix(), path2.as_posix()
@@ -390,7 +395,7 @@ def setup(params, modification=None):
        Debye-Hückel screening length, and Mg²⁺-RNA charge scaling factor (lambda).
     4. Load CHARMM topology and parameter files for protein and RNA.
     5. Import coordinates (PDB) and topology (PSF).
-    6. Build the HyRes custom force field via :func:`HyresFF.buildSystem`.
+    6. Build the HyRes custom force field via :func:`FFs.buildSystem`.
     7. Attach the barostat (NPT only), initialize the Langevin integrator, and
        create the CUDA simulation context with positions and velocities.
 
@@ -421,7 +426,7 @@ def setup(params, modification=None):
         modification (callable, optional): User-defined function that accepts the
                                            ``System`` object and applies additional
                                            force modifications. Passed directly to
-                                           :func:`HyresFF.buildSystem`. Called
+                                           :func:`FFs.buildSystem`. Called
                                            after all built-in forces are added.
                                            Default is ``None``.
 
@@ -506,8 +511,9 @@ def setup(params, modification=None):
     top_DNA, param_DNA = load_ff('DNA')
     top_AGs, param_AGs = load_ff('AGs')
     top_mets, param_mets = load_ff('Metabolite')
-    top_list = [top_pro, top_RNA, top_DNA, top_AGs, top_mets]
-    param_list = [param_pro, param_RNA, param_DNA, param_AGs, param_mets]
+    top_poly, param_poly = load_ff('Polymer')
+    top_list = [top_pro, top_RNA, top_DNA, top_AGs, top_mets, top_poly]
+    param_list = [param_pro, param_RNA, param_DNA, param_AGs, param_mets, param_poly]
     if params.custom:
         custom_list = [mol.strip() for mol in params.custom.split(',')]
         custom_tops = []
@@ -653,7 +659,8 @@ def setup2(args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picose
     top_RNA, param_RNA = load_ff('RNA')
     #top_DNA, param_DNA = load_ff('DNA')
     #top_ATP, param_ATP = load_ff('RNA')
-    params = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro)
+    top_poly, param_poly = load_ff('Polymer')
+    params = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_poly, param_poly)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
@@ -765,7 +772,8 @@ def rG4s_setup(params, GG=3.0, modification=None):
     top_RNA, param_RNA = load_ff('RNA')
     #top_DNA, param_DNA = load_ff('DNA')
     top_AGs, param_AGs = load_ff('AGs')
-    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs)
+    top_poly, param_poly = load_ff('Polymer')
+    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs, top_poly, param_poly)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
@@ -829,7 +837,7 @@ def iConRNA_setup(params, modification=None):
        Debye-Hückel screening length, and Mg²⁺-RNA charge scaling factor (lambda).
     4. Load CHARMM topology and parameter files for protein and RNA.
     5. Import coordinates (PDB) and topology (PSF).
-    6. Build the HyRes custom force field via :func:`HyresFF.buildSystem`.
+    6. Build the HyRes custom force field via :func:`FFs.buildSystem`.
     7. Attach the barostat (NPT only), initialize the Langevin integrator, and
        create the CUDA simulation context with positions and velocities.
 
@@ -860,7 +868,7 @@ def iConRNA_setup(params, modification=None):
        modification (callable, optional): User-defined function that accepts the
                                            ``System`` object and applies additional
                                            force modifications. Passed directly to
-                                           :func:`HyresFF.buildSystem`. Called
+                                           :func:`FFs.buildSystem`. Called
                                            after all built-in forces are added.
                                            Default is ``None``.
 
@@ -949,8 +957,9 @@ def iConRNA_setup(params, modification=None):
     top_pro, param_pro = load_ff('Protein')
     top_DNA, param_DNA = load_ff('DNA')
     top_mets, param_mets = load_ff('Metabolite')
-    top_list = [top_pro, top_RNA, top_DNA, top_AGs, top_mets]
-    param_list = [param_pro, param_RNA, param_DNA, param_AGs, param_mets]
+    top_poly, param_poly = load_ff('Polymer')
+    top_list = [top_pro, top_RNA, top_DNA, top_AGs, top_mets, top_poly]
+    param_list = [param_pro, param_RNA, param_DNA, param_AGs, param_mets, param_poly]
     if params.custom:
         custom_list = [mol.strip() for mol in params.custom.split(',')]
         custom_tops = []
@@ -1085,7 +1094,8 @@ def setupMg(params, modification=None):
     top_DNA, param_DNA = load_ff('DNA')
     top_AGs, param_AGs = load_ff('AGs')
     top_mets, param_mets = load_ff('Metabolite')
-    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets)
+    top_poly, param_poly = load_ff('Polymer')
+    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets, top_poly, param_poly)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
@@ -1149,7 +1159,7 @@ def iConDNA_setup(params, modification=None):
        Debye-Hückel screening length, and Mg²⁺-DNA charge scaling factor (lambda).
     4. Load CHARMM topology and parameter files for protein and DNA.
     5. Import coordinates (PDB) and topology (PSF).
-    6. Build the HyRes custom force field via :func:`HyresFF.buildSystem`.
+    6. Build the HyRes custom force field via :func:`FFs.buildSystem`.
     7. Attach the barostat (NPT only), initialize the Langevin integrator, and
        create the CUDA simulation context with positions and velocities.
 
@@ -1180,7 +1190,7 @@ def iConDNA_setup(params, modification=None):
         modification (callable, optional): User-defined function that accepts the
                                            ``System`` object and applies additional
                                            force modifications. Passed directly to
-                                           :func:`HyresFF.buildSystem`. Called
+                                           :func:`FFs.buildSystem`. Called
                                            after all built-in forces are added.
                                            Default is ``None``.
 
@@ -1264,7 +1274,8 @@ def iConDNA_setup(params, modification=None):
     top_DNA, param_DNA = load_ff('DNA')
     top_AGs, param_AGs = load_ff('AGs')
     top_mets, param_mets = load_ff('Metabolite')
-    ffparams = CharmmParameterSet(top_DNA, param_DNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets)
+    top_poly, param_poly = load_ff('Polymer')
+    ffparams = CharmmParameterSet(top_DNA, param_DNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets, top_poly, param_poly)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf

@@ -144,16 +144,16 @@ def buildSystem(psf, system, DH_params, modification=None):
     Example:
         >>> from openmm.app import CharmmPsfFile
         >>> from openmm import System
-        >>> from HyresBuilder import HyresFF
+        >>> from HyresBuilder import FFs
         >>> psf = CharmmPsfFile("conf.psf")
         >>> system = psf.createSystem(...)
         >>> DH_params = {'dh': 1.2*unit.nanometer, 'lmd': 0.0, 'er': 80.0}
-        >>> system = HyresFF.buildSystem(psf, system, DH_params)
+        >>> system = FFs.buildSystem(psf, system, DH_params)
 
         >>> # With custom modification
         >>> def my_mod(system):
         ...     pass  # add extra forces here
-        >>> system = HyresFF.buildSystem(psf, system, DH_params, modification=my_mod)
+        >>> system = FFs.buildSystem(psf, system, DH_params, modification=my_mod)
     """
     
     print('\n################# constructe HyRes and/or iConRNA force field ####################')
@@ -521,7 +521,7 @@ def iConRNASystem(psf, system, DH_params, modification=None):
     --------
     >>> from openmm.app import CharmmPsfFile, CharmmParameterSet
     >>> from openmm import unit
-    >>> from HyresBuilder import HyresFF
+    >>> from HyresBuilder import FFs
     >>> psf    = CharmmPsfFile("rna.psf")
     >>> params = CharmmParameterSet("rna.prm")
     >>> system = psf.createSystem(params)
@@ -531,7 +531,7 @@ def iConRNASystem(psf, system, DH_params, modification=None):
     ...     'er'       : 20.0,
     ...     'eps_base' : 3.0 * unit.kilocalorie_per_mole,
     ... }
-    >>> system = HyresFF.iConRNASystem(psf, system, DH_params)
+    >>> system = FFs.iConRNASystem(psf, system, DH_params)
     """
     top = psf.topology
     # 2) constructe the force field
@@ -830,7 +830,7 @@ def rG4sSystem(psf, system, DH_params, modification=None):
     --------
     >>> from openmm.app import CharmmPsfFile, CharmmParameterSet
     >>> from openmm import unit
-    >>> from HyresBuilder import HyresFF
+    >>> from HyresBuilder import FFs
     >>> psf    = CharmmPsfFile("rg4.psf")
     >>> params = CharmmParameterSet("rg4.prm")
     >>> system = psf.createSystem(params)
@@ -840,7 +840,7 @@ def rG4sSystem(psf, system, DH_params, modification=None):
     ...     'er'      : 80.0,
     ...     'ion_type': 5.0  * unit.kilocalorie_per_mole,   # K+ ion strength
     ... }
-    >>> system = HyresFF.rG4sSystem(psf, system, DH_params)
+    >>> system = FFs.rG4sSystem(psf, system, DH_params)
     """
 
     top = psf.topology
@@ -1500,16 +1500,16 @@ def iConDNASystem(psf, system, DH_params, modification=None):
     Example:
         >>> from openmm.app import CharmmPsfFile
         >>> from openmm import System
-        >>> from HyresBuilder import HyresFF
+        >>> from HyresBuilder import FFs
         >>> psf = CharmmPsfFile("conf.psf")
         >>> system = psf.createSystem(...)
         >>> DH_params = {'dh': 1.2*unit.nanometer, 'lmd': 0.0, 'er': 80.0}
-        >>> system = HyresFF.buildSystem(psf, system, DH_params)
+        >>> system = FFs.buildSystem(psf, system, DH_params)
 
         >>> # With custom modification
         >>> def my_mod(system):
         ...     pass  # add extra forces here
-        >>> system = HyresFF.buildSystem(psf, system, DH_params, modification=my_mod)
+        >>> system = FFs.buildSystem(psf, system, DH_params, modification=my_mod)
     """
     
     print('\n################# constructe HyRes and/or iConDNA force field ####################')

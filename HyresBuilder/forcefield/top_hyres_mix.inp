@@ -48,8 +48,6 @@ MASS   240 P3S   94.970   ! pSer side chain 2 CC (PO4)
 !## pTHR
 MASS   241 P2T   27.046   ! pThr side chain 1 CB
 MASS   242 P3T   94.970   ! pThr side chain 1 CC
-!## PEG
-MASS   243 PEG   44.000   ! unit of Polyethylene Glycol (PEG) or Polyethylene Oxide (PEO)
 
 
 DECL -C
@@ -497,12 +495,5 @@ ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   C         CA   C    O          CA   C    +N
 ANGL O    C    +N
 IMPH N    -C   CA   H         C    CA   +N   O
-
-
-RESI PEG     0.00000
-GROU
-ATOM EO   PEG     0.00
-BOND EO   +EO
-ANGL -EO   EO   +EO
 
 END

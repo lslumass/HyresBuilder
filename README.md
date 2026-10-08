@@ -46,24 +46,25 @@ PeptideBuilder.build_peptide("name", "the sequence")
 ```
 then name.pdb will be created.   
 
-### B. Construct iConRNA coil strand from sequence
-1. from comman line, use ```rnabuilder```:   
+### B. Construct iConRNA/iConDNA coil strand from sequence
+1. from command line, use ```iconbuilder```:   
 ```
-usage: rnabuilder [-h] name seq
+usage: iconbuilder [-h] name seq
 
-RNABuilder: build iConRNA from sequence
+NABuilder: build iConRNA/iConDNA from sequence
 
 positional arguments:
-  name        protein name, output: name.pdb
-  seq         sequence in one-letter
+  name        output name stem, produces name.pdb
+  seq         sequence in one-letter codes; RNA: A/U/C/G (e.g. AUCGAUCG or A100); DNA: lowercase d prefix (e.g. dATCG or
+              dA100); polyP: P followed by count (e.g. P10); PEG: EO followed by count (e.g. EO20)
 
 options:
   -h, --help  show this help message and exit
 ```
-2. from script, use ```RNABuilder.build```:   
+2. from script, use ```iConBuilder.build_rna``` (or ```build_dna```, ```build_polyP```, ```build_peg```):   
 ```
-from HyresBuilder import RNABuilder
-RNABuilder.build("name", "sequence")
+from HyresBuilder import iConBuilder
+iConBuilder.build_rna("name", "sequence")
 ```
 
 ### C. Convert atomistic structure into HyRes model

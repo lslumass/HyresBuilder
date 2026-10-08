@@ -1,0 +1,123 @@
+* parameter file for CG polymers
+*
+* Date: Oct 8, 2026
+* Author: Shanlong Li
+
+BOND
+!
+!V(bond) = Kb(b - b0)**2
+!
+!Kb: kcal/mole/A**2
+!b0: A
+!
+!converted from GROMACS (b0 nm, kb kJ/mol/nm**2): Kb = kb/(2*4.184*100), b0 = 10*b0
+!
+!atom type Kb          b0
+!
+!bonds for methacrylate polymers (QDM, BZM)
+MMA   MMA    17.93      2.79   ! A-A, 0.279 15000
+MMA   MAO    23.90      2.82   ! A-B, 0.282 20000
+MAO   NC4    17.93      4.00   ! B-C, 0.400 15000
+MAO   BZ1     5.98      3.90   ! B-D, 0.390  5000
+BZ1   BZ2    23.90      2.18   ! D-E, 0.218 20000
+BZ2   BZ2    23.90      1.73   ! E-E, 0.173 20000
+!bonds for PEG/PEO
+PEG   PEG    10.0       3.60   ! EO-EO, the distance between two EO units (O-O) as b0
+
+
+THETAS
+!V = V(angle) + V(Urey-Bradley)
+!
+!V(angle) = Ktheta(Theta - Theta0)**2
+!
+!V(Urey-Bradley) = Kub(S - S0)**2
+!
+!Ktheta: kcal/mole/rad**2
+!Theta0: degrees
+!Kub: kcal/mole/A**2 (Urey-Bradley)
+!S0: A
+!
+!converted from GROMACS type 2, V = 0.5*k*(cos(theta)-cos(theta0))**2 (k in kJ/mol).
+!FFs.buildSystem turns these angles into the ReB form
+!    V = Ktheta*(theta-theta0)**2/sin(theta)**2
+!so the curvature at theta0 is matched by Ktheta = k*sin(theta0)**4/(2*4.184).
+!
+!atom types     Ktheta    Theta0   Kub     S0
+!
+!angles for methacrylate polymers (QDM, BZM)
+MMA   MMA   MMA    3.23     145.0  ! A-A-A, 145.0 250.0
+MMA   MAO   NC4    4.48     135.0  ! A-B-C, 135.0 150.0
+MMA   MAO   BZ1    2.39     135.0  ! A-B-D, 135.0  80.0
+MAO   BZ1   BZ2    2.06     130.0  ! B-D-E, 130.0  50.0
+!angles for PEG/PEO
+PEG   PEG   PEG   10.0     123.0  ! EO-EO-EO
+
+
+PHI
+!
+!V(dihedral) = Kchi(1 + cos(n(chi) - delta))
+!
+!Kchi: kcal/mole
+!n: multiplicity
+!delta: degrees
+!
+!atom types             Kchi    n   delta
+!
+!dihedrals for PEG/PEO, zero, kept for PSFs built with auto dihedrals
+PEG   PEG   PEG   PEG     0.00    2       0.0    ! EO-EO-EO-EO
+
+
+IMPHI
+
+
+NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
+     CUTNB 12.0  CTOFNB 12.0  CTONNB 11.0
+
+!
+!V(Lennard-Jones) = Eps,i,j[(Rmin,i,j/ri,j)**12 - 2(Rmin,i,j/ri,j)**6]
+!
+!epsilon: kcal/mole, Eps,i,j = sqrt(eps,i * eps,j)
+!Rmin/2: A, Rmin,i,j = Rmin/2,i + Rmin/2,j
+!
+!epsilon from the HyRes reference type; Rmin/2 estimated from the number of heavy
+!atoms in the bead, following the HyRes side-chain beads
+!(1: C3E 2.12, 2: P1S/QdK 2.32-2.36, 3: P1T/A2V 2.62-2.75, 4: QaE/P4Q 2.85-2.89)
+!no special 1-4 (as Martini): eps,1-4 and Rmin/2,1-4 equal the normal values
+!
+!atom  ignored    epsilon      Rmin/2   ignored   eps,1-4       Rmin/2,1-4
+!
+! for methacrylate polymers (QDM, BZM)
+MMA      0.00     -0.1200      2.7000   0.00     -0.1200       2.7000 ! as C3E, 3 heavy atoms
+MAO      0.00     -0.0502      2.8500   0.00     -0.0502       2.8500 ! as P1T, 4 heavy atoms
+NC4      0.00     -0.0150      3.1000   0.00     -0.0150       3.1000 ! as QdK, 5 heavy atoms
+BZ1      0.00     -0.1708      2.6414   0.00     -0.1708       2.6414 ! as A1F, same mapping
+BZ2      0.00     -0.1708      2.3288   0.00     -0.1708       2.3288 ! as A1F eps, A2F/A3F size
+! for PEG/PEO
+PEG      0.00     -0.0480      2.6500   0.00     -0.0480       2.6500 ! as P1S, 3 heavy atoms
+
+NBFIX
+!                 Emin         Rmin
+!                 (kcal/mol)   (A)
+! NBFIX for self-interactons to make sure customBNforce is used, instead of the default NBForce, which was deleted
+MMA       MMA      -0.1200      5.4000       -0.1200      5.4000
+MAO       MAO      -0.0502      5.7000       -0.0502      5.7000
+NC4       NC4      -0.0150      6.2000       -0.0150      6.2000
+BZ1       BZ1      -0.1708      5.2828       -0.1708      5.2828
+BZ2       BZ2      -0.1708      4.6576       -0.1708      4.6576
+PEG       PEG      -0.0480      5.3000       -0.0480      5.3000
+
+!# cation-pi interactions, copied from QdK/A1F/A3F; Rmin shifted by the change in Rmin/2
+NC4       A3F      -0.3000      5.4288
+NC4       P1Y      -0.3000      5.5524
+NC4       A2W      -0.4000      5.1870
+NC4       BZ2      -0.3000      5.4288
+QdK       BZ2      -0.3000      4.6877
+QdR       BZ1      -0.5000      4.8651
+
+!# NC4-RNA cation-pi interactions, as QdK-RNA
+NC4       RG1      -0.2200      5.2411
+NC4       RC1      -0.2700      5.2411
+NC4       RU1      -0.1700      5.2411
+
+
+END

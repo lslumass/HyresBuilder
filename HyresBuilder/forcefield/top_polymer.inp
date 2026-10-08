@@ -1,0 +1,63 @@
+* topology file for CG polymers
+*
+* Date: Oct 8, 2026
+* Author: Shanlong Li
+*
+   20    1
+
+! bead types for methacrylate polymers
+! masses are the sums of the atoms mapped into each bead
+MASS   601 MMA   41.073   ! A: methacrylate backbone, CH2-C(CH3)
+MASS   602 MAO   58.036   ! B: ester, C(=O)-O-CH2
+MASS   603 NC4   73.139   ! C: quaternary ammonium, CH2-N+(CH3)3
+MASS   604 BZ1   39.057   ! D: CH2 + ipso/ortho ring carbons, C3H3 (as A1F of Phe)
+MASS   605 BZ2   26.038   ! E: ring carbons, C2H2 (as A2F/A3F of Phe)
+
+! bead types for PEG/PEO
+MASS   606 PEG   44.000   ! EO unit, -CH2-O-CH2-
+
+
+!! polymers
+! QDM: quaternized DMAEMA monomer, for qPDMAEMA and qPDMAEMA-r-PBzMA
+! BZM: 2-phenylethyl methacrylate monomer, for qPDMAEMA-r-PBzMA
+! PEG: EO unit of polyethylene glycol (PEG) or polyethylene oxide (PEO);
+!      bead name EO kept from the original HyRes definition
+! bead names: BB for the backbone bead, SC1, SC2, ... for side-chain beads;
+! avoid the HyRes/iCon atom names (N, H, C, O, P, NA-ND, MG) that
+! FFs.buildSystem selects by name
+
+
+AUTOGENERATE
+DEFA FIRS NTER LAST CTER
+
+RESI QDM          1.00
+GROUP
+ATOM BB   MMA     0.00
+ATOM SC1  MAO     0.00
+ATOM SC2  NC4     1.00
+BOND BB   SC1     SC1  SC2     BB   +BB
+ANGL BB   SC1  SC2
+ANGL -BB  BB   +BB
+
+
+RESI BZM          0.00
+GROUP
+ATOM BB   MMA     0.00
+ATOM SC1  MAO     0.00
+ATOM SC2  BZ1     0.00
+ATOM SC3  BZ2     0.00
+ATOM SC4  BZ2     0.00
+BOND BB   SC1     SC1  SC2     BB   +BB
+BOND SC2  SC3     SC2  SC4     SC3  SC4
+ANGL BB   SC1  SC2
+ANGL SC1  SC2  SC3     SC1  SC2  SC4
+ANGL -BB  BB   +BB
+
+
+RESI PEG          0.00
+GROUP
+ATOM EO   PEG     0.00
+BOND EO   +EO
+ANGL -EO  EO   +EO
+
+END

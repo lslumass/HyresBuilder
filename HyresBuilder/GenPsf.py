@@ -36,7 +36,7 @@ Prefix    Molecule     Example IDs
 ``R``     RNA          R001, R002, …
 ``D``     DNA          D001, D002, …
 ``I``     Mg²⁺,Ca²⁺    I001, I002, …
-``S``     PolyP, PEG   S001, S002, …
+``S``     Polymers     S001, S002, …
 ``AGs``   Antibiotics  AGs001, AGs002, …
 ``M``     Metabolites  M001, M002, …
 ========  ===========  ===============
@@ -369,7 +369,8 @@ aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
 rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
 dnas = ["DAD", "DCY", "DTH", "DGU", "DA", "DG", "DC", "DT"]
 ions = ["MG+", "SMG", "CA+"]
-polymer = ['PHO', 'PEG']
+polymer = ['PHO', 'PEG', 'QDM', 'BZM']
+auto_polymer = ['PHO']     # polymers relying on psfgen auto angles/dihedrals in the fast path
 metabolites = ['KAN', 'LLL', 'SRY',
                'UN1', 'AYA', 'ACA', 'NLG', 'C3C', 'C4C', 'C5C', '152', 'CHT', 'CIT',
                'CTT', 'ABU', 'CH5', 'GSH', 'MTA', 'SHR', 'TAU', 'BET', '3PG', 'G6P',
@@ -396,6 +397,36 @@ def get_type(resname):
     )
     return chaintype
 
+def _encode_resseq(n):
+    """Encode residue number n into the 4-char PDB resSeq field (hybrid-36 beyond 9999)."""
+    if n < 10000:
+        return f"{n:4d}"
+    n -= 10000
+    if n < 26 * 36**3:
+        digits, first = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'A'
+    else:
+        n -= 26 * 36**3
+        digits, first = '0123456789abcdefghijklmnopqrstuvwxyz', 'a'
+    result = []
+    for _ in range(3):
+        n, remainder = divmod(n, 36)
+        result.append(digits[remainder])
+    result.append(chr(ord(first) + n))
+    return ''.join(reversed(result))
+
+def _renumber_residues(lines):
+    """Renumber residues in ATOM lines sequentially from 1, in file order."""
+    new_lines = []
+    old_key = None
+    new_resid = 0
+    for line in lines:
+        key = (line[21], line[72:76], line[22:27])
+        if key != old_key:
+            new_resid += 1
+            old_key = key
+        new_lines.append(line[:22] + _encode_resseq(new_resid) + ' ' + line[27:])
+    return new_lines
+
 def split_chains(pdb):
     currentKey = None
     atoms = []
@@ -420,20 +451,27 @@ def split_chains(pdb):
         if atoms:
             chains.append(atoms)
 
-    pre_type = None
-    for i, (t, chain) in enumerate(zip(types, chains)):
-        if t in ['P', 'R', 'D', 'S', 'M']:
-            tmp_pdb = f"psfgentmp_{i}.pdb"
-        elif t in ['I']:
-            if t == pre_type:
-                continue
-            else:
-                tmp_pdb = f"psfgentmp_{t}.pdb"
-        else:
+    # merge adjacent ion chains into one segment; each block -> psfgentmp_{i}.pdb
+    blocks = []
+    merged = []
+    for t, chain in zip(types, chains):
+        if t not in segtypes:
             print('Unknown molecule type')
             exit(1)
-        pre_type = t
+        if t == 'I' and blocks and blocks[-1][0] == 'I':
+            blocks[-1][1].extend(chain)
+            merged[-1] = True
+        else:
+            blocks.append((t, list(chain)))
+            merged.append(False)
 
+    types = []
+    for i, ((t, chain), is_merged) in enumerate(zip(blocks, merged)):
+        types.append(t)
+        if is_merged:
+            # merged ion chains may repeat resids, renumber them within the segment
+            chain = _renumber_residues(chain)
+        tmp_pdb = f"psfgentmp_{i}.pdb"
         with open(tmp_pdb, 'w') as f:
             for line in chain:
                 f.write(line)
@@ -499,6 +537,7 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix', custom_top_files=None
     DNA_topology, _ = utils.load_ff('DNA')
     AGs_topology, _ = utils.load_ff('AGs')
     Mats_topology, _ = utils.load_ff('Metabolite')
+    polymer_topology, _ = utils.load_ff('Polymer')
 
     gen = PsfGen()
     gen.read_topology(RNA_topology)
@@ -506,6 +545,7 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix', custom_top_files=None
     gen.read_topology(DNA_topology)
     gen.read_topology(AGs_topology)
     gen.read_topology(Mats_topology)
+    gen.read_topology(polymer_topology)
     
     # Load custom metabolite topologies if provided
     if custom_top_files:
@@ -515,11 +555,7 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix', custom_top_files=None
     counts = {'P': 1, 'R': 1, 'D': 1, 'I': 1, 'S': 1, 'M': 1}
     types = split_chains(pdb_in)
     for i, t in enumerate(types):
-        if t in ["P", "R", "D", "S", "M"]:
-            tmp_pdb = f"psfgentmp_{i}.pdb"
-        else:
-            tmp_pdb = f"psfgentmp_{t}.pdb"
-
+        tmp_pdb = f"psfgentmp_{i}.pdb"
         segid = f"{t}{encode_segid(counts[t])}"
         counts[t] += 1
         if t == 'P':
@@ -575,6 +611,7 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
     DNA_topology, _ = utils.load_ff('DNA')
     AGs_topology, _ = utils.load_ff('AGs')
     Mats_topology, _ = utils.load_ff('Metabolite')
+    polymer_topology, _ = utils.load_ff('Polymer')
 
     atom_blocks, bond_blocks, angle_blocks = [], [], []
     dihedral_blocks, improper_blocks = [], []
@@ -610,6 +647,7 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
             gen.read_topology(DNA_topology)
             gen.read_topology(AGs_topology)
             gen.read_topology(Mats_topology)
+            gen.read_topology(polymer_topology)
             
             # Load custom metabolite topologies if provided
             if custom_top_files:
@@ -619,7 +657,7 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
             tmpl_segid = f"{chaintype}{encode_segid(counts[chaintype] + 1)}"
             if chaintype == 'P':
                 gen.add_segment(segid=tmpl_segid, pdbfile=pdb, auto_angles=False)
-            elif chaintype == 'S':
+            elif chaintype == 'S' and resname in auto_polymer:
                 gen.add_segment(segid=tmpl_segid, pdbfile=pdb)
             else:
                 gen.add_segment(segid=tmpl_segid, pdbfile=pdb, auto_angles=False, auto_dihedrals=False)

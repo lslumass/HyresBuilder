@@ -5,7 +5,7 @@ API Reference
    :maxdepth: 1
 
    api/PeptideBuilder
-   api/RNABuilder
+   api/iConBuilder
    api/Convert2CG
    api/GenPsf
    api/FFs

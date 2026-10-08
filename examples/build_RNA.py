@@ -1,2 +1,2 @@
-from HyresBuilder import RNABuilder
-RNABuilder.build("name", "sequence")
+from HyresBuilder import iConBuilder
+iConBuilder.build_rna("name", "sequence")

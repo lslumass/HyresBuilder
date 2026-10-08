@@ -34,7 +34,7 @@ orchestrate the full workflow:
    REMARK headers.
 
 A command-line interface is exposed via :func:`main` and registered as
-the ``RNABuilder`` entry point.
+the ``iconbuilder`` entry point.
 
 Reference
 ---------
@@ -201,8 +201,8 @@ def build_rna(name, sequence):
         ValueError: If *name* is empty or *sequence* contains unsupported bases.
 
     Example:
-        >>> from HyresBuilder import RNABuilder
-        >>> RNABuilder.build_rna("myrna", "AUCGAUCG")
+        >>> from HyresBuilder import iConBuilder
+        >>> iConBuilder.build_rna("myrna", "AUCGAUCG")
         # output: myrna.pdb
     """
     _build(name, sequence, readRNAmap, 'RNA')
@@ -234,8 +234,8 @@ def build_dna(name, sequence):
         ValueError: If *name* is empty or *sequence* contains unsupported bases.
 
     Example:
-        >>> from HyresBuilder import RNABuilder
-        >>> RNABuilder.build_dna("mydna", "ATCGATCG")
+        >>> from HyresBuilder import iConBuilder
+        >>> iConBuilder.build_dna("mydna", "ATCGATCG")
         # output: mydna.pdb
     """
     _build(name, sequence, readDNAmap, 'DNA')
@@ -271,10 +271,10 @@ def build_polyP(name, n, seed=None):
         RuntimeError: If a collision-free chain cannot be generated.
 
     Example:
-        >>> from HyresBuilder import RNABuilder
-        >>> RNABuilder.build_polyP("polyP", 10)
+        >>> from HyresBuilder import iConBuilder
+        >>> iConBuilder.build_polyP("polyP", 10)
         # output: polyP.pdb
-        >>> RNABuilder.build_polyP("polyP_rep", 10, seed=42)  # reproducible
+        >>> iConBuilder.build_polyP("polyP_rep", 10, seed=42)  # reproducible
     """
     import math
     import random

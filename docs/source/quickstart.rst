@@ -63,7 +63,7 @@ From the command line:
 
 .. code-block:: bash
 
-   rnabuilder myrna AUGCAUGC
+   iconbuilder myrna AUGCAUGC
 
 This outputs ``myrna.pdb``.
 
@@ -71,8 +71,8 @@ From Python:
 
 .. code-block:: python
 
-   from HyresBuilder import RNABuilder
-   RNABuilder.build("myrna", "AUGCAUGC")
+   from HyresBuilder import iConBuilder
+   iConBuilder.build_rna("myrna", "AUGCAUGC")
 
 ----
 
