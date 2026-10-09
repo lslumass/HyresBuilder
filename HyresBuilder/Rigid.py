@@ -718,10 +718,21 @@ def createRigidBodies(system, positions, bodies):
             avgR = unit.sqrt(unit.sum([unit.dot(x, x) for x in r])/len(particles))
             rank = sorted(range(len(particles)), key=lambda i: abs(unit.norm(r[i])-avgR))
             realParticles = None
-            for p in combinations(rank, 4):
+            # Prefer a balanced set: every real particle should carry at least half of the mean
+            # mass (total/8).  Any positive set reproduces the mass and COM exactly, but a very
+            # light real particle (e.g. 80 Da out of 2700 Da) takes a large share of the forces
+            # and torque on the body, and that blows up to NaN at large time steps (e.g. 8 fs).
+            # If no balanced set turns up, use the most balanced positive set found.
+            totalMass = unit.sum(mass).value_in_unit(unit.amu)
+            minWeight = 0.125*totalMass
+            maxTrials = 200000
+            best = None
+            for trial, p in enumerate(combinations(rank, 4)):
+                if best is not None and trial >= maxTrials:
+                    break
                 # Select masses for the "real" particles.  If any is negative, reject this set of particles
                 # and keep going.
-                
+
                 matrix = np.zeros((4, 4))
                 for i in range(4):
                     particleR = r[p[i]].value_in_unit(unit.nanometers)
@@ -729,7 +740,7 @@ def createRigidBodies(system, positions, bodies):
                     matrix[1][i] = particleR[1]
                     matrix[2][i] = particleR[2]
                     matrix[3][i] = 1.0
-                rhs = np.array([0.0, 0.0, 0.0, unit.sum(mass).value_in_unit(unit.amu)])
+                rhs = np.array([0.0, 0.0, 0.0, totalMass])
                 try:
                     weights = lin.solve(matrix, rhs)
                 except lin.LinAlgError:
@@ -743,11 +754,15 @@ def createRigidBodies(system, positions, bodies):
                     if not np.allclose(matrix.dot(weights), rhs, atol=1e-8):
                         continue
                 if all(w > 0.0 for w in weights):
-                    # We have a good set of particles.
-                    
-                    realParticles = [particles[i] for i in p]
-                    realParticleMasses = [float(w) for w in weights]*unit.amu
-                    break
+                    # We have a valid set of particles.  Keep it if it is the most balanced so far.
+
+                    if best is None or min(weights) > min(best[1]):
+                        best = (p, weights)
+                    if min(weights) >= minWeight:
+                        break
+            if best is not None:
+                realParticles = [particles[i] for i in best[0]]
+                realParticleMasses = [float(w) for w in best[1]]*unit.amu
             if realParticles is None:
                 raise ValueError(
                     f"Could not select four 'real' particles with positive mass "
