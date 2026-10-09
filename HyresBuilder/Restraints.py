@@ -22,13 +22,16 @@ Restraint types provided
 * **Per-atom positional restraints** — harmonic springs pinning individual
   atoms to arbitrary reference positions, using ``periodicdistance`` for
   PBC compatibility (:func:`positional_restraint`).
-* **Backbone positional restraints** — bulk restraint of all protein backbone
-  heavy atoms (CA, N, C, O) to a reference PDB (:func:`bb_positional_restraint`).
+* **Backbone positional restraints** — bulk restraint of all atoms named
+  CA, N, C or O to a reference PDB (:func:`bb_positional_restraint`).
 * **Folded-domain CA restraints** — positional restraints restricted to CA
   atoms in secondary-structure elements (helix or strand) identified by DSSP
   (:func:`CA_positional_restraint`).
 * **COM positional restraints** — harmonic springs on the center of mass of
   atom groups using ``CustomCentroidBondForce`` (:func:`COM_positional_restraint`).
+  NOTE: currently unusable — its expression uses ``periodicdistance``, which
+  ``CustomCentroidBondForce`` does not support, so Context creation fails.
+  Use :func:`HyresBuilder.addRestraints.comres_xyz` instead.
 * **COM distance restraints** — harmonic potential on the COM–COM distance
   between two atom groups (:func:`COM_relative_restraint`).
 * **Domain 3D restraints** — pairwise native CA–CA ``HarmonicBondForce`` bonds
@@ -40,9 +43,16 @@ Restraint types provided
 Secondary-structure detection
 ------------------------------
 Folded residues are identified via MDTraj's DSSP implementation (simplified
-scheme): residues labelled ``'H'`` (helix) or ``'E'`` (strand) are treated as
-structured; ``'C'`` (coil) residues are excluded. This logic is encapsulated
-in :func:`identify_folded_CA_idx` and reused by the domain restraint functions.
+scheme): every residue not labelled ``'C'`` (coil) — i.e. ``'H'`` (helix),
+``'E'`` (strand), and also ``'NA'`` (non-protein) — is treated as structured.
+This logic is encapsulated in :func:`identify_folded_CA_idx` (used by
+:func:`CA_positional_restraint` and :func:`domain_3D_restraint`) and
+reimplemented for PSF segments in :func:`segment_3D_restraint`.
+
+Unless stated otherwise, every function adds one new Force to the System in
+place and returns the same System object. Atom indices from the PDB/MDTraj
+topology are assumed to match the System's particle order. MDTraj is imported
+at module import time, so it is required even for the OpenMM-only helpers.
 
 Author:      Jian Huang
 Date:        Nov 12, 2024
@@ -68,7 +78,9 @@ def get_atom_indices_coordinates(pdb, selection):
     Wraps mdtraj's atom selection with a fix for chain IDs: mdtraj internally
     renumbers chains as 0, 1, 2, ..., but this function maps the original
     alphabetic chain IDs from the PDB file so that selections like
-    'chainid A' work as expected.
+    'chainid A' work as expected. The remapping splits the selection on the
+    substring 'and', so it only handles simple ``... and chainid X [Y ...]``
+    conjunctions; an unknown chain ID raises KeyError.
 
     Args:
         pdb       (str): Path to the PDB file.
@@ -122,7 +134,8 @@ def get_COM(pdb, selection):
                          Chain IDs should match those in the PDB file (e.g. 'A', 'B').
 
     Returns:
-        np.ndarray, shape (3,): Center-of-mass coordinates in nanometers at frame 0.
+        np.ndarray, shape (3,): Center-of-mass coordinates in nanometers at frame 0
+        (mass-weighted with MDTraj's element masses, not the System's masses).
 
     Example:
         >>> com = get_COM('system.pdb', 'resid 1 to 50 and chainid A')
@@ -155,10 +168,12 @@ def positional_restraint(system, indx_pos_Kcons_list):
     Apply per-atom positional (harmonic) restraints to an OpenMM system.
 
     Each atom is restrained to an arbitrary reference position using a
-    periodic-distance harmonic potential: U = kp * periodicdistance(x, y, z, x0, y0, z0)^2
+    periodic-distance harmonic potential (no factor 1/2):
+    U = kp * periodicdistance(x, y, z, x0, y0, z0)^2
 
     Using periodicdistance ensures the restraint works correctly under
-    periodic boundary conditions.
+    periodic boundary conditions. ``kp`` is a per-particle parameter, so
+    each atom can have its own force constant. The force is unnamed.
 
     Args:
         system               (openmm.System): OpenMM System object to modify.
@@ -196,9 +211,11 @@ def bb_positional_restraint(system, pdb_ref, Kcons=400):
     """
     Apply positional restraints to all protein backbone atoms (CA, N, C, O).
 
-    Reference positions are taken directly from the provided PDB file.
-    A single global force constant is shared across all restrained atoms.
-    The harmonic potential uses periodicdistance for PBC compatibility: U = kp * periodicdistance(x, y, z, x0, y0, z0)^2
+    Every atom named CA, N, C or O in the PDB is restrained (no residue-type
+    filter). Reference positions are taken directly from the provided PDB file.
+    A single global force constant ``kp`` is shared across all restrained atoms.
+    The harmonic potential uses periodicdistance for PBC compatibility (no
+    factor 1/2): U = kp * periodicdistance(x, y, z, x0, y0, z0)^2
 
     Args:
         system  (openmm.System): OpenMM System object to modify.
@@ -236,10 +253,11 @@ def CA_positional_restraint(system, pdb_file, domain):
     Apply positional restraints to CA atoms within a folded domain.
 
     Only CA atoms identified as part of secondary structure elements (helices
-    or strands) by identify_folded_CA_idx are restrained. Uses a standard
-    harmonic potential (not periodic-distance): U = k * ((x-x0)^2 + (y-y0)^2 + (z-z0)^2)
+    or strands) by identify_folded_CA_idx are restrained. Uses a plain
+    harmonic potential (not periodic-distance, no factor 1/2):
+    U = k * ((x-x0)^2 + (y-y0)^2 + (z-z0)^2)
 
-    Force constant is hardcoded to 400 kJ/mol/nm².
+    Force constant is hardcoded to 400 kJ/mol/nm² (global parameter ``k``).
 
     Args:
         system   (openmm.System): OpenMM System object to modify.
@@ -273,8 +291,18 @@ def COM_positional_restraint(system, group_indices_pos_kcons):
     """
     Apply positional restraints on the center of mass (COM) of atom groups.
 
-    Each group's COM is harmonically restrained to a reference position using
-    OpenMM's CustomCentroidBondForce with periodic-distance: U = kp * periodicdistance(x, y, z, x0, y0, z0)^2
+    Intended to restrain each group's COM harmonically to a reference position
+    using OpenMM's CustomCentroidBondForce with the expression
+    ``kp*periodicdistance(x, y, z, x0, y0, z0)^2``.
+
+    Warning:
+        This force does not work as written. ``CustomCentroidBondForce`` does
+        not provide ``periodicdistance()`` (and names group coordinates
+        ``x1, y1, z1``, not ``x, y, z``), so OpenMM (checked with 8.2) raises
+        "unknown function: periodicdistance" when a Context is created from
+        the System. The function itself returns without error. Use
+        :func:`HyresBuilder.addRestraints.comres_xyz` for a working COM
+        positional restraint.
 
     Args:
         system (openmm.System): OpenMM System object to modify.
@@ -315,6 +343,10 @@ def COM_relative_restraint(system, groups_dist_Kcons_list):
     Uses OpenMM's CustomCentroidBondForce with potential:
         U = 0.5 * kp * (distance(g1, g2) - d0)^2
 
+    Group centers are mass-weighted. Periodic boundary conditions are not
+    enabled on the force, so the plain (non-minimum-image) COM distance is
+    used. All pairs are added to a single force.
+
     Args:
         system                (openmm.System): OpenMM System object to modify.
         groups_dist_Kcons_list (list of tuples): Each tuple contains:
@@ -354,8 +386,10 @@ def identify_folded_CA_idx(pdb, domain):
     Identify CA atom indices belonging to secondary-structure elements in a domain.
 
     Uses MDTraj's DSSP implementation (simplified scheme) to classify each residue
-    within the specified domain. Residues assigned to helix ('H') or strand ('E')
-    are considered folded; coil ('C') residues are excluded.
+    within the specified domain (DSSP is run on the sliced domain only). Every
+    residue not assigned coil ('C') is considered folded, i.e. helix ('H'),
+    strand ('E') and non-protein ('NA') residues; residues are then mapped back
+    to CA atoms by residue number (MDTraj ``residue`` = resSeq).
 
     Args:
         pdb    (md.Trajectory): MDTraj Trajectory object (typically loaded via md.load_pdb).
@@ -371,6 +405,7 @@ def identify_folded_CA_idx(pdb, domain):
 
     Raises:
         AssertionError: If the specified chain_id is not present in the PDB topology.
+        IndexError: If a folded residue has no atom named CA.
 
     Example:
         >>> pdb_md = md.load_pdb('protein.pdb')
@@ -402,9 +437,11 @@ def domain_3D_restraint(system, pdb_ref, domain_ranges, Kcons=400, cutoff=1.2):
     Restrain the internal 3D structure of folded domains using pairwise CA–CA bonds.
 
     For each domain, all CA atoms in secondary-structure elements are identified via
-    identify_folded_CA_idx. Pairs of those CA atoms within the cutoff distance in the
+    identify_folded_CA_idx. Pairs of those CA atoms closer than 1.2 nm in the
     reference PDB are added as HarmonicBondForce bonds, preserving the native
-    geometry of each folded region throughout the simulation.
+    geometry of each folded region throughout the simulation. Only pairs within
+    the same domain are bonded; all bonds go into one (non-periodic)
+    HarmonicBondForce.
 
     Bond potential: U = 0.5 * Kcons * (r - r0)^2
     where r0 is the distance between the pair in the reference PDB.
@@ -416,8 +453,8 @@ def domain_3D_restraint(system, pdb_ref, domain_ranges, Kcons=400, cutoff=1.2):
                                         (chain_id, (start_resid, end_resid)).
                                         Example: [('A', (1, 50)), ('B', (75, 200))]
         Kcons         (float):         Force constant in kJ/mol/nm². Default: 400.
-        cutoff        (float):         Maximum CA–CA distance (nm) for a pair to be
-                                       included as a restrained bond. Default: 1.2 nm.
+        cutoff        (float):         Intended maximum CA–CA distance (nm). Currently
+                                       IGNORED: the code always uses 1.2 nm.
 
     Returns:
         openmm.System: The modified system with domain structural restraints added.
@@ -460,17 +497,20 @@ def segment_3D_restraint(system, pdb_ref, psf_file, domain_ranges, Kcons=400, cu
     """
     Restrain the internal 3D structure of folded domains using pairwise CA–CA bonds.
 
-    For each domain, CA atoms in secondary-structure elements (helix 'H' or strand 'E')
-    are identified via DSSP. Pairs of those CA atoms within the cutoff distance in the
-    reference PDB are added as HarmonicBondForce bonds, preserving the native geometry
-    of each folded region throughout the simulation.
+    For each domain, CA atoms in secondary-structure elements (any residue not
+    assigned coil 'C' by DSSP on the sliced domain) are identified. Pairs of those
+    CA atoms closer than ``cutoff`` in the reference structure are added as
+    HarmonicBondForce bonds, preserving the native geometry of each folded region
+    throughout the simulation. Only pairs within the same domain are bonded; all
+    bonds go into one (non-periodic) HarmonicBondForce.
 
     Bond potential: U = 0.5 * Kcons * (r - r0)^2
     where r0 is the distance between the pair in the reference PDB.
 
     Args:
         system        (openmm.System):  OpenMM System object to modify.
-        pdb_ref       (str):            Path to the reference coordinate file.
+        pdb_ref       (str):            Path to the reference coordinate file (any
+                                        format ``mdtraj.load`` reads with a PSF topology).
         psf_file      (str):            Path to the PSF topology file. Domain identifiers
                                         in domain_ranges are matched against segment IDs
                                         (segid) in this topology.
@@ -484,12 +524,15 @@ def segment_3D_restraint(system, pdb_ref, psf_file, domain_ranges, Kcons=400, cu
     Returns:
         openmm.System: The modified system with domain structural restraints added.
 
+    Raises:
+        AssertionError: If a domain matches no atoms in the topology.
+
     Notes:
         The number of restrained pairs per domain is printed to stdout.
 
     Example:
         >>> domains = [('PROA', (1, 50)), ('PROB', (75, 200))]
-        >>> system = domain_3D_restraint(system, 'ref.crd', 'topol.psf', domains)
+        >>> system = segment_3D_restraint(system, 'ref.pdb', 'topol.psf', domains)
     """
     internal_force = HarmonicBondForce()
     Kcons_internal = Kcons * unit.kilojoule_per_mole / unit.nanometers**2

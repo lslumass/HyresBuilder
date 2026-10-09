@@ -1,79 +1,89 @@
 """
-HyRes protein and iConRNA RNA coarse-grained force field construction.
- 
+HyRes / iConRNA / iConDNA coarse-grained force field construction.
+
 Overview
 --------
 This module replaces the standard OpenMM force terms generated from a CHARMM
-PSF/parameter file with the custom interactions that define the HyRes protein
-and iConRNA RNA coarse-grained models. All forces are added to an existing
-OpenMM ``System`` object in place; the original ``NonbondedForce`` and
-``HarmonicAngleForce`` are removed after substitution.
- 
-Three top-level builders are provided, each targeting a different molecular
-context:
- 
-* :func:`buildSystem` — general HyRes/iConRNA mixed protein-RNA system.
-* :func:`iConRNASystem` — legacy iConRNA-only RNA model (PNAS 2025).
-* :func:`rG4sSystem` — RNA G-quadruplex (rG4) system with A-U, C-G, and G-G
+PSF/parameter file with the custom interactions that define the HyRes protein,
+iConRNA RNA and iConDNA DNA coarse-grained models. All forces are added to an
+existing OpenMM ``System`` object in place; the original ``NonbondedForce``
+and ``HarmonicAngleForce`` are removed after substitution. Van der Waals
+interactions are not rebuilt here: they are expected to come from the
+NBFIX ``CustomNonbondedForce`` that ``CharmmPsfFile.createSystem`` creates,
+which is only renamed to ``'LJ Force w/ NBFIX'``.
+
+Five top-level builders are provided, each targeting a different molecular
+context (all are called from :mod:`HyresBuilder.utils`):
+
+* :func:`buildSystem` — general HyRes/iConRNA system (protein, RNA, CG
+  polymers, small molecules, Mg2+).
+* :func:`iConRNASystem` — original iConRNA RNA model (PNAS 2025).
+* :func:`rG4sSystem` — RNA G-quadruplex (rG4) system with A-U, C-G and G-G
   base pairs.
- 
-Force terms applied by :func:`buildSystem`
-------------------------------------------
-Forces are constructed and registered in the following order:
- 
-1. **Restricted Bending (ReB) angle force** — replaces ``HarmonicAngleForce``
-   with a sine-based potential ``0.5*kt*(theta-theta0)^2 / sin(theta)^kReB``.
-   RNA backbone atoms (P, C1, C2, NA–ND) and CA–CB angles use ``kReB = 2``
-   to prevent numerical collapse near the planar singularity; all other angles
-   use ``kReB = 0``, which recovers the ordinary harmonic form.
- 
-2. **Debye–Hückel electrostatics** — screened Coulomb interactions via
-   ``CustomNonbondedForce``. The screening length (``dh``), relative
-   dielectric constant (``er``), and a lambda factor (``lmd``) that scales
-   protein–RNA cross-interactions are all user-configurable through the
-   ``ffs`` dictionary.
- 
-3. **1-4 nonbonded interactions** — Lennard-Jones and electrostatic corrections
-   for 1–4 bonded pairs via ``CustomBondForce``, sourced directly from the
-   ``NonbondedForce`` exception list.
- 
-4. **Backbone hydrogen bonds** — N-H···O potential for protein backbone amide
-   groups via ``CustomHbondForce``. Proline residues are excluded as donors
-   because they lack a backbone NH.
- 
-5. **RNA base stacking** — centroid-distance–based potential between consecutive
-   bases on the same chain via ``CustomCentroidBondForce``. Well depths and
-   optimal distances are residue-pair-specific (see ``scales`` and ``r0s``
-   dictionaries inside the function).
- 
-6. **RNA base pairing** — Watson-Crick A-U and C-G pairs and wobble G-U pairs,
-   each implemented as a separate ``CustomHbondForce`` with distance- and
-   angular-gating terms.
- 
+* :func:`buildMgSystem` — variant of :func:`buildSystem` with a reduced
+  dielectric for phosphate/Mg2+/Ca2+ electrostatics.
+* :func:`iConDNASystem` — HyRes/iConDNA system (protein and DNA).
+
+Common force terms
+------------------
+Most builders construct, in order:
+
+1. **Restricted Bending (ReB) angle force** (``'ReBAngleForce'``) — replaces
+   ``HarmonicAngleForce`` with ``0.5*kt*(theta-theta0)^2 / sin(theta)^kReB``.
+   ``kReB = 2`` for every angle in which none of the three atom names is a
+   protein backbone name (``N``, ``H``, ``C``, ``O``), i.e. side-chain,
+   nucleic-acid, polymer and other non-backbone angles; ``kReB = 0`` (plain
+   harmonic) for angles involving any backbone atom.
+   (:func:`iConRNASystem` uses ``kt*(theta-theta0)^2/sin(theta)^2`` for all
+   angles.)
+
+2. **Debye–Hückel electrostatics** (``CustomNonbondedForce``) — screened
+   Coulomb ``138.935456/er*q1*q2/r*exp(-r/dh)*kpmg`` with screening length
+   ``dh`` and relative dielectric ``er``, cutoff 1.8 nm with switching from
+   1.6 nm, and exclusions for pairs up to 3 bonds apart. ``kpmg`` equals
+   ``lmd`` for phosphate (``P``)–Mg2+ pairs and 1 otherwise, so ``lmd`` scales
+   only the P–Mg2+ interaction.
+
+3. **1-4 nonbonded interactions** (``'1-4 interaction'``, ``CustomBondForce``)
+   — LJ plus screened electrostatics for every ``NonbondedForce`` exception
+   with non-zero epsilon.
+
+4. **Protein backbone hydrogen bonds** (``'N-H--O HBForce'``,
+   ``CustomHbondForce``) — N-H donors (PRO N excluded) and O acceptors.
+
+5. **Base stacking** (``'StackingForce'``, ``CustomCentroidBondForce``)
+   between consecutive bases on the same chain.
+
+6. **Base pairing** (``CustomHbondForce``) — A-U and C-G (RNA) or A-T and C-G
+   (DNA), with distance and angular gating.
+
+See each builder's docstring for the exact terms and parameters it uses.
+
 Force groups
 ------------
-After all forces are added, each force is assigned a unique ``ForceGroup``
-index (0, 1, 2, …) in the order they appear in ``system.getForces()``. This
-allows per-force energy decomposition during analysis via
+Except :func:`rG4sSystem`, every builder finally assigns each force a unique
+``ForceGroup`` equal to its index in ``system.getForces()`` (0, 1, 2, …),
+allowing per-force energy decomposition via
 ``Context.getState(getEnergy=True, groups={i})``.
- 
+
 Extensibility
 -------------
-Every builder accepts an optional ``modification`` callable that receives the
-``System`` object after all built-in forces have been registered but before
-``NonbondedForce`` is removed. Use this hook to inject positional restraints,
+Every builder accepts an optional ``modification`` callable,
+``modification(system)``, invoked after all built-in forces have been added
+and the original ``NonbondedForce``/``HarmonicAngleForce`` removed, and
+before force groups are assigned. Use it to inject positional restraints,
 experimental potentials, or any other custom forces without modifying this
 module directly.
- 
+
 Authors
 -------
 Shanlong Li, Xiping Gong, Yumeng Zhang, Xiaorong Liu, and Jianhan Chen
- 
+
 Dates
 -----
 Created  : Mar 09, 2024
 Modified : Jun 11, 2026
- 
+
 Dependencies
 ------------
 * `OpenMM <https://openmm.org>`_ (``openmm``, ``openmm.app``, ``openmm.unit``)
@@ -95,43 +105,61 @@ def buildSystem(psf, system, DH_params, modification=None):
     for the HyRes/iConRNA coarse-grained models. The following forces are
     constructed and added in order:
 
-    1. **ReB angle force** — replaces ``HarmonicAngleForce`` with a Restricted
-       Bending (ReB) potential for RNA and CA-CB angles.
-    2. **Debye-Hückel electrostatics** — screened charge-charge interactions
-       via ``CustomNonbondedForce`` with configurable screening length and
-       dielectric constant.
-    3. **1-4 nonbonded interactions** — short-range LJ and electrostatic terms
-       for 1-4 bonded pairs via ``CustomBondForce``.
-    4. **Backbone hydrogen bonds** — N-H···O hydrogen bond potential for protein
-       backbone via ``CustomHbondForce`` (skipped for PRO residues).
-    5. **RNA base stacking** — centroid-based stacking potential between
-       consecutive bases via ``CustomCentroidBondForce``.
-    6. **RNA base pairing** — A-U, C-G, and G-U Watson-Crick and wobble pair
-       potentials via ``CustomHbondForce``.
+    1. **ReB angle force** (``'ReBAngleForce'``) — replaces
+       ``HarmonicAngleForce`` with ``0.5*kt*(theta-theta0)^2/sin(theta)^kReB``.
+       ``kReB = 2`` when none of the three atom names is in
+       ``['N', 'H', 'C', 'O']`` (RNA, side-chain, polymer, ... angles);
+       ``kReB = 0`` (plain harmonic) otherwise.
+    2. **Debye-Hückel electrostatics** (``'DH_ElecForce'``) —
+       ``138.935456/er*q1*q2/r*exp(-r/dh)*kpmg`` via ``CustomNonbondedForce``
+       (cutoff 1.8 nm, switching from 1.6 nm, nonbonded method copied from the
+       ``NonbondedForce``, exclusions for pairs up to 3 bonds apart).
+       ``kpmg = lmd`` for P–MG pairs (atom names ``'P'`` and ``'MG'``) and 1
+       for all other pairs.
+    3. **1-4 nonbonded interactions** (``'1-4 interaction'``) — LJ plus
+       screened electrostatics via ``CustomBondForce`` for every
+       ``NonbondedForce`` exception with non-zero epsilon.
+    4. **Backbone hydrogen bonds** (``'N-H--O HBForce'``) — N-H···O potential
+       via ``CustomHbondForce`` (cutoff 0.45 nm); donors are N/H pairs (N of
+       PRO excluded), acceptors are all ``O`` atoms. Added only if the system
+       contains donors and acceptors.
+    5. **RNA base stacking** (``'StackingForce'``) — (12, 10) centroid
+       potential via ``CustomCentroidBondForce`` between consecutive bases on
+       the same chain, with residue-pair-specific well depths (base energy
+       3.4 kcal/mol times ``scales``) and optimal distances (``r0s``).
+    6. **RNA base pairing** — A-U (``'AUpairForce'``) and C-G
+       (``'CGpairForce'``) via ``CustomHbondForce`` (cutoff 0.65 nm), each
+       added only if both base types are present. G-U wobble pairing is
+       currently disabled (commented out).
 
-    The original ``NonbondedForce`` and ``HarmonicAngleForce`` are removed after
-    replacement. Each remaining force is assigned a unique force group index.
+    Terms 5-6 are only built when RNA bases (atom ``NA`` in residues A/G/C/U)
+    are present. The ``CustomNonbondedForce`` created by ``createSystem`` for
+    NBFIX (the LJ term) is kept and renamed ``'LJ Force w/ NBFIX'``. The
+    original ``NonbondedForce`` and ``HarmonicAngleForce`` are then removed,
+    ``modification`` is applied, and each force is assigned a force group
+    equal to its index.
 
     Args:
         psf (CharmmPsfFile): Parsed PSF object containing topology and atom
                              information.
-        system (System): OpenMM ``System`` object created from the PSF topology,
-                         to which forces will be added.
+        system (System): OpenMM ``System`` object created from the PSF topology
+                         (must contain ``NonbondedForce`` and
+                         ``HarmonicAngleForce``); modified in place.
         DH_params (dict): Debye-Hückel parameter dictionary. Required keys:
 
                     - ``'dh'`` (Quantity) — Debye-Hückel screening length in
                       length units (e.g. ``1.2*unit.nanometer``).
-                    - ``'lmd'`` (float) — Lambda scaling factor for protein-RNA
+                    - ``'lmd'`` (float) — Scaling factor for phosphate (P)–Mg2+
                       charge-charge interactions.
                     - ``'er'`` (float) — Relative dielectric constant.
 
-        modification (callable, optional): A user-defined function that accepts
-                                           the ``System`` object and applies
-                                           additional force modifications before
-                                           the function returns. Called after all
-                                           built-in forces are added but before
-                                           ``NonbondedForce`` is removed.
-                                           Default is ``None``.
+        modification (callable, optional): A user-defined function
+                                           ``modification(system)`` called
+                                           after the original
+                                           ``NonbondedForce`` and
+                                           ``HarmonicAngleForce`` are removed
+                                           and before force groups are
+                                           assigned. Default is ``None``.
 
     Returns:
         System: The modified OpenMM ``System`` object with all HyRes/iConRNA
@@ -140,14 +168,16 @@ def buildSystem(psf, system, DH_params, modification=None):
     Raises:
         ValueError: If any of the required keys (``'dh'``, ``'lmd'``, ``'er'``)
                     are missing from ``DH_params``.
+        AssertionError: If the numbers of donor ``N`` (non-PRO) and ``H``
+                        atoms differ.
 
     Example:
+        >>> from openmm import unit
         >>> from openmm.app import CharmmPsfFile
-        >>> from openmm import System
         >>> from HyresBuilder import FFs
         >>> psf = CharmmPsfFile("conf.psf")
         >>> system = psf.createSystem(...)
-        >>> DH_params = {'dh': 1.2*unit.nanometer, 'lmd': 0.0, 'er': 80.0}
+        >>> DH_params = {'dh': 1.2*unit.nanometer, 'lmd': 1.0, 'er': 80.0}
         >>> system = FFs.buildSystem(psf, system, DH_params)
 
         >>> # With custom modification
@@ -458,65 +488,68 @@ def buildSystem(psf, system, DH_params, modification=None):
 def iConRNASystem(psf, system, DH_params, modification=None):
     """
     Build the original iConRNA coarse-grained RNA force field (PNAS 2025).
- 
-    This is the legacy iConRNA-only builder. It applies a Restricted Bending
-    angle potential, Debye–Hückel screened electrostatics, and RNA-specific
-    base-stacking and A-U/C-G base-pairing forces. Unlike :func:`buildSystem`,
-    this function does not include protein backbone hydrogen bonds, 1-4
-    corrections, or G-U wobble pairing, and uses slightly different stacking
-    potentials and exclusion radii consistent with the original publication.
- 
+
+    Applies a Restricted Bending angle potential, Debye–Hückel screened
+    electrostatics, 1-4 corrections, and RNA base-stacking and A-U/C-G
+    base-pairing forces. Unlike :func:`buildSystem`, this function does not
+    include protein backbone hydrogen bonds and uses the stacking/pairing
+    functional forms and parameters of the original publication.
+
     The ``NonbondedForce`` and ``HarmonicAngleForce`` generated by
-    ``CharmmPsfFile.createSystem`` are removed before returning.
- 
+    ``CharmmPsfFile.createSystem`` are removed, ``modification`` is applied,
+    and each force is then assigned a force group equal to its index.
+
     Parameters
     ----------
     psf : openmm.app.CharmmPsfFile
-        Parsed PSF object providing topology and per-atom metadata (name,
-        residue name, residue index).
+        Parsed PSF object providing topology and per-atom metadata (atom and
+        residue names).
     system : openmm.System
         OpenMM ``System`` created from the PSF topology.  Modified in place.
     DH_params : dict
         Debye-Hückel parameter dictionary.  Required keys:
- 
+
         ``'dh'`` : openmm.unit.Quantity
             Debye–Hückel screening length (e.g. ``1.2 * unit.nanometer``).
         ``'lmd'`` : float
-            Lambda scaling factor for protein–RNA charge–charge interactions.
+            Scaling factor for phosphate (``P``)–Mg2+/Ca2+ (``MG``/``CAL``)
+            charge–charge interactions.
         ``'er'`` : float
             Relative dielectric constant (e.g. ``80.0``).
-        ``'eps_base'`` : openmm.unit.Quantity
-            Base energy scale (energy units) used to compute absolute stacking
-            and pairing well depths via the ``scales`` dictionary.
- 
+
     modification : callable, optional
-        User-defined function ``modification(system)`` called after all built-in
-        forces are registered but before ``NonbondedForce`` is removed.
-        Default is ``None``.
- 
+        User-defined function ``modification(system)`` called after the
+        original ``NonbondedForce``/``HarmonicAngleForce`` are removed and
+        before force groups are assigned. Default is ``None``.
+
     Returns
     -------
     openmm.System
         The modified ``System`` with iConRNA force terms applied and the
         original ``NonbondedForce`` / ``HarmonicAngleForce`` removed.
- 
+
+    Raises
+    ------
+    KeyError
+        If ``'dh'``, ``'lmd'`` or ``'er'`` is missing from *DH_params* (no
+        explicit validation is performed).
+
     Notes
     -----
-    * The ReB angle potential here uses the form ``kt*(theta-theta0)^2 /
-      sin(theta)^2`` (without the 0.5 prefactor and without the per-angle
-      ``kReB`` exponent switch used in :func:`buildSystem`); every angle
-      receives the same sine denominator regardless of atom type.
-    * Exclusions for the Debye–Hückel force are created to bond-separation
-      depth 2 (not 3 as in :func:`buildSystem`).
-    * The stacking potential uses a (10, 6) power law rather than the (12, 10)
-      form used in :func:`buildSystem`, and a single global ``r0 = 0.34 nm``
-      is applied to all base pairs.
-    * Base-pairing potentials also use (10, 6) powers and the angular gate
-      ``-2*cos(phi)^3`` rather than ``-cos(phi)^5``.
-    * G-U wobble pairing is not included in this builder.
-    * No unique ``ForceGroup`` indices are assigned; force groups retain their
-      OpenMM defaults.
- 
+    * The ReB angle potential here is ``kt*(theta-theta0)^2 / sin(theta)^2``
+      (no 0.5 prefactor and no per-angle ``kReB`` switch as in
+      :func:`buildSystem`); every angle receives the sine denominator.
+    * The Debye–Hückel force is named ``'LJ_ElecForce'`` (it contains only
+      electrostatics); cutoff 1.8 nm with switching from 1.6 nm and
+      exclusions for pairs up to 3 bonds apart.
+    * The base energy scale is hard-coded as ``2.05 kcal/mol``.
+    * The stacking potential uses a (10, 6) power law with a single global
+      ``r0 = 0.34 nm``; pyrimidines use two overlapping groups (NA-NB,
+      NB-NC). Stacking bonds are added between consecutive bases in atom
+      order without checking the chain.
+    * Base-pairing potentials use (10, 6) powers and the angular gate
+      ``-2*cos(phi)^3``; G-U wobble pairing is not included.
+
     Examples
     --------
     >>> from openmm.app import CharmmPsfFile, CharmmParameterSet
@@ -529,7 +562,6 @@ def iConRNASystem(psf, system, DH_params, modification=None):
     ...     'dh'       : 1.2 * unit.nanometer,
     ...     'lmd'      : 1.0,
     ...     'er'       : 20.0,
-    ...     'eps_base' : 3.0 * unit.kilocalorie_per_mole,
     ... }
     >>> system = FFs.iConRNASystem(psf, system, DH_params)
     """
@@ -762,14 +794,18 @@ def iConRNASystem(psf, system, DH_params, modification=None):
 def rG4sSystem(psf, system, DH_params, modification=None):
     """
     Build the rG4 force field for RNA G-quadruplex (rG4) simulations.
- 
-    Constructs a mixed RNA force field that includes standard HyRes/iConRNA
-    interactions (ReB angles, Debye–Hückel electrostatics, 1-4 corrections,
-    base stacking, A-U and C-G Watson-Crick pairing) and additionally
-    models G-G Hoogsteen pairing required for G-quadruplex tetrad formation.
-    G-G pairing is implemented via two separate ``CustomHbondForce`` objects,
-    each capturing a distinct donor-acceptor geometry of the Hoogsteen contact.
- 
+
+    Constructs an iConRNA-type force field (ReB angles, Debye–Hückel
+    electrostatics, 1-4 corrections, base stacking, A-U and C-G Watson-Crick
+    pairing) and additionally models the G-G Hoogsteen pairing required for
+    G-quadruplex tetrad formation. G-G pairing is implemented via two separate
+    ``CustomHbondForce`` objects, each capturing a distinct contact geometry.
+    No protein backbone hydrogen-bond term is added.
+
+    The ``NonbondedForce`` and ``HarmonicAngleForce`` are removed and then
+    ``modification`` is applied. Unlike the other builders, no force groups
+    are assigned.
+
     Parameters
     ----------
     psf : openmm.app.CharmmPsfFile
@@ -778,54 +814,56 @@ def rG4sSystem(psf, system, DH_params, modification=None):
         OpenMM ``System`` created from the PSF topology.  Modified in place.
     DH_params : dict
         Debye-Hückel parameter dictionary.  Required keys:
- 
+
         ``'dh'`` : openmm.unit.Quantity
             Debye–Hückel screening length (e.g. ``1.2 * unit.nanometer``).
         ``'lmd'`` : float
-            Lambda scaling factor for protein–RNA charge–charge interactions.
+            Scaling factor for phosphate (``P``)–Mg2+/Ca2+ (``MG``/``CAL``)
+            charge–charge interactions.
         ``'er'`` : float
             Relative dielectric constant (e.g. ``80.0``).
-        ``'ion_type'`` : openmm.unit.Quantity
-            G-G pairing well depth in energy units.  Represents the ion-dependent
-            strength of the G-tetrad Hoogsteen contact.
- 
+        ``'GG'`` : float
+            G-G pairing well depth in kcal/mol (plain number; multiplied by
+            ``unit.kilocalorie_per_mole`` internally).  Represents the
+            ion-dependent strength of the G-tetrad Hoogsteen contact.
+
     modification : callable, optional
-        User-defined function ``modification(system)`` called after all built-in
-        forces are registered but before ``NonbondedForce`` is removed.
+        User-defined function ``modification(system)`` called after the
+        original ``NonbondedForce``/``HarmonicAngleForce`` are removed.
         Default is ``None``.
- 
+
     Returns
     -------
     openmm.System
         The modified ``System`` with rG4 force terms applied and the original
         ``NonbondedForce`` / ``HarmonicAngleForce`` removed.
- 
+
     Notes
     -----
-    * G-U wobble pairing is **not** included in this builder (unlike
-      :func:`buildSystem`).
-    * Two ``CustomHbondForce`` objects handle G-G pairing:
- 
-      - *GGpairForce1* governs the NB–ND contact (optimal distance 0.40 nm)
-        with a combined dihedral gate (``psi``) and angular gate (``phi``).
-      - *GGpairForce2* governs the NC–NC contact (optimal distance 0.42 nm)
-        with mirrored dihedral and angular gating.
- 
-    * Self-exclusions (``addExclusion(i, i)``) and nearest-neighbour exclusions
-      (sequential residue index) are applied to both G-G forces to suppress
-      intra-strand contacts.
+    * ReB angles follow the same ``kReB`` rule as :func:`buildSystem`.
+    * Debye–Hückel (``'DH_ElecForce'``): pairs in which both atoms are
+      ``P``, ``MG`` or ``CAL`` use a dielectric constant of 20.0 instead of
+      ``er``; ``lmd`` scales P–MG/CAL pairs.
+    * Two ``CustomHbondForce`` objects (cutoff 0.65 nm) handle G-G pairing:
+
+      - *GGpairForce1*: NC–NC contact (optimal distance 0.40 nm), gated by
+        ``cos(dihedral(a2,a1,d1,d2))`` and ``-cos(angle(a3,a1,d3))``.
+      - *GGpairForce2*: NB(donor)–ND(acceptor) contact (optimal distance
+        0.42 nm), gated by ``cos(dihedral(a1,a2,d2,d1))`` and
+        ``-cos(angle(d3,d1,a1))``.
+
+    * In both G-G forces, a G is excluded from pairing with itself and with
+      the next G in the list when their residue indices are consecutive.
     * The base energy scale is hard-coded as ``3.2 kcal/mol``; the ``scales``
-      and ``r0s`` dictionaries mirror :func:`buildSystem` except that the G-U
-      entry is absent and ``UU`` uses ``0.4`` rather than ``0.1``.
-    * No unique ``ForceGroup`` indices are assigned; groups retain OpenMM
-      defaults.
- 
+      and ``r0s`` dictionaries mirror :func:`buildSystem` except that ``UU``
+      uses ``0.4`` rather than ``0.1``. G-U wobble pairing is not included.
+
     Raises
     ------
     KeyError
-        If any required key is absent from *DH_params* (``'dh'``, ``'lmd'``, ``'er'``,
-        ``'ion_type'``).
- 
+        If any required key is absent from *DH_params* (``'dh'``, ``'lmd'``,
+        ``'er'``, ``'GG'``); no explicit validation is performed.
+
     Examples
     --------
     >>> from openmm.app import CharmmPsfFile, CharmmParameterSet
@@ -835,10 +873,10 @@ def rG4sSystem(psf, system, DH_params, modification=None):
     >>> params = CharmmParameterSet("rg4.prm")
     >>> system = psf.createSystem(params)
     >>> DH_params    = {
-    ...     'dh'      : 1.2  * unit.nanometer,
-    ...     'lmd'     : 1.0,
-    ...     'er'      : 80.0,
-    ...     'ion_type': 5.0  * unit.kilocalorie_per_mole,   # K+ ion strength
+    ...     'dh'  : 1.2 * unit.nanometer,
+    ...     'lmd' : 1.0,
+    ...     'er'  : 80.0,
+    ...     'GG'  : 5.0,   # kcal/mol, e.g. K+ ion strength
     ... }
     >>> system = FFs.rG4sSystem(psf, system, DH_params)
     """
@@ -1138,7 +1176,49 @@ def rG4sSystem(psf, system, DH_params, modification=None):
 # for HyRes_iConRNA System with Mg-RNA interactions
 def buildMgSystem(psf, system, DH_params, modification=None):
     """
-    similar to buildSystem, but specifically for Mg/Ca-RNA interactions.
+    Build HyRes/iConRNA with modified phosphate–Mg2+/Ca2+ electrostatics.
+
+    Identical to :func:`buildSystem` (same ReB angles, 1-4 term, backbone
+    hydrogen bonds, base stacking and A-U/C-G pairing with the same
+    parameters) except for the Debye–Hückel term ``'DH_ElecForce'``::
+
+        138.935456/ker*q1*q2/r*exp(-r/dh)*kpmg
+
+    * ``ker = 20.0`` for pairs in which both atoms are ``P``, ``MG`` or
+      ``CAL``, and ``er`` for all other pairs.
+    * ``kpmg = lmd`` for pairs of a phosphate (``P``, ``P1``, ``P2``, ``P3``)
+      with ``MG``/``CAL``, and 1 otherwise.
+
+    Cutoff 1.8 nm with switching from 1.6 nm; exclusions for pairs up to 3
+    bonds apart. The ``NonbondedForce`` and ``HarmonicAngleForce`` are
+    removed, ``modification`` is applied, and each force is assigned a force
+    group equal to its index.
+
+    Args:
+        psf (CharmmPsfFile): Parsed PSF object containing topology and atom
+                             information.
+        system (System): OpenMM ``System`` created from the PSF topology;
+                         modified in place.
+        DH_params (dict): Required keys ``'dh'`` (Quantity, length),
+                          ``'lmd'`` (float) and ``'er'`` (float), as in
+                          :func:`buildSystem`.
+        modification (callable, optional): ``modification(system)`` called
+                                           after the original forces are
+                                           removed and before force groups
+                                           are assigned. Default is ``None``.
+
+    Returns:
+        System: The modified OpenMM ``System``.
+
+    Raises:
+        ValueError: If ``'dh'``, ``'lmd'`` or ``'er'`` is missing from
+                    ``DH_params``.
+        AssertionError: If the numbers of donor ``N`` (non-PRO) and ``H``
+                        atoms differ.
+
+    Example:
+        >>> from HyresBuilder import FFs
+        >>> system = FFs.buildMgSystem(psf, system, DH_params)
     """
     
     print('\n################# constructe HyRes and/or iConRNA force field ####################')
@@ -1451,43 +1531,53 @@ def iConDNASystem(psf, system, DH_params, modification=None):
     for the HyRes/iConDNA coarse-grained models. The following forces are
     constructed and added in order:
 
-    1. **ReB angle force** — replaces ``HarmonicAngleForce`` with a Restricted
-       Bending (ReB) potential for RNA and CA-CB angles.
-    2. **Debye-Hückel electrostatics** — screened charge-charge interactions
-       via ``CustomNonbondedForce`` with configurable screening length and
-       dielectric constant.
-    3. **1-4 nonbonded interactions** — short-range LJ and electrostatic terms
-       for 1-4 bonded pairs via ``CustomBondForce``.
-    4. **Backbone hydrogen bonds** — N-H···O hydrogen bond potential for protein
-       backbone via ``CustomHbondForce`` (skipped for PRO residues).
-    5. **RNA base stacking** — centroid-based stacking potential between
-       consecutive bases via ``CustomCentroidBondForce``.
-    6. **RNA base pairing** — A-U, C-G, and G-U Watson-Crick and wobble pair
-       potentials via ``CustomHbondForce``.
+    1. **ReB angle force** (``'ReBAngleForce'``) — same as
+       :func:`buildSystem`: ``kReB = 2`` when none of the three atom names is
+       in ``['N', 'H', 'C', 'O']``, ``kReB = 0`` (harmonic) otherwise.
+    2. **Debye-Hückel electrostatics** (``'DH_ElecForce'``) — same as
+       :func:`buildSystem` (cutoff 1.8 nm, switching from 1.6 nm, exclusions
+       up to 3 bonds, ``lmd`` scaling only P–MG pairs).
+    3. **1-4 nonbonded interactions** (``'1-4 interaction'``) — LJ plus
+       screened electrostatics for ``NonbondedForce`` exceptions with
+       non-zero epsilon.
+    4. **Backbone hydrogen bonds** (``'N-H--O HBForce'``) — as in
+       :func:`buildSystem` (PRO N excluded as donor).
+    5. **DNA base stacking** (``'StackingForce'``) — (12, 10) potential via
+       ``CustomCentroidBondForce``. Each DA/DG/DC/DT base defines five
+       weighted centroid groups; each pair of consecutive bases on the same
+       chain gets two stacking bonds, each with depth
+       ``scales[pair]*eps_base/2`` (``eps_base = 4.0 kcal/mol``) and optimal
+       distances from ``r0s``/``r1s``. Always added (possibly empty).
+    6. **DNA base pairing** — A-T (``'ATpairForce'``) and C-G
+       (``'CGpairForce'``) via ``CustomHbondForce`` (cutoff 0.7 nm), gated by
+       ``-cos(phi)^3`` with ``phi = min(angle(a2,a1,d1), angle(d3,d2,a3)+0.25)``;
+       each added only if both base types are present.
 
-    The original ``NonbondedForce`` and ``HarmonicAngleForce`` are removed after
-    replacement. Each remaining force is assigned a unique force group index.
+    The original ``NonbondedForce`` and ``HarmonicAngleForce`` are then
+    removed, ``modification`` is applied, and each force is assigned a force
+    group equal to its index.
 
     Args:
         psf (CharmmPsfFile): Parsed PSF object containing topology and atom
                              information.
-        system (System): OpenMM ``System`` object created from the PSF topology,
-                         to which forces will be added.
+        system (System): OpenMM ``System`` object created from the PSF topology
+                         (must contain ``NonbondedForce`` and
+                         ``HarmonicAngleForce``); modified in place.
         DH_params (dict): Debye-Hückel parameter dictionary. Required keys:
 
                     - ``'dh'`` (Quantity) — Debye-Hückel screening length in
                       length units (e.g. ``1.2*unit.nanometer``).
-                    - ``'lmd'`` (float) — Lambda scaling factor for protein-RNA
+                    - ``'lmd'`` (float) — Scaling factor for phosphate (P)–Mg2+
                       charge-charge interactions.
                     - ``'er'`` (float) — Relative dielectric constant.
 
-        modification (callable, optional): A user-defined function that accepts
-                                           the ``System`` object and applies
-                                           additional force modifications before
-                                           the function returns. Called after all
-                                           built-in forces are added but before
-                                           ``NonbondedForce`` is removed.
-                                           Default is ``None``.
+        modification (callable, optional): A user-defined function
+                                           ``modification(system)`` called
+                                           after the original
+                                           ``NonbondedForce`` and
+                                           ``HarmonicAngleForce`` are removed
+                                           and before force groups are
+                                           assigned. Default is ``None``.
 
     Returns:
         System: The modified OpenMM ``System`` object with all HyRes/iConDNA
@@ -1496,20 +1586,22 @@ def iConDNASystem(psf, system, DH_params, modification=None):
     Raises:
         ValueError: If any of the required keys (``'dh'``, ``'lmd'``, ``'er'``)
                     are missing from ``DH_params``.
+        AssertionError: If the numbers of donor ``N`` (non-PRO) and ``H``
+                        atoms differ.
 
     Example:
+        >>> from openmm import unit
         >>> from openmm.app import CharmmPsfFile
-        >>> from openmm import System
         >>> from HyresBuilder import FFs
         >>> psf = CharmmPsfFile("conf.psf")
         >>> system = psf.createSystem(...)
-        >>> DH_params = {'dh': 1.2*unit.nanometer, 'lmd': 0.0, 'er': 80.0}
-        >>> system = FFs.buildSystem(psf, system, DH_params)
+        >>> DH_params = {'dh': 1.2*unit.nanometer, 'lmd': 1.0, 'er': 80.0}
+        >>> system = FFs.iConDNASystem(psf, system, DH_params)
 
         >>> # With custom modification
         >>> def my_mod(system):
         ...     pass  # add extra forces here
-        >>> system = FFs.buildSystem(psf, system, DH_params, modification=my_mod)
+        >>> system = FFs.iConDNASystem(psf, system, DH_params, modification=my_mod)
     """
     
     print('\n################# constructe HyRes and/or iConDNA force field ####################')

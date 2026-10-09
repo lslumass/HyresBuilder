@@ -3,39 +3,44 @@ De novo HyRes coarse-grained protein structure generation from sequence.
 
 This module builds coarse-grained HyRes protein PDB files directly from
 a single-letter amino acid sequence, without requiring an all-atom input
-structure. Each residue is placed sequentially by aligning its backbone
-onto the preceding residue using the Kabsch superposition algorithm,
-producing a connected chain with physically reasonable local geometry.
+structure. Each residue is placed sequentially by superposing its
+N-terminal backbone atoms onto the C-terminal backbone atoms of the
+preceding residue (Kabsch algorithm), producing a connected chain.
 
 Structure database
 ------------------
 Residue templates are stored in ``AMINO_ACID_STRUCTURES``, a dictionary
-keyed by single-letter code. Most residues carry two entries: a primary
-conformation (``'A'``) and an alternate rotamer (``'A0'``), allowing
-optional conformational sampling every fourth residue to break extended-
-chain artefacts. All 20 standard amino acids are represented, with proline
-handled specially throughout the pipeline (no backbone H donor, no H
-included in alignment atoms).
+keyed by single-letter code; each entry is a list of
+``(atom_name, x, y, z)`` tuples in Å. Besides the residue's own HyRes
+beads (N, H, CA, side-chain beads CB/CC/..., C, O), every template carries
+the previous residue's ``C-``/``O-`` and the next residue's ``N+``/``H+``
+atoms, which are used only for alignment. All 20 standard amino acids
+are present. Every residue except proline also has an alternate entry
+(``'A0'``, ``'G0'``, ...); for R, K, H, F, Y and W the alternate is
+currently identical to the primary template. Proline has no backbone H,
+so H/H+ are dropped from the alignment set whenever proline is involved.
 
 Build pipeline
 --------------
 The top-level function :func:`build_peptide` orchestrates the full workflow:
 
-1. Iterate over the sequence; for each residue, optionally draw from the
-   alternate rotamer at every 4th position (:func:`get_amino_acid`,
-   :func:`align_residues`).
-2. Superpose the new residue's backbone onto the previous residue's
-   C-terminal atoms via the Kabsch algorithm (:func:`kabsch`).
-3. Accumulate all transformed atoms and translate the chain so that the
-   first Cα sits at (5000, 5000, 5000) Å, placing it well within a
-   typical periodic simulation box.
-4. Optionally run a Cα-only clash check (:func:`detect_clashes`) and
-   retry with a new random seed if clashes are found, up to
+1. Iterate over the sequence. With ``random_conf=True``, residues at
+   positions 4, 8, 12, ... are drawn at random (50/50) from the primary
+   or alternate template.
+2. Superpose the new residue onto the previous residue's C, O, N+ (and
+   H+) atoms via :func:`align_residues` / :func:`kabsch`.
+3. Accumulate the transformed atoms (alignment-only atoms excluded) and
+   translate the chain so that the first CA sits at (5000, 5000, 5000) Å.
+4. Optionally run a CA-only clash check (:func:`detect_clashes`) and
+   rebuild with fresh random choices if clashes are found, up to
    ``max_retries`` attempts.
-5. Write the output PDB (:func:`write_pdb`).
+5. Write ``<name>.pdb`` (:func:`write_pdb`).
 
-A command-line interface is exposed via :func:`main` and registered as
-the ``BuildPeptide`` entry point.
+Command line
+------------
+:func:`main` is registered as the ``pepbuilder`` entry point::
+
+    pepbuilder NAME SEQUENCE [--linear] [--check-clash]
 
 Reference
 ---------
@@ -558,7 +563,19 @@ AMINO_ACID_STRUCTURES = {
 }
 
 def get_amino_acid(code):
-    """Get amino acid structure by single-letter code."""
+    """Return a template from ``AMINO_ACID_STRUCTURES`` as a list of atom dicts.
+
+    Args:
+        code (str): Template key, e.g. ``'A'`` or the alternate ``'A0'``.
+
+    Returns:
+        list[dict]: One dict per template atom (alignment atoms included)
+        with keys ``'index'`` (1-based int), ``'name'`` (str) and
+        ``'coords'`` (``np.ndarray`` of shape (3,), Å).
+
+    Raises:
+        ValueError: If *code* is not a key of ``AMINO_ACID_STRUCTURES``.
+    """
     if code not in AMINO_ACID_STRUCTURES:
         raise ValueError(f"Amino acid '{code}' not found in structure database")
     
@@ -572,18 +589,52 @@ def get_amino_acid(code):
     return atoms
 
 def get_coords(res_name, atom_names):
-    """Extract coordinates from AMINO_ACID_STRUCTURES."""
+    """Return template coordinates of selected atoms.
+
+    Args:
+        res_name (str): Key of ``AMINO_ACID_STRUCTURES`` (e.g. ``'A'``, ``'A0'``).
+        atom_names (list[str]): Atom names to extract, in the desired order.
+
+    Returns:
+        np.ndarray: Array of shape (len(atom_names), 3), Å.
+
+    Raises:
+        KeyError: If *res_name* or any atom name is missing.
+    """
     res = AMINO_ACID_STRUCTURES[res_name]
     name_to_coord = {name: np.array([x, y, z], dtype=float) for name, x, y, z in res}
     return np.vstack([name_to_coord[a] for a in atom_names])
 
 def get_from_ref(ref, atom_names):
-    """Extract coordinates from reference residue."""
+    """Return coordinates of selected atoms from an already-placed residue.
+
+    Args:
+        ref (list[dict]): Atom dicts with ``'name'`` and ``'coords'`` keys,
+            as returned by :func:`get_amino_acid` or :func:`align_residues`.
+        atom_names (list[str]): Atom names to extract, in the desired order.
+
+    Returns:
+        np.ndarray: Array of shape (len(atom_names), 3).
+
+    Raises:
+        KeyError: If any atom name is missing from *ref*.
+    """
     name_to_coord = {atom['name']: atom['coords'] for atom in ref}
     return np.vstack([name_to_coord[a] for a in atom_names])
 
 def kabsch(P, Q):
-    """Compute optimal rotation R and translation t using Kabsch algorithm."""
+    """Compute the rigid transform that best maps point set P onto Q (Kabsch).
+
+    Reflections are corrected so that ``R`` is a proper rotation.
+
+    Args:
+        P (np.ndarray): Mobile points, shape (N, 3).
+        Q (np.ndarray): Target points, shape (N, 3), in correspondence with P.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: ``(R, t)`` with R of shape (3, 3) and
+        t of shape (3,), such that ``R @ p + t`` approximates the matching q.
+    """
     Pc = P.mean(axis=0)
     Qc = Q.mean(axis=0)
     P_centered = P - Pc
@@ -598,10 +649,26 @@ def kabsch(P, Q):
     return R, t
 
 def align_residues(ref, resA_name, resB_name):
-    """
-    Align residue B to residue A using backbone atoms.
-    Handles Proline: skips H/H+ if either residue is 'P'.
-    Returns list of dicts for B atoms (excluding alignment atoms).
+    """Superpose template *resB_name* onto the previously placed residue.
+
+    The template's ``C-``, ``O-``, ``N`` (and ``H``) atoms are fitted onto
+    the ``C``, ``O``, ``N+`` (and ``H+``) atoms of *ref*. The H/H+ pair is
+    omitted when either residue is proline (``'P'``).
+
+    Args:
+        ref (list[dict]): Transformed atoms of the previous residue (full
+            template including ``N+``/``H+``).
+        resA_name (str): Single-letter code of the previous residue; only
+            used for the proline check.
+        resB_name (str): ``AMINO_ACID_STRUCTURES`` key of the new residue
+            (e.g. ``'A'`` or ``'A0'``).
+
+    Returns:
+        tuple[list[dict], list[dict]]: ``(ref, B_atoms)`` where ``ref`` holds
+        all transformed template atoms of the new residue (to serve as the
+        reference for the next one) and ``B_atoms`` holds only the residue's
+        own atoms (``C-``, ``O-``, ``N+``, ``H+`` excluded). Each dict has
+        keys ``'index'`` (0-based), ``'name'`` and ``'coords'``.
     """
     # Default alignment atoms
     atoms_A = ["C", "O", "N+"]
@@ -639,7 +706,15 @@ def align_residues(ref, resA_name, resB_name):
     return ref, B_atoms
 
 def write_pdb(atoms, filename):
-    """Write atoms to PDB file."""
+    """Write atoms to a PDB file with HyRes REMARK headers.
+
+    All atoms are written as ``ATOM`` records in chain A, followed by ``END``.
+
+    Args:
+        atoms (list[dict]): Atom dicts with keys ``'global_index'``,
+            ``'name'``, ``'res_name'``, ``'res_num'`` and ``'coords'`` (Å).
+        filename (str): Output path (overwritten if it exists).
+    """
     with open(filename, 'w') as f:
         f.write("REMARK   HyRes protein\n")
         f.write("REMARK   Peptide chain generated by HyresBuilder\n")
@@ -653,7 +728,20 @@ def write_pdb(atoms, filename):
         f.write("END\n")
 
 def detect_clashes(all_atoms, threshold=4.5):
-    """Fast clash detection using CA atoms only. Threshold hardcoded to 3.8 Å."""
+    """Detect clashes between non-adjacent CA atoms.
+
+    Pairs of CA atoms closer than *threshold* are reported; directly bonded
+    neighbours (residues i, i+1) are ignored. Each clash is printed.
+
+    Args:
+        all_atoms (list[dict]): Atom dicts with ``'name'``, ``'coords'``,
+            ``'res_name'`` and ``'res_num'`` keys.
+        threshold (float): Clash distance cutoff in Å. Default: 4.5.
+
+    Returns:
+        list[tuple[int, int]]: Index pairs ``(i, j)``, ``i < j``, into the
+        list of CA atoms (not into *all_atoms*). Empty if no clashes.
+    """
     ca_atoms = [a for a in all_atoms if a['name'] == 'CA']
     coords = np.array([a['coords'] for a in ca_atoms])
     diff = coords[:, None, :] - coords[None, :, :]
@@ -679,41 +767,47 @@ def build_peptide(name, sequence, random_conf=True, check_clash=False, max_retri
     Build a coarse-grained HyRes protein PDB from a single-letter amino acid sequence.
 
     Residues are placed sequentially by aligning each new residue's backbone onto the
-    previous one via the Kabsch algorithm. Every 4th residue can be drawn from an
-    alternate rotamer conformation (suffix '0' entries in AMINO_ACID_STRUCTURES) when
-    random_conf is enabled, introducing conformational variation into the chain.
-    The finished chain is translated so that the first CA sits at (5000, 5000, 5000) Å.
+    previous one via the Kabsch algorithm. When random_conf is enabled, residues at
+    positions 4, 8, 12, ... are drawn at random (50/50) from the primary template or
+    its alternate ('0'-suffixed entry in AMINO_ACID_STRUCTURES), introducing
+    conformational variation into the chain. The finished chain is translated so that
+    the first CA sits at (5000, 5000, 5000) Å. Residue names are written as
+    three-letter codes in chain A.
 
     Args:
         name        (str):  Stem of the output file. The PDB is written to '<name>.pdb'.
-        sequence    (str):  Amino acid sequence as single-letter codes (e.g. 'ACDEFGHIKL').
+        sequence    (str):  Amino acid sequence as upper-case single-letter codes
+                            (e.g. 'ACDEFGHIKL'); the function does not change case.
                             All characters must have entries in AMINO_ACID_STRUCTURES.
-        random_conf (bool): If True, randomly sample an alternate rotamer conformation
-                            for every 4th residue to avoid extended-chain artefacts.
-                            Default: True.
+        random_conf (bool): If True, every 4th residue randomly uses the primary or
+                            alternate template. If False, only primary templates are
+                            used (deterministic chain). Default: True.
         check_clash (bool): If True (and random_conf is True), run a CA-only clash check
-                            after each build attempt and retry with a new random seed if
+                            (:func:`detect_clashes`, 4.5 Å cutoff) after each build
+                            attempt and rebuild with new random template choices if
                             clashes are found. Has no effect when random_conf is False.
                             Default: False.
-        max_retries (int):  Maximum number of rebuild attempts when check_clash is True.
+        max_retries (int):  Maximum number of build attempts when check_clash is True.
                             If clashes persist after all attempts the structure is written
-                            anyway with a warning. Default: 10.
+                            anyway with a warning. Must be >= 1. Default: 10.
 
     Returns:
-        None. Writes a PDB file to '<name>.pdb' in the current working directory.
+        None. Writes '<name>.pdb' (relative to the current working directory unless
+        name contains a path) and prints a short summary.
 
     Raises:
         ValueError: If any single-letter code in sequence is absent from
                     AMINO_ACID_STRUCTURES.
 
     Examples:
+        >>> from HyresBuilder.PeptideBuilder import build_peptide
         >>> # Basic build with default random conformations
         >>> build_peptide('myprotein', 'ACDEFGHIKLM')
 
         >>> # Fully extended/linear chain
         >>> build_peptide('linear', 'ACDEFGHIKLM', random_conf=False)
 
-        >>> # Random conformations with clash checking, up to 20 retries
+        >>> # Random conformations with clash checking, up to 20 attempts
         >>> build_peptide('folded', 'ACDEFGHIKLM', check_clash=True, max_retries=20)
     """
     output_file = f"{name}.pdb"
@@ -777,7 +871,17 @@ def build_peptide(name, sequence, random_conf=True, check_clash=False, max_retri
     print(f"Output written to: {output_file}")
 
 def main():
-    "Command-line interface to build peptide from sequence."
+    """Command-line interface (``pepbuilder`` entry point).
+
+    Usage::
+
+        pepbuilder NAME SEQUENCE [--linear] [--check-clash]
+
+    Writes ``NAME.pdb``. SEQUENCE is upper-cased before building.
+    ``--linear`` disables the random alternate templates
+    (``random_conf=False``); ``--check-clash`` enables the CA clash check
+    with the default ``max_retries`` of 10.
+    """
     import argparse
     
     parser = argparse.ArgumentParser(

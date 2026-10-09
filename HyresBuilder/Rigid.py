@@ -16,13 +16,17 @@ converted to ``OutOfPlaneSite`` virtual sites whose positions are recomputed
 analytically at every step from the four real particles. Constraints are
 added between every pair of real particles to maintain their pairwise
 distances. Any pre-existing constraints that couple two atoms within the same
-body are automatically removed to avoid conflicts.
+body are automatically removed to avoid conflicts. Reference geometry is taken
+from the positions passed in (normally the PDB file), so each body is frozen
+in that conformation.
 
 The four real particles and their masses are chosen so that the total mass and
-center of mass of the rigid body exactly match those of the original atom set.
-For bodies with fewer than five atoms, all atoms are treated as real particles.
-The moment of inertia will be similar but not identical to the original
-distribution.
+center of mass of the rigid body exactly match those of the original atom set
+(among the valid choices, the most mass-balanced set is preferred, because a
+very light real particle is unstable at large time steps). For bodies with
+fewer than five atoms, all atoms are treated as real particles and keep their
+masses. The moment of inertia will be similar but not identical to the
+original distribution.
 
 The three reference atoms used to define the virtual-site frame are selected
 from the real particles by maximising the norm of their cross product, ensuring
@@ -42,9 +46,10 @@ Five functions are provided at increasing levels of abstraction:
   of segment-ID ranges ("P001-P080"), and applies the same residue-based
   rigid-body definition to every matching segment. Intended for
   residue-structured molecules (proteins, nucleic acids, fibrils) described
-  by a PSF. With ``loop=False`` (the default) coil residues, as assigned by
-  DSSP, are left out so only helix and strand residues are rigid; with
-  ``CA=True`` only the CA atoms go into each body.
+  by a PSF. By default (``loop=True``) every listed residue is rigid; with
+  ``loop=False`` coil residues, as assigned by DSSP (MDTraj), are left out so
+  only helix and strand residues are rigid; with ``CA=True`` only the CA atoms
+  go into each body.
 * :func:`createRigidCA` — high-level; identical to
   :func:`createRigidSegments` except that only atoms with selected names are
   placed in each body ("CA" by default, e.g. "P" for nucleic acids). Produces
@@ -52,9 +57,26 @@ Five functions are provided at increasing levels of abstraction:
   mobile.
 * :func:`RigidSmallMols` — high-level; for systems with many (potentially
   thousands of) small-molecule segments in a PSF, e.g. 'M001', 'M002', ...
-  Accepts a PSF/PDB and a single atom-index pattern ("10-15,20-25") plus a
-  set of segment-ID ranges ("M001-M010,M020-M030"), and applies the same
-  rigid-body definition to every matching segment in one call.
+  Accepts a PSF/PDB and a single atom-index pattern ("10-15,20-25", 1-based
+  within each segment) plus a set of segment-ID ranges
+  ("M001-M010,M020-M030"), and applies the same rigid-body definition to
+  every matching segment in one call.
+
+All functions modify the ``System`` in place (particle masses, constraints and
+virtual sites), so they must be called before the ``Context``/``Simulation``
+is created. With :func:`HyresBuilder.utils.setup`, which creates the
+``Simulation`` before returning, apply them -- together with any COM
+restraint, e.g. from :mod:`HyresBuilder.addRestraints` -- inside the
+``modification`` hook::
+
+    from HyresBuilder import utils
+    from HyresBuilder.Rigid import createRigidSegments
+
+    def modification(system):
+        createRigidSegments(system, 'conf.psf', 'conf.pdb',
+                            residues="27-95", segments="P001-P080")
+
+    system, sim = utils.setup(params, modification=modification)
 
 Limitations
 -----------
@@ -73,8 +95,8 @@ same body. Build the ``System`` without constraints on the rigidified atoms
 Original authors:  Peter Eastman (Stanford University / Simbios)
 Modified by:       Shanlong Li
 
-This module is derived from the OpenMM toolkit and is distributed under the
-MIT licence. See the licence header in the source file for the full text.
+This module is derived from Peter Eastman's ``rigid.py`` example for OpenMM
+(MIT licence).
 
 Dependencies
 ------------
@@ -97,7 +119,8 @@ from itertools import combinations
 def _loadPsfPdb(psf=None, pdb=None):
     """Normalise `psf`/`pdb` arguments that may be file paths or already-loaded
     objects into (CharmmPsfFile, PDBFile) objects. Either argument can be
-    omitted (pass None) if a function only needs one of the two.
+    omitted (pass None) if a function only needs one of the two; it is then
+    returned as None. Non-string arguments are returned unchanged.
     """
     if psf is not None and isinstance(psf, str):
         from openmm.app import CharmmPsfFile
@@ -143,7 +166,19 @@ def resolveBodiesToIndices(psf, segment_bodies):
     -------
     bodies : list of list of int
         Each inner list contains the atom indices that form one rigid body,
-        ready to pass directly to createRigidBodies().
+        ready to pass directly to createRigidBodies(). The System is not
+        modified.
+
+    Raises
+    ------
+    ValueError
+        If a segment ID is not present in the PSF.
+
+    Notes
+    -----
+    Residue numbers are matched against ``residue.id`` (the PSF resid);
+    residues whose ID is not a plain integer (insertion codes such as '27A')
+    are skipped. A body that matches no atoms is skipped with a warning.
     """
     import warnings
     psf, _ = _loadPsfPdb(psf=psf)
@@ -198,6 +233,9 @@ def _dsspCodes(psf, pdb):
     DSSP is run once on the whole system with MDTraj, so hydrogen bonds between
     chains (e.g. the cross-beta sheets of a fibril) are taken into account.
     Coordinates come from `pdb`; the atom order must match the PSF.
+
+    Raises ImportError if MDTraj is not installed and ValueError if the PSF and
+    PDB atom counts differ.
     """
     try:
         import mdtraj as md
@@ -224,7 +262,8 @@ def createRigidSegments(system, psf, pdb, residues, segments, loop=True, CA=Fals
     *each* segment) and a set of segment names/ranges to apply it to; one
     rigid body is created per matching segment.
 
-    Two options narrow what goes into each body:
+    By default (``loop=True``, ``CA=False``) every atom of every listed residue
+    goes into the body. Two options narrow what goes into each body:
 
     * ``loop=False`` runs DSSP (via MDTraj) on the PDB coordinates and drops
       residues assigned as coil ('C'), so only helix ('H') and strand ('E')
@@ -251,7 +290,7 @@ def createRigidSegments(system, psf, pdb, residues, segments, loop=True, CA=Fals
         "P001,P005,P010". Numeric ranges keep the zero-padding width of the
         range's start ID.
     loop : bool, optional
-        If True, every residue in `residues` is included. If False (default),
+        If True (default), every residue in `residues` is included. If False,
         residues that DSSP assigns as coil ('C') are removed from each body;
         helix ('H') and strand ('E') residues are kept. Residues DSSP cannot
         classify ('NA', e.g. non-protein residues) are kept. The assignment is
@@ -267,11 +306,22 @@ def createRigidSegments(system, psf, pdb, residues, segments, loop=True, CA=Fals
     numBodies : int
         The number of rigid bodies (matching segments) that were created.
 
+    Raises
+    ------
+    ValueError
+        If no rigid body could be built, or (from :func:`createRigidBodies`)
+        if a body is degenerate.
+    ImportError
+        If ``loop=False`` and MDTraj is not installed.
+
     Notes
     -----
-    Each body needs at least three non-collinear atoms. With ``CA=True`` or
-    ``loop=False`` a segment can fall below that (e.g. an all-coil chain);
-    such segments are skipped with a warning.
+    Each body needs at least three non-collinear atoms. Segments with fewer
+    than three selected atoms (e.g. an all-coil chain with ``loop=False``) are
+    skipped with a warning; segment IDs not found in the PSF are also skipped
+    with a warning. Residues with non-integer IDs (insertion codes) are
+    ignored. The System is modified in place (see :func:`createRigidBodies`)
+    and a one-line summary is printed.
 
     With ``loop=False`` every helix/coil and strand/coil junction becomes a
     boundary between a rigid residue and a free one; with ``CA=True`` every CA
@@ -287,19 +337,20 @@ def createRigidSegments(system, psf, pdb, residues, segments, loop=True, CA=Fals
     -------
     ::
 
-        from Rigid import createRigidSegments
+        from HyresBuilder.Rigid import createRigidSegments
 
         # Residues 27-95 of every chain P001 through P080, as one rigid body each.
         createRigidSegments(system, 'conf.psf', 'conf.pdb',
-                             residues="27-95", segments="P001-P080", loop=True)
+                             residues="27-95", segments="P001-P080")
 
         # Same chains, but only helix/strand residues are rigid (coils free).
         createRigidSegments(system, 'conf.psf', 'conf.pdb',
-                             residues="27-95", segments="P001-P080")
+                             residues="27-95", segments="P001-P080", loop=False)
 
         # Only the CA atoms of the helix/strand residues are rigid.
         createRigidSegments(system, 'conf.psf', 'conf.pdb',
-                             residues="27-95", segments="P001-P080", CA=True)
+                             residues="27-95", segments="P001-P080",
+                             loop=False, CA=True)
     """
     import warnings
 
@@ -404,12 +455,18 @@ def createRigidCA(system, psf, pdb, residues, segments, atomNames='CA'):
     numBodies : int
         The number of rigid bodies (matching segments) that were created.
 
+    Raises
+    ------
+    ValueError
+        If `atomNames` is empty, if no rigid body could be built, or (from
+        :func:`createRigidBodies`) if a body is degenerate.
+
     Notes
     -----
     Each body needs at least three non-collinear selected atoms, because
     createRigidBodies() uses three real particles to define the virtual-site
-    frame. Segments yielding fewer than three matching atoms are skipped with
-    a warning.
+    frame. Segments yielding fewer than three matching atoms, and segment IDs
+    not found in the PSF, are skipped with a warning.
 
     If the System was built with bond constraints (e.g. ``constraints=HBonds``
     or ``AllBonds``), a constraint between a selected atom that becomes a
@@ -422,7 +479,7 @@ def createRigidCA(system, psf, pdb, residues, segments, atomNames='CA'):
     -------
     ::
 
-        from Rigid import createRigidCA
+        from HyresBuilder.Rigid import createRigidCA
 
         # CA atoms of residues 27-95 in every chain P001-P080, one body each.
         createRigidCA(system, 'conf.psf', 'conf.pdb',
@@ -502,6 +559,9 @@ def createRigidCA(system, psf, pdb, residues, segments, atomNames='CA'):
 def _parseIndexRanges(spec):
     """Parse a comma-separated string of integers/ranges, e.g. "10-15,20-25,30"
     into a sorted list of unique ints: [10, 11, 12, 13, 14, 15, 20, ..., 25, 30].
+
+    Ranges are inclusive; empty tokens are ignored. Negative numbers are not
+    supported (a '-' always marks a range); malformed tokens raise ValueError.
     """
     indices = []
     for token in spec.split(','):
@@ -520,7 +580,10 @@ def _parseSegmentRange(spec):
     """Parse a comma-separated string of segment IDs/ranges, e.g.
     "M001-M010,M020-M030,X5" into an ordered list of segment ID strings.
     Ranges are expanded numerically, preserving the zero-padding width of the
-    range's start ID (e.g. "M001-M010" -> M001, M002, ..., M010).
+    range's start ID (e.g. "M001-M010" -> M001, M002, ..., M010). The prefix
+    is taken from the start ID only; the end ID contributes just its number.
+    Duplicates are dropped, keeping first-occurrence order. Raises ValueError
+    if a range end has no numeric suffix.
     """
     import re as _re
     segids = []
@@ -577,21 +640,36 @@ def RigidSmallMols(system, psf, pdb, atoms=None, segments=None):
         atom in each matching segment is used (the whole small molecule is
         made rigid).
     segments : str
-        Comma-separated segment-ID ranges to apply this to, e.g.
-        "M001-M010,M020-M030" (segments M001 through M010, and M020 through
-        M030) or an explicit list like "M001,M005,M010". Numeric ranges keep
-        the zero-padding width of the range's start ID.
+        Required (despite the ``None`` default). Comma-separated segment-ID
+        ranges to apply this to, e.g. "M001-M010,M020-M030" (segments M001
+        through M010, and M020 through M030) or an explicit list like
+        "M001,M005,M010". Numeric ranges keep the zero-padding width of the
+        range's start ID.
 
     Returns
     -------
     numBodies : int
         The number of rigid bodies (matching segments) that were created.
 
+    Raises
+    ------
+    ValueError
+        If `segments` is None, if no rigid body could be built, or (from
+        :func:`createRigidBodies`) if a body is degenerate.
+
+    Notes
+    -----
+    Segments not found in the PSF, and segments with fewer atoms than the
+    largest index in `atoms`, are skipped with a warning. Selections with
+    fewer than two atoms are skipped silently. :func:`createRigidBodies`
+    needs three non-collinear atoms per body, so a two-atom selection raises
+    ValueError there.
+
     Example
     -------
     ::
 
-        from Rigid import RigidSmallMols
+        from HyresBuilder.Rigid import RigidSmallMols
 
         # Rigidify atoms 10-15 and 20-25 (PSF numbering, within each segment)
         # of every segment M001 through M010 and M020 through M030.
@@ -672,20 +750,40 @@ def createRigidBodies(system, positions, bodies):
     particles in the same rigid body.  But if there is a constraint between a particle in a rigid body and
     another particle not in that body, it will likely lead to an exception when you try to create a context.
 
+    For bodies with five or more particles, candidate sets of four real particles are tried (closest to
+    the body's RMS radius first) and their masses are obtained by solving for the total mass and COM; sets
+    with any non-positive mass are rejected.  The search stops at the first set in which every mass is at
+    least 1/8 of the body's total mass, otherwise it returns the most balanced valid set found (searching
+    at most 200000 combinations once a valid set exists).  Bodies with fewer than five particles keep all
+    of them as real particles with their original masses.  Virtual sites are ``OutOfPlaneSite`` objects
+    defined on the three real particles with the largest cross product, and their masses are set to zero.
+
     Parameters
     ----------
     system : openmm.System
-        The System to modify.
-    positions : list
-        The positions of all particles in the system.
+        The System to modify (in place). Must be called before a Context is created from it.
+    positions : list of Vec3 (Quantity with length units)
+        The positions of all particles in the system, e.g. ``PDBFile.positions``. These define the
+        rigid geometry.
     bodies : list of list of int
-        Each element defines one rigid body as a list of atom indices.
+        Each element defines one rigid body as a list of atom indices. Every body needs at least three
+        non-collinear particles.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If no set of four real particles with positive masses exists for a body, or if no three
+        non-collinear real particles can be found (this includes any body with fewer than three particles).
 
     Example
     -------
     ::
 
-        from Rigid import createRigidBodies
+        from HyresBuilder.Rigid import createRigidBodies
         from openmm.app import PDBFile
 
         pdb = PDBFile('conf.pdb')

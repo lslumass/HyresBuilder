@@ -1,62 +1,77 @@
 """
 PSF file generation for HyRes and iCon coarse-grained systems.
 
-This module constructs CHARMM-style PSF topology files from coarse-grained
-PDB structures produced by the HyRes (protein) and iCon (RNA, DNA, Metabolite) force fields.
-It handles mixed systems containing any combination of protein, RNA, DNA,
-Mg²⁺, and Ca²⁺ chains in a single input PDB, automatically detecting molecule
-types by chain identity and assigning structured segment IDs before invoking
-``psfgen`` to build and write the topology.
+This module builds CHARMM-style PSF topology files from coarse-grained PDB
+structures for the HyRes (protein) and iCon (RNA, DNA) force fields, plus
+ions, CG polymers, metabolites (including aminoglycosides such as KAN) and
+user-supplied custom metabolites. Molecule types are detected from residue
+names, each chain is assigned a structured segment ID, and ``psfgen`` is used
+to build and write the topology.
 
-MODIFICATION: Added support for custom metabolites with topology file conversion.
-For each custom metabolite (e.g., ABC), the code:
-  1. Looks for ABC.itp in current directory
-  2. Converts ABC.itp to ABC.top and ABC.par using utils.itp2charmm
-  3. Loads ABC.top into psfgen
+Two generation paths are provided:
 
-Workflow
---------
-1. Parse the input CG PDB and split it into per-chain temporary files,
-   detecting molecule type from residue names (:func:`split_chains`).
-2. Assign segment IDs following the convention below and register each chain
-   with ``psfgen`` using the appropriate force-field topology (:func:`genpsf`).
-3. Optionally set terminus charge states for protein chains
-   (:func:`set_terminus`).
-4. Write the PSF file and remove all intermediate temporary PDB files.
+* :func:`genpsf` (default) -- one mixed PDB containing any number of chains
+  of any supported type. Every chain is added to a single ``psfgen`` session.
+* :func:`custom_genpsf_fast` (``--fast``) -- a list of single-molecule PDBs
+  and a copy number for each. One template PSF is built per PDB with
+  ``psfgen`` and then replicated N times by text-level PSF parsing and index
+  offsetting, which is much faster for systems with many identical copies.
+
+Workflow (default path)
+-----------------------
+1. Split the input CG PDB into chains keyed by (chainID, segID), type each
+   chain from its first residue name, merge consecutive ion chains into one
+   segment and write each block to ``psfgentmp_{i}.pdb``
+   (:func:`split_chains`).
+2. Load all force-field topologies (RNA, Protein, DNA, AGs, Metabolite,
+   Polymer and any custom topologies) and add each block to ``psfgen`` with
+   a segment ID following the convention below (:func:`genpsf`).
+3. Optionally set terminus charges on protein segments (:func:`set_terminus`).
+4. Write the PSF and delete the ``psfgentmp_*.pdb`` files.
 
 Segment ID convention
 ---------------------
-Segment IDs are four characters: a single type prefix followed by a
-three-character hybrid-36 counter encoded by :func:`encode_segid`.
+Segment IDs are a single type prefix followed by a counter (starting at 1 for
+each type) encoded by :func:`encode_segid`.
 
-========  ===========  ===============
-Prefix    Molecule     Example IDs
-========  ===========  ===============
-``P``     Protein      P001, P002, …
-``R``     RNA          R001, R002, …
-``D``     DNA          D001, D002, …
-``I``     Mg²⁺,Ca²⁺    I001, I002, …
-``S``     Polymers     S001, S002, …
-``AGs``   Antibiotics  AGs001, AGs002, …
-``M``     Metabolites  M001, M002, …
-========  ===========  ===============
+========  ==================================  ===============
+Prefix    Molecule                            Example IDs
+========  ==================================  ===============
+``P``     Protein                             P001, P002, ...
+``R``     RNA                                 R001, R002, ...
+``D``     DNA                                 D001, D002, ...
+``I``     Ions (MG+, SMG, CA+)                I001, I002, ...
+``S``     Polymers (PHO, PEG, QDM, BZM)       S001, S002, ...
+``M``     Metabolites, incl. AGs (e.g. KAN)   M001, M002, ...
+========  ==================================  ===============
 
-The hybrid-36 counter supports up to 68,391 chains per molecule type before
-overflowing.
+The counter is ``001``-``999``, then ``A00``-``Z99``, then lowercase-led
+base62 codes (``a00``...), keeping segment IDs at 4 characters for up to
+103,543 segments per type; beyond that a plain decimal number is used, which
+makes the segment ID longer than 4 characters.
 
-A command-line interface is exposed via :func:`main` and registered as the
-``GenPsf`` entry point.
+Custom metabolites
+------------------
+``--custom ABC,XYZ`` appends the codes to the module-level ``metabolites``
+list (so they are typed as ``M``) and, for each code, converts ``ABC.itp`` in
+the current directory into ``ABC.top`` and ``ABC.par`` with
+``utils.itp2charmm``; the ``.top`` files are then loaded into ``psfgen``
+(:func:`prepare_custom_metabolites`).
 
-MODIFICATIONS:
-1. Merged --fast and --custom flags
-2. Removed --verify flag
-3. Renamed --metabolites to --custom
+Command line
+------------
+Exposed via :func:`main` as the ``genpsf`` console script (also runnable as
+``python -m HyresBuilder.GenPsf``)::
+
+    genpsf conf.pdb conf.psf [-t neutral|charged|NT|CT|positive] [--icon]
+           [--custom ABC,XYZ]
+    genpsf unused.pdb conf.psf --fast -p a.pdb b.pdb -n 10 200 [...]
 
 Dependencies
 ------------
 * `psfgen <https://github.com/MDAnalysis/psfgen>`_ (``psfgen.PsfGen``)
 * HyresBuilder force-field topology files, loaded via ``utils.load_ff``.
-* For custom metabolites: ABC.itp files converted via ``utils.itp2charmm``.
+* For custom metabolites: ``.itp`` files converted via ``utils.itp2charmm``.
 """
 from __future__ import annotations
 import re
@@ -75,7 +90,14 @@ from HyresBuilder import utils
 # ===========================================================================
 
 class PSF:
-    """In-memory representation of a single PSF file's contents."""
+    """In-memory representation of a single PSF file's contents.
+
+    Filled by :func:`parse_psf`. Atoms are stored as lists of whitespace-split
+    tokens (``[id, segid, resid, resname, name, type, charge, mass, imove]``);
+    bonded terms, donors/acceptors, groups and cross-terms are stored as tuples
+    of 1-based atom indices (groups keep their raw three-integer records).
+    ``section_order`` records the order in which sections were read.
+    """
     def __init__(self):
         self.flags = []
         self.title_lines = []
@@ -95,6 +117,7 @@ class PSF:
 
     @property
     def natom(self):
+        """int: Number of atoms in the PSF."""
         return len(self.atoms)
 
 def _read_int_block(lines, i, n_ints):
@@ -108,6 +131,22 @@ def _read_int_block(lines, i, n_ints):
 _SECTION_RE = re.compile(r"!([A-Z0-9:]+)")
 
 def parse_psf(path: str) -> PSF:
+    """Parse a PSF file into a :class:`PSF` object.
+
+    Reads the ``PSF`` header flags and title, then the NATOM, NBOND, NTHETA,
+    NPHI, NIMPHI, NDON, NACC, NNB, NGRP and NCRTERM sections, identified by
+    their ``!TAG`` labels.
+
+    Args:
+        path (str): Path to the PSF file.
+
+    Returns:
+        PSF: The parsed contents.
+
+    Raises:
+        ValueError: If the first line does not start with ``PSF``.
+        NotImplementedError: If a section with any other tag is encountered.
+    """
     with open(path) as f:
         lines = f.read().splitlines()
 
@@ -197,6 +236,25 @@ def _offset(v, by):
     return v if v == 0 else v + by
 
 def replicate_segment(template: PSF, n_copies: int, segid_for_copy, start_offset: int = 0):
+    """Generate offset copies of a template PSF.
+
+    For copy ``c`` every atom index is shifted by
+    ``start_offset + c * template.natom`` (zero entries are left unchanged)
+    and every atom's segment ID is replaced by ``segid_for_copy(c)``.
+
+    Args:
+        template (PSF): Template, typically a single segment.
+        n_copies (int): Number of copies to generate.
+        segid_for_copy (callable): Maps the copy index ``c`` (0-based) to the
+            segment ID string for that copy.
+        start_offset (int): Number of atoms preceding the first copy in the
+            merged PSF. Defaults to 0.
+
+    Yields:
+        dict: Per-copy blocks with keys ``atoms``, ``bonds``, ``angles``,
+        ``dihedrals``, ``impropers``, ``donors``, ``acceptors``, ``nnb``,
+        ``groups`` and ``crossterms``, ready for :func:`write_merged_psf`.
+    """
     natom = template.natom
     for c in range(n_copies):
         atom_offset = start_offset + c * natom
@@ -236,7 +294,33 @@ def write_merged_psf(out_path, title_lines, flags, atom_blocks, bond_blocks,
                       angle_blocks, dihedral_blocks, improper_blocks,
                       donor_blocks, acceptor_blocks, nnb_blocks, nnb_label,
                       group_blocks, ngrp_nst2, crossterm_blocks):
-    """Write a single merged PSF from lists of per-segment-group blocks."""
+    """Write a single merged PSF from lists of per-segment blocks.
+
+    Each ``*_blocks`` argument is a list with one entry per segment copy (as
+    yielded by :func:`replicate_segment`); entries are concatenated in order
+    and section counts are recomputed. Atom indices must already be offset.
+
+    Notes:
+        * If the concatenated NNB list does not have one entry per atom, it is
+          replaced by ``natom`` zeros.
+        * ``group_blocks`` and ``ngrp_nst2`` are accepted but ignored: a single
+          NGRP group (``0 0 0``) is always written.
+        * The NCRTERM section is written only if there are cross-terms.
+
+    Args:
+        out_path (str): Output PSF path (overwritten).
+        title_lines (list of str): Title (REMARKS) lines.
+        flags (list of str): Header flags written after ``PSF``
+            (e.g. ``EXT``).
+        atom_blocks (list): Lists of atom token lists.
+        bond_blocks, angle_blocks, dihedral_blocks, improper_blocks,
+        donor_blocks, acceptor_blocks, crossterm_blocks (list): Lists of
+            index tuples for the corresponding sections.
+        nnb_blocks (list): Lists of NNB integers.
+        nnb_label (str): Label written after the NNB count (e.g. ``NNB``).
+        group_blocks (list): Unused.
+        ngrp_nst2 (int): Unused.
+    """
 
     natom = sum(len(b) for b in atom_blocks)
     nbond = sum(len(b) for b in bond_blocks)
@@ -309,23 +393,25 @@ def write_merged_psf(out_path, title_lines, flags, atom_blocks, bond_blocks,
 # ===========================================================================
 
 def prepare_custom_metabolites(metabolite_names, verbose=True):
-    """
-    Convert custom metabolite .itp files to CHARMM topology files.
-    
-    For each metabolite name (e.g., 'ABC'), looks for ABC.itp in current directory,
-    converts it to ABC.top and ABC.par using utils.itp2charmm.
-    
-    Parameters
-    ----------
-    metabolite_names : list of str
-        List of metabolite codes (e.g., ['ABC', 'UVW'])
-    verbose : bool
-        Print status messages
-    
-    Returns
-    -------
-    list of str
-        Paths to generated .top files ready to load into psfgen
+    """Convert custom metabolite ``.itp`` files to CHARMM topology files.
+
+    For each code (e.g. ``'ABC'``), ``ABC.itp`` in the current working
+    directory is converted with ``utils.itp2charmm``, which writes
+    ``<RESI>.top`` and ``<RESI>.par`` named after the residue in the itp's
+    ``[ RESI ]`` section; ``ABC.top`` must exist afterwards.
+
+    Args:
+        metabolite_names (list of str): Metabolite codes, e.g.
+            ``['ABC', 'UVW']``.
+        verbose (bool): Print status messages. Defaults to True.
+
+    Returns:
+        list of str: Paths of the generated ``.top`` files (relative to the
+        current directory), ready to load into ``psfgen``.
+
+    Note:
+        Calls ``sys.exit(1)`` if an ``.itp`` file is missing, if the expected
+        ``.top`` file is not produced, or if the conversion raises.
     """
     custom_top_files = []
     
@@ -386,6 +472,18 @@ metabolites = ['KAN', 'LLL', 'SRY',
 segtypes = ['P', 'R', 'D', 'I', 'S', 'M']
 
 def get_type(resname):
+    """Return the molecule-type code for a residue name.
+
+    Args:
+        resname (str): Residue name (as in PDB columns 18-20, stripped).
+
+    Returns:
+        str or None: ``'P'`` protein (``aas``), ``'R'`` RNA (``rnas``),
+        ``'D'`` DNA (``dnas``), ``'I'`` ion (``ions``: MG+, SMG, CA+),
+        ``'S'`` polymer (``polymer``: PHO, PEG, QDM, BZM), ``'M'`` metabolite
+        (``metabolites``, including AGs such as KAN and any ``--custom``
+        codes), or None if unrecognised. Lists are checked in that order.
+    """
     chaintype = (
         'P' if resname in aas else
         'R' if resname in rnas else
@@ -415,7 +513,18 @@ def _encode_resseq(n):
     return ''.join(reversed(result))
 
 def _renumber_residues(lines):
-    """Renumber residues in ATOM lines sequentially from 1, in file order."""
+    """Renumber residues in ATOM lines sequentially from 1, in file order.
+
+    A new residue starts whenever the (chainID, segID, resSeq+iCode) key
+    changes. The new number is written with :func:`_encode_resseq` and the
+    insertion-code column is blanked.
+
+    Args:
+        lines (list of str): PDB ATOM lines.
+
+    Returns:
+        list of str: The renumbered lines.
+    """
     new_lines = []
     old_key = None
     new_resid = 0
@@ -428,6 +537,27 @@ def _renumber_residues(lines):
     return new_lines
 
 def split_chains(pdb):
+    """Split a CG PDB into per-segment temporary PDB files.
+
+    ATOM records are grouped into chains whenever the (chainID, segID) key
+    (PDB columns 22 and 73-76) changes; each chain is typed by
+    :func:`get_type` from its first residue name. Consecutive ion (``'I'``)
+    chains are merged into one block whose residues are renumbered from 1
+    (:func:`_renumber_residues`, hybrid-36 beyond 9999). Block ``i`` is
+    written to ``psfgentmp_{i}.pdb`` in the current directory, terminated by
+    ``END``. Non-ATOM records (including HETATM) are ignored.
+
+    Args:
+        pdb (str): Input CG PDB path.
+
+    Returns:
+        list of str: Type code of each block, in the order of the
+        ``psfgentmp_{i}.pdb`` files.
+
+    Note:
+        Prints ``Unknown molecule type`` and exits with status 1 if any
+        chain's first residue is not recognised.
+    """
     currentKey = None
     atoms = []
     chains = []
@@ -479,6 +609,28 @@ def split_chains(pdb):
     return types
 
 def set_terminus(gen, segid, charge_status):
+    """Set terminus charges on a protein segment in a ``psfgen`` session.
+
+    Only segments whose ID starts with ``P`` are modified; others are left
+    unchanged. The N-terminus is atom ``N`` of the first residue and the
+    C-terminus is atom ``O`` of the last residue.
+
+    Args:
+        gen (psfgen.PsfGen): Session containing the segment.
+        segid (str): Segment ID.
+        charge_status (str): One of
+
+            - ``'charged'``: N-terminal N = +1.00, C-terminal O = -1.00
+            - ``'NT'``: N-terminal N = +1.00 only
+            - ``'CT'``: C-terminal O = -1.00 only
+            - ``'positive'``: N-terminal N = -1.00 and C-terminal O = -1.00
+              (both set to -1.00 as currently implemented)
+
+    Note:
+        Any other value, including ``'neutral'``, prints an error and exits
+        with status 1 for protein segments; callers skip this function for
+        ``'neutral'``.
+    """
     if segid.startswith("P"):
         nter, cter = gen.get_resids(segid)[0], gen.get_resids(segid)[-1]
         if charge_status == 'charged':
@@ -496,16 +648,21 @@ def set_terminus(gen, segid, charge_status):
             exit(1)
 
 def encode_segid(n: int) -> str:
-    """Encode segment number n into a 3-char string.
+    """Encode a segment counter as a (normally 3-character) string.
 
-    Tier 1 (n=1..999):       plain decimal      "001".."999"
-    Tier 2 (n=1000..3599):   letter + 2 digits  "A00".."Z99"
-    Tier 3 (n=3600..103543): lowercase-led base62 - guaranteed not to
-        collide with tiers 1/2 since only tier 3 codes start with a
-        lowercase letter (tier 1 starts with a digit, tier 2 with an
-        uppercase letter).
-    Beyond n=103543: plain numeric fallback (only reached by
-        extremely large systems).
+    Tier 1 (n < 1000):        zero-padded decimal  ``"001"``..``"999"``
+    Tier 2 (n=1000..3599):    letter + 2 digits    ``"A00"``..``"Z99"``
+    Tier 3 (n=3600..103543):  lowercase letter + 2 base62 characters
+        (``"a00"``..``"zZZ"``); cannot collide with tiers 1/2, which start
+        with a digit or an uppercase letter.
+    n > 103543: ``str(n)`` (6+ characters, so the resulting segment ID
+        exceeds the 4-character PSF limit).
+
+    Args:
+        n (int): Segment counter (1-based in this module).
+
+    Returns:
+        str: Encoded counter.
     """
     if n < 1000:
         return f"{n:03d}"
@@ -528,6 +685,29 @@ def encode_segid(n: int) -> str:
     return f"{c1}{c2}{c3}"
 
 def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix', custom_top_files=None):
+    """Generate a PSF for a mixed CG system from a single PDB.
+
+    Loads the RNA, Protein, DNA, AGs, Metabolite and Polymer topologies (plus
+    any custom ones), splits the PDB with :func:`split_chains`, and adds
+    each block as a segment named ``<type><encode_segid(k)>`` with ``k``
+    counted from 1 per type. Protein segments use ``auto_angles=False``;
+    all other types use ``auto_angles=False, auto_dihedrals=False``. If
+    ``terminal`` is not ``'neutral'``, :func:`set_terminus` is applied to
+    every segment (it only affects protein segments). The temporary
+    ``psfgentmp_*.pdb`` files are deleted after the PSF is written.
+
+    Args:
+        pdb_in (str): Input CG PDB path.
+        psf_out (str): Output PSF path.
+        terminal (str): Protein terminus charge status: ``'neutral'``,
+            ``'charged'``, ``'NT'``, ``'CT'`` or ``'positive'`` (see
+            :func:`set_terminus`). Defaults to ``'neutral'``.
+        RNA (str): RNA topology: ``'mix'`` uses ``utils.load_ff('RNA')``
+            (``top_RNA_mix.inp``, HyRes-compatible iConRNA); ``'icon'`` uses
+            ``forcefield/top_RNA.inp``. Defaults to ``'mix'``.
+        custom_top_files (list of str, optional): Extra topology files (e.g.
+            from :func:`prepare_custom_metabolites`).
+    """
     if RNA == 'mix':
         RNA_topology, _ = utils.load_ff('RNA')
     elif RNA == 'icon':
@@ -572,6 +752,19 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix', custom_top_files=None
         os.remove(file_path)
 
 def _apply_terminus_to_template(atoms, charge_status):
+    """Set terminus charges directly on parsed PSF atom tokens (in place).
+
+    Text-level equivalent of :func:`set_terminus` used by the fast path: the
+    N-terminus is atom ``N`` of the first resid and the C-terminus atom
+    ``O`` of the last resid, in order of appearance. Prints a warning if a
+    target atom is missing; prints an error and exits with status 1 for an
+    unsupported ``charge_status`` (including ``'neutral'``).
+
+    Args:
+        atoms (list of list of str): ``PSF.atoms`` of a protein template.
+        charge_status (str): ``'charged'``, ``'NT'``, ``'CT'`` or
+            ``'positive'`` (same charges as :func:`set_terminus`).
+    """
     resid_order = []
     for a in atoms:
         if a[2] not in resid_order:
@@ -602,6 +795,43 @@ def _apply_terminus_to_template(atoms, charge_status):
         exit(1)
 
 def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix', custom_top_files=None, verbose=True):
+    """Generate a PSF for many copies of a few molecules (fast path).
+
+    For each ``(pdb, num)`` pair with ``num > 0``, the molecule type is taken
+    from the first ATOM residue of ``pdb`` (:func:`get_type`); the whole file
+    is treated as one segment. A template PSF is built with a fresh
+    ``psfgen`` session (all topologies loaded, as in :func:`genpsf`) and
+    written to a temporary ``genpsf_fast_*`` directory, parsed with
+    :func:`parse_psf`, and replicated ``num`` times with
+    :func:`replicate_segment`. Segment IDs continue the per-type counters
+    across inputs (``<type><encode_segid(k)>``), and a ``REMARKS segment``
+    title line is added for each copy. All copies are written to ``psf_out``
+    with :func:`write_merged_psf`.
+
+    Template ``psfgen`` options: proteins use ``auto_angles=False``;
+    polymers listed in ``auto_polymer`` (PHO) keep psfgen's automatic angles
+    and dihedrals; all other types use ``auto_angles=False,
+    auto_dihedrals=False``. For protein templates, a non-``'neutral'``
+    ``terminal`` is applied via :func:`_apply_terminus_to_template`.
+
+    The temporary directory and any ``psfgentmp_*.pdb`` files in the current
+    directory are removed afterwards.
+
+    Args:
+        pdb_list (list of str): Single-molecule CG PDB files.
+        num_list (list of int or str): Copy number for each PDB (converted
+            with ``int``); pairs beyond the shorter list are ignored.
+        psf_out (str): Output PSF path.
+        terminal (str): Protein terminus charge status. Defaults to
+            ``'neutral'``.
+        RNA (str): ``'mix'`` or ``'icon'``, as in :func:`genpsf`. Defaults to
+            ``'mix'``.
+        custom_top_files (list of str, optional): Extra topology files.
+        verbose (bool): Print progress. Defaults to True.
+
+    Note:
+        Exits with status 1 if a PDB's first residue type is unknown.
+    """
     if RNA == 'mix':
         RNA_topology, _ = utils.load_ff('RNA')
     elif RNA == 'icon':
@@ -732,14 +962,34 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
 # ===========================================================================
 
 def main():
-    """
-    MODIFIED: Command-line interface for PSF generation.
-    
-    MODIFICATIONS:
-    1. --fast flag now automatically enables custom mode behavior
-       (merged --custom and --fast)
-    2. Removed --verify flag completely
-    3. Renamed --metabolites to --custom
+    """Command-line interface for PSF generation (``genpsf`` console script).
+
+    Positional arguments are ``pdb`` (input CG PDB) and ``psf`` (output PSF);
+    both are required, although ``pdb`` is unused with ``--fast``.
+
+    Options:
+        -t/--ter: Protein terminus charge status (``neutral`` [default],
+            ``charged``, ``NT``, ``CT``, ``positive``).
+        --icon: Use the iConRNA topology ``top_RNA.inp`` instead of the
+            HyRes-compatible ``top_RNA_mix.inp``.
+        --fast: Use :func:`custom_genpsf_fast`; requires ``-p/--pdb_list``
+            and ``-n/--num_list`` (otherwise exits with status 1).
+        -p/--pdb_list: Single-molecule PDB files for ``--fast``.
+        -n/--num_list: Copy number of each PDB for ``--fast``.
+        --custom: Comma-separated custom metabolite codes (e.g. ``ABC,UVW``).
+            Codes are added to ``metabolites`` and ``<code>.itp`` files in the
+            current directory are converted via
+            :func:`prepare_custom_metabolites`; the resulting ``.top`` files
+            are loaded in either mode.
+
+    Without ``--fast``, :func:`genpsf` is run on ``pdb``. Any remaining
+    ``psfgentmp_*.pdb`` files are removed at the end.
+
+    Example::
+
+        genpsf conf.pdb conf.psf -t charged
+        genpsf conf.pdb conf.psf --custom ABC
+        genpsf x.pdb system.psf --fast -p protein.pdb kan.pdb -n 10 500
     """
     parser = argparse.ArgumentParser(
         description="generate PSF for Hyres/iCon systems",

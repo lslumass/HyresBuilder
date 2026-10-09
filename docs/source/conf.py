@@ -12,11 +12,16 @@ MOCK_MODULES = [
     'mdtraj',
     'numpy',
     'numpy.linalg',
+    'scipy',
+    'scipy.spatial',
     'pkg_resources',
 ]
 
 for mod in MOCK_MODULES:
     sys.modules[mod] = MagicMock()
+
+# `from openmm import *` must provide the names used at import time (e.g. annotations)
+sys.modules['openmm'].__all__ = ['System']
 
 # 2. Specifically handle the 'unit' name error
 # Create a mock for unit and inject it into builtins

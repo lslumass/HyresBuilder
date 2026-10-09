@@ -1,3 +1,21 @@
+"""
+Legacy iConRNA force field construction (original RNA-only model).
+
+Legacy module: it is not imported anywhere else in the package. The
+maintained iConRNA builder is :func:`HyresBuilder.FFs.iConRNASystem`, which
+is used by :func:`HyresBuilder.utils.iConRNA_setup`. This module is kept for
+reference/backward compatibility.
+
+:func:`iConRNASystem` replaces the CHARMM ``HarmonicAngleForce`` and
+``NonbondedForce`` of an OpenMM ``System`` with the iConRNA terms: Restricted
+Bending angles, Debye–Hückel electrostatics, base stacking and A-U/C-G base
+pairing. No 1-4 term, protein hydrogen bonds or force-group assignment is
+included.
+
+Dependencies
+------------
+* `OpenMM <https://openmm.org>`_ (``openmm``, ``openmm.app``, ``openmm.unit``)
+"""
 from __future__ import division, print_function
 # OpenMM Imports
 from openmm.unit import *
@@ -6,6 +24,43 @@ from openmm import *
 
 
 def iConRNASystem(psf, system, ffs):
+    """
+    Build the legacy iConRNA RNA force field into an OpenMM system.
+
+    Forces added, in order:
+
+    1. ``'ReBAngleForce'`` — ``kt*(theta-theta0)^2/sin(theta)^2`` for every
+       angle of the ``HarmonicAngleForce``.
+    2. ``'LJ_ElecForce'`` — Debye–Hückel electrostatics
+       ``138.935456/er*q1*q2/r*exp(-r/dh)*kpmg`` via ``CustomNonbondedForce``
+       (cutoff 1.8 nm, switching from 1.6 nm, exclusions for pairs up to
+       2 bonds apart). ``kpmg = lmd`` for ``P``–``MG`` pairs, 1 otherwise.
+    3. ``'StackingForce'`` — (10, 6) centroid stacking potential with global
+       ``r0 = 0.34 nm`` between consecutive bases in atom order (no chain
+       check), depth ``scales[pair]*eps_base``.
+    4. ``'AUpairForce'`` / ``'CGpairForce'`` — (10, 6) ``CustomHbondForce``
+       pairing (cutoff 0.65 nm, angular gate ``-2*cos(phi)^3``), each added
+       only if both base types are present.
+
+    The ``NonbondedForce`` and ``HarmonicAngleForce`` are then removed.
+
+    Args:
+        psf (CharmmPsfFile): Parsed PSF object providing topology and atom
+                             names.
+        system (System): OpenMM ``System`` created from the PSF; modified in
+                         place.
+        ffs (dict): Force field parameters with keys ``'dh'`` (Quantity,
+                    screening length), ``'lmd'`` (float, P–Mg2+ scaling
+                    factor), ``'er'`` (float, relative dielectric constant)
+                    and ``'eps_base'`` (Quantity, base energy scale for
+                    stacking and pairing).
+
+    Returns:
+        System: The modified OpenMM ``System``.
+
+    Raises:
+        KeyError: If a required key is missing from ``ffs``.
+    """
     top = psf.topology
     # 2) constructe the force field
     print('\n################# constructe the HyRes force field ####################')

@@ -1,12 +1,11 @@
 """
-iConRNA force field construction for RNA G-quadruplex (rG4) systems.
+Legacy iConRNA force field construction for RNA G-quadruplex (rG4) systems.
 
-This module extends the standard iConRNA force field with the additional
-G–G Hoogsteen base-pairing terms required to model RNA G-quadruplex (rG4)
-structures. It shares the same backbone electrostatic, angle, and stacking
-architecture as the general HyRes/iConRNA force field, but replaces the
-G–U wobble pair with two dedicated G–G pairing forces that capture the
-geometry of the Hoogsteen-edge interactions found in G-quartet planes.
+Legacy module: it is not imported anywhere else in the package. The
+maintained builder is :func:`HyresBuilder.FFs.rG4sSystem`, which is used by
+:func:`HyresBuilder.utils.rG4s_setup` (and takes the G-G strength as a float
+``'GG'`` in kcal/mol instead of ``'ion_type'``). This module is kept for
+reference/backward compatibility.
 
 Force terms applied
 -------------------
@@ -14,36 +13,32 @@ The following forces are constructed and registered in order by
 :func:`rG4sSystem`:
 
 1. **Restricted Bending (ReB) angle force** — replaces ``HarmonicAngleForce``
-   with a sine-based bending potential for RNA backbone and base angles,
-   with doubled force constants for RNA beads relative to the standard model.
-2. **Debye–Hückel electrostatics** — screened Coulomb interactions via
-   ``CustomNonbondedForce``, with configurable screening length (``dh``),
-   relative dielectric constant (``er``), and a lambda scaling factor (``lmd``)
-   for protein–RNA cross-interactions.
-3. **1-4 nonbonded interactions** — short-range Lennard-Jones and electrostatic
-   corrections for 1–4 bonded pairs via ``CustomBondForce``.
-4. **RNA base stacking** — centroid-distance–based stacking potential between
-   consecutive bases via ``CustomCentroidBondForce``, with residue-pair-specific
-   well depths and optimal distances.
-5. **A–U base pairing** — Watson-Crick pair via ``CustomHbondForce`` with
-   dual distance and angular gating terms.
-6. **C–G base pairing** — Watson-Crick pair via ``CustomHbondForce`` with
-   dual distance and angular gating terms.
-7. **G–G base pairing** — two complementary ``CustomHbondForce`` terms
-   (``GGpairForce1`` and ``GGpairForce2``) capturing NB–ND and NC–NC
-   Hoogsteen contacts respectively, with dihedral and angular gating and
-   automatic exclusions for self-pairs and sequential nearest neighbours.
+   with ``0.5*kt*(theta-theta0)^2/sin(theta)^kReB``; ``kReB = 2`` when the
+   first atom of the angle is named ``P``, ``C1``, ``C2``, ``NA``, ``NB``,
+   ``NC`` or ``ND``, otherwise ``kReB = 0`` (harmonic).
+2. **Debye–Hückel electrostatics** (``'DH_ElecForce'``) — screened Coulomb
+   interactions via ``CustomNonbondedForce`` (cutoff 1.8 nm, switching from
+   1.6 nm, exclusions up to 3 bonds), with screening length (``dh``),
+   relative dielectric constant (``er``), and a scaling factor (``lmd``)
+   applied only to P–MG pairs.
+3. **1-4 nonbonded interactions** — Lennard-Jones and screened electrostatic
+   terms for all ``NonbondedForce`` exceptions via ``CustomBondForce``.
+4. **RNA base stacking** — (12, 10) centroid potential between consecutive
+   bases on the same chain via ``CustomCentroidBondForce``, with
+   residue-pair-specific well depths and optimal distances.
+5. **A–U base pairing** — via ``CustomHbondForce`` with dual distance and
+   angular gating terms.
+6. **C–G base pairing** — via ``CustomHbondForce`` with dual distance and
+   angular gating terms.
+7. **G–G base pairing** — two ``CustomHbondForce`` terms
+   (``GGpairForce1``: NC–NC contact, 0.40 nm; ``GGpairForce2``: NB–ND
+   contact, 0.42 nm), with dihedral and angular gating and exclusions for
+   self-pairs and sequential neighbouring G residues.
 
 The original ``NonbondedForce`` and ``HarmonicAngleForce`` are removed
-after all custom terms have been added.
-
-Key difference from the standard iConRNA model
------------------------------------------------
-The G–U wobble pair is omitted and replaced by the two G–G Hoogsteen
-pair forces. The G–G interaction strength is controlled by
-``ffs['ion_type']``, a Quantity in energy units, allowing the strength
-of the G-quartet hydrogen bonds to be tuned independently of the other
-base-pairing terms.
+after all custom terms have been added. No G–U wobble pair, protein
+hydrogen bonds or force-group assignment is included. The G–G interaction
+strength is ``ffs['ion_type']``, a Quantity in energy units.
 
 Author:     Shanlong Li
 Date:       Dec 01, 2024
@@ -62,22 +57,32 @@ import numpy as np
 ###### for RNA System with A-U/G-C/G-G pairs ######
 def rG4sSystem(psf, system, ffs):
     """
-    Construct force field for rG4s.
-    
+    Construct the (legacy) rG4 force field.
+
+    See the module docstring for the force terms. The base energy scale is
+    hard-coded as 3.2 kcal/mol.
+
     Args:
-        psf: PSF file containing topology information
-        system: OpenMM system object
-        ffs: Force field parameters dictionary containing:
-            - dh: Debye-Huckel screening length
-            - lmd: Lambda parameter for charge-charge interactions
-            - er: Relative dielectric constant
-        modification: custome defined function for further modifying system
-    
+        psf (CharmmPsfFile): Parsed PSF object containing topology
+                             information.
+        system (System): OpenMM ``System`` created from the PSF; modified in
+                         place.
+        ffs (dict): Force field parameters dictionary containing:
+
+            - ``'dh'`` (Quantity): Debye-Hückel screening length.
+            - ``'lmd'`` (float): Scaling factor for P–MG charge-charge
+              interactions.
+            - ``'er'`` (float): Relative dielectric constant.
+            - ``'ion_type'`` (Quantity): G-G pairing well depth in energy
+              units.
+
     Returns:
-        Modified OpenMM system with protein and/or RNA force field
-    
+        System: The modified OpenMM ``System`` with the rG4 force field and
+        the original ``NonbondedForce``/``HarmonicAngleForce`` removed.
+
     Raises:
-        ValueError: If required parameters or forces are missing
+        KeyError: If a required key is missing from ``ffs`` (no explicit
+                  validation is performed).
     """
 
     top = psf.topology

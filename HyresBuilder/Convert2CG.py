@@ -1,68 +1,71 @@
 """
 Conversion utilities for all-atom to coarse-grained (CG) structure preparation.
 
-This module provides the tools needed to convert all-atom protein and RNA
+This module converts all-atom protein, RNA, DNA and aminoglycoside (AGs)
 structures into coarse-grained representations compatible with the HyRes
-(protein) and iConRNA (RNA) force fields. It handles the full conversion
-pipeline — from optional backbone hydrogen addition through CG bead placement,
-topology generation, and PSF writing — and can process mixed protein/RNA
-systems in a single call.
+(protein), iConRNA (RNA), iConDNA (DNA) and AGs CG models. It handles the full
+pipeline -- optional backbone hydrogen addition, CG bead placement, topology
+generation with ``psfgen`` and PSF writing -- and can process mixed systems in
+a single call.
 
 Conversion models
 -----------------
-* **HyRes (protein)** — backbone heavy atoms (N, H, CA, C, O) are retained at
-  their original positions; sidechain heavy atoms are collapsed into one to five
+* **HyRes (protein)** -- backbone atoms N, H, CA, C, O are kept at their
+  original positions; sidechain heavy atoms are collapsed into one to five
   geometric-center beads named CB, CC, CD, CE, CF depending on residue type.
-  Glycine carries no sidechain bead. Histidine variants (HSD, HSE, HSP) are
-  unified under the HIS residue name (:func:`at2hyres`).
-* **iConRNA (RNA)** — each nucleotide is mapped to a phosphate bead (P), two
-  sugar beads (C1 at C4′, C2 at C1′), and two to four base beads (NA–ND),
-  all placed at the geometric center of their contributing all-atom coordinates.
-  Supported nucleotides: ADE, GUA, CYT, URA (:func:`at2RNA`).
-* **iConRNA (DNA)** — the same bead topology as the RNA model (P, C1, C2,
-  NA–ND), applied to deoxyribonucleotides. Supported nucleotides: DA, DG,
-  DC, DT, plus the CHARMM-style aliases DAD, DGU, DCY, DTH (:func:`at2DNA`).
+  Glycine has no sidechain bead. Histidine variants are written as HIS
+  (:func:`at2hyres`).
+* **iConRNA (RNA)** -- each nucleotide is mapped to a phosphate bead (P), two
+  sugar beads (C1 at C4', C2 at C1') and three or four base beads (NA-ND),
+  each at the geometric center of its contributing atoms. Supported
+  nucleotides: ADE, GUA, CYT, URA; one-letter A, G, C, U are renamed to these
+  during chain splitting (:func:`at2RNA`).
+* **iConDNA (DNA)** -- the same bead topology (P, C1, C2, NA-ND) applied to
+  deoxyribonucleotides DA, DG, DC, DT and the aliases DAD, DGU, DCY, DTH
+  (:func:`at2DNA`).
+* **AGs (aminoglycosides)** -- residue-specific bead mappings; currently
+  kanamycin A (KAN, 11 beads K1-K11) (:func:`at2AGs`).
 
 Pipeline overview
 -----------------
-The top-level entry point :func:`at2cg` orchestrates the full workflow:
+The top-level function :func:`at2cg` orchestrates the workflow:
 
-1. Optionally add backbone amide hydrogens to the all-atom input
-   (:func:`add_backbone_hydrogen`).
-2. Optionally rewrite CHARMM-style nucleic acid residue names so DNA chains
-   are distinguishable from RNA (:func:`fix_charmm_dna_resnames`).
-3. Split the input PDB into per-chain temporary files and detect molecule
-   types (:func:`split_chains`).
-4. Apply the appropriate CG mapping per chain (:func:`at2hyres`,
-   :func:`at2RNA`, or :func:`at2DNA`).
-5. Build topology and write PSF via ``psfgen``, set terminus charge states
-   (:func:`set_terminus`), and re-encode any atom serial numbers exceeding
-   99,999 in hybrid-36 format (:func:`fix_pdb_serial`).
-6. Optionally remove intermediate temporary files.
+1. (CLI ``--hydrogen`` only) add backbone amide hydrogens to the all-atom
+   input (:func:`add_backbone_hydrogen`).
+2. Optionally rename CHARMM-style DNA residue names so DNA chains are
+   distinguishable from RNA (:func:`fix_charmm_dna_resnames`).
+3. Split the input PDB into per-chain temporary files
+   ``aa2cgtmp_{i}_aa.pdb``, detect molecule types and assign segment IDs
+   (:func:`split_chains`), optionally renumbering residues from 1.
+4. Apply the CG mapping per chain (:func:`at2hyres`, :func:`at2RNA`,
+   :func:`at2DNA` or :func:`at2AGs`) and add each chain to ``psfgen``.
+5. Write the CG PDB, set protein terminus charges (:func:`set_terminus`),
+   write the PSF, remove the ``aa2cgtmp_*.pdb`` files (unless
+   ``cleanup=False``) and renumber the PDB atom serials, using hybrid-36
+   above 99,999 (:func:`fix_pdb_serial`).
 
 A command-line interface is exposed via :func:`main` and registered as the
-``Convert2CG`` entry point.
+``convert2cg`` console script.
 
 CHARMM residue names
 --------------------
 CHARMM PDB files use the same residue names for RNA and DNA bases (ADE, GUA,
 CYT, THY), so a DNA chain cannot be distinguished from an RNA chain by residue
 name alone. Passing ``charmm=True`` to :func:`at2cg` (or ``--charmm`` on the
-command line) renames ADE→DAD, GUA→DGU, CYT→DCY, THY→DTH before chain
+command line) renames ADE->DA, GUA->DG, CYT->DC, THY->DT before chain
 splitting, so those chains are typed as DNA and routed to :func:`at2DNA`.
 
 Hybrid-36 serial encoding
---------------------------
-PDB format supports a maximum atom serial of 99,999. This module encodes
-larger serials in hybrid-36 (base-36 alphanumeric strings: A0000–Z9ZZZ for
-atoms 100,000–1,316,735, then a0000–z9ZZZ beyond that), ensuring output files
-remain valid for large systems.
+-------------------------
+The PDB format allows at most 5 characters for atom serials (99,999). Larger
+serials are written in hybrid-36: ``A0000``-``ZZZZZ`` for atoms
+100,000-43,770,015, then ``a0000``-``zzzzz`` beyond that.
 
 Dependencies
 ------------
-* `OpenMM <https://openmm.org>`_ (``openmm``, ``openmm.app``, ``openmm.unit``)
 * `psfgen <https://github.com/MDAnalysis/psfgen>`_ (``psfgen.PsfGen``)
 * `NumPy <https://numpy.org>`_ (``numpy``)
+* HyresBuilder force-field topology files, loaded via ``utils.load_ff``.
 """
 
 from psfgen import PsfGen
@@ -74,15 +77,24 @@ from .utils import load_ff
 
 def add_backbone_hydrogen(pdb_file, output_file):
     """
-    Add backbone hydrogen atoms (H) to peptide chains in a PDB file.
-    Preserves all original atoms (backbone and side chains).
-    
-    Parameters:
-    -----------
-    pdb_file : str
-        Path to input PDB file
-    output_file : str
-        Path to output PDB file with added H atoms
+    Add backbone amide hydrogen atoms (H) to peptide chains in a PDB file.
+
+    All ATOM records are kept (other records such as HETATM, TER and END are
+    dropped) and atom serials are renumbered from 1 (hybrid-36 above 99,999).
+    An ``H`` atom is inserted directly after the ``N`` atom of every residue
+    except PRO, residues that already have ``H`` or ``HN``, and residues
+    lacking ``CA`` or any usable ``C``. It is placed 1.01 A from N along the
+    bisector of the C(prev)->N and CA->N directions, where C(prev) is the
+    previous residue's C within the same segment; the residue's own C is used
+    for the first residue of a segment. A new segment starts when the chain
+    ID changes or the residue number jumps by more than 1.
+
+    Args:
+        pdb_file (str): Path to the input all-atom PDB file.
+        output_file (str): Path to the output PDB file (overwritten).
+
+    Returns:
+        str: ``output_file``.
     """
     
     def parse_atom_line(line):
@@ -389,27 +401,23 @@ def fix_charmm_dna_resnames(pdb_file, output_file=None):
 
     CHARMM PDB files use the same residue names for RNA and DNA bases, so a
     DNA chain is written as ADE/GUA/CYT/THY rather than DA/DG/DC/DT. This
-    helper renames them to the DNA aliases understood by :func:`split_chains`
-    and :func:`at2DNA`::
+    helper renames them, in every ATOM/HETATM record, to the DNA names
+    understood by :func:`split_chains` and :func:`at2DNA`::
 
-        ADE -> DAD    GUA -> DGU    CYT -> DCY    THY -> DTH
+        ADE -> DA    GUA -> DG    CYT -> DC    THY -> DT
 
     Note:
         The mapping is unconditional, so apply this only to files whose nucleic
         acid chains are DNA. A CHARMM file containing genuine RNA chains would
         have those chains mis-typed as DNA.
 
-    Parameters:
-    -----------
-    pdb_file : str
-        Path to the input PDB file.
-    output_file : str, optional
-        Path to the output PDB file. If None, the input file is overwritten
-        in-place.
+    Args:
+        pdb_file (str): Path to the input PDB file.
+        output_file (str, optional): Path to the output PDB file. If None,
+            the input file is overwritten in place.
 
     Returns:
-    --------
-    str : Path to the written PDB file.
+        str: Path to the written PDB file.
 
     Example:
         >>> from HyresBuilder import Convert2CG
@@ -498,7 +506,17 @@ def _renumber_chain(chain_lines):
 
 
 def split_chains(pdb, renumber=False):
-    """Split PDB file into separate chains and identify their types.
+    """Split an all-atom PDB into chains, identify their types and segids.
+
+    Chains are delimited by changes in either the chain ID (column 22) or
+    the segment ID (columns 73-76) of ATOM records. If only one of them is
+    present it is used; if both are present the chain ID is used when it
+    changes and the segment ID either never changes or changes the same
+    number of times, otherwise the segment ID is used. Before writing,
+    one-letter RNA names A/G/C/U are renamed to ADE/GUA/CYT/URA and histidine
+    variants (HSD, HSE, HSP, HID, HIE, HIP) to HIS. Each chain is typed from
+    its first residue and written to ``aa2cgtmp_{i}_aa.pdb`` (ending with
+    ``END``) in the current directory.
 
     Args:
         pdb (str): Path to the input PDB file.
@@ -506,6 +524,16 @@ def split_chains(pdb, renumber=False):
             starting residue number and, if it doesn't already start from 1,
             renumbers that segment's residues sequentially from 1. Segments
             that already start from 1 are left untouched. Default ``False``.
+
+    Returns:
+        tuple: ``(types, segids)`` -- per-chain type codes (``'P'`` protein,
+        ``'R'`` RNA, ``'D'`` DNA, ``'A'`` AGs/KAN) and segment IDs of the
+        form ``<type><counter:03d>`` (e.g. ``P001``, ``R002``, ``A001``),
+        counted per type.
+
+    Raises:
+        ValueError: If no ATOM record has a chain ID or segment ID, or if a
+            chain's first residue name is not recognised.
     """
     aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
            "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
@@ -638,7 +666,21 @@ def split_chains(pdb, renumber=False):
 
 
 def set_terminus(gen, segid, terminal):
-    """Set the charge status of protein terminus."""
+    """Set terminus charges on a protein segment in a ``psfgen`` session.
+
+    Segments whose ID does not start with ``P`` are left unchanged. The
+    N-terminus is atom ``N`` of the first residue and the C-terminus is atom
+    ``O`` of the last residue.
+
+    Args:
+        gen (psfgen.PsfGen): Session containing the segment.
+        segid (str): Segment ID.
+        terminal (str): ``'neutral'`` (no change), ``'charged'`` (N +1.00,
+            O -1.00), ``'NT'`` (N +1.00 only) or ``'CT'`` (O -1.00 only).
+
+    Raises:
+        ValueError: For any other ``terminal`` value on a protein segment.
+    """
     if not segid.startswith("P"):
         return
         
@@ -662,12 +704,17 @@ def at2hyres(pdb_in, pdb_out):
     """
     Convert an all-atom protein PDB to a HyRes coarse-grained PDB.
 
-    Backbone atoms (N, H, CA, C, O) are preserved at their original positions.
-    Sidechain heavy atoms are collapsed into one or more coarse-grained beads
-    by computing their geometric center, named CB, CC, CD, CE, CF in order.
-    Glycine residues have no sidechain bead. Histidine variants (HSD, HSE, HSP)
-    are renamed to HIS. Atom serial numbers are encoded in hybrid-36 format to
-    support systems with more than 99,999 atoms.
+    Backbone atoms (N, H, CA, C, O) are preserved at their original positions
+    (``HN``/``HT1`` are renamed H and ``OT1`` is renamed O; ``OT2``/``OXT``
+    and all other hydrogens are dropped). Sidechain heavy atoms are collapsed
+    into one or more beads at their geometric center, named CB, CC, CD, CE,
+    CF in order: one bead for ALA, VAL, LEU, ILE, MET, ASN, ASP, GLN, GLU,
+    CYS, SER, THR, PRO; two for LYS, ARG; three for HIS, PHE, TYR; five for
+    TRP; none for GLY. HSD, HSE and HSP are renamed HIS. Atoms are written
+    per residue as: N/H/CA (input order), sidechain beads, then C/O (input
+    order). Residues are keyed by residue number only, so the input should
+    be a single chain. Atom serial numbers are encoded in hybrid-36 format
+    above 99,999.
 
     Args:
         pdb_in (str): Path to the input all-atom PDB file.
@@ -852,13 +899,17 @@ def at2RNA(pdb_in, pdb_out):
 
     Each nucleotide is mapped onto a set of coarse-grained beads:
 
-    - **P** — phosphate group (P, O1P, O2P, O5', O3' from previous residue)
+    - **P** — phosphate group (P, O1P, O2P, O5', plus O3' of residue
+      ``resid - 1`` in the same segment)
     - **C1** — sugar bead at C4'
     - **C2** — sugar bead at C1'
-    - **NA/NB/NC/ND** — base beads (number depends on nucleotide type)
+    - **NA/NB/NC/ND** — base beads (four for ADE/GUA, three for CYT/URA)
 
     Bead coordinates are computed as the geometric center of the contributing
-    all-atom positions. Supported nucleotides: ADE, GUA, CYT, URA.
+    all-atom positions; a bead is omitted if none of its atoms are present.
+    Residues are grouped by segment ID and written in sorted segid/resid
+    order. Supported nucleotides: ADE, GUA, CYT, URA (other residues get only
+    P/C1/C2 beads). Atom serials use hybrid-36 above 99,999.
 
     Args:
         pdb_in (str): Path to the input all-atom RNA PDB file.
@@ -1028,17 +1079,17 @@ def at2DNA(pdb_in, pdb_out):
     NA–ND base beads, all placed at the geometric center of their
     contributing all-atom coordinates), applied to deoxyribonucleotides.
 
-    - **P** — phosphate group (P, O1P, O2P, O5', O3' from previous residue)
+    - **P** — phosphate group (P, O1P, O2P, O5', plus O3' of residue
+      ``resid - 1`` in the same segment)
     - **C1** — sugar bead at C4'
     - **C2** — sugar bead at C1'
-    - **NA/NB/NC/ND** — base beads (number depends on nucleotide type)
+    - **NA/NB/NC/ND** — base beads (four for DA/DG, three for DC/DT)
 
     Supported nucleotides: DA, DG, DC, DT, corresponding respectively to the
-    RNA nucleotides ADE, GUA, CYT, URA. The CHARMM-style aliases DAD, DGU,
-    DCY, and DTH are also accepted (see :func:`fix_charmm_dna_resnames`).
-    Thymine (DT/DTH) additionally carries the 5-methyl group (C7 and its
-    hydrogens) folded into its NB base bead, since DT lacks the O2' present in
-    ribonucleotides (irrelevant to this CG mapping, which does not use O2').
+    RNA nucleotides ADE, GUA, CYT, URA, plus the aliases DAD, DGU, DCY and
+    DTH, which share the same mappings. Thymine's 5-methyl group (C7, H71,
+    H72, H73) is folded into its NB bead. Other residues get only P/C1/C2
+    beads. Atom serials use hybrid-36 above 99,999.
 
     Args:
         pdb_in (str): Path to the input all-atom DNA PDB file.
@@ -1210,20 +1261,26 @@ def at2DNA(pdb_in, pdb_out):
 
 def at2AGs(pdb_in, pdb_out):
     """
-    Convert an all-atom aminoglycosides (AGs) PDB to coarse-grained PDB.
+    Convert an all-atom aminoglycoside (AGs) PDB to a coarse-grained PDB.
 
-    Each AGs has its specific mapping rules
+    Each AGs residue has its own mapping; every bead is placed at the
+    geometric center of its listed atoms and omitted if none are present.
+    Currently mapped: kanamycin A (``KAN``, beads K1-K11). ``LLL``
+    (gentamicin C1a) is a placeholder with empty atom lists, so it produces
+    no beads, as do residues without a mapping. Residues are grouped by
+    segment ID and written in sorted segid/resid order; atom serials use
+    hybrid-36 above 99,999.
 
     Args:
-        pdb_in (str): Path to the input all-atom RNA PDB file.
-        pdb_out (str): Path to the output iConRNA coarse-grained PDB file.
+        pdb_in (str): Path to the input all-atom AGs PDB file.
+        pdb_out (str): Path to the output coarse-grained PDB file.
 
     Returns:
         None. Writes a CG PDB file to ``pdb_out``.
 
     Example:
         >>> from HyresBuilder import Convert2CG
-        >>> Convert2CG.at2AGs("rna_aa.pdb", "rna_cg.pdb")
+        >>> Convert2CG.at2AGs("kan_aa.pdb", "kan_cg.pdb")
     """
     
     def encode_serial(n):
@@ -1344,21 +1401,18 @@ def at2AGs(pdb_in, pdb_out):
 def fix_pdb_serial(pdb_file, output_file=None):
     """
     Fix PDB files where atom serial numbers exceed 99999 and have been written
-    as '******' by psfgen-python. Re-numbers all ATOM/HETATM records sequentially
-    using hybrid-36 encoding so serial numbers beyond 99999 are represented as
-    base-36 alphanumeric strings (A0000–Z9999, then a0000–z9999).
+    as '******' by psfgen-python. Re-numbers all ATOM/HETATM records
+    sequentially from 1 using hybrid-36 encoding, so serial numbers beyond
+    99999 are written as ``A0000``-``ZZZZZ``, then ``a0000``-``zzzzz``.
+    Other records are copied unchanged.
 
-    Parameters:
-    -----------
-    pdb_file : str
-        Path to the input PDB file containing '******' serial fields.
-    output_file : str, optional
-        Path to the output fixed PDB file.
-        If None, the input file is overwritten in-place.
+    Args:
+        pdb_file (str): Path to the input PDB file.
+        output_file (str, optional): Path to the output fixed PDB file. If
+            None, the input file is overwritten in place.
 
     Returns:
-    --------
-    str : Path to the fixed PDB file.
+        str: Path to the fixed PDB file.
     """
 
     def _encode_serial(n):
@@ -1414,12 +1468,17 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, renumber=False,
     """
     Convert an all-atom PDB to a coarse-grained PDB and PSF file.
 
-    Automatically detects molecule types (protein, RNA, or DNA) by chain,
-    then applies :func:`at2hyres` for protein chains, :func:`at2RNA` for RNA
-    chains, and :func:`at2DNA` for DNA chains. Topology and connectivity are
-    handled by psfgen, which also writes the PSF file. Atom serial numbers
-    exceeding 99,999 are re-encoded in hybrid-36 format. Temporary
-    intermediate files are removed after conversion unless ``cleanup=False``.
+    Automatically detects molecule types (protein, RNA, DNA or AGs) by chain
+    (:func:`split_chains`), then applies :func:`at2hyres` for protein chains,
+    :func:`at2RNA` for RNA, :func:`at2DNA` for DNA and :func:`at2AGs` for
+    AGs (KAN). Each CG chain is added to psfgen (RNA, DNA, Protein and AGs
+    topologies) using the segids from :func:`split_chains`; proteins use
+    ``auto_angles=False``, the other types also ``auto_dihedrals=False``.
+    psfgen writes ``pdb_out``, terminus charges are then set, and the PSF is
+    written to ``pdb_out`` with its last four characters replaced by
+    ``.psf``. Temporary ``aa2cgtmp_*.pdb`` files in the current directory are
+    removed unless ``cleanup=False``. Finally ``pdb_out`` is rewritten by
+    :func:`fix_pdb_serial` (hybrid-36 serials above 99,999).
 
     Args:
         pdb_in (str): Path to the input all-atom PDB file. May contain mixed
@@ -1442,8 +1501,8 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, renumber=False,
                                   unchanged. Default is ``False``.
         charmm (bool, optional): If ``True``, treat the input as a CHARMM-style
                                   PDB in which DNA bases share the RNA residue
-                                  names, and rename ADE→DAD, GUA→DGU,
-                                  CYT→DCY, THY→DTH before chain splitting so
+                                  names, and rename ADE→DA, GUA→DG,
+                                  CYT→DC, THY→DT before chain splitting so
                                   those chains are detected as DNA. Only use
                                   this when the nucleic acid chains really are
                                   DNA. Default is ``False``.
@@ -1453,7 +1512,10 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, renumber=False,
                coarse-grained PDB and PSF files.
 
     Raises:
-        ValueError: If an unsupported molecule type is detected in the PDB.
+        ValueError: If the input has neither chain IDs nor segment IDs, a
+            chain starts with an unrecognised residue, or ``terminal`` is not
+            supported (raised after ``pdb_out`` has been written).
+        SystemExit: If :func:`at2hyres` meets an unknown amino acid.
 
     Example:
         >>> from HyresBuilder import Convert2CG
@@ -1540,7 +1602,20 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, renumber=False,
     return pdb_out, psf_file
 
 def main():
-    """Command-line interface for Convert2CG."""
+    """Command-line interface (``convert2cg`` console script).
+
+    Usage::
+
+        convert2cg aa.pdb cg.pdb [--hydrogen] [-t neutral|charged|NT|CT]
+                   [--renumber] [--charmm]
+
+    Runs :func:`at2cg` (with ``cleanup=True``) and writes ``cg.pdb`` and
+    ``cg.psf``. ``--hydrogen`` first runs :func:`add_backbone_hydrogen`,
+    writing ``<aa minus last 4 chars>_addH.pdb``, which is kept and used as
+    the input. ``-t/--terminal`` defaults to ``neutral``; ``--renumber`` and
+    ``--charmm`` map to the :func:`at2cg` arguments of the same name.
+    ``UserWarning`` messages are suppressed.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(

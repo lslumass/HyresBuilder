@@ -1,6 +1,43 @@
 """
-This module is for parsing the bonded parameter file for CG metabolites.
-bonded parameters are first generated based on the parameter file, and then modulated.
+Residue-specific bonded parameters for coarse-grained metabolites.
+
+The CHARMM-format files ``top_metabolome.inp`` / ``param_metabolome.inp``
+assign bonded parameters by atom type, which cannot distinguish chemically
+different bonds between beads of the same type. After an OpenMM system has
+been built from them, :func:`modify_metabolite` overwrites the bonded terms
+of metabolite residues with residue- and atom-name-specific values stored
+in :data:`metabolome` (optionally extended by local ``.itp``-style files).
+
+Reference dictionary
+--------------------
+:data:`metabolome` maps a residue name (e.g. ``'NCA'``, ``'2HG'``) to a dict
+with exactly four keys, each mapping atom-name tuples to parameters in
+CHARMM-style units:
+
+==============  ============================  ==================================
+key             atom-name key                 value
+==============  ============================  ==================================
+``bonds``       ``(i, j)``                    ``(k [kcal/mol/Å²], b0 [Å])``
+``angles``      ``(i, j, k)``                 ``(k [kcal/mol/rad²], θ0 [deg])``
+``dihedrals``   ``(i, j, k, l)``              ``(k [kcal/mol], n [int], phase [deg])``
+``impropers``   ``(i, j, k, l)``              ``(k [kcal/mol/rad²], unused, θ0 [deg])``
+==============  ============================  ==================================
+
+Bond, angle and improper force constants follow the CHARMM convention
+``E = k (x - x0)²`` (no ½); dihedrals use ``E = k [1 + cos(n φ - phase)]``.
+
+Unit conversion (applied in :func:`modify_metabolite`)
+------------------------------------------------------
+* bonds: ``b0 × 0.1`` (Å→nm), ``k × 4.184 × 100 × 2`` (``HarmonicBondForce``
+  uses ``½ k``).
+* angles: ``θ0`` deg→rad, ``k × 4.184 × 2`` (HyRes ReB angle uses ``0.5*kt``).
+* dihedrals: ``phase`` deg→rad, ``k × 4.184``, ``n`` unchanged.
+* impropers: ``θ0`` deg→rad, ``k × 4.184 × 2``.
+
+Constants
+---------
+KCAL_TO_KJ : float
+    4.184, kcal→kJ conversion factor.
 """
 import os
 from openmm.unit import *
@@ -1652,7 +1689,41 @@ metabolome = {
 # ---------------------------------------------------------------------------
 
 def _parse_itp_file(filename):
-    """Parse a single .itp file and return the dict structure."""
+    """Parse one custom-residue parameter file into a :data:`metabolome` entry.
+
+    The file uses bracketed section headers; text after ``;`` is a comment
+    and blank lines are ignored. Units are the same as in :data:`metabolome`.
+    Lines with too few fields are silently skipped; extra fields are ignored::
+
+        [ RESI ]
+        ABC                      ; residue name (last line in section wins)
+        [ BOND ]
+        M1  M2  k  b0
+        [ ANGL ]
+        M1  M2  M3  k  theta0
+        [ DIHE ]
+        M1  M2  M3  M4  k  n  phase
+        [ IMPR ]
+        M1  M2  M3  M4  k  n  theta0
+
+    Parameters
+    ----------
+    filename : str
+        Path to the file.
+
+    Returns
+    -------
+    tuple
+        ``(res_name, res_data)`` where ``res_name`` is the ``[ RESI ]`` name
+        (``None`` if the section is absent) and ``res_data`` has the keys
+        ``bonds``, ``angles``, ``dihedrals``, ``impropers``. If the file does
+        not exist a warning is printed and ``(None, None)`` is returned.
+
+    Raises
+    ------
+    ValueError
+        If a numeric field cannot be converted (``n`` must be an integer).
+    """
     if not os.path.exists(filename):
         print(f"Warning: {filename} not found.")
         return None, None
@@ -1694,7 +1765,26 @@ def _parse_itp_file(filename):
     return res_name, res_data
 
 def _load_custom(custom):
-    """Resolve *custom* into a metabolome-style dict by reading their .itp files, or None if custom is None."""
+    """Load custom residues from ``<name>.itp`` files in the current directory.
+
+    Parameters
+    ----------
+    custom : str, list of str, tuple of str or None
+        Residue/file names. A string is split on commas (``"ABC,UVW"``).
+        For each name, ``<name>.itp`` is parsed with :func:`_parse_itp_file`.
+
+    Returns
+    -------
+    dict or None
+        ``None`` if *custom* is ``None``; otherwise a :data:`metabolome`-style
+        dict keyed by the ``[ RESI ]`` name of each file (falling back to the
+        file name stem). Missing files are skipped after a warning.
+
+    Raises
+    ------
+    ValueError
+        If *custom* is not ``None``, a string, a list or a tuple.
+    """
     if custom is None:
         return None
 
@@ -1720,15 +1810,17 @@ def _load_custom(custom):
 def modify_metabolite(psf, system, custom=None, merge=True):
     """Overwrite bonded force parameters for CG metabolite residues in *system*.
 
-    The function iterates over every ``Force`` object registered in the OpenMM
-    *system* and, for each bonded interaction whose four (or fewer) atoms all
-    belong to the same residue and that residue is listed in :data:`metabolome`,
-    replaces the current parameters with the hand-tuned values from the
-    dictionary.
+    The function iterates over every ``Force`` object in the OpenMM *system*
+    and, for each existing bonded interaction whose atoms all belong to the
+    same residue (by residue name; the check does not compare residue
+    indices) and whose residue name is in the active parameter library, looks
+    up the atom-name tuple and, if found, replaces the parameters. Terms not
+    present in the library are left unchanged and no new terms are added.
 
     All dictionary values are converted from CHARMM units to OpenMM internal
-    units (kJ/mol, nm, radians) before being written back.  See the module
-    docstring for the full conversion table.
+    units (kJ/mol, nm, radians) before being written back; see the module
+    docstring for the conversion table. A summary of the number of modified
+    terms per category is printed.
 
     Parameters
     ----------
@@ -1740,30 +1832,44 @@ def modify_metabolite(psf, system, custom=None, merge=True):
         OpenMM system object, typically produced by
         ``psf.createSystem(params, ...)``.  The forces inside this object are
         modified **in place**.
-    custom : tuple or list of str, optional
-        A list of custom metabolite names to load from local .itp files (e.g., ("ABC", "XYZ")).
-        If not provided, the default :data:`metabolome` dictionary is used.
+    custom : str, list of str or tuple of str, optional
+        Names of custom residues whose parameters are read from
+        ``<name>.itp`` files in the current working directory (format
+        described in :func:`_parse_itp_file`), e.g. ``("ABC", "XYZ")`` or the
+        comma-separated string ``"ABC,XYZ"``. Missing files are skipped with
+        a warning. If ``None`` (default), only :data:`metabolome` is used.
     merge : bool, optional
-        If True (default), the loaded *custom* data is merged with the default
-        :data:`metabolome` dictionary, with *custom* taking precedence.  If False,
-        the default dictionary is ignored and only *custom* data is used.
+        Only used when *custom* is given. If True (default), the custom
+        residues are added to a shallow copy of :data:`metabolome`; a custom
+        residue with the same name replaces the built-in entry as a whole
+        (sub-dicts are not merged). If False, only the custom residues are
+        used.
 
     Returns
     -------
     openmm.System
-        The same *system* object, returned for convenience so the call can be
-        chained.
+        The same *system* object (modified in place), returned for
+        convenience.
+
+    Raises
+    ------
+    ValueError
+        If *custom* has an unsupported type (see :func:`_load_custom`).
 
     Notes
     -----
     Force identification strategy
         ``HarmonicBondForce`` and ``PeriodicTorsionForce`` are identified by
         their Python type alone.  ``CustomAngleForce`` and
-        ``CustomTorsionForce`` are additionally filtered by the name set on the
-        force object (``force.getName()``).  The expected names are
-        ``"ReBAngleForce"`` and ``"CustomTorsionForce"`` respectively.  These
-        names **must** be assigned with ``force.setName(...)`` before calling
-        this function; forces without the expected name are silently skipped.
+        ``CustomTorsionForce`` are additionally filtered by
+        ``force.getName()``, which must be ``"ReBAngleForce"`` and
+        ``"CustomTorsionForce"`` respectively; other forces of these types
+        are silently skipped.  The HyRes system builders
+        (:func:`HyresBuilder.FFs.buildSystem`) name the ReB angle force
+        ``"ReBAngleForce"``, and the improper force created by
+        ``CharmmPsfFile.createSystem`` keeps OpenMM's default name
+        ``"CustomTorsionForce"``.  ``HarmonicAngleForce`` is never modified, so
+        angles are only updated in systems that use the ReB angle force.
 
     Parameter index layout for custom forces
         *CustomAngleForce* ("ReBAngleForce"): per-angle parameters are ordered
@@ -1781,23 +1887,18 @@ def modify_metabolite(psf, system, custom=None, merge=True):
 
     Examples
     --------
-    Minimal usage after building a CHARMM system::
+    Typical usage as the ``modification`` hook of
+    :func:`HyresBuilder.utils.setup` (as in ``scripts/run_latest_Metabolite.py``)::
 
-        import openmm as mm
-        from openmm.app import CharmmPsfFile, CharmmParameterSet
-        from Metabolome import modify_metabolite
+        from openmm.app import CharmmPsfFile
+        from HyresBuilder import utils
+        from HyresBuilder.Metabolome import modify_metabolite
 
-        psf    = CharmmPsfFile('system.psf')
-        params = CharmmParameterSet('toppar.str')
-        system = psf.createSystem(params)
+        def mod(system):
+            modify_metabolite(CharmmPsfFile(params.psf), system,
+                              custom="ABC,XYZ")   # reads ABC.itp, XYZ.itp
 
-        for force in system.getForces():
-            if isinstance(force, mm.CustomAngleForce):
-                force.setName("ReBAngleForce")
-            elif isinstance(force, mm.CustomTorsionForce):
-                force.setName("CustomTorsionForce")
-
-        system = modify_metabolite(psf, system, custom=("PRL",))
+        system, sim = utils.setup(params, modification=mod)
     """
     topology = psf.topology
 

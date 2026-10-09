@@ -16,13 +16,14 @@ Force types provided
 --------------------
 * **In-register backbone hydrogen bonds** — a ``CustomHbondForce`` that
   exclusively couples N-H···O donor–acceptor pairs sharing the same residue
-  index across chains, enforcing parallel in-register β-sheet geometry
+  number across chains, enforcing parallel in-register β-sheet geometry
   (:func:`inRegisterHB`).
 
 Conventions
 -----------
-* Residue indexing follows OpenMM conventions (integer residue IDs from topology).
-* Proline residues are always excluded from hydrogen bond donor lists, as they
+* Residues are identified by ``int(atom.residue.id)``, i.e. the residue number
+  from the PSF/PDB, not OpenMM's 0-based residue index.
+* Proline residues are skipped entirely (no N, H or O is collected), as they
   lack a backbone NH group.
 * All forces use nanometer / kilojoule-per-mole internal units; user-facing
   parameters (e.g. ``age``) are accepted in kcal/mol for convenience and
@@ -47,36 +48,45 @@ def inRegisterHB(system, top, res_list, age=1.0):
     Add in-register backbone hydrogen bonds between identical residue positions
     across beta-sheet chains for amyloid aging simulations.
 
-    Implements a ``CustomHbondForce`` that only forms N-H···O hydrogen bonds
-    between donor and acceptor atoms that share the **same residue index**
-    (``delta(di - ai) == 1``). This enforces in-register beta-sheet geometry,
-    mimicking the structural locking that occurs during amyloid aging.
-    Proline residues are excluded as they lack backbone NH groups. Self-pairs
-    (same residue donating and accepting) are excluded via ``addExclusion``.
+    Implements a ``CustomHbondForce`` (named ``'inRegister HBForce'``) that only
+    forms N-H···O hydrogen bonds between donor and acceptor atoms that share the
+    **same residue number** (``delta(di - ai) == 1``). This enforces in-register
+    beta-sheet geometry, mimicking the structural locking that occurs during
+    amyloid aging. Proline residues are skipped (no donor or acceptor), as they
+    lack backbone NH groups. Self-pairs (the donor and acceptor of the same
+    residue in the same chain) are excluded via ``addExclusion``.
 
     The hydrogen bond potential takes the form:
 
     .. code-block:: text
 
         epsilon * (5*(sigma/r)^12 - 6*(sigma/r)^10) * step(cos3) * cos3 * delta(di-ai)
+        cos3 = -cos(phi)^3
 
-    where ``r`` is the N···O distance, ``phi`` is the N-H···O angle, and
-    ``sigma = 0.29 nm``.
+    where ``r`` is the N···O distance, ``phi`` is the N-H···O angle (at H),
+    ``sigma = 0.29 nm`` and ``epsilon = age`` kcal/mol (converted to kJ/mol).
+    The minimum, ``-epsilon``, is at ``r = sigma`` with a linear N-H···O.
+
+    Donors (N, H) and acceptors (O) are collected per residue: a selected
+    residue is a donor if it has atoms named N and H, and an acceptor if it
+    has an atom named O, so a residue missing one of them does not shift the
+    others. Interactions are cut off at 0.45 nm, using periodic distances
+    (``CutoffPeriodic``) when the system is periodic and ``CutoffNonPeriodic``
+    otherwise. No force is added if there are no donors or no acceptors.
 
     Args:
         system (System): OpenMM ``System`` object to which the hydrogen bond
                          force will be added.
         top (Topology): OpenMM ``Topology`` object used to identify N, H, and O
                         atoms and their residue indices.
-        res_list (list of int): Residue indices to include in the in-register
-                                hydrogen bond network.
-        age (float, optional): Aging strength scaling factor applied to the
-                               hydrogen bond energy (in kcal/mol). A value of
-                               ``1.0`` corresponds to 1 kcal/mol per bond.
-                               Default is ``1.0``.
+        res_list (list of int): Residue numbers (``residue.id``) to include in
+                                the in-register hydrogen bond network.
+        age (float, optional): Hydrogen bond well depth ``epsilon`` in kcal/mol.
+                               A value of ``1.0`` corresponds to 1 kcal/mol per
+                               bond. Default is ``1.0``.
 
     Returns:
-        System: The modified OpenMM ``System`` object with the
+        System: The same ``System`` object, modified in place, with the
                 ``inRegister HBForce`` added.
 
     Example:
@@ -91,18 +101,18 @@ def inRegisterHB(system, top, res_list, age=1.0):
     #    if force.getName() == "NonbondedForce":
     #        nbforce = force
 
-    Ns, Hs, Os = [], [], []
-    for atom in top.atoms():
-        resid = int(atom.residue.id)
-        if atom.residue.name != 'PRO' and resid in res_list:
-            if atom.name == "N":
-                Ns.append([int(atom.index), resid])
-            if atom.name == "H":
-                Hs.append([int(atom.index), resid])
-            if atom.name == "O":
-                Os.append([int(atom.index), resid])
+    donors, acceptors = [], []      # (N, H, resid, residue index) and (O, resid, residue index)
+    for residue in top.residues():
+        resid = int(residue.id)
+        if residue.name == 'PRO' or resid not in res_list:
+            continue
+        names = {atom.name: atom.index for atom in residue.atoms()}
+        if 'N' in names and 'H' in names:
+            donors.append((names['N'], names['H'], resid, residue.index))
+        if 'O' in names:
+            acceptors.append((names['O'], resid, residue.index))
 
-    if len(Ns) != 0:
+    if donors and acceptors:
         sigma_hb = 0.29*unit.nanometer
         eps_hb = age*unit.kilocalorie_per_mole
         # cond = delta(adi); adi=di-ai; if resid is same, cond=1, else cond=0
@@ -113,14 +123,22 @@ def inRegisterHB(system, top, res_list, age=1.0):
                 """
         inRegHB = CustomHbondForce(formula)
         inRegHB.setName('inRegister HBForce')
-        #inRegHB.setNonbondedMethod(nbforce.getNonbondedMethod())
+        if system.usesPeriodicBoundaryConditions():
+            inRegHB.setNonbondedMethod(CustomHbondForce.CutoffPeriodic)
+        else:
+            inRegHB.setNonbondedMethod(CustomHbondForce.CutoffNonPeriodic)
         inRegHB.setCutoffDistance(0.45*unit.nanometers)
         inRegHB.addPerDonorParameter("di")  # resid for donor
         inRegHB.addPerAcceptorParameter("ai")  # resid for acceptor
-        for idx in range(len(Hs)):
-            inRegHB.addDonor(Ns[idx][0], Hs[idx][0], -1, [Hs[idx][1],])
-            inRegHB.addAcceptor(Os[idx][0], -1, -1, [Hs[idx][1],])
-            inRegHB.addExclusion(idx, idx)
+        for n, h, resid, _ in donors:
+            inRegHB.addDonor(n, h, -1, [resid])
+        for o, resid, _ in acceptors:
+            inRegHB.addAcceptor(o, -1, -1, [resid])
+        # exclude the donor and acceptor of the same residue
+        acceptor_of = {res_idx: k for k, (_, _, res_idx) in enumerate(acceptors)}
+        for k, (_, _, _, res_idx) in enumerate(donors):
+            if res_idx in acceptor_of:
+                inRegHB.addExclusion(k, acceptor_of[res_idx])
         
         system.addForce(inRegHB)
     return system

@@ -1,40 +1,53 @@
 """
-De novo iConRNA coarse-grained RNA/DNA structure generation from sequence.
+De novo coarse-grained iConRNA/iConDNA, polyphosphate and PEG chain builder.
 
-This module builds iConRNA coarse-grained RNA and DNA PDB files directly from a
-single-letter nucleotide sequence, without requiring an all-atom input
-structure. Each nucleotide is placed sequentially using a fixed set of
-reference bead coordinates that define the iConRNA bead topology, and
-residues are stacked along the z-axis with a 3.63 Å rise per step,
-producing a canonical A-form–like helical geometry.
+This module writes coarse-grained PDB files directly from a sequence or a
+chain length, without requiring an all-atom input structure:
 
-Bead topology
+* :func:`build_rna` / :func:`build_dna` -- iConRNA / iConDNA nucleic acids.
+* :func:`build_polyP` -- polyphosphate, one ``PHO`` bead (atom ``P``) per unit.
+* :func:`build_peg` -- PEG/PEO, one ``EO`` bead (residue ``PEG``) per unit.
+
+All chains start at (9000, 9000, 9000) Å and are written in chain ``X``.
+
+Nucleic acids
 -------------
 Reference bead coordinates are stored in the ``maps`` dictionary, keyed
 by single-letter nucleotide code. Purines (A, G) carry seven beads
 (P, C1, C2, NA, NB, NC, ND); pyrimidines (C, U, T) carry six
-(P, C1, C2, NA, NB, NC). Three-letter residue names follow the iConRNA
-convention:
+(P, C1, C2, NA, NB, NC). Residue names are ADE, GUA, CYT, URA (RNA,
+segment ID ``RNA``) and DA, DG, DC, DT (DNA, segment ID ``DNA``).
 
-  RNA: ADE, GUA, CYT, URA
-  DNA: DAD, DGU, DCY, DTH
+Placement is translation only: each template is shifted so that its P
+bead sits at the anchor point, and the next anchor is the current
+residue's C1 bead shifted by +3.63 Å along z. The result is a simple
+stacked, non-helical starting conformation meant to be relaxed by
+simulation. The sequence is validated (:func:`_validate_sequence`) before
+the file is opened.
 
-Build pipeline
---------------
-The top-level functions :func:`build_rna` (RNA) and :func:`build_dna` (DNA)
-orchestrate the full workflow:
+Polymers
+--------
+:func:`build_polyP` and :func:`build_peg` generate self-avoiding random
+chains (see their docstrings for bond lengths, angles and exclusion
+distances); pass ``seed`` for reproducible coordinates.
 
-1. Validate the sequence against the allowed nucleotide alphabet.
-2. Iterate over the sequence and load the reference bead layout for each
-   nucleotide (:func:`readRNAmap` / :func:`readDNAmap`).
-3. Translate the new residue so that its P bead aligns with the reference
-   anchor point, which advances by 3.63 Å along z after each residue
-   (:func:`transform`).
-4. Accumulate all transformed beads and write the output PDB with iConRNA
-   REMARK headers.
+Command line
+------------
+:func:`main` is registered as the ``iconbuilder`` entry point::
 
-A command-line interface is exposed via :func:`main` and registered as
-the ``iconbuilder`` entry point.
+    iconbuilder NAME SEQ
+
+``SEQ`` selects the molecule type (output ``NAME.pdb``):
+
+* RNA: letters A/U/C/G (any case), e.g. ``AUCGAUCG``, or repeat shorthand
+  ``<motif><count>`` such as ``A100`` or ``CAG50``. The count is the total
+  number of nucleotides (the motif is repeated and truncated to that length).
+* DNA: lowercase ``d`` prefix, e.g. ``dATCG``, ``dA100``.
+* polyP: ``P<count>``, e.g. ``P10``.
+* PEG: ``EO<count>``, e.g. ``EO20``.
+
+All files carry an ``REMARK  iConRNA`` header line (also for DNA, polyP
+and PEG) plus a ``REMARK  SEQUENCE`` line.
 
 Reference
 ---------
@@ -114,6 +127,15 @@ def _validate_name(name):
 
 
 def printcg(atoms, file):
+    """Write atoms as fixed-column PDB ``ATOM`` records.
+
+    Args:
+        atoms (list[list]): Each atom is ``[record, serial, name, resname,
+            chain, resid, x, y, z, occupancy, bfactor, segid]``. Atom names
+            are right-aligned in two characters (columns 13-14), so names
+            longer than two characters shift the following columns.
+        file: Open, writable text file object.
+    """
     for atom in atoms:
         file.write('{}  {:5d} {:>2}   {} {}{:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}      {:<4}\n'.format(
             atom[0], int(atom[1]), atom[2], atom[3], atom[4], int(atom[5]),
@@ -121,6 +143,18 @@ def printcg(atoms, file):
 
 
 def readRNAmap(seq):
+    """Return the iConRNA template beads for one RNA nucleotide.
+
+    Args:
+        seq (str): Upper-case nucleotide code, one of ``A``, ``G``, ``C``, ``U``.
+
+    Returns:
+        list[list]: Atom records in :func:`printcg` layout with residue names
+        ADE/GUA/CYT/URA, chain ``X``, resid 1 and segment ID ``RNA``.
+
+    Raises:
+        KeyError: If *seq* is not a supported RNA nucleotide.
+    """
     atoms = []
     nos = {'A': 'ADE', 'G': 'GUA', 'C': 'CYT', 'U': 'URA'}
     for index, name, rx, ry, rz in maps[seq]:
@@ -130,6 +164,19 @@ def readRNAmap(seq):
 
 
 def readDNAmap(seq):
+    """Return the iConDNA template beads for one DNA nucleotide.
+
+    Args:
+        seq (str): Upper-case nucleotide code, one of ``A``, ``G``, ``C``, ``T``.
+
+    Returns:
+        list[list]: Atom records in :func:`printcg` layout with residue names
+        DA/DG/DC/DT (written right-aligned as ``' DA'`` etc.), chain ``X``,
+        resid 1 and segment ID ``DNA``.
+
+    Raises:
+        KeyError: If *seq* is not a supported DNA nucleotide.
+    """
     atoms = []
     nos = {'A': ' DA', 'G': ' DG', 'C': ' DC', 'T': ' DT'}
     for index, name, rx, ry, rz in maps[seq]:
@@ -139,6 +186,15 @@ def readDNAmap(seq):
 
 
 def transform(ref, atoms):
+    """Translate *atoms* in place so that the first atom (P) lies at *ref*.
+
+    Args:
+        ref (list[float]): Target (x, y, z) in Å.
+        atoms (list[list]): Atom records in :func:`printcg` layout.
+
+    Returns:
+        list[list]: The same, modified *atoms* list.
+    """
     refx, refy, refz = ref[0], ref[1], ref[2]
     Px, Py, Pz = atoms[0][6], atoms[0][7], atoms[0][8]
     dx, dy, dz = Px - refx, Py - refy, Pz - refz
@@ -150,7 +206,20 @@ def transform(ref, atoms):
 
 
 def _build(name, sequence, map_func, molecule):
-    """Shared build core used by build_rna and build_dna."""
+    """Shared build core used by :func:`build_rna` and :func:`build_dna`.
+
+    Upper-cases and validates *sequence*, then writes ``<name>.pdb`` (see the
+    module docstring for the placement scheme).
+
+    Args:
+        name (str): Output file stem; must not be empty.
+        sequence (str): Nucleotide sequence (any case).
+        map_func (callable): :func:`readRNAmap` or :func:`readDNAmap`.
+        molecule (str): ``'RNA'`` or ``'DNA'``; selects the allowed alphabet.
+
+    Raises:
+        ValueError: If *name* is empty or *sequence* contains invalid bases.
+    """
     _validate_name(name)
     sequence = sequence.upper()
     valid = _VALID_RNA if molecule == 'RNA' else _VALID_DNA
@@ -182,11 +251,13 @@ def build_rna(name, sequence):
     """
     Build an iConRNA coarse-grained RNA structure from a nucleotide sequence.
 
-    Each residue is placed sequentially by mapping its nucleotide type onto a
-    set of reference bead coordinates (P, C1, C2, NA, NB, NC, and ND for purines).
-    Residues are stacked along the z-axis with a 3.63 Å rise per residue.
-    The sequence is validated before any file is written. The finished structure
-    is written as a PDB file with iConRNA REMARK headers.
+    Each residue is placed by translating a fixed template of reference beads
+    (P, C1, C2, NA, NB, NC, plus ND for purines) so that its P bead sits 3.63 Å
+    above (+z) the previous residue's C1 bead; the first P is placed at
+    (9000, 9000, 9000) Å. No rotation is applied, so the chain is a simple
+    stacked, non-helical starting model. The sequence is validated before any
+    file is written. The structure is written with iConRNA REMARK headers
+    (including the sequence) in chain X.
 
     Args:
         name (str): Stem of the output file. The PDB is written to ``<name>.pdb``.
@@ -195,7 +266,9 @@ def build_rna(name, sequence):
             Case-insensitive. Supported nucleotides: ``A``, ``U``, ``C``, ``G``.
 
     Returns:
-        None. Writes a PDB file to ``<name>.pdb`` in the current working directory.
+        None. Writes ``<name>.pdb`` (relative to the current working directory
+        unless *name* contains a path). Residue names ADE/GUA/CYT/URA, segment
+        ID ``RNA``.
 
     Raises:
         ValueError: If *name* is empty or *sequence* contains unsupported bases.
@@ -212,14 +285,16 @@ def build_dna(name, sequence):
     """
     Build an iConRNA coarse-grained DNA structure from a nucleotide sequence.
 
-    Each residue is placed sequentially by mapping its nucleotide type onto a
-    set of reference bead coordinates (P, C1, C2, NA, NB, NC, and ND for purines).
-    Residues are stacked along the z-axis with a 3.63 Å rise per residue.
-    The sequence is validated before any file is written. The finished structure
-    is written as a PDB file with iConRNA REMARK headers.
+    Each residue is placed by translating a fixed template of reference beads
+    (P, C1, C2, NA, NB, NC, plus ND for purines) so that its P bead sits 3.63 Å
+    above (+z) the previous residue's C1 bead; the first P is placed at
+    (9000, 9000, 9000) Å. No rotation is applied, so the chain is a simple
+    stacked, non-helical starting model. The sequence is validated before any
+    file is written. The structure is written with iConRNA REMARK headers
+    (including the sequence) in chain X.
 
-    Three-letter residue names follow the iConRNA DNA convention:
-    DAD (A), DGU (G), DCY (C), DTH (T).
+    Residue names are DA, DG, DC, DT (segment ID ``DNA``), matching
+    ``top_DNA_mix.inp``.
 
     Args:
         name (str): Stem of the output file. The PDB is written to ``<name>.pdb``.
@@ -245,16 +320,21 @@ def build_polyP(name, n, seed=None):
     """
     Build a poly-phosphate (polyP) coarse-grained structure of n residues.
 
-    Each residue is a single PHO bead (P). Beads are placed via a random walk
-    so that every P-P bond is exactly 2.7 Å but the chain is non-linear.
-    The step direction is drawn uniformly from the unit sphere, giving a
-    realistic disordered conformation with a general +z propagation and 
-    P-P-P angles strictly > 90°.
-    
-    Self-Avoiding Constraint: Excluded volume is enforced by ensuring any 
-    non-adjacent bead pair maintains a distance strictly greater than 4.0 Å. 
-    (Note: A 5.0 Å limit is not used here because the P-P bond is only 2.7 Å; 
-    a 5.0 Å constraint would physically force all bond angles to be > 135°).
+    Each residue is a single bead (residue PHO, atom name P, segment ID
+    ``S001``), starting at (9000, 9000, 9000) Å. Beads are placed by a random
+    walk with every P-P bond exactly 2.7 Å. Each step direction is a random
+    unit vector, accepted only if its z component is positive (the chain
+    always advances along +z) and, after the first step, if it makes an
+    angle < 90° with the previous step (i.e. P-P-P angle > 90°).
+
+    Self-avoiding constraint: a new bead is rejected if it lies within
+    4.0 Å (inclusive) of any earlier bead other than its bonded predecessor.
+    Up to 50 placements are tried per bead; if all fail, the whole chain is
+    restarted (at most 1000 restarts). (A 5.0 Å limit is not used because
+    with a 2.7 Å bond it would force all bond angles to be > 135°.)
+
+    The PDB has ``REMARK  iConRNA``, ``REMARK  CREATE BY HyResBuilder`` and
+    ``REMARK  SEQUENCE: PHO x<n>`` headers (no reference line).
 
     Args:
         name (str): Stem of the output file. The PDB is written to ``<name>.pdb``.
@@ -268,7 +348,7 @@ def build_polyP(name, n, seed=None):
 
     Raises:
         ValueError: If *name* is empty or *n* < 1.
-        RuntimeError: If a collision-free chain cannot be generated.
+        RuntimeError: If no collision-free chain is found within 1000 restarts.
 
     Example:
         >>> from HyresBuilder import iConBuilder
@@ -289,7 +369,10 @@ def build_polyP(name, n, seed=None):
     rng = random.Random(seed)
 
     def random_unit_vector():
-        """Uniform random direction on the unit sphere (Marsaglia method)."""
+        """Random unit vector: (x, y) uniform in the unit disk, z = +/-sqrt(1-x^2-y^2).
+
+        Note: this is not uniform on the sphere (density is biased toward the poles).
+        """
         while True:
             x = rng.uniform(-1, 1)
             y = rng.uniform(-1, 1)
@@ -299,7 +382,7 @@ def build_polyP(name, n, seed=None):
             return x, y, z
 
     def next_direction(prev_dir):
-        """Return a candidate random unit vector satisfying local angle constraints."""
+        """Draw random unit vectors until one has z > 0 and, if *prev_dir* is given, a positive dot product with it."""
         while True:
             d = random_unit_vector()
             if d[2] <= 0:                              # must go +z
@@ -311,7 +394,7 @@ def build_polyP(name, n, seed=None):
             return d
 
     def generate_chain():
-        """Generates the chain, restarting if it gets trapped in a steric clash."""
+        """Build the bead coordinates, restarting the whole chain (up to 1000 times) when a bead cannot be placed in 50 tries."""
         max_restarts = 1000
         for attempt in range(max_restarts):
             x, y, z = 9000.0, 9000.0, 9000.0
@@ -370,13 +453,21 @@ def build_peg(name, n, seed=None):
     """
     Build a poly(ethylene glycol) (PEG) coarse-grained structure of n repeat units.
 
-    Each repeat unit is represented by a single EO bead (residue name PEG,
-    bead name EO). The chain is built as a freely-rotating chain (FRC): every
-    EO-EO bond is exactly 3.5 Å and every EO-EO-EO bond angle is fixed at
-    exactly 123°, matching the C-C-O / C-O-C backbone geometry of PEG.
-    
-    Self-Avoiding Constraint: Any non-adjacent bead pair is guaranteed to have 
-    a distance strictly greater than 0.5 nm (5.0 Å).
+    Each repeat unit is represented by a single bead (residue PEG, atom name EO,
+    segment ID ``PEG``), matching ``RESI PEG`` in ``top_polymer.inp``. The chain
+    starts at (9000, 9000, 9000) Å with a random first bond direction and is
+    built as a freely-rotating chain: every EO-EO bond is exactly 3.5 Å, every
+    EO-EO-EO angle is exactly 123°, and each torsion is drawn uniformly from
+    [0, 2π). (Note: the force-field bond b0 in ``param_polymer.inp`` is 3.60 Å;
+    the angle matches its 123° theta0.)
+
+    Self-avoiding constraint: a new bead is rejected if it lies within 5.0 Å
+    (inclusive) of any earlier bead other than its bonded predecessor, so all
+    non-adjacent pairs end up > 5.0 Å apart. Up to 50 torsions are tried per
+    bead; if all fail, the whole chain is restarted (at most 1000 restarts).
+
+    The PDB carries ``REMARK  iConRNA`` / ``CREATE BY RNABUILDER`` / reference
+    headers and ``REMARK  SEQUENCE: PEG x<n>``.
 
     Args:
         name (str): Stem of the output file. The PDB is written to ``<name>.pdb``.
@@ -390,7 +481,12 @@ def build_peg(name, n, seed=None):
 
     Raises:
         ValueError: If *name* is empty or *n* < 1.
-        RuntimeError: If a collision-free chain cannot be generated.
+        RuntimeError: If no collision-free chain is found within 1000 restarts.
+
+    Example:
+        >>> from HyresBuilder import iConBuilder
+        >>> iConBuilder.build_peg("peg20", 20, seed=1)
+        # output: peg20.pdb
     """
     import math
     import random
@@ -409,7 +505,10 @@ def build_peg(name, n, seed=None):
     rng = random.Random(seed)
 
     def random_unit_vector():
-        """Uniform random direction on the unit sphere (Marsaglia method)."""
+        """Random unit vector: (x, y) uniform in the unit disk, z = +/-sqrt(1-x^2-y^2).
+
+        Note: this is not uniform on the sphere (density is biased toward the poles).
+        """
         while True:
             x = rng.uniform(-1, 1)
             y = rng.uniform(-1, 1)
@@ -419,7 +518,7 @@ def build_peg(name, n, seed=None):
             return (x, y, z)
 
     def perp_vector(v):
-        """Return an arbitrary unit vector perpendicular to v."""
+        """Return a unit vector perpendicular to v (v x z-axis; undefined if v is parallel to z)."""
         ax = (0.0, 0.0, 1.0) if abs(v[0]) < 0.9 or abs(v[1]) < 0.9 else (1.0, 0.0, 0.0)
         cx = v[1] * ax[2] - v[2] * ax[1]
         cy = v[2] * ax[0] - v[0] * ax[2]
@@ -428,7 +527,7 @@ def build_peg(name, n, seed=None):
         return (cx / norm, cy / norm, cz / norm)
 
     def next_bond(prev_bond):
-        """Return a unit vector for the next bond."""
+        """Return the next bond unit vector at 57 deg to *prev_bond* (123 deg bond angle) with a uniform random torsion."""
         p1 = perp_vector(prev_bond)
         p2 = (
             prev_bond[1] * p1[2] - prev_bond[2] * p1[1],
@@ -444,7 +543,7 @@ def build_peg(name, n, seed=None):
         return (nx, ny, nz)
 
     def generate_chain():
-        """Generates the chain, restarting if it gets trapped in a steric clash."""
+        """Build the bead coordinates, restarting the whole chain (up to 1000 times) when a bead cannot be placed in 50 tries."""
         max_restarts = 1000
         for attempt in range(max_restarts):
             x, y, z = 9000.0, 9000.0, 9000.0
@@ -504,7 +603,30 @@ def build_peg(name, n, seed=None):
 
 
 def main():
-    """Command-line interface"""
+    """Command-line interface (``iconbuilder`` entry point).
+
+    Usage::
+
+        iconbuilder NAME SEQ
+
+    *SEQ* is interpreted in this order:
+
+    1. Starts with lowercase ``d`` followed by a letter: DNA. The rest is
+       upper-cased; ``<motif><count>`` (e.g. ``dA100``, ``dATCG20``) expands to
+       *count* nucleotides by repeating the motif and truncating.
+    2. ``<letters><count>``: ``P``/``p`` gives :func:`build_polyP` with *count*
+       beads, ``EO`` (any case) gives :func:`build_peg` with *count* beads,
+       anything else is an RNA motif repeated and truncated to *count*
+       nucleotides (e.g. ``A100``, ``CAG50``).
+    3. Letters only: RNA sequence (upper-cased).
+
+    Writes ``NAME.pdb`` and prints a confirmation. Builders are called with
+    their default ``seed=None``.
+
+    Raises:
+        ValueError: If *SEQ* matches none of the forms above, or the chosen
+            builder rejects it (e.g. invalid nucleotide letters).
+    """
 
     parser = argparse.ArgumentParser(description='NABuilder: build iConRNA/iConDNA from sequence')
     parser.add_argument('name', type=str, help='output name stem, produces name.pdb')

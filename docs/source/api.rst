@@ -10,9 +10,11 @@ API Reference
    api/GenPsf
    api/FFs
    api/utils
+   api/Metabolome
    api/Mutator
    api/Restraints
    api/addRestraints
    api/Rigid
+   api/Relax
    api/Aging
    api/USampling

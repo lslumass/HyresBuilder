@@ -9,18 +9,24 @@ frozen or tethered during equilibration and production runs.
 
 Restraint types provided
 ------------------------
-* **CA positional restraints** — harmonic springs on Cα atoms, selectable by
-  residue index (:func:`posres_CA`) or by explicit atom index (:func:`posres_CAs`).
+* **Positional restraints** — harmonic springs on CA atoms selected by
+  residue number (:func:`posres_CAs`), or on arbitrary atoms selected by
+  atom index (:func:`posres`). These use the plain (non-periodic)
+  displacement from the reference position.
 * **Amyloid-aware restraints** — automatically identify the structured fibril
   core from a MODELLER ``alignment.ali`` file and apply either positional
   restraints (:func:`posre_amyloid`) or full-atom freezing via zero mass
   (:func:`freeze_amyloid`).
 * **COM restraints** — restrain the center of mass of a group of atoms in all
   three dimensions (:func:`comres_xyz`) or within a user-specified 2D plane,
-  leaving the remaining axis free (:func:`comres_2d`).
+  leaving the remaining axis free (:func:`comres_2d`). For periodic systems
+  the COM offset uses the minimum-image convention of the System's default
+  (orthorhombic) box.
 
-All forces are added directly to the provided ``openmm.System`` object in place
-and are compatible with periodic boundary conditions where applicable.
+All forces are added directly to the provided ``openmm.System`` object in
+place, so these functions must be called before the ``Context``/``Simulation``
+is created (with :func:`HyresBuilder.utils.setup`, use its ``modification``
+hook). Energies have no factor 1/2: U = k * |Δr|².
 
 Dependencies
 ------------
@@ -39,24 +45,30 @@ def posres_CAs(system, pdb, residue_list=None, limited_range=None, kpos=200.0):
     """
     Apply positional restraints to CA atoms selected by residue index.
 
-    Adds a harmonic ``CustomExternalForce`` that restrains each selected CA atom
-    to its reference position in the PDB file with a spring constant of
-    200 kJ/mol/nm². Restraints can be further filtered to a specific atom index
-    range using ``limited_range``.
+    Adds a harmonic ``CustomExternalForce``
+    ``kpos*((x-x0)^2+(y-y0)^2+(z-z0)^2)`` (no factor 1/2, no periodic
+    wrapping) that restrains each selected CA atom to its reference position
+    in the PDB file. Residues are matched by ``int(atom.residue.id)`` (the
+    residue number in the file, not the 0-based residue index). Restraints can
+    be further filtered to an atom index range using ``limited_range``.
 
     Args:
         system (System): OpenMM ``System`` object to which the restraint force
                          will be added.
         pdb (PDBFile): OpenMM ``PDBFile`` object providing topology and reference
                        positions (e.g. ``PDBFile('conf.pdb')``).
-        residue_list (list of int, optional): Residue indices to restrain.
-                                              If ``None``, no atoms are restrained.
+        residue_list (list of int): Residue numbers to restrain. Despite the
+                                    ``None`` default it is required; ``None``
+                                    raises TypeError.
         limited_range (tuple of int, optional): ``(min_index, max_index)`` atom
-                                                index range. Only CA atoms within
-                                                this range are restrained.
-                                                If ``None``, all CA atoms in
-                                                ``residue_list`` are restrained.
-        kpos (float, optional): Spring constant for the positional restraints in kJ/mol/nm². Default is 200.0.
+                                                index range. Only CA atoms with
+                                                ``min_index < index < max_index``
+                                                (both bounds exclusive) are
+                                                restrained. If ``None``, the
+                                                range is ``(0, n_atoms)``, which
+                                                also excludes atom 0.
+        kpos (float, optional): Spring constant (global parameter ``kpos``) in
+                                kJ/mol/nm². Default is 200.0.
 
     Returns:
         None. Modifies ``system`` in place by adding a ``Ca_position_restraint``
@@ -94,12 +106,15 @@ def posres_CAs(system, pdb, residue_list=None, limited_range=None, kpos=200.0):
 
 def posres(system, pdb, grp, kpos=200.0):
     """
-    Apply positional restraints to CA atoms selected by atom index.
+    Apply positional restraints to atoms selected by atom index.
 
-    Adds a harmonic ``CustomExternalForce`` that restrains each atom in ``grp``
-    to its reference position in the PDB file with a spring constant of
-    200 kJ/mol/nm². Use this function when you already know the exact atom
-    indices to restrain, rather than selecting by residue ID.
+    Adds a harmonic ``CustomExternalForce``
+    ``kpos*((x-x0)^2+(y-y0)^2+(z-z0)^2)`` (no factor 1/2, no periodic
+    wrapping) that restrains each atom in ``grp`` (any atom, not only CA) to
+    its reference position in the PDB file. Use this function when you already
+    know the exact atom indices to restrain, rather than selecting by residue
+    ID. It shares the global parameter name ``kpos`` with :func:`posres_CAs`,
+    so both may be used in one System only with the same ``kpos``.
 
     Args:
         system (System): OpenMM ``System`` object to which the restraint force
@@ -107,7 +122,8 @@ def posres(system, pdb, grp, kpos=200.0):
         pdb (PDBFile): OpenMM ``PDBFile`` object providing topology and reference
                        positions (e.g. ``PDBFile('conf.pdb')``).
         grp (list of int): Atom indices to restrain.
-        kpos (float, optional): Spring constant for the positional restraints in kJ/mol/nm². Default is 200.0.
+        kpos (float, optional): Spring constant (global parameter ``kpos``) in
+                                kJ/mol/nm². Default is 200.0.
 
     Returns:
         None. Modifies ``system`` in place by adding a ``Ca_position_restraint``
@@ -117,7 +133,7 @@ def posres(system, pdb, grp, kpos=200.0):
         >>> from openmm.app import PDBFile
         >>> from HyresBuilder import addRestraints
         >>> pdb = PDBFile("conf.pdb")
-        >>> addRestraints.posres_CAs(system, pdb, grp=[0, 5, 10, 15], kpos=300.0)
+        >>> addRestraints.posres(system, pdb, grp=[0, 5, 10, 15], kpos=300.0)
     """
 
     # add restraint
@@ -139,8 +155,12 @@ def posre_amyloid(system, pdb, alignment_file):
 
     Reads an alignment file (``alignment.ali``) to identify which residues are
     present in the fibril core (non-``'-'`` positions in the alignment sequence).
-    Restraints are applied to CA atoms of those residues across all chains using
-    :func:`posres_CAs` with a spring constant of 200 kJ/mol/nm².
+    The sequence lines are those between the first two ``>`` headers, skipping
+    the header and the following structure line and dropping the last line
+    before the second header; one line per chain, compared position by
+    position with the chain's residues. The CA atoms of the core residues are
+    restrained by atom index with :func:`posres` (default spring constant
+    200 kJ/mol/nm²).
 
     Args:
         system (System): OpenMM ``System`` object to which the restraint force
@@ -153,11 +173,12 @@ def posre_amyloid(system, pdb, alignment_file):
 
     Returns:
         None. Modifies ``system`` in place by adding positional restraints via
-        :func:`posres_CAs`.
+        :func:`posres`.
 
     Raises:
         SystemExit: If the number of chains in ``pdb`` does not match the number
-                    of sequence blocks in ``alignment_file``.
+                    of sequence lines in ``alignment_file`` (a message is
+                    printed and ``exit(1)`` is called).
 
     Example:
         >>> from openmm.app import PDBFile
@@ -191,18 +212,20 @@ def posre_amyloid(system, pdb, alignment_file):
                         ca = atom.index
                         grp.append(ca)
      
-    # add position restraint
-    posres_CAs(system, pdb, grp)
+    # add position restraint, grp holds atom indices
+    posres(system, pdb, grp)
 
 def freeze_amyloid(system, pdb, alignment_file):
     """
     Freeze the structured core of an amyloid fibril by setting atom masses to zero.
 
     Reads an ``alignment.ali`` file to identify residues present in the fibril
-    core (non-``'-'`` positions in the alignment sequence). Sets the mass of
-    every atom in those residues to zero, effectively freezing them during
-    simulation. This is cheaper than positional restraints and guarantees no
-    drift of the fibril core.
+    core (non-``'-'`` positions in the alignment sequence; parsed as in
+    :func:`posre_amyloid`). Sets the mass of every atom in those residues to
+    zero; OpenMM integrators do not move zero-mass particles, so the core is
+    fixed in place. This is cheaper than positional restraints and guarantees
+    no drift of the fibril core. Zero-mass particles must not take part in
+    constraints, so build the System without constraints on these atoms.
 
     Args:
         system (System): OpenMM ``System`` object whose particle masses will be
@@ -218,7 +241,8 @@ def freeze_amyloid(system, pdb, alignment_file):
 
     Raises:
         SystemExit: If the number of chains in ``pdb`` does not match the number
-                    of sequence blocks in ``alignment_file``.
+                    of sequence lines in ``alignment_file`` (a message is
+                    printed and ``exit(1)`` is called).
 
     Example:
         >>> from openmm.app import PDBFile
@@ -261,6 +285,15 @@ def _com_offset_expr(system):
     is taken with the minimum-image convention of the orthorhombic box; periodicdistance()
     is not available in CustomCentroidBondForce. For a non-periodic system it is the
     plain difference.
+
+    Only the diagonal of ``system.getDefaultPeriodicBoxVectors()`` is used, and the
+    box lengths are written into the expression as constants when it is built, so
+    later box changes (e.g. a barostat under NPT) are not followed.
+
+    Returns:
+        tuple: ``(definitions, periodic)`` -- the expression fragment defining
+        ``dx; dy; dz`` from ``x1, y1, z1`` and ``cx, cy, cz``, and whether the
+        System is periodic (to pass to ``setUsesPeriodicBoundaryConditions``).
     """
     if not system.usesPeriodicBoundaryConditions():
         return "dx=x1-cx; dy=y1-cy; dz=z1-cz", False
@@ -275,11 +308,28 @@ def comres_xyz(system, pdb, groups):
     """
     Apply a center-of-mass (COM) restraint in all three (x, y, z) dimensions.
 
-    Computes the mass-weighted COM of the selected atoms from their reference
-    positions and adds a ``CustomCentroidBondForce`` that penalizes deviation
-    from that reference COM with a spring constant of 500 kJ/mol/nm². Periodic
-    boundary conditions are enabled. Use this to prevent drift of a molecular
-    group in all directions.
+    Computes the mass-weighted COM of the selected atoms from the PDB
+    positions, using the System's current particle masses (so call it before
+    anything that changes masses, e.g. rigid bodies or freezing), prints it,
+    and adds a ``CustomCentroidBondForce`` named ``COM_xyz_restraint``:
+
+        U = kxyz * (dx^2 + dy^2 + dz^2)      (no factor 1/2)
+
+    where (dx, dy, dz) is the offset of the group's COM from the reference
+    COM (per-bond parameters ``cx, cy, cz``) and ``kxyz`` is a global
+    parameter fixed at 500 kJ/mol/nm². For a periodic System the offset uses
+    the minimum-image convention of the default orthorhombic box (see
+    :func:`_com_offset_expr`) and the force is flagged periodic; otherwise the
+    plain difference is used. Use this to prevent drift of a molecular group
+    in all directions.
+
+    Caveats:
+        * The restrained group should be smaller than half the box in each
+          direction.
+        * The box length is fixed into the expression when the force is
+          created, so it is not suited to NPT (changing box).
+        * Calling it more than once in one System is fine (all calls share
+          ``kxyz`` = 500).
 
     Args:
         system (System): OpenMM ``System`` object to which the restraint force
@@ -329,18 +379,43 @@ def comres_2d(system, dimension, groups, pdb, k=1000):
     """
     Add a 2D harmonic COM restraint to the system, leaving one axis free.
 
+    The reference COM is the mass-weighted COM of ``groups`` from the PDB
+    positions, using the System's current particle masses. The added
+    ``CustomCentroidBondForce`` (named ``'COM_2d_restraint'``) is, e.g. for
+    ``'xy'``:
+
+        U = k2d * (dx^2 + dy^2)      (no factor 1/2)
+
+    with the offsets (dx, dy, dz) from the reference COM computed as in
+    :func:`comres_xyz` (minimum image of the default orthorhombic box for a
+    periodic System, plain difference otherwise). ``k2d`` and the reference
+    ``cx, cy, cz`` are per-bond parameters (the free axis's reference is 0),
+    so several calls in one System, with different groups or ``k``, do not
+    interfere. To change ``k2d`` later, use ``setBondParameters`` and
+    ``updateParametersInContext`` on the returned force.
+
+    Caveats:
+        * The restrained group should be smaller than half the box in each
+          direction.
+        * The box length is fixed into the expression when the force is
+          created, so it is not suited to NPT (changing box).
+
     Parameters
     ----------
-    system    : openmm.System
-    dimension : str — one of 'xy', 'xz', or 'yz'
+    system    : openmm.System — modified in place
+    dimension : str — one of 'xy', 'xz', or 'yz' (case-insensitive)
                 The two axes that are restrained; the third is left free.
     groups    : list[int] — atom indices forming the restrained group
     pdb       : openmm.app.PDBFile — PDB file used to compute the initial COM
-    k         : force constant (default 1000 kJ/mol/nm²)
+    k         : float — force constant in kJ/mol/nm² (default 1000)
 
     Returns
     -------
-    openmm.CustomCentroidBondForce added to system
+    openmm.CustomCentroidBondForce — the force, already added to ``system``.
+
+    Raises
+    ------
+    ValueError if ``dimension`` is not 'xy', 'xz' or 'yz'.
     """
     dimension = dimension.lower()
     if dimension not in ('xy', 'xz', 'yz'):
@@ -374,11 +449,13 @@ def comres_2d(system, dimension, groups, pdb, k=1000):
     # ── Build force ────────────────────────────────────────────────────────────
     offset, periodic = _com_offset_expr(system)
     force_2d = CustomCentroidBondForce(1, f'{expr}; {offset}')
+    force_2d.setName("COM_2d_restraint")
     force_2d.addGroup(groups)
-    force_2d.addGlobalParameter('k2d', k*kilojoule_per_mole/(unit.nanometer**2))
-    for name, value in values.items():
-        force_2d.addGlobalParameter(name, value)
+    force_2d.addPerBondParameter('k2d')
+    for name in ('cx', 'cy', 'cz'):
+        force_2d.addPerBondParameter(name)
     force_2d.setUsesPeriodicBoundaryConditions(periodic)
-    force_2d.addBond([0])
+    force_2d.addBond([0], [k*kilojoule_per_mole/(unit.nanometer**2), values['cx'], values['cy'], values['cz']])
 
     system.addForce(force_2d)
+    return force_2d

@@ -1,69 +1,78 @@
 """
-Force field loading and simulation setup utilities for HyRes and iConRNA systems.
+Force field loading and simulation setup utilities for HyresBuilder.
 
 This module provides the shared infrastructure used across HyresBuilder to
-locate force field files, compute solution-condition parameters, and assemble
-complete OpenMM simulation systems. It serves as the primary entry point for
-constructing production-ready simulations from a PSF/PDB pair and a parameter
-namespace.
+locate bundled force field files, convert custom molecule definitions,
+compute solution-condition parameters, and assemble complete OpenMM
+simulations from a CHARMM PSF/PDB pair and a parameter namespace. It covers
+HyRes proteins, iConRNA/iConDNA nucleic acids, aminoglycosides (AGs),
+metabolites, and coarse-grained polymers. The force field builders themselves
+live in :mod:`HyresBuilder.FFs` (imported here via ``from .FFs import *``).
 
 Force field file resolution
 ---------------------------
-CHARMM topology and parameter files are bundled within the installed
-HyresBuilder package and resolved at runtime via ``importlib.resources``,
-requiring no manual path management. Five models are supported by
-:func:`load_ff`:
+CHARMM topology and parameter files are bundled in the package's
+``forcefield`` directory and resolved at runtime via ``importlib.resources``.
+:func:`load_ff` supports the following model names:
 
 ========== ===============================================================
-Model      Description
+Model      Files
 ========== ===============================================================
-Protein    HyRes coarse-grained protein (``top_hyres_mix`` / ``param_hyres_mix``)
-RNA        iConRNA coarse-grained RNA (``top_RNA_mix`` / ``param_RNA_mix``)
-DNA        iConDNA coarse-grained DNA (``top_DNA_mix`` / ``param_DNA_mix``)
-rG4s       RNA G-quadruplex; uses RNA topology with ``param_rG4s``
-ATP        ATP force field (``top_ATP`` / ``param_ATP``)
+Protein    HyRes protein (``top_hyres_mix`` / ``param_hyres_mix``)
+RNA        iConRNA (``top_RNA_mix`` / ``param_RNA_mix``)
+DNA        iConDNA (``top_DNA_mix`` / ``param_DNA_mix``)
+rG4s       RNA G-quadruplex (``top_RNA_mix`` / ``param_rG4s``)
+ATP        ATP (``top_ATP`` / ``param_ATP``)
+AGs        aminoglycosides, e.g. KAN (``top_AGs`` / ``param_AGs``)
+Metabolite metabolites (``top_metabolome`` / ``param_metabolome``)
+Polymer    CG polymers: QDM (quaternized DMAEMA), BZM (2-phenylethyl
+           methacrylate), PEG/PEO (``top_polymer`` / ``param_polymer``)
 ========== ===============================================================
+
+Custom molecules can be converted from an ``.itp``-style definition into
+CHARMM ``.top``/``.par`` files with :func:`itp2charmm`.
 
 Solution-condition parameters
-------------------------------
-Three helper functions translate experimental solution conditions into the
-physical parameters consumed by the force field:
-
+-----------------------------
 * :func:`cal_er` — temperature-dependent relative dielectric constant of
-  water, fitted to a cubic polynomial.
-* :func:`cal_dh` — Debye–Hückel screening length (nm) from ionic strength
-  and temperature, using the Bjerrum length at the given dielectric.
-* :func:`nMg2lmd` — Mg²⁺-to-lambda conversion: maps a Mg²⁺ concentration
-  (mM) and temperature onto the charge-scaling factor ``lmd`` that modulates
-  Mg²⁺–RNA phosphate interactions. Empirical Hill-function parameters are
-  provided for rA, rU, and CAG RNA contexts, or can be supplied as custom
-  values.
+  water (cubic polynomial in T - 273).
+* :func:`cal_dh` — Debye–Hückel screening length (``Quantity`` in nm) from
+  ionic strength (M) and temperature (K) via the Bjerrum length.
+* :func:`nMg2lmd` / :func:`estimate_lmd` — map a Mg²⁺ concentration onto
+  the factor ``lmd`` that scales Debye–Hückel interactions between RNA/DNA
+  phosphate (``P``) beads and Mg²⁺ (``MG``) ions.
 
-Simulation setup pipeline
---------------------------
-Two setup functions share the same seven-stage pipeline — parse parameters,
-configure PBC, compute force field parameters, load topology files, import
-PSF/PDB, build the custom force field, attach the integrator and barostat —
-and differ only in which force field they target:
+Simulation setup
+----------------
+All setup functions follow the same pipeline — read parameters, configure
+PBC, compute ``er``/``dh``/``lmd``, load topology/parameter files, read
+PSF/PDB, build the custom force field, add a 25-step ``MonteCarloBarostat``
+for NPT, and create a CUDA (mixed precision) ``Simulation`` with positions
+and velocities set. They differ in the builder used and the files loaded:
 
-* :func:`setup` — primary entry point for HyRes protein / iConRNA mixed
-  systems; accepts a rich ``params`` namespace and an optional
-  ``modification`` hook for injecting extra forces after the built-in
-  terms are added.
-* :func:`iConRNA_setup` — specialised setup for original iConRNA systems
-* :func:`rG4s_setup` — specialised setup for rG4 G-quadruplex systems;
-  loads the rG4s parameter file and passes an additional ``ion_type``
-  energy parameter to :func:`rG4sFF.rG4sSystem`.
+* :func:`setup` — general entry point; :func:`FFs.buildSystem`; loads
+  Protein, RNA, DNA, AGs, Metabolite, Polymer (+ optional custom ``.itp``).
+* :func:`setup2` — older argument-style variant; :func:`FFs.buildSystem`;
+  loads Protein, RNA, Polymer.
+* :func:`rG4s_setup` — RNA G-quadruplexes; :func:`FFs.rG4sSystem`; loads
+  Protein, RNA, AGs, Polymer and passes the G–G strength ``GG``.
+* :func:`iConRNA_setup` — original iConRNA model; :func:`FFs.iConRNASystem`;
+  loads ``top_RNA``/``param_RNA`` plus Protein, DNA, AGs, Metabolite, Polymer
+  (+ optional custom ``.itp``).
+* :func:`setupMg` — explicit Mg²⁺/Ca²⁺ systems; :func:`FFs.buildMgSystem`;
+  loads Protein, RNA, AGs, Metabolite, Polymer.
+* :func:`iConDNA_setup` — iConDNA systems; :func:`FFs.iConDNASystem`;
+  loads Protein, DNA, AGs, Metabolite, Polymer.
 
-Both functions return a ``(system, sim)`` tuple with positions and velocities
-initialised, ready for production runs. The CUDA platform is used throughout
-with mixed precision.
+Each returns a ``(system, sim)`` tuple. :func:`crowding_effect` can be
+applied to a built ``System`` (before creating a ``Simulation``) to scale
+the LJ well depth uniformly and mimic crowding.
 
 Dependencies
 ------------
 * `OpenMM <https://openmm.org>`_ (``openmm``, ``openmm.app``, ``openmm.unit``)
 * `NumPy <https://numpy.org>`_ (``numpy``)
-* HyresBuilder submodules: ``FFs``, ``rG4sFF``
+* HyresBuilder submodule: ``FFs``
 """
 
 from importlib.resources import files
@@ -78,8 +87,42 @@ from .FFs import *
 
 def itp2charmm(itp):
     """
-    Parses an ITP file, generates CHARMM-style TOP and PAR content,
-    and writes them to respective files named after the RESI.
+    Convert an ITP-style molecule definition into CHARMM TOP and PAR files.
+
+    The input is split into sections by bracketed upper-case headers
+    (``[ RESI ]``, ``[ ATOM ]``, ``[ BOND ]``, ``[ ANGL ]``, ``[ DIHE ]``,
+    ``[ IMPR ]``); text after ``;`` is ignored and other sections are skipped.
+    Expected fields per line:
+
+    - ``RESI``: residue name (first entry is used; defaults to ``"RESI"``).
+    - ``ATOM``: ``name type charge`` (a ``+`` sign in the charge is stripped).
+    - ``BOND``: ``a1 a2 Kb b0``.
+    - ``ANGL``: ``a1 a2 a3 Ktheta Theta0 [Kub S0]``.
+    - ``DIHE``: ``a1 a2 a3 a4 Kchi n delta``.
+    - ``IMPR``: ``a1 a2 a3 a4 Kpsi n psi0``.
+
+    The TOP file contains ``RESI`` (with the summed charge), ``GROUP``,
+    ``ATOM``, and ``BOND``/``ANGL``/``DIHE``/``IMPR`` connectivity entries.
+    The PAR file contains BOND/THETAS/PHI/IMPHI parameters keyed by atom
+    type, followed by a fixed NONBONDED and NBFIX block for the metabolite
+    bead types (M01–M08, MS1, MS2, MCI, MSO, MSS, MCL, MCF, MBR, SMG).
+    Entries with too few fields are skipped, and entries referencing an
+    unknown atom name print a warning.
+
+    Args:
+        itp (str): Path to the ITP-style input file.
+
+    Returns:
+        None. Side effect: writes ``<RESI>.top`` and ``<RESI>.par`` to the
+        current working directory (overwriting existing files).
+
+    Raises:
+        FileNotFoundError: If ``itp`` does not exist.
+        ValueError: If an atom charge cannot be parsed as a float.
+
+    Example:
+        >>> from HyresBuilder.utils import itp2charmm
+        >>> itp2charmm('ABC.itp')   # writes ABC.top and ABC.par if RESI is ABC
     """
     
     # Read the ITP File
@@ -275,17 +318,22 @@ def load_ff(model: str) -> tuple[str, str]:
                        with a dedicated parameter file (``param_rG4s``)
                      - ``'ATP'`` — ATP force field
                        (``top_ATP`` / ``param_ATP``)
-                     - ``'Polymer'`` — CG polymers such as qPDMAEMA
+                     - ``'AGs'`` — aminoglycosides such as KAN
+                       (``top_AGs`` / ``param_AGs``)
+                     - ``'Metabolite'`` — metabolites
+                       (``top_metabolome`` / ``param_metabolome``)
+                     - ``'Polymer'`` — CG polymers: QDM (quaternized
+                       DMAEMA), BZM (2-phenylethyl methacrylate), PEG/PEO
                        (``top_polymer`` / ``param_polymer``)
 
     Returns:
-        tuple[str, str]: A 2-tuple of absolute paths:
-
-                         - ``top_inp``   — CHARMM topology (``.inp``) file.
-                         - ``param_inp`` — CHARMM parameter (``.inp``) file.
+        tuple[str, str]: ``(top_inp, param_inp)``, the POSIX paths of the
+        CHARMM topology and parameter ``.inp`` files. Existence of the files
+        is not checked.
 
     Raises:
-        SystemExit: If an unsupported model name is provided.
+        SystemExit: If an unsupported model name is provided (prints an
+                    error and calls ``exit(1)``).
 
     Example:
         >>> from HyresBuilder.utils import load_ff
@@ -328,6 +376,35 @@ def load_ff(model: str) -> tuple[str, str]:
     return top_inp, param_inp
 
 def estimate_lmd(cNa, cMg, length, Rg, T):
+    """
+    Roughly estimate the P–Mg²⁺ scaling factor ``lmd`` for an RNA.
+
+    The number of Mg²⁺ bound per phosphate is estimated with an empirical
+    competition model (doi:10.1016/j.bpj.2010.06.029) using the RNA length
+    and compactness relative to ``Rg0 = 0.406*N + 130/(N + 11)``:
+
+        nMg = 0.47 * X / (X + cNa),  X = 10**B * cMg**A
+
+    It is then shifted by ``0.0012*(T - 303)`` and converted to ``lmd`` with
+    the Hill-type mapping ``1.265*(nMg/0.172)**0.625 / (1 + (nMg/0.172)**0.625)``
+    (doi:10.1073/pnas.2504583122; calibrated for er = 20).
+
+    Args:
+        cNa (float): Monovalent salt concentration (same units as ``cMg``;
+                     the example scripts pass mM).
+        cMg (float): Mg²⁺ concentration.
+        length (int): RNA length N (nucleotides).
+        Rg (float): RNA radius of gyration, in the units of the ``Rg0``
+                    reference formula above.
+        T (float): Temperature in Kelvin.
+
+    Returns:
+        float: Estimated ``lmd``.
+
+    Example:
+        >>> from HyresBuilder.utils import estimate_lmd
+        >>> lmd = estimate_lmd(150.0, 5.0, 40, 20.0, 303.0)
+    """
     # imperical estimation of nMg: doi: 10.1016/j.bpj.2010.06.029
     # convert nMg to lmd: https://doi.org/10.1073/pnas.2504583122
     N = length
@@ -344,6 +421,44 @@ def estimate_lmd(cNa, cMg, length, Rg, T):
     return lmd
 
 def nMg2lmd(cMg, T, F=0.0, M=0.0, n=0.0, RNA='rA'):
+    """
+    Convert a Mg²⁺ concentration into the P–Mg²⁺ scaling factor ``lmd``.
+
+    The number of bound Mg²⁺ per phosphate follows a Hill function,
+    ``nMg = F*(cMg/M)**n / (1 + (cMg/M)**n)``, is shifted by
+    ``0.0012*(T - 303)``, and is converted to ``lmd`` with
+    ``1.265*(nMg/0.172)**0.625 / (1 + (nMg/0.172)**0.625)``
+    (doi:10.1073/pnas.2504583122; calibrated for er = 20). ``lmd`` scales
+    only the Debye–Hückel interaction between phosphate (``P``) beads and
+    Mg²⁺ (``MG``) ions.
+
+    Args:
+        cMg (float): Mg²⁺ concentration in mM (same units as ``M``).
+        T (float): Temperature in Kelvin.
+        F (float): Maximum Mg²⁺ bound per phosphate. Only used when ``RNA``
+                   is not a preset. Default ``0.0``.
+        M (float): Half-saturation concentration M_1/2. Only used when
+                   ``RNA`` is not a preset; must be non-zero then.
+                   Default ``0.0``.
+        n (float): Hill coefficient. Only used when ``RNA`` is not a preset.
+                   Default ``0.0``.
+        RNA (str): Preset ``'rA'`` (F, M, n = 0.54, 0.94, 0.59), ``'rU'``
+                   (0.48, 1.31, 0.85) or ``'CAG'`` (0.53, 0.68, 0.28); any
+                   other value uses the supplied ``F``, ``M``, ``n``.
+                   Presets override user-supplied values. Default ``'rA'``.
+
+    Returns:
+        float: ``lmd`` (``0.0`` when ``cMg == 0``).
+
+    Raises:
+        SystemExit: If a non-preset ``RNA`` is given with ``M == 0.0``
+                    (prints an error and calls ``exit(1)``).
+
+    Example:
+        >>> from HyresBuilder.utils import nMg2lmd
+        >>> lmd = nMg2lmd(10.0, 303.0, RNA='rA')
+        >>> lmd = nMg2lmd(10.0, 303.0, F=0.5, M=1.0, n=0.6, RNA='custom')
+    """
     if RNA == 'rA':
         F, M, n = 0.54, 0.94, 0.59
     elif RNA == 'rU':
@@ -367,12 +482,57 @@ def nMg2lmd(cMg, T, F=0.0, M=0.0, n=0.0, RNA='rA'):
 
 # calculate relative dielectric constant at temperature T in K
 def cal_er(T):
+    """
+    Relative dielectric constant of water at temperature ``T``.
+
+    Uses the cubic fit ``87.74 - 0.4008*Td + 9.398e-4*Td**2 - 1.41e-6*Td**3``
+    with ``Td = T - 273``.
+
+    Args:
+        T (float): Temperature in Kelvin.
+
+    Returns:
+        float: Relative dielectric constant (about 76.5 at 303 K).
+    """
     Td = T-273
     er_t = 87.74-0.4008*Td+9.398*10**(-4)*Td**2-1.41*10**(-6)*Td**3
     return er_t
 
 # calculate Debye-Huckel screening length in nm
+DH_NO_SALT = 1.0e4      # nm, Debye-Huckel screening length used for salt-free systems (no screening)
+
+
 def cal_dh(c_ion, T):
+    """
+    Debye–Hückel screening length for a 1:1 salt.
+
+    Computes ``dh = 1/sqrt(8*pi*lB*NA*c_ion*1e-24)`` with the Bjerrum length
+    ``lB = 16710/(er*T)`` nm, where ``er = cal_er(T)`` (the unscaled water
+    dielectric).
+
+    Without salt there is no screening: ``c_ion = 0`` returns ``DH_NO_SALT``
+    (1e4 nm), so ``exp(-r/dh)`` stays above 0.9998 within the 1.8 nm cutoff of
+    the Debye–Hückel force. A finite value is used because ``dh`` is written into
+    OpenMM energy expressions as a number.
+
+    Args:
+        c_ion (float): Ionic strength (salt concentration) in M, >= 0.
+        T (float): Temperature in Kelvin.
+
+    Returns:
+        openmm.unit.Quantity: Screening length in nanometers.
+
+    Raises:
+        ValueError: If ``c_ion`` is negative.
+
+    Example:
+        >>> from HyresBuilder.utils import cal_dh
+        >>> dh = cal_dh(0.15, 303.0)   # ~0.8 nm
+    """
+    if c_ion < 0:
+        raise ValueError(f"Salt concentration must be >= 0, got {c_ion} M.")
+    if c_ion == 0:
+        return DH_NO_SALT*unit.nanometer
     NA = 6.02214076e23          # Avogadro's number
     er = cal_er(T)
     lB = 16710/(er*T)          # Bjerrum length in nm, 16710 = e^2/(4*pi*epsilon_0*k_B) in unit of nm*K
@@ -385,61 +545,73 @@ def cal_dh(c_ion, T):
 
 def setup(params, modification=None):
     """
-    Build and initialize a complete HyRes/iConRNA OpenMM simulation system.
+    Build and initialize a HyRes/iConRNA/iConDNA mixed OpenMM simulation.
 
-    Executes the full setup pipeline in seven stages:
+    General entry point for protein, nucleic acid, AG, metabolite and polymer
+    systems.
 
-    1. Parse simulation parameters from ``params``.
-    2. Configure periodic boundary conditions (PBC) and box vectors.
-    3. Compute force field parameters: temperature-dependent dielectric constant,
-       Debye-Hückel screening length, and Mg²⁺-RNA charge scaling factor (lambda).
-    4. Load CHARMM topology and parameter files for protein and RNA.
-    5. Import coordinates (PDB) and topology (PSF).
-    6. Build the HyRes custom force field via :func:`FFs.buildSystem`.
-    7. Attach the barostat (NPT only), initialize the Langevin integrator, and
-       create the CUDA simulation context with positions and velocities.
+    Pipeline: read ``params``; set up the periodic box (NPT/NVT); compute
+    ``er`` (:func:`cal_er` scaled by ``er_ref/77.6``) and ``dh``
+    (:func:`cal_dh`); load Protein, RNA, DNA, AGs, Metabolite and Polymer
+    files via :func:`load_ff` plus optional custom molecules; read PDB/PSF and
+    call ``psf.createSystem`` (cutoff 1.2 nm, switch 1.1 nm, ``HBonds``
+    constraints, ``CutoffPeriodic`` or ``CutoffNonPeriodic`` for ``'non'``);
+    build the force field with :func:`FFs.buildSystem`; add a
+    ``MonteCarloBarostat`` (every 25 steps) for NPT; create a
+    ``LangevinIntegrator``.
 
     Args:
-        params (argparse.Namespace): Simulation parameter object with the
-                                     following attributes:
+        params (argparse.Namespace): Simulation parameters with attributes:
 
-                                     - ``pdb`` (str) — path to input PDB file.
+                                     - ``pdb`` (str) — path to input PDB file
+                                       (coordinates).
                                      - ``psf`` (str) — path to CHARMM PSF file.
                                      - ``temp`` (float) — temperature in Kelvin.
-                                     - ``salt`` (float) — NaCl concentration in mM.
-                                     - ``lmd`` (float) — lmd for Mg²⁺-RNA interaction.
+                                     - ``salt`` (float) — monovalent salt
+                                       concentration in mM (converted to M for
+                                       :func:`cal_dh`; must be > 0).
+                                     - ``lmd`` (float, optional) — scaling of
+                                       the phosphate(P)–Mg²⁺ Debye–Hückel
+                                       interaction (see :func:`nMg2lmd`);
+                                       defaults to 0 if absent.
                                      - ``ens`` (str) — ensemble: ``'NPT'``,
                                        ``'NVT'``, or ``'non'`` (non-periodic).
-                                     - ``box`` (list of float) — box dimensions
-                                       in nm; one value for cubic, three for
-                                       orthorhombic.
+                                     - ``box`` (list of float) — box lengths
+                                       in nm, one value (cubic) or three
+                                       (orthorhombic); required for NPT/NVT.
                                      - ``dt`` (Quantity) — integration time step.
-                                     - ``er_ref`` (float) — reference dielectric
-                                       used to scale the temperature-dependent er.
-                                     - ``pressure`` (Quantity) — pressure for NPT
-                                       barostat.
+                                     - ``er_ref`` (float) — reference dielectric;
+                                       ``er = cal_er(temp) * er_ref / 77.6``.
+                                     - ``pressure`` (Quantity) — barostat
+                                       pressure (used for NPT only).
                                      - ``friction`` (Quantity) — Langevin friction
                                        coefficient.
                                      - ``gpu_id`` (str) — CUDA device index
                                        (e.g. ``'0'``).
+                                     - ``custom`` (str or None) — required
+                                       attribute; comma-separated names of
+                                       custom molecules. For each name ``X``,
+                                       ``X.itp`` must exist in the working
+                                       directory; it is converted with
+                                       :func:`itp2charmm` and ``X.top`` /
+                                       ``X.par`` are added to the parameter
+                                       set. Falsy values skip this.
 
-        modification (callable, optional): User-defined function that accepts the
-                                           ``System`` object and applies additional
-                                           force modifications. Passed directly to
-                                           :func:`FFs.buildSystem`. Called
-                                           after all built-in forces are added.
-                                           Default is ``None``.
+        modification (callable, optional): Function ``modification(system)``
+                                           passed to :func:`FFs.buildSystem`,
+                                           which calls it after its built-in
+                                           forces are added. Default ``None``.
 
     Returns:
-        tuple:
-            - ``system`` (System) — the fully constructed OpenMM ``System``.
-            - ``sim`` (Simulation) — the initialized ``Simulation`` object with
-              positions and velocities set.
+        tuple: ``(system, sim)`` — the constructed OpenMM ``System`` and a
+        ``Simulation`` on the CUDA platform (mixed precision) with positions
+        set from the PDB and velocities drawn at ``temp``.
 
     Raises:
-        SystemExit: If an unsupported ensemble type is provided, if Mg²⁺ is
-                    specified for a non-periodic system, or if an invalid box
-                    dimension list is given.
+        SystemExit: Printed error and ``exit(1)`` if ``ens`` is not
+                    ``'NPT'``/``'NVT'``/``'non'``, if ``ens == 'non'`` with
+                    non-zero ``lmd``, or if ``box`` does not have 1 or 3
+                    values. Also exits if a custom ``.itp`` file is missing.
 
     Example:
         >>> from HyresBuilder.utils import setup
@@ -584,25 +756,35 @@ def setup(params, modification=None):
 
 def setup2(args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picosecond, gpu_id="0"):
     """
-    Set up the simulation system with given parameters.
-    Parameters:
-    -----------
-    args: argparse.Namespace
-        The command line arguments containing simulation parameters.
-    dt: float
-        The time step for the integrator.
-    pressure: unit.Quantity
-        The pressure for the MonteCarloBarostat (default is 1 atm).
-    friction: unit.Quantity
-        The friction coefficient for the Langevin integrator (default is 0.1 / ps).
-    gpu_id: str
-        The GPU device index to use (default is "0").
+    Older argument-style variant of :func:`setup` (HyRes/iConRNA + polymers).
+
+    Loads Protein, RNA and Polymer files only, uses a fixed reference
+    dielectric (``er = cal_er(temp) * 60.0 / 77.6``), builds the force field
+    with :func:`FFs.buildSystem` (no ``modification`` hook), adds a 25-step
+    ``MonteCarloBarostat`` for NPT, and uses a ``LangevinMiddleIntegrator``
+    on CUDA (mixed precision). Cutoff 1.2 nm, switch 1.1 nm.
+
+    Args:
+        args (argparse.Namespace): Must provide ``pdb``, ``psf``, ``temp`` (K),
+            ``salt`` (mM), ``Mg``, ``ens`` (``'NPT'``/``'NVT'``/``'non'``) and,
+            for NPT/NVT, ``box`` (1 or 3 lengths in nm). Note: ``args.Mg`` is
+            passed directly as the P–Mg²⁺ scaling factor ``lmd``.
+        dt (Quantity): Integration time step.
+        lmd (float): Unused; overridden by ``args.Mg``. Default ``0``.
+        pressure (Quantity): Barostat pressure for NPT. Default 1 atm.
+        friction (Quantity): Langevin friction. Default 0.1/ps.
+        gpu_id (str): CUDA device index. Default ``"0"``.
+
     Returns:
-    --------
-    system: openmm.System
-        The constructed OpenMM system.
-    sim: openmm.app.Simulation
-        The OpenMM simulation object.
+        tuple: ``(system, sim)`` — the constructed OpenMM ``System`` and a
+        ``Simulation`` on the CUDA platform (mixed precision) with positions
+        set from the PDB and velocities drawn at ``args.temp``.
+
+    Raises:
+        SystemExit: Printed error and ``exit(1)`` if ``ens`` is not
+                    ``'NPT'``/``'NVT'``/``'non'``, if ``ens == 'non'`` with
+                    non-zero ``args.Mg``, or if ``box`` does not have 1 or 3
+                    values.
     """
 
     print('\n################## set up simulation parameters ###################')
@@ -707,9 +889,69 @@ def setup2(args, dt, lmd=0, pressure=1*unit.atmosphere, friction=0.1/unit.picose
 
 def rG4s_setup(params, GG=3.0, modification=None):
     """
-    Set up the rG4s simulation system with given parameters.
-    GG: float, the strength of G-G pair interaction in unit.kilocalorie_per_mole, default is 3.0 kcal/mol,
-        adjust this value to fit the experimental Tm under different conditions.
+    Build and initialize an RNA G-quadruplex (rG4) OpenMM simulation.
+
+    Pipeline: read ``params``; set up the periodic box (NPT/NVT); compute
+    ``er`` (:func:`cal_er` scaled by ``er_ref/77.6``) and ``dh``
+    (:func:`cal_dh`); load RNA, Protein, AGs and Polymer files via
+    :func:`load_ff`; read PDB/PSF and call ``psf.createSystem`` (cutoff 1.2
+    nm, switch 1.1 nm, ``HBonds`` constraints, ``CutoffPeriodic`` or
+    ``CutoffNonPeriodic`` for ``'non'``); build the force field with
+    :func:`FFs.rG4sSystem`; add a ``MonteCarloBarostat`` (every 25 steps) for
+    NPT; create a ``LangevinMiddleIntegrator``. Note that the ``'RNA'`` files
+    (``param_RNA_mix``) are loaded, not ``param_rG4s``.
+
+    Args:
+        params (argparse.Namespace): Simulation parameters with attributes:
+
+                                     - ``pdb`` (str) — path to input PDB file
+                                       (coordinates).
+                                     - ``psf`` (str) — path to CHARMM PSF file.
+                                     - ``temp`` (float) — temperature in Kelvin.
+                                     - ``salt`` (float) — monovalent salt
+                                       concentration in mM (converted to M for
+                                       :func:`cal_dh`; must be > 0).
+                                     - ``lmd`` (float, optional) — scaling of
+                                       the phosphate(P)–Mg²⁺ Debye–Hückel
+                                       interaction (see :func:`nMg2lmd`);
+                                       defaults to 0 if absent.
+                                     - ``ens`` (str) — ensemble: ``'NPT'``,
+                                       ``'NVT'``, or ``'non'`` (non-periodic).
+                                     - ``box`` (list of float) — box lengths
+                                       in nm, one value (cubic) or three
+                                       (orthorhombic); required for NPT/NVT.
+                                     - ``dt`` (Quantity) — integration time step.
+                                     - ``er_ref`` (float) — reference dielectric;
+                                       ``er = cal_er(temp) * er_ref / 77.6``.
+                                     - ``pressure`` (Quantity) — barostat
+                                       pressure (used for NPT only).
+                                     - ``friction`` (Quantity) — Langevin friction
+                                       coefficient.
+                                     - ``gpu_id`` (str) — CUDA device index
+                                       (e.g. ``'0'``).
+
+        GG (float): G–G pair interaction strength in kcal/mol, passed to the
+                    builder as ``DH_params['GG']``; tune to match experimental
+                    Tm. Default ``3.0``.
+        modification (callable, optional): Function ``modification(system)``
+                                           passed to :func:`FFs.rG4sSystem`,
+                                           which calls it after its built-in
+                                           forces are added. Default ``None``.
+
+    Returns:
+        tuple: ``(system, sim)`` — the constructed OpenMM ``System`` and a
+        ``Simulation`` on the CUDA platform (mixed precision) with positions
+        set from the PDB and velocities drawn at ``temp``.
+
+    Raises:
+        SystemExit: Printed error and ``exit(1)`` if ``ens`` is not
+                    ``'NPT'``/``'NVT'``/``'non'``, if ``ens == 'non'`` with
+                    non-zero ``lmd``, or if ``box`` does not have 1 or 3
+                    values.
+
+    Example:
+        >>> from HyresBuilder.utils import rG4s_setup
+        >>> system, sim = rG4s_setup(params, GG=3.0)
     """
 
     print('\n################## set up simulation parameters ###################')
@@ -827,70 +1069,75 @@ def rG4s_setup(params, GG=3.0, modification=None):
 
 def iConRNA_setup(params, modification=None):
     """
-    Build and initialize a complete HyRes/iConRNA OpenMM simulation system.
+    Build and initialize a simulation with the original iConRNA model.
 
-    Executes the full setup pipeline in seven stages:
-
-    1. Parse simulation parameters from ``params``.
-    2. Configure periodic boundary conditions (PBC) and box vectors.
-    3. Compute force field parameters: temperature-dependent dielectric constant,
-       Debye-Hückel screening length, and Mg²⁺-RNA charge scaling factor (lambda).
-    4. Load CHARMM topology and parameter files for protein and RNA.
-    5. Import coordinates (PDB) and topology (PSF).
-    6. Build the HyRes custom force field via :func:`FFs.buildSystem`.
-    7. Attach the barostat (NPT only), initialize the Langevin integrator, and
-       create the CUDA simulation context with positions and velocities.
+    Pipeline: read ``params``; set up the periodic box (NPT/NVT); compute
+    ``er`` (:func:`cal_er` scaled by ``er_ref/77.6``) and ``dh``
+    (:func:`cal_dh`); load the original iConRNA files (``top_RNA.inp`` /
+    ``param_RNA.inp``) plus Protein, DNA, AGs, Metabolite and Polymer files
+    via :func:`load_ff` and optional custom molecules; read PDB/PSF and call
+    ``psf.createSystem`` (cutoff 1.8 nm, switch 1.6 nm, ``HBonds``
+    constraints, ``CutoffPeriodic`` or ``CutoffNonPeriodic`` for ``'non'``);
+    build the force field with :func:`FFs.iConRNASystem`; add a
+    ``MonteCarloBarostat`` (every 25 steps) for NPT; create a
+    ``LangevinMiddleIntegrator``.
 
     Args:
-        params (argparse.Namespace): Simulation parameter object with the
-                                     following attributes:
+        params (argparse.Namespace): Simulation parameters with attributes:
 
-                                     - ``pdb`` (str) — path to input PDB file.
+                                     - ``pdb`` (str) — path to input PDB file
+                                       (coordinates).
                                      - ``psf`` (str) — path to CHARMM PSF file.
                                      - ``temp`` (float) — temperature in Kelvin.
-                                     - ``salt`` (float) — NaCl concentration in mM.
-                                     - ``lmd`` (float) — lmd value for Mg²⁺-RNA interaction.
+                                     - ``salt`` (float) — monovalent salt
+                                       concentration in mM (converted to M for
+                                       :func:`cal_dh`; must be > 0).
+                                     - ``lmd`` (float) — scaling of the
+                                       phosphate(P)–Mg²⁺ Debye–Hückel
+                                       interaction (required attribute).
                                      - ``ens`` (str) — ensemble: ``'NPT'``,
                                        ``'NVT'``, or ``'non'`` (non-periodic).
-                                     - ``box`` (list of float) — box dimensions
-                                       in nm; one value for cubic, three for
-                                       orthorhombic.
+                                     - ``box`` (list of float) — box lengths
+                                       in nm, one value (cubic) or three
+                                       (orthorhombic); required for NPT/NVT.
                                      - ``dt`` (Quantity) — integration time step.
-                                     - ``er_ref`` (float) — reference dielectric
-                                       used to scale the temperature-dependent er.
-                                     - ``pressure`` (Quantity) — pressure for NPT
-                                       barostat.
+                                     - ``er_ref`` (float) — reference dielectric;
+                                       ``er = cal_er(temp) * er_ref / 77.6``.
+                                     - ``pressure`` (Quantity) — barostat
+                                       pressure (used for NPT only).
                                      - ``friction`` (Quantity) — Langevin friction
                                        coefficient.
                                      - ``gpu_id`` (str) — CUDA device index
                                        (e.g. ``'0'``).
+                                     - ``custom`` (str or None) — required
+                                       attribute; comma-separated names of
+                                       custom molecules. For each name ``X``,
+                                       ``X.itp`` must exist in the working
+                                       directory; it is converted with
+                                       :func:`itp2charmm` and ``X.top`` /
+                                       ``X.par`` are added to the parameter
+                                       set. Falsy values skip this.
 
-       modification (callable, optional): User-defined function that accepts the
-                                           ``System`` object and applies additional
-                                           force modifications. Passed directly to
-                                           :func:`FFs.buildSystem`. Called
-                                           after all built-in forces are added.
-                                           Default is ``None``.
+        modification (callable, optional): Function ``modification(system)``
+                                           passed to :func:`FFs.iConRNASystem`,
+                                           which calls it after its built-in
+                                           forces are added. Default ``None``.
 
     Returns:
-        tuple:
-            - ``system`` (System) — the fully constructed OpenMM ``System``.
-            - ``sim`` (Simulation) — the initialized ``Simulation`` object with
-              positions and velocities set.
+        tuple: ``(system, sim)`` — the constructed OpenMM ``System`` and a
+        ``Simulation`` on the CUDA platform (mixed precision) with positions
+        set from the PDB and velocities drawn at ``temp``.
 
     Raises:
-        SystemExit: If an unsupported ensemble type is provided, if Mg²⁺ is
-                    specified for a non-periodic system, or if an invalid box
-                    dimension list is given.
+        SystemExit: Printed error and ``exit(1)`` if ``ens`` is not
+                    ``'NPT'``/``'NVT'``/``'non'``, if ``ens == 'non'`` with
+                    non-zero ``lmd``, or if ``box`` does not have 1 or 3
+                    values. Also exits if a custom ``.itp`` file is missing.
 
     Example:
-        >>> from HyresBuilder.utils import setup
-        >>> system, sim = setup(params)
-
-        >>> # With a custom force modification
-        >>> def my_mod(system):
-        ...     pass  # add or remove forces here
-        >>> system, sim = setup(params, modification=my_mod)
+        >>> from HyresBuilder.utils import iConRNA_setup
+        >>> params.lmd = 0.0
+        >>> system, sim = iConRNA_setup(params)
     """
     
     print('\n################## set up simulation parameters ###################')
@@ -1029,9 +1276,70 @@ def iConRNA_setup(params, modification=None):
 
 def setupMg(params, modification=None):
     """
-    Similar to setup(), but with a focus on Mg²⁺-RNA interactions, where
-    the er = 20 was specifically chosen to match the experimental Mg²⁺-RNA interactions.
-    other details are the same as setup().
+    Build and initialize a simulation with explicit Mg²⁺/Ca²⁺ ions.
+
+    Same as :func:`setup` except that it uses :func:`FFs.buildMgSystem`
+    (which applies a fixed er = 20 to Debye–Hückel pairs among backbone ``P``
+    and ``MG``/``CAL`` beads and ``er`` to all other pairs), does not support
+    custom ``.itp`` molecules, and uses a ``LangevinMiddleIntegrator``.
+
+    Pipeline: read ``params``; set up the periodic box (NPT/NVT); compute
+    ``er`` (:func:`cal_er` scaled by ``er_ref/77.6``) and ``dh``
+    (:func:`cal_dh`); load RNA, Protein, AGs, Metabolite and Polymer files via
+    :func:`load_ff`; read PDB/PSF and call ``psf.createSystem`` (cutoff 1.2
+    nm, switch 1.1 nm, ``HBonds`` constraints, ``CutoffPeriodic`` or
+    ``CutoffNonPeriodic`` for ``'non'``); build the force field with
+    :func:`FFs.buildMgSystem`; add a ``MonteCarloBarostat`` (every 25 steps)
+    for NPT; create a ``LangevinMiddleIntegrator``.
+
+    Args:
+        params (argparse.Namespace): Simulation parameters with attributes:
+
+                                     - ``pdb`` (str) — path to input PDB file
+                                       (coordinates).
+                                     - ``psf`` (str) — path to CHARMM PSF file.
+                                     - ``temp`` (float) — temperature in Kelvin.
+                                     - ``salt`` (float) — monovalent salt
+                                       concentration in mM (converted to M for
+                                       :func:`cal_dh`; must be > 0).
+                                     - ``lmd`` (float, optional) — scaling of
+                                       the phosphate(P)–Mg²⁺ Debye–Hückel
+                                       interaction (see :func:`nMg2lmd`);
+                                       defaults to 0 if absent.
+                                     - ``ens`` (str) — ensemble: ``'NPT'``,
+                                       ``'NVT'``, or ``'non'`` (non-periodic).
+                                     - ``box`` (list of float) — box lengths
+                                       in nm, one value (cubic) or three
+                                       (orthorhombic); required for NPT/NVT.
+                                     - ``dt`` (Quantity) — integration time step.
+                                     - ``er_ref`` (float) — reference dielectric;
+                                       ``er = cal_er(temp) * er_ref / 77.6``.
+                                     - ``pressure`` (Quantity) — barostat
+                                       pressure (used for NPT only).
+                                     - ``friction`` (Quantity) — Langevin friction
+                                       coefficient.
+                                     - ``gpu_id`` (str) — CUDA device index
+                                       (e.g. ``'0'``).
+
+        modification (callable, optional): Function ``modification(system)``
+                                           passed to :func:`FFs.buildMgSystem`,
+                                           which calls it after its built-in
+                                           forces are added. Default ``None``.
+
+    Returns:
+        tuple: ``(system, sim)`` — the constructed OpenMM ``System`` and a
+        ``Simulation`` on the CUDA platform (mixed precision) with positions
+        set from the PDB and velocities drawn at ``temp``.
+
+    Raises:
+        SystemExit: Printed error and ``exit(1)`` if ``ens`` is not
+                    ``'NPT'``/``'NVT'``/``'non'``, if ``ens == 'non'`` with
+                    non-zero ``lmd``, or if ``box`` does not have 1 or 3
+                    values.
+
+    Example:
+        >>> from HyresBuilder.utils import setupMg
+        >>> system, sim = setupMg(params)
     """
     
     print('\n################## set up simulation parameters ###################')
@@ -1149,70 +1457,65 @@ def setupMg(params, modification=None):
 
 def iConDNA_setup(params, modification=None):
     """
-    Build and initialize a complete HyRes/iConDNA OpenMM simulation system.
+    Build and initialize a HyRes/iConDNA OpenMM simulation.
 
-    Executes the full setup pipeline in seven stages:
-
-    1. Parse simulation parameters from ``params``.
-    2. Configure periodic boundary conditions (PBC) and box vectors.
-    3. Compute force field parameters: temperature-dependent dielectric constant,
-       Debye-Hückel screening length, and Mg²⁺-DNA charge scaling factor (lambda).
-    4. Load CHARMM topology and parameter files for protein and DNA.
-    5. Import coordinates (PDB) and topology (PSF).
-    6. Build the HyRes custom force field via :func:`FFs.buildSystem`.
-    7. Attach the barostat (NPT only), initialize the Langevin integrator, and
-       create the CUDA simulation context with positions and velocities.
+    Pipeline: read ``params``; set up the periodic box (NPT/NVT); compute
+    ``er`` (:func:`cal_er` scaled by ``er_ref/77.6``) and ``dh``
+    (:func:`cal_dh`); load DNA, Protein, AGs, Metabolite and Polymer files via
+    :func:`load_ff` (no RNA files); read PDB/PSF and call ``psf.createSystem``
+    (cutoff 1.2 nm, switch 1.1 nm, ``HBonds`` constraints, ``CutoffPeriodic``
+    or ``CutoffNonPeriodic`` for ``'non'``); build the force field with
+    :func:`FFs.iConDNASystem`; add a ``MonteCarloBarostat`` (every 25 steps)
+    for NPT; create a ``LangevinIntegrator``.
 
     Args:
-        params (argparse.Namespace): Simulation parameter object with the
-                                     following attributes:
+        params (argparse.Namespace): Simulation parameters with attributes:
 
-                                     - ``pdb`` (str) — path to input PDB file.
+                                     - ``pdb`` (str) — path to input PDB file
+                                       (coordinates).
                                      - ``psf`` (str) — path to CHARMM PSF file.
                                      - ``temp`` (float) — temperature in Kelvin.
-                                     - ``salt`` (float) — NaCl concentration in mM.
-                                     - ``lmd`` (float) — lmd for Mg²⁺-DNA interaction.
+                                     - ``salt`` (float) — monovalent salt
+                                       concentration in mM (converted to M for
+                                       :func:`cal_dh`; must be > 0).
+                                     - ``lmd`` (float, optional) — scaling of
+                                       the phosphate(P)–Mg²⁺ Debye–Hückel
+                                       interaction (see :func:`nMg2lmd`);
+                                       defaults to 0 if absent.
                                      - ``ens`` (str) — ensemble: ``'NPT'``,
                                        ``'NVT'``, or ``'non'`` (non-periodic).
-                                     - ``box`` (list of float) — box dimensions
-                                       in nm; one value for cubic, three for
-                                       orthorhombic.
+                                     - ``box`` (list of float) — box lengths
+                                       in nm, one value (cubic) or three
+                                       (orthorhombic); required for NPT/NVT.
                                      - ``dt`` (Quantity) — integration time step.
-                                     - ``er_ref`` (float) — reference dielectric
-                                       used to scale the temperature-dependent er.
-                                     - ``pressure`` (Quantity) — pressure for NPT
-                                       barostat.
+                                     - ``er_ref`` (float) — reference dielectric;
+                                       ``er = cal_er(temp) * er_ref / 77.6``.
+                                     - ``pressure`` (Quantity) — barostat
+                                       pressure (used for NPT only).
                                      - ``friction`` (Quantity) — Langevin friction
                                        coefficient.
                                      - ``gpu_id`` (str) — CUDA device index
                                        (e.g. ``'0'``).
 
-        modification (callable, optional): User-defined function that accepts the
-                                           ``System`` object and applies additional
-                                           force modifications. Passed directly to
-                                           :func:`FFs.buildSystem`. Called
-                                           after all built-in forces are added.
-                                           Default is ``None``.
+        modification (callable, optional): Function ``modification(system)``
+                                           passed to :func:`FFs.iConDNASystem`,
+                                           which calls it after its built-in
+                                           forces are added. Default ``None``.
 
     Returns:
-        tuple:
-            - ``system`` (System) — the fully constructed OpenMM ``System``.
-            - ``sim`` (Simulation) — the initialized ``Simulation`` object with
-              positions and velocities set.
+        tuple: ``(system, sim)`` — the constructed OpenMM ``System`` and a
+        ``Simulation`` on the CUDA platform (mixed precision) with positions
+        set from the PDB and velocities drawn at ``temp``.
 
     Raises:
-        SystemExit: If an unsupported ensemble type is provided, if Mg²⁺ is
-                    specified for a non-periodic system, or if an invalid box
-                    dimension list is given.
+        SystemExit: Printed error and ``exit(1)`` if ``ens`` is not
+                    ``'NPT'``/``'NVT'``/``'non'``, if ``ens == 'non'`` with
+                    non-zero ``lmd``, or if ``box`` does not have 1 or 3
+                    values.
 
     Example:
-        >>> from HyresBuilder.utils import setup
-        >>> system, sim = setup(params)
-
-        >>> # With a custom force modification
-        >>> def my_mod(system):
-        ...     pass  # add or remove forces here
-        >>> system, sim = setup(params, modification=my_mod)
+        >>> from HyresBuilder.utils import iConDNA_setup
+        >>> system, sim = iConDNA_setup(params)
     """
     
     print('\n################## set up simulation parameters ###################')
@@ -1329,41 +1632,46 @@ def iConDNA_setup(params, modification=None):
 
 def crowding_effect(system: System, crowding_factor: float = 1.0) -> None:
     """
-    Modify the NBFIX-style CustomNonbondedForce ("LJ Force w/ NBFIX") in an
-    OpenMM System so its LJ epsilon is scaled by a global parameter,
-    "crowding_factor", mimicking PEG (or other) crowding effects.
+    Scale the LJ well depth of the "LJ Force w/ NBFIX" force to mimic crowding.
 
-    Original energy:  (a/r6)^2 - b/r6
-    Scaled energy:    (a*sqrt(crowding_factor)/r6)^2 - b*crowding_factor/r6
+    Rewrites the energy function of the ``CustomNonbondedForce`` named
+    ``'LJ Force w/ NBFIX'`` (the NBFIX LJ force that the FFs builders rename;
+    it exists only if the parameter set contains NBFIX terms) and adds a
+    global parameter ``crowding_factor``:
 
-    Since `a` and `b` are both linear in epsilon, this multiplies the
-    effective LJ epsilon by `crowding_factor` uniformly, while leaving
-    sigma (the potential minimum location) unchanged.
+    - Original energy: ``(a/r6)^2 - b/r6``
+    - New energy:      ``(a*sqrt(crowding_factor)/r6)^2 - b*crowding_factor/r6``
 
-    IMPORTANT: must be called BEFORE creating a Context/Simulation.
-    Global parameter additions and energy function changes on a Force are
-    only picked up when the Context is created — calling this after a
-    Context/Simulation already exists will have no effect on the running
-    simulation.
+    Since ``a`` scales as sqrt(epsilon) and ``b`` as epsilon, this multiplies
+    the effective LJ epsilon of every pair by ``crowding_factor`` while
+    leaving sigma unchanged. The new expression replaces the original one
+    verbatim (it assumes the standard ``acoef``/``bcoef`` NBFIX form).
 
-    Parameters
-    ----------
-    system : System
-        The System containing the target CustomNonbondedForce. Modified in-place.
-    crowding_factor : float
-        Initial value of the "crowding_factor" global parameter (must be >= 0).
-        1.0 = unscaled/original epsilon; >1 strengthens LJ attraction/repulsion
-        proportionally; <1 weakens it; 0 disables LJ entirely.
+    Must be called BEFORE creating a ``Context``/``Simulation``; changes made
+    afterwards do not affect an existing Context. The parameter can later be
+    changed with ``context.setParameter('crowding_factor', value)``.
 
-    Raises
-    ------
-    ValueError
-        If the target force isn't found, is found more than once, already
-        has a "crowding_factor" parameter, or crowding_factor is negative.
-    
-    Example
-    -------
-    >>> crowding_effect(system, crowding_factor=1.0)
+    Args:
+        system (System): System containing the target force; modified in place.
+        crowding_factor (float): Initial value of ``crowding_factor``
+            (must be >= 0). 1.0 = original epsilon; >1 strengthens and <1
+            weakens LJ interactions; 0 disables LJ. Default ``1.0``.
+
+    Returns:
+        CustomNonbondedForce: The modified force (despite the ``-> None``
+        annotation).
+
+    Raises:
+        ValueError: If ``crowding_factor`` is negative, if no or more than one
+                    ``CustomNonbondedForce`` named ``'LJ Force w/ NBFIX'`` is
+                    found, or if the force already has a ``crowding_factor``
+                    global parameter.
+
+    Example:
+        >>> from HyresBuilder.utils import setup, crowding_effect
+        >>> def mod(system):
+        ...     crowding_effect(system, crowding_factor=1.4)
+        >>> system, sim = setup(params, modification=mod)
     """
     if crowding_factor < 0:
         raise ValueError(f"crowding_factor must be >= 0, got {crowding_factor}")

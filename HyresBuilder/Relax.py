@@ -3,13 +3,19 @@ HyresBuilder.Relax -- soft-core pre-relaxation of an OpenMM Simulation.
 
 relax_simulation(sim, system) pre-relaxes the CURRENT positions of a
 Simulation before the regular minimisation. A copy of the System keeps every
-bonded term, constraint and virtual site; all nonbonded forces are replaced
-by a soft repulsion  k (sigma - r)^2  that honours the System's own
-exclusions. It stays finite when particles overlap, so it removes the
-overlaps that make the real force field produce NaN. Optionally, chosen
-particles are held by positional restraints. The relaxed positions are
-written back into sim.context; the simulation's System is not modified.
-Works for HyRes, iConRNA / iConDNA and all-atom models.
+bonded term, constraint and virtual site; all nonbonded-type forces
+(NonbondedForce, CustomNonbondedForce, GB, CustomHbondForce,
+CustomManyParticleForce, AMOEBA nonbonded terms) are replaced by a single
+soft repulsion  k_rep (sigma - r)^2  for r < sigma, and CMMotionRemover,
+barostats and the Andersen thermostat are dropped. The repulsion skips the
+System's nonbonded exclusions/exceptions plus all 1-2, 1-3 and 1-4 pairs
+(bonds, constraints, topology bonds, angles, torsions). It stays finite when
+particles overlap, so it removes the overlaps that make the real force field
+produce NaN. Optionally, chosen particles are held by positional restraints.
+The copy is minimised in a separate Context on the same platform (CPU as a
+fallback); the relaxed positions are written back into sim.context and the
+simulation's System is not modified. Works for HyRes, iConRNA / iConDNA and
+all-atom models.
 
 Typical use in a run script
 ---------------------------
@@ -79,6 +85,7 @@ def _exclusions(system, topology=None):
 
 
 def _orthorhombic(box):
+    """True if the box vectors (nm, or None) form an orthorhombic box."""
     return box is not None and abs(box[1][0]) + abs(box[2][0]) + abs(box[2][1]) < 1e-9
 
 
@@ -108,7 +115,11 @@ def _close_pairs(pos_nm, cutoff_nm, excluded, box=None):
 
 
 def _context_like(system, integrator, ref_context):
-    """Context on the same platform / device as the running simulation."""
+    """Context on the same platform / device as the running simulation.
+
+    Tries the reference context's full platform properties, then only its
+    DeviceIndex properties, then falls back to the CPU platform (with a
+    printed warning)."""
     plat = ref_context.getPlatform()
     props = {}
     for name in plat.getPropertyNames():
@@ -138,18 +149,36 @@ def relax_simulation(simulation, system=None, sigma=RELAX_SIGMA, k_rep=1.0e4, re
     Parameters
     ----------
     simulation : openmm.app.Simulation   positions are read from and written back to it
-    system     : openmm.System           defaults to simulation.system
+    system     : openmm.System           defaults to simulation.system; only read (copied),
+                                         never modified
     sigma      : float, NANOMETRES (0 < sigma <= 0.5). Non-bonded pairs closer
                  than this are pushed apart. Keep it below the normal contact
                  distances of the model: 0.18 nm (default) removes the overlaps
                  that crash a simulation without disturbing hydrogen-bond or
                  bead-contact distances; up to ~0.3 nm for CG beads.
-    k_rep      : soft repulsion strength, kJ/mol/nm^2  (E = k_rep (sigma - r)^2)
+    k_rep      : soft repulsion strength, kJ/mol/nm^2  (E = k_rep (sigma - r)^2 for r < sigma,
+                 no factor 1/2; periodic cutoff = sigma if the System is periodic). Default 1.0e4.
     restrain   : None, a list of particle indices, or a function atom -> bool
                  (openmm.app.Atom from simulation.topology) selecting particles
-                 held at their start positions, e.g. the deposited structure.
-    k_restrain : restraint strength, kJ/mol/nm^2
-    Returns a dict with before/after counts of non-excluded pairs < 0.9 sigma.
+                 held at their current (start) positions. Virtual sites are skipped.
+    k_restrain : restraint strength, kJ/mol/nm^2  (E = 0.5 k_restrain d^2, d = periodic
+                 distance if the System is periodic). Default 1000.0.
+    max_iter   : maximum iterations of LocalEnergyMinimizer (default 20000)
+    tolerance  : minimizer tolerance, kJ/mol/nm (default 10.0)
+    verbose    : print a short summary (distances printed in Angstrom)
+
+    Returns
+    -------
+    dict with keys 'pairs_before', 'pairs_after' (counts of non-excluded pairs
+    closer than 0.9 sigma, minimum image for orthorhombic boxes), 'min_before_nm',
+    'min_after_nm' (closest such pair, or None), 'max_shift_nm', and
+    'energy_before', 'energy_after' (soft-System potential energy, kJ/mol).
+
+    Raises
+    ------
+    ValueError   if sigma is outside (0, 0.5] nm.
+    RuntimeError if the relaxation gives non-finite coordinates or no Context
+                 can be created.
     """
     if not 0 < sigma <= MAX_SIGMA:
         raise ValueError(f"sigma = {sigma} nm: must be in (0, {MAX_SIGMA}] nm (sigma is in nm; "

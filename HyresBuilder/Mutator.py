@@ -3,27 +3,31 @@ Residue mutation utilities for HyRes and iConRNA coarse-grained PDB structures.
 
 This module applies in silico point mutations to coarse-grained PDB files
 produced by the HyRes (protein) and iConRNA (RNA) pipelines. Mutations are
-performed via ``psfgen``, which rebuilds the affected residue geometry —
-including guessed coordinates for newly introduced atoms, and regenerated
-angles and dihedrals — so the output is immediately suitable for downstream
-PSF generation and simulation setup.
+performed via ``psfgen``: the mutated residues are rebuilt from the topology,
+coordinates of atoms not present in the input are guessed, and the resulting
+structure is written as a PDB (no PSF is written).
 
-Both protein and RNA chains are supported, selected by segment ID prefix
-(``P`` for protein, ``R`` for RNA). Multiple sites can be mutated in a single
-call, and a single mutation type can be broadcast across all target sites for
-convenience.
+The whole input PDB is treated as a single segment, which must be either a
+protein or an RNA chain, selected by segment ID prefix (``P`` for protein,
+``R`` for RNA). Only the HyRes protein and iConRNA (``top_RNA_mix``)
+topologies are loaded, so mutation types must be residue names defined there
+(e.g. ``ALA``, ``GLY`` for protein; ``ADE``, ``GUA``, ``CYT``, ``URA`` for
+RNA). Multiple sites can be mutated in a single call, and a single mutation
+type can be broadcast across all target sites.
 
 Workflow
 --------
-1. Normalise sites and mutation types into matched lists (:func:`mutate`).
-2. Load HyRes/iConRNA topology files via ``utils.load_ff``.
+1. Normalise sites and mutation types into matched lists (:func:`mutate`, or
+   :func:`main` on the command line).
+2. Load the protein and RNA topology files via ``utils.load_ff``.
 3. Register the input PDB as a ``psfgen`` segment with the ``mutate`` table
    applied at the ``add_segment`` step (:func:`mut`).
-4. Read reference coordinates, guess coordinates for mutated positions,
-   regenerate angles and dihedrals, and write the output PDB.
+4. Read the input coordinates, guess missing coordinates, regenerate angles
+   and dihedrals, and write the output PDB.
 
-A command-line interface is exposed via :func:`main`, accepting one or more
-mutation sites and types as positional or named arguments.
+A command-line interface is exposed via :func:`main` as the ``mutate``
+console script, taking the input and output PDB as positional arguments and
+sites/mutations via ``-s``/``-m``.
 
 Authors:    Shanlong Li
 Date:       Feb 14, 2026
@@ -43,7 +47,11 @@ from pathlib import Path
 
 def mutate(pdb_in, sites, mutations, pdb_out=None, segid='P001'):
     """
-    Performe mutations on a PDB file.
+    Perform mutations on a CG PDB file (convenience wrapper around :func:`mut`).
+
+    ``sites``/``mutations`` may be scalars or sequences; a single mutation
+    type is broadcast to every site. Mutation codes are upper-cased by
+    :func:`mut`.
 
     Args:
         pdb_in  (str):              Input PDB file path.
@@ -52,7 +60,8 @@ def mutate(pdb_in, sites, mutations, pdb_out=None, segid='P001'):
                                     A single value is broadcast to all sites.
         pdb_out (str, optional):    Output PDB file path. Defaults to
                                     '<pdb_in stem>_mut.pdb' in the same directory.
-        segid   (str):              Segment ID — 'P001' for Protein, 'R001' for RNA.
+        segid   (str):              Segment ID assigned to the whole input —
+                                    e.g. 'P001' for protein, 'R001' for RNA.
                                     Must start with 'P' or 'R'. Default: 'P001'.
 
     Returns:
@@ -63,7 +72,7 @@ def mutate(pdb_in, sites, mutations, pdb_out=None, segid='P001'):
         ValueError:        If sites/mutations lengths are mismatched, or segid is invalid.
 
     Examples:
-        >>> from mutator import mutate
+        >>> from HyresBuilder.Mutator import mutate
 
         >>> # Single mutation
         >>> mutate('protein.pdb', 123, 'ALA')
@@ -76,7 +85,7 @@ def mutate(pdb_in, sites, mutations, pdb_out=None, segid='P001'):
         >>> mutate('protein.pdb', [10, 20, 30], 'ALA')
 
         >>> # RNA mutation
-        >>> mutate('rna.pdb', [10, 20], ['G', 'C'], segid='R001')
+        >>> mutate('rna.pdb', [10, 20], ['GUA', 'CYT'], segid='R001')
     """
     # ---------- normalise sites / mutations to lists ----------
     if isinstance(sites, int):
@@ -104,14 +113,26 @@ def mutate(pdb_in, sites, mutations, pdb_out=None, segid='P001'):
 
 def mut(pdb_in, pdb_out, sites, mutations, segid):
     """
-    Perform mutations on a PDB file using psfgen
+    Perform mutations on a PDB file using psfgen.
+
+    Loads the RNA and protein topologies, adds ``pdb_in`` as one segment
+    with the mutation table (protein: ``auto_angles=False``; RNA:
+    ``auto_angles=False, auto_dihedrals=False``), reads its coordinates,
+    guesses missing coordinates, regenerates angles and dihedrals and writes
+    ``pdb_out``. Progress is printed to stdout.
 
     Args:
-        pdb_in (str): Input PDB file path
-        pdb_out (str): Output PDB file path
-        sites (list): List of residue numbers to mutate
-        mutations (list): List of mutation types (3-letter codes)
-        segid (str): Segment ID (P001 for Protein, R001 for RNA)
+        pdb_in (str): Input PDB file path.
+        pdb_out (str): Output PDB file path (overwritten).
+        sites (list): Residue numbers to mutate.
+        mutations (list): Mutation types (residue names, upper-cased here);
+            must have the same length as ``sites``.
+        segid (str): Segment ID; must start with 'P' (protein) or 'R' (RNA).
+
+    Raises:
+        FileNotFoundError: If ``pdb_in`` does not exist.
+        ValueError: If ``sites`` and ``mutations`` differ in length, or
+            ``segid`` does not start with 'P' or 'R'.
     """
     # Validate inputs
     if not Path(pdb_in).exists():
@@ -172,6 +193,18 @@ def mut(pdb_in, pdb_out, sites, mutations, segid):
 
 
 def main():
+    """Command-line interface (``mutate`` console script).
+
+    Usage::
+
+        mutate input.pdb output.pdb -s 123 456 -m ALA GLY [-d P001] [-v]
+
+    ``-s/--sites`` (ints) and ``-m/--mutations`` are required; a single
+    mutation type is applied to all sites. ``-d/--segid`` defaults to
+    ``P001`` (use an ``R`` prefix for RNA). Any exception is printed to
+    stderr (with a traceback if ``-v/--verbose``) and the program exits with
+    status 1.
+    """
     parser = argparse.ArgumentParser(
         description="Perform site mutations on PDB file using psfgen",
         formatter_class=argparse.RawDescriptionHelpFormatter,

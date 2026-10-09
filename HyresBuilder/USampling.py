@@ -13,10 +13,18 @@ program`_; full documentation for the WHAM binary is available in the
 
 Workflow
 --------
+The CV throughout is the distance between the (mass-weighted) centres of two
+atom groups; in a periodic System it is the minimum-image distance, so each
+group must be smaller than half the box in every direction. Every SMD / umbrella helper
+installs the ``CustomCVForce`` bias ``0.5*fc_pull*(cv-r0)^2`` (named
+``'US_pulling_force'``, global parameters ``fc_pull`` and ``r0``) in the
+System, replacing the bias of any earlier helper call, reinitializes the
+Context and leaves the force in place.
+
 1. **Define windows** – :func:`US_define_windows` returns evenly spaced CV
    target values between two endpoints.
-2. **Steer to start** – :func:`US_initial_windows` uses SMD to bring the
-   system to the first window target before production.
+2. **Steer to start** – :func:`US_initial_windows` uses SMD to pull the
+   COM distance down to the first window target before production.
 3. **Generate window structures** – :func:`US_create_windows` uses SMD to
    sweep from the start to the end CV, saving a PDB file at each window.
 4. **Production sampling** – :func:`US_collect_cv` applies a harmonic bias at
@@ -35,15 +43,33 @@ Input file formats
 **Metafile** (e.g. ``metafile.txt``) — one umbrella window per line.
 Blank lines and lines starting with ``#`` are ignored::
 
-    cv_values_window_0.txt   0.76   300
-    cv_values_window_1.txt   1.01   300
+    cv_values_window_0.txt   0.76   71.70172084130019
+    cv_values_window_1.txt   1.01   71.70172084130019
     ...
 
 Columns (whitespace-separated):
 
 1. Path to the CV trajectory file.
 2. Restraint centre :math:`r_k^0` (same units as the CV).
-3. Harmonic force constant :math:`K_k` (kJ mol⁻¹ nm⁻²).
+3. Harmonic force constant :math:`K_k` in the WHAM binary's energy units,
+   i.e. kcal mol⁻¹ nm⁻² for the standard Grossfield build.
+   :func:`US_gen_metafile` takes the simulation value in kJ mol⁻¹ nm⁻² (as
+   the sampling helpers do) and writes it divided by 4.184.
+
+Notes from the Grossfield WHAM manual and source (v2.0.4 and v2.1.0):
+
+* WHAM assumes the bias :math:`V = \frac{1}{2}K(x - x_0)^2`, the same form as
+  the ``0.5*fc_pull*(cv-r0)^2`` bias used here, so no factor of 2 is needed.
+* WHAM works in kcal/mol by default (``k_B_DEFAULT`` in ``wham.h``), and
+  :func:`wham` passes no ``units`` argument, hence the division by 4.184.
+  The 2.1.0 ``units`` option only offers LAMMPS unit sets (``real`` is
+  kcal/mol; there is no kJ/mol choice); a kJ/mol ``wham`` needs
+  ``k_B_DEFAULT`` changed in ``wham.h`` before building, and then the 4.184
+  conversion must be dropped.
+* No decorrelation time ("correl time") column is written, so ``--MC``
+  bootstrapping treats every recorded CV value as independent and
+  underestimates the uncertainty when samples are correlated.
+* CV values outside the histogram range (MIN, MAX) are ignored by WHAM.
 
 **CV trajectory file** (e.g. ``cv_values_window_0.txt``) — two columns::
 
@@ -51,7 +77,8 @@ Columns (whitespace-separated):
     1.000000e+00   6.905046e-01
     ...
 
-Column 0 is the time step (ignored); column 1 is the CV value.
+Column 0 is the record index written by :func:`US_collect_cv` (ignored);
+column 1 is the CV value.
 
 **PMF output file** (e.g. ``pmf.txt``) — standard Grossfield WHAM output
 (two columns: bin centre and free energy) when running in normal or MC mode.
@@ -93,10 +120,10 @@ Examples
 
 .. code-block:: python
 
-    from wham import US_define_windows, US_gen_metafile, wham
+    from HyresBuilder.USampling import US_define_windows, US_gen_metafile, wham
     import sys
 
-    # 1. Build metafile
+    # 1. Build metafile (fc_pull in kJ mol-1 nm-2, as used in US_collect_cv)
     windows = US_define_windows(r0=0.5, r1=5.5, window_num=18)
     US_gen_metafile(windows, fc_pull=300.0, metafile='metafile.txt')
 
@@ -137,14 +164,17 @@ Examples
 
         wham <min> <max> <bins> <tol> <temp> 0 <metafile> <pmf> [MC] [seed]
 
-    Units must be consistent with those used during simulation
-    (nanometers and kJ mol⁻¹ nm⁻² throughout this module).
+    The simulation helpers use nanometers and kJ mol⁻¹ nm⁻²; the WHAM
+    binary works in kcal/mol, so metafile force constants are in
+    kcal mol⁻¹ nm⁻² (:func:`US_gen_metafile` converts) and the PMF is reported
+    in kcal/mol.  In normal and MC mode the WHAM output is appended to
+    ``wham.log``; the command exits with an error if ``wham`` is missing,
+    fails, or writes no PMF.
 
     Block-average mode writes a separate log file named after the PMF output
-    (e.g. ``pmf_block.log``) and requires each CV trajectory to contain at
-    least two frames.  The ``--block`` and ``--MC`` flags are mutually
-    exclusive: block averaging runs WHAM in deterministic mode on each half
-    independently.
+    (extension replaced by ``_block.log``, e.g. ``pmf_block.log``) and requires
+    each CV trajectory to contain at least two frames.  ``--MC``/``--seed``
+    are passed on to each block's WHAM run when ``--block`` is given.
 
 .. _OpenMM umbrella sampling tutorial: https://openmm.github.io/openmm-cookbook/latest/notebooks/cookbook/Umbrella%20Sampling.html
 .. _Grossfield WHAM program: http://membrane.urmc.rochester.edu/?page_id=126
@@ -161,6 +191,53 @@ from openmm import *
 # ---------------------------------------------------------------------------
 # Umbrella sampling helpers
 # ---------------------------------------------------------------------------
+
+PULLING_FORCE_NAME = 'US_pulling_force'
+
+
+def _distance_cv(system, group1, group2):
+    """Distance between the centres of two atom groups, as a ``CustomCentroidBondForce``.
+
+    In a periodic System the distance uses the minimum image (the CUDA platform
+    wraps molecules into the box, so a non-periodic distance jumps by a box
+    length when the groups lie on opposite sides of a box face). Each group
+    must then be smaller than half the box in every direction.
+    """
+    cv = CustomCentroidBondForce(2, 'r; r = distance(g1, g2)')
+    grp1, grp2 = cv.addGroup(group1), cv.addGroup(group2)
+    cv.addBond([grp1, grp2])
+    cv.setUsesPeriodicBoundaryConditions(system.usesPeriodicBoundaryConditions())
+    return cv
+
+
+def _set_pulling_force(system, sim, cv, fc_pull, r0):
+    """Install the harmonic bias ``0.5*fc_pull*(cv-r0)^2`` on *system*.
+
+    Any bias added earlier by these helpers (a ``CustomCVForce`` named
+    ``PULLING_FORCE_NAME``) is removed first, so calling the helpers one after
+    another replaces the bias instead of stacking a second force that shares
+    the global parameters ``fc_pull`` and ``r0``. The context is then
+    reinitialized with its state preserved, and ``fc_pull`` and ``r0`` are set
+    to the new values (a preserved state would otherwise keep the old ones).
+
+    Returns:
+        tuple: ``(force, index)`` of the new ``CustomCVForce`` in *system*.
+    """
+    for i in reversed(range(system.getNumForces())):
+        if system.getForce(i).getName() == PULLING_FORCE_NAME:
+            system.removeForce(i)
+    force = CustomCVForce('0.5*fc_pull*(cv-r0)^2')
+    force.setName(PULLING_FORCE_NAME)
+    force.addGlobalParameter('fc_pull', fc_pull)
+    force.addGlobalParameter('r0', r0)
+    force.addCollectiveVariable('cv', cv)
+    index = system.addForce(force)
+    sim.context.reinitialize(preserveState=True)
+    # preserveState restores the previous values of fc_pull/r0, so set them explicitly
+    sim.context.setParameter('fc_pull', fc_pull)
+    sim.context.setParameter('r0', r0)
+    return force, index
+
 
 def US_define_windows(r0, r1, window_num):
     """Define umbrella sampling window target CV values.
@@ -187,25 +264,27 @@ def US_initial_windows(system, sim, group1, group2, r0,
                         total_steps=100000, increment_steps=2):
     """Steer the system to the first umbrella window via SMD.
 
-    A harmonic bias (``CustomCVForce``) is applied to the COM distance
-    between *group1* and *group2*.  The anchor is advanced at *v_pull*
-    toward *r0* and clamped once it reaches the target.  The simulation
-    stops early when the CV crosses ``r0 + rcut``.  The final structure
-    is always written to ``init.pdb``.
+    A harmonic bias ``0.5*fc_pull*(cv-r0)^2`` (``CustomCVForce``) is applied
+    to the COM distance between *group1* and *group2*.  The anchor starts at
+    the current CV and is moved *down* at *v_pull* toward *r0*, clamped once
+    it reaches the target (this only pulls the groups together).  If the CV
+    is already ``<= r0`` no steps are run.  The simulation stops early when
+    the CV crosses ``r0 + rcut``.  The final structure is always written to
+    ``init.pdb`` in the current directory.
 
     Parameters
     ----------
     system : openmm.System
         System object; the pulling force is added in place.
     sim : openmm.app.Simulation
-        Running simulation whose context is reinitialized after the force
-        is added.
+        Running simulation whose context is reinitialized (state preserved)
+        after the force is added.
     group1 : list[int]
         Atom indices for the first centroid group (e.g. the protein).
     group2 : list[int]
         Atom indices for the second centroid group (e.g. the ligand).
     r0 : float
-        Target COM–COM distance / stopping criterion (nanometers).
+        Target COM–COM distance (nanometers).
     rcut : float, optional
         Tolerance around *r0* used as the stopping criterion; SMD stops
         when ``cv <= r0 + rcut``.  Default is ``0.5``.
@@ -235,25 +314,21 @@ def US_initial_windows(system, sim, group1, group2, r0,
     the expected displacement over a sliding window of
     ``20000 // increment_steps`` increments.  This usually indicates a
     conflicting force on the system.
+
+    The pulling force (``'US_pulling_force'``) stays in *system* afterwards,
+    with the anchor left at its last value; the next helper call replaces it.
     """
     if float(r0) < 0:
         raise ValueError(f'r0 must be >= 0 nm, got {r0}')
 
-    cv = CustomCentroidBondForce(2, 'r; r = distance(g1, g2)')
-    grp1, grp2 = cv.addGroup(group1), cv.addGroup(group2)
-    cv.addBond([grp1, grp2])
+    cv = _distance_cv(system, group1, group2)
 
     fc_pull = fc_pull * kilojoule_per_mole / (unit.nanometers ** 2)
     v_pull  = v_pull  * unit.nanometers / unit.picosecond
     dt      = sim.integrator.getStepSize()
     r0_nm   = float(r0)
 
-    pullingForce = CustomCVForce('0.5*fc_pull*(cv-r0)^2')
-    pullingForce.addGlobalParameter('fc_pull', fc_pull)
-    pullingForce.addGlobalParameter('r0', r0_nm * unit.nanometers)
-    pullingForce.addCollectiveVariable('cv', cv)
-    force_index = system.addForce(pullingForce)
-    sim.context.reinitialize(preserveState=True)
+    pullingForce, force_index = _set_pulling_force(system, sim, cv, fc_pull, r0_nm * unit.nanometers)
 
     current_cv_value = pullingForce.getCollectiveVariableValues(sim.context)[0]
     print(f'SMD start: r = {current_cv_value:.4f} nm  |  target r0 = {r0_nm:.4f} nm  '
@@ -313,18 +388,20 @@ def US_create_windows(system, sim, group1, group2, r0, r1, window_num,
     """Generate umbrella sampling window structures via SMD.
 
     A COM-distance CV is defined between *group1* and *group2*.  A
-    harmonic bias sweeps the anchor from *r0* to *r1* at constant
-    velocity *v_pull*.  Whenever the instantaneous CV crosses the next
-    window target, the current coordinates are saved as
-    ``window_<i>.pdb``.
+    harmonic bias ``0.5*fc_pull*(cv-r0)^2`` moves its anchor upward from
+    *r0* at constant velocity *v_pull* (the anchor is not clamped at *r1*),
+    so the groups are pulled apart.  Whenever the instantaneous CV reaches
+    the next window target (``cv >= target``), the current coordinates are
+    stored; after the run they are written as ``window_<i>.pdb`` in the
+    current directory.  The loop stops once all windows are captured.
 
     Parameters
     ----------
     system : openmm.System
         System object; the pulling force is added in place.
     sim : openmm.app.Simulation
-        Running simulation whose context is reinitialized after the force
-        is added.
+        Running simulation whose context is reinitialized (state preserved)
+        after the force is added.
     group1 : list[int]
         Atom indices for the first centroid group (e.g. the protein).
     group2 : list[int]
@@ -352,9 +429,9 @@ def US_create_windows(system, sim, group1, group2, r0, r1, window_num,
 
     Notes
     -----
-    * The pulling force is permanently added to *system*.  To remove it
-      afterward, iterate ``system.getForces()`` to locate the force by
-      type and call ``system.removeForce(index)`` with its index.
+    * The pulling force (``'US_pulling_force'``) stays in *system*; the next
+      helper call replaces it. To remove it, find the force with that name
+      and call ``system.removeForce(index)``.
     * Coordinates are saved with ``enforcePeriodicBox=False`` to keep
       molecules whole across PBC boundaries.
     * Fewer than *window_num* PDB files are written if the simulation
@@ -363,9 +440,7 @@ def US_create_windows(system, sim, group1, group2, r0, r1, window_num,
     """
     print('#create windows:')
 
-    cv = CustomCentroidBondForce(2, 'r; r = distance(g1, g2)')
-    grp1, grp2 = cv.addGroup(group1), cv.addGroup(group2)
-    cv.addBond([grp1, grp2])
+    cv = _distance_cv(system, group1, group2)
 
     fc_pull = fc_pull * kilojoule_per_mole / (unit.nanometers ** 2)
     v_pull  = v_pull  * unit.nanometers / unit.picosecond
@@ -375,12 +450,7 @@ def US_create_windows(system, sim, group1, group2, r0, r1, window_num,
     r1_nm  = float(r1)
     r0_qty = r0_nm * unit.nanometers
 
-    pullingForce = CustomCVForce('0.5*fc_pull*(cv-r0)^2')
-    pullingForce.addGlobalParameter('fc_pull', fc_pull)
-    pullingForce.addGlobalParameter('r0', r0_qty)
-    pullingForce.addCollectiveVariable('cv', cv)
-    system.addForce(pullingForce)
-    sim.context.reinitialize(preserveState=True)
+    pullingForce, _ = _set_pulling_force(system, sim, cv, fc_pull, r0_qty)
 
     windows       = np.linspace(r0_nm, r1_nm, window_num)
     window_coords = []
@@ -427,16 +497,22 @@ def US_collect_cv(system, sim, group1, group2, window_index, windows,
                    fc_pull=300.0, total_steps=20000000, record_steps=1000):
     """Run umbrella sampling for one window and record the CV time series.
 
-    Applies a harmonic bias at the target CV for *window_index* and
-    writes the CV values to ``cv_values_window_{window_index}.txt``.
+    Applies a harmonic bias ``0.5*fc_pull*(cv-r0)^2`` centred at
+    ``windows[window_index]``, runs 1000 unrecorded equilibration steps,
+    then runs *total_steps* steps recording the CV every *record_steps*
+    steps, and writes the CV values to
+    ``cv_values_window_{window_index}.txt`` in the current directory.  The
+    bias force (``'US_pulling_force'``) stays in *system* afterwards; the next
+    helper call replaces it.
 
     Parameters
     ----------
     system : openmm.System
         System object; the bias force is added in place.
     sim : openmm.app.Simulation
-        Running simulation whose context is reinitialized after the force
-        is added.
+        Running simulation whose context is reinitialized (state preserved)
+        after the force is added.  Positions should already be at this
+        window, e.g. loaded from ``window_<i>.pdb``.
     group1 : list[int]
         Atom indices for the first centroid group (e.g. the protein).
     group2 : list[int]
@@ -459,24 +535,17 @@ def US_collect_cv(system, sim, group1, group2, window_index, windows,
     -------
     None
         Writes ``cv_values_window_{window_index}.txt`` with two columns:
-        step index and instantaneous CV value (nanometers).
+        record index (0, 1, 2, ...) and instantaneous CV value (nanometers).
     """
     print("define the CV:")
-    cv = CustomCentroidBondForce(2, 'r; r = distance(g1, g2)')
-    grp1, grp2 = cv.addGroup(group1), cv.addGroup(group2)
-    cv.addBond([grp1, grp2])
+    cv = _distance_cv(system, group1, group2)
 
     fc_pull = fc_pull * kilojoule_per_mole / (unit.nanometers ** 2)
 
     print('running window', window_index)
     r0 = windows[window_index] * unit.nanometers
 
-    pullingForce = CustomCVForce('0.5*fc_pull*(cv-r0)^2')
-    pullingForce.addGlobalParameter('fc_pull', fc_pull)
-    pullingForce.addGlobalParameter('r0', r0)
-    pullingForce.addCollectiveVariable('cv', cv)
-    system.addForce(pullingForce)
-    sim.context.reinitialize(preserveState=True)
+    pullingForce, _ = _set_pulling_force(system, sim, cv, fc_pull, r0)
     sim.context.setParameter('r0', r0)
     sim.step(1000)
 
@@ -499,8 +568,10 @@ def US_gen_metafile(windows, fc_pull=300.0, metafile='metafile.txt'):
         Array of window target CV values (nanometers) as returned by
         :func:`US_define_windows` or :func:`US_create_windows`.
     fc_pull : float, optional
-        Harmonic force constant used during production sampling
-        (kJ mol⁻¹ nm⁻²).  Default is ``300.0``.
+        Harmonic force constant used during sampling, in kJ mol⁻¹ nm⁻² (the
+        same value passed to :func:`US_collect_cv`).  It is written to the
+        third column divided by 4.184, i.e. in kcal mol⁻¹ nm⁻², the unit the
+        Grossfield WHAM binary reads.  Default is ``300.0``.
     metafile : str, optional
         Output filename.  Default is ``'metafile.txt'``.
 
@@ -509,9 +580,10 @@ def US_gen_metafile(windows, fc_pull=300.0, metafile='metafile.txt'):
     None
         Writes *metafile* with one line per window formatted as::
 
-            cv_values_window_{i}.txt   {window_target}   {fc_pull}
+            cv_values_window_{i}.txt   {window_target}   {fc_pull / 4.184}
     """
-    lines = [f'cv_values_window_{i}.txt {windows[i]} {fc_pull}\n'
+    fc_kcal = fc_pull / 4.184          # kJ mol-1 nm-2 -> kcal mol-1 nm-2 for WHAM
+    lines = [f'cv_values_window_{i}.txt {windows[i]} {fc_kcal}\n'
              for i in range(len(windows))]
     with open(metafile, 'w') as f:
         f.writelines(lines)
@@ -521,9 +593,52 @@ def US_gen_metafile(windows, fc_pull=300.0, metafile='metafile.txt'):
 # WHAM
 # ---------------------------------------------------------------------------
 def wham_block_average(metafile, min_cv, max_cv, bins, tol, temp, pmf_out, MC=0, seed=12345):
-    """
-    Block averaging: split each window's CV trajectory into two equal halves,
-    run WHAM independently on each block, then write mean ± half-difference PMF.
+    """Two-block error analysis of the PMF with the Grossfield ``wham`` binary.
+
+    Each window's CV trajectory listed in *metafile* is split into two equal
+    halves (the last frame is dropped if the frame count is odd); WHAM is run
+    independently on each half and the mean and half-difference of the two
+    PMFs are written per bin.
+
+    Parameters
+    ----------
+    metafile : str
+        WHAM metafile (``cv_file  centre  force_constant``; blank and ``#``
+        lines ignored).  Force constants must be in WHAM's units
+        (kcal mol⁻¹ nm⁻²).
+    min_cv, max_cv : float
+        Histogram range of the CV.
+    bins : int
+        Number of histogram bins.
+    tol : float
+        WHAM convergence tolerance.
+    temp : float
+        Temperature in Kelvin.
+    pmf_out : str
+        Output file: three columns ``CV  PMF_mean  PMF_error`` (kcal/mol);
+        bins where either block PMF is not finite are written as ``nan``.
+    MC : int, optional
+        Number of WHAM Monte Carlo bootstrap trials passed to each block run
+        (0 = none).  Default ``0``.
+    seed : int, optional
+        Random seed for the MC trials.  Default ``12345``.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If the metafile has no entries, or a CV file has fewer than 2 frames.
+    RuntimeError
+        If a WHAM run fails or produces no output.
+
+    Notes
+    -----
+    Block files are written to a temporary directory that is removed
+    afterwards.  WHAM's stdout/stderr are appended to ``pmf_out`` with its
+    extension replaced by ``_block.log``.  ``wham`` must be on ``PATH``.
     """
     import tempfile, shutil, subprocess
     import numpy as np
@@ -541,7 +656,7 @@ def wham_block_average(metafile, min_cv, max_cv, bins, tol, temp, pmf_out, MC=0,
     if not entries:                                              # ✅ guard #6
         raise ValueError(f"No valid entries found in metafile: {metafile}")
 
-    log_file = pmf_out.replace('.txt', '_block.log')            # ✅ fix #5
+    log_file = os.path.splitext(pmf_out)[0] + '_block.log'
 
     # ── 2. Build two block metafiles in a temp directory ──────────────────
     tmpdir = tempfile.mkdtemp(prefix='wham_block_')
@@ -642,7 +757,28 @@ def wham_block_average(metafile, min_cv, max_cv, bins, tol, temp, pmf_out, MC=0,
 
 
 def wham():
-    """Command-line entry point for the ``gfwham`` script."""
+    """Command-line entry point for the ``gfwham`` script.
+
+    Usage::
+
+        gfwham METAFILE MIN MAX WINDOW_NUM FC_PULL [--temp 298] [--bins 50]
+               [--tol 1e-6] [--pmf pmf.txt] [--no-gen-metafile]
+               [--MC 0] [--seed 12345] [--block]
+
+    Arguments are read from ``sys.argv``.  Unless ``--no-gen-metafile`` is
+    given, METAFILE is (over)written by :func:`US_gen_metafile` with
+    WINDOW_NUM windows evenly spaced from MIN to MAX and force constant
+    FC_PULL (kJ mol⁻¹ nm⁻²), written as FC_PULL / 4.184 in kcal mol⁻¹ nm⁻².  WINDOW_NUM
+    and FC_PULL are required positionals even with ``--no-gen-metafile``,
+    where they are unused (the existing metafile must already be in
+    kcal mol⁻¹ nm⁻²).  MIN and MAX are also the WHAM histogram range.
+
+    With ``--block`` :func:`wham_block_average` is run; otherwise
+    ``wham MIN MAX BINS TOL TEMP 0 METAFILE PMF [MC SEED]`` is executed
+    (MC and SEED only if ``--MC`` > 0) with output appended to ``wham.log``;
+    it exits with an error if ``wham`` is not on ``PATH``, returns a non-zero
+    status, or does not write PMF.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -675,8 +811,7 @@ def wham():
     # ── metafile generation ────────────────────────────────────────────────
     if not args.no_gen_metafile:
         windows  = US_define_windows(r0=args.min, r1=args.max, window_num=args.window_num)
-        fc_pull  = args.fc_pull / 4.184   # kJ mol-1 nm-2 → kcal mol-1 nm-2
-        US_gen_metafile(windows, fc_pull=fc_pull, metafile=args.metafile)
+        US_gen_metafile(windows, fc_pull=args.fc_pull, metafile=args.metafile)
 
     # ── PMF calculation ────────────────────────────────────────────────────
     if args.block:
@@ -687,12 +822,19 @@ def wham():
             pmf_out=args.pmf,
             MC=args.MC,      seed=args.seed,
         )
-    elif args.MC > 0:
-        os.system(f"wham {args.min} {args.max} {args.bins} {args.tol} {args.temp} 0 "
-                  f"{args.metafile} {args.pmf} {args.MC} {args.seed} >> wham.log")
     else:
-        os.system(f"wham {args.min} {args.max} {args.bins} {args.tol} {args.temp} 0 "
-                  f"{args.metafile} {args.pmf} >> wham.log")
+        import subprocess
+        cmd = ['wham', str(args.min), str(args.max), str(args.bins), str(args.tol),
+               str(args.temp), '0', args.metafile, args.pmf]
+        if args.MC > 0:
+            cmd += [str(args.MC), str(args.seed)]
+        try:
+            with open('wham.log', 'a') as log:
+                result = subprocess.run(cmd, stdout=log, stderr=log)
+        except FileNotFoundError:
+            raise SystemExit("Error: the 'wham' executable was not found on PATH.")
+        if result.returncode != 0 or not os.path.exists(args.pmf):
+            raise SystemExit(f"Error: WHAM failed (exit code {result.returncode}); see wham.log.")
 
 
 if __name__ == '__main__':

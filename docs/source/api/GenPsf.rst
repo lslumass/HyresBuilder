@@ -2,4 +2,4 @@ GenPsf
 ======
 
 .. automodule:: HyresBuilder.GenPsf
-   :members: genpsf
+   :members: genpsf, custom_genpsf_fast
