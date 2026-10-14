@@ -501,7 +501,10 @@ def US_collect_cv(system, sim, group1, group2, window_index, windows,
     ``windows[window_index]``, runs 1000 unrecorded equilibration steps,
     then runs *total_steps* steps recording the CV every *record_steps*
     steps, and writes the CV values to
-    ``cv_values_window_{window_index}.txt`` in the current directory.  The
+    ``cv_values_window_{window_index}.txt`` in the current directory.  Each
+    record is written and flushed as it is taken, so a run stopped early
+    keeps every record up to that point (the file is overwritten when the
+    window is run again).  The
     bias force (``'US_pulling_force'``) stays in *system* afterwards; the next
     helper call replaces it.
 
@@ -535,7 +538,8 @@ def US_collect_cv(system, sim, group1, group2, window_index, windows,
     -------
     None
         Writes ``cv_values_window_{window_index}.txt`` with two columns:
-        record index (0, 1, 2, ...) and instantaneous CV value (nanometers).
+        record index (0, 1, 2, ...) and instantaneous CV value (nanometers),
+        one line per record as the simulation runs.
     """
     print("define the CV:")
     cv = _distance_cv(system, group1, group2)
@@ -549,13 +553,13 @@ def US_collect_cv(system, sim, group1, group2, window_index, windows,
     sim.context.setParameter('r0', r0)
     sim.step(1000)
 
-    cv_values = []
-    for i in range(total_steps // record_steps):
-        sim.step(record_steps)
-        current_cv_value = pullingForce.getCollectiveVariableValues(sim.context)
-        cv_values.append([i, current_cv_value[0]])
-
-    np.savetxt(f'cv_values_window_{window_index}.txt', np.array(cv_values))
+    # write each record as it is taken, so an interrupted run keeps its data
+    with open(f'cv_values_window_{window_index}.txt', 'w') as cv_file:
+        for i in range(total_steps // record_steps):
+            sim.step(record_steps)
+            current_cv_value = pullingForce.getCollectiveVariableValues(sim.context)
+            cv_file.write(f'{i:.18e} {current_cv_value[0]:.18e}\n')   # same format as np.savetxt
+            cv_file.flush()
     print('Completed window', window_index)
 
 
