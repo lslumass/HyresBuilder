@@ -4,6 +4,8 @@ Build a coarse-grained methacrylate polymer chain (forcefield/top_polymer.inp).
 Monomers:
     QDM  quaternized DMAEMA         BB (MMA), SC1 (MAO), SC2 (NC4)
     BZM  2-phenylethyl methacrylate BB (MMA), SC1 (MAO), SC2 (BZ1), SC3 (BZ2), SC4 (BZ2)
+    BMA  n-butyl methacrylate       BB (MMA), SC1 (MAO), SC2 (LC3)
+    LMA  lauryl methacrylate        BB (MMA), SC1 (MAO), SC2-SC4 (LC3), SC5 (LC2)
 
 Beads are placed at the equilibrium geometry of the force field with random torsions,
 and every non-bonded bead pair is kept further apart than MIN_DIST:
@@ -11,6 +13,7 @@ and every non-bonded bead pair is kept further apart than MIN_DIST:
     QDM: SC1-SC2 4.00 A, BB-SC1-SC2 135 deg
     BZM: SC1-SC2 3.90 A, BB-SC1-SC2 135 deg, SC2-SC3/SC4 2.18 A, SC3-SC4 1.73 A,
          SC1-SC2-SC3/SC4 130 deg
+    BMA/LMA: SC1-LC3 and LC3-LC3 3.60 A, LC3-LC2 3.00 A, BB-SC1-SC2 135 deg, tail angles 165 deg
 
 The sequence is a '-'-separated list of residue names, each optionally followed by a
 repeat count, e.g. QDM50 or QDM5-BZM-QDM5-BZM.
@@ -30,10 +33,14 @@ ANG_BB, ANG_SC = 145.0, 135.0                 # BB-BB-BB and BB-SC1-SC2 angles, 
 QDM_SC1_SC2 = 4.00
 BZM_SC1_SC2, BZM_RING, BZM_RING_EE = 3.90, 2.18, 1.73
 ANG_RING = 130.0                              # SC1-SC2-SC3/SC4, deg
+ANG_TAIL = 165.0                              # alkyl tail angles (BMA, LMA), deg
+TAILS = {'BMA': [3.60], 'LMA': [3.60, 3.60, 3.60, 3.00]}   # alkyl bead bond lengths from SC1, A
 MIN_DIST = 4.0                                # minimum distance of non-bonded beads, A
 
 ATOMS = {'QDM': ['BB', 'SC1', 'SC2'],
-         'BZM': ['BB', 'SC1', 'SC2', 'SC3', 'SC4']}
+         'BZM': ['BB', 'SC1', 'SC2', 'SC3', 'SC4'],
+         'BMA': ['BB', 'SC1', 'SC2'],
+         'LMA': ['BB', 'SC1', 'SC2', 'SC3', 'SC4', 'SC5']}
 
 
 def unit(v):
@@ -110,6 +117,14 @@ def add_sidechains(bb, residues, rng, tries=500):
             s1 = bb[i] + BB_SC1 * d1
             if res == 'QDM':
                 new = [s1, s1 + QDM_SC1_SC2 * next_dir(d1, ANG_SC, rng)]
+            elif res in TAILS:
+                new, d = [s1], d1
+                for k, b in enumerate(TAILS[res]):
+                    d = next_dir(d, ANG_SC if k == 0 else ANG_TAIL, rng)
+                    new.append(new[-1] + b * d)
+                # tail beads must also avoid each other (beyond their bonded neighbour)
+                if any(clash(x, new[:j - 1]) for j, x in enumerate(new) if j >= 2):
+                    continue
             else:
                 d2 = next_dir(d1, ANG_SC, rng)
                 s2 = s1 + BZM_SC1_SC2 * d2
