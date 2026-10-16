@@ -21,6 +21,11 @@ MAO   NC4    17.93      4.00   ! B-C, 0.400 15000
 MAO   BZ1     5.98      3.90   ! B-D, 0.390  5000
 BZ1   BZ2    23.90      2.18   ! D-E, 0.218 20000
 BZ2   BZ2    23.90      1.73   ! E-E, 0.173 20000
+!bonds for LMA and BMA, 3:1 and 2:1 alkyl beads; force constant of the Martini 2 lipid tail (1250),
+!b0 of the Martini 4:1 tail bond (0.47 nm) scaled by the carbons per bead (x 3/4 for 3:3, x 2.5/4 for 3:2)
+MAO   LC3     1.49      3.60   ! B-F, 0.360  1250
+LC3   LC3     1.49      3.60   ! F-F, 0.360  1250
+LC3   LC2     1.49      3.00   ! F-G, 0.300  1250
 !bonds for PEG/PEO
 PEG   PEG    10.0       3.60   ! EO-EO, the distance between two EO units (O-O) as b0
 
@@ -49,6 +54,12 @@ MMA   MMA   MMA    3.23     145.0  ! A-A-A, 145.0 250.0
 MMA   MAO   NC4    4.48     135.0  ! A-B-C, 135.0 150.0
 MMA   MAO   BZ1    2.39     135.0  ! A-B-D, 135.0  80.0
 MAO   BZ1   BZ2    2.06     130.0  ! B-D-E, 130.0  50.0
+!angles for LMA and BMA; side-chain root as BZM; tail from the Martini 2 lipid tail (180.0, 25), with theta0
+!moved to 165.0 because the ReB form is singular at 180 (Ktheta = 25*sin(165)**4/8.368)
+MMA   MAO   LC3    2.39     135.0  ! A-B-F, 135.0  80.0
+MAO   LC3   LC3    1.00     165.0  ! B-F-F, 165.0  25.0
+LC3   LC3   LC3    1.00     165.0  ! F-F-F, 165.0  25.0
+LC3   LC3   LC2    1.00     165.0  ! F-F-G, 165.0  25.0
 !angles for PEG/PEO
 PEG   PEG   PEG   10.0     123.0  ! EO-EO-EO
 
@@ -92,6 +103,9 @@ MAO      0.00     -0.0600      2.8500   0.00     -0.0600       2.8500 ! from P1T
 NC4      0.00     -0.0150      3.1000   0.00     -0.0150       3.1000 ! as QdK, 5 heavy atoms
 BZ1      0.00     -0.1708      2.6414   0.00     -0.1708       2.6414 ! as A1F, same mapping
 BZ2      0.00     -0.1708      2.3288   0.00     -0.1708       2.3288 ! as A1F eps, A2F/A3F size
+! for LMA and BMA
+LC3      0.00     -0.2191      2.7541   0.00     -0.2191       2.7541 ! as A2V (Val side chain, C3H7); 3 heavy atoms, also the BMA chain end
+LC2      0.00     -0.1700      2.3500   0.00     -0.1700       2.3500 ! between C3E (1 C, -0.120) and A2V (3 C, -0.219); 2 heavy atoms
 ! for PEG/PEO
 PEG      0.00     -0.0480      2.6500   0.00     -0.0480       2.6500 ! as P1S, 3 heavy atoms
 
@@ -104,16 +118,12 @@ MAO       MAO      -0.0600      5.7000       -0.0600      5.7000
 NC4       NC4      -0.0150      6.2000       -0.0150      6.2000
 BZ1       BZ1      -0.1708      5.2828       -0.1708      5.2828
 BZ2       BZ2      -0.1708      4.6576       -0.1708      4.6576
+LC3       LC3      -0.2191      5.5082       -0.2191      5.5082
+LC2       LC2      -0.1700      4.7000       -0.1700      4.7000
 PEG       PEG      -0.0480      5.3000       -0.0480      5.3000
 
 !# cation-pi of the BZM ring beads, copied from QdK-A3F and QdR-A1F; Rmin shifted by the change in Rmin/2
-QdK       BZ2      -0.3000      4.6877
+QdK       BZ1      -0.3000      4.6877
 QdR       BZ1      -0.5000      4.8651
-
-!# NC4-RNA cation-pi interactions, as QdK-RNA
-NC4       RG1      -0.2200      5.2411
-NC4       RC1      -0.2700      5.2411
-NC4       RU1      -0.1700      5.2411
-
 
 END

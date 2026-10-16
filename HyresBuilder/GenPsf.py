@@ -455,7 +455,7 @@ aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
 rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
 dnas = ["DAD", "DCY", "DTH", "DGU", "DA", "DG", "DC", "DT"]
 ions = ["MG+", "SMG", "CA+"]
-polymer = ['PHO', 'PEG', 'QDM', 'BZM']
+polymer = ['PHO', 'PEG', 'QDM', 'BZM', 'LMA', 'BMA']
 auto_polymer = ['PHO']     # polymers relying on psfgen auto angles/dihedrals in the fast path
 metabolites = ['KAN', 'LLL', 'SRY',
                'UN1', 'AYA', 'ACA', 'NLG', 'C3C', 'C4C', 'C5C', '152', 'CHT', 'CIT',
