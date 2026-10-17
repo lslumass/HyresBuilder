@@ -51,6 +51,7 @@ THETAS
 !
 !angles for methacrylate polymers (QDM, BZM)
 MMA   MMA   MMA    3.23     145.0  ! A-A-A, 145.0 250.0
+MMA   MMA   MAO   25.00      90.0   ! A-A-B, 90.0 550.0
 MMA   MAO   NC4    4.48     135.0  ! A-B-C, 135.0 150.0
 MMA   MAO   BZ1    2.39     135.0  ! A-B-D, 135.0  80.0
 MAO   BZ1   BZ2    2.06     130.0  ! B-D-E, 130.0  50.0
@@ -100,7 +101,7 @@ NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
 ! for methacrylate polymers (QDM, BZM)
 MMA      0.00     -0.1500      2.7000   0.00     -0.1500       2.7000 ! from C3E (-0.1200), adjusted; 3 heavy atoms
 MAO      0.00     -0.0600      2.8500   0.00     -0.0600       2.8500 ! from P1T (-0.0502), adjusted; 4 heavy atoms
-NC4      0.00     -0.0150      3.1000   0.00     -0.0150       3.1000 ! as QdK, 5 heavy atoms
+NC4      0.00     -0.0150      2.9000   0.00     -0.0150       2.9000 ! as QdK, 5 heavy atoms
 BZ1      0.00     -0.1708      1.9082   0.00     -0.1708       1.9082 ! A1F eps; Martini 3 tiny bead size (sigma 0.34 nm)
 BZ2      0.00     -0.1708      1.9082   0.00     -0.1708       1.9082 ! A1F eps; Martini 3 tiny bead size (sigma 0.34 nm)
 ! for LMA and BMA
@@ -115,7 +116,7 @@ NBFIX
 ! NBFIX for self-interactons to make sure customBNforce is used, instead of the default NBForce, which was deleted
 MMA       MMA      -0.1500      5.4000       -0.1500      5.4000
 MAO       MAO      -0.0600      5.7000       -0.0600      5.7000
-NC4       NC4      -0.0150      6.2000       -0.0150      6.2000
+NC4       NC4      -0.0150      5.8000       -0.0150      5.8000
 BZ1       BZ1      -0.1708      3.8164       -0.1708      3.8164
 BZ2       BZ2      -0.1708      3.8164       -0.1708      3.8164
 LC3       LC3      -0.2191      5.5082       -0.2191      5.5082
@@ -124,7 +125,7 @@ PEG       PEG      -0.0480      5.3000       -0.0480      5.3000
 
 !# cation-pi of the BZM ring beads, copied from QdK-A3F (4.6877) and QdR-A1F (4.8651); Rmin shifted by the change
 !# in Rmin/2 to the Martini 3 tiny bead (1.9082 vs A3F 2.3288 / A1F 2.6414)
-QdK       BZ1      -0.3000      4.2671
-QdR       BZ1      -0.5000      4.1319
+QdK       BZ1      -0.3000      4.8671
+QdR       BZ1      -0.5000      4.8319
 
 END
