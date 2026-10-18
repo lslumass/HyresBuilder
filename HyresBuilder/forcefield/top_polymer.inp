@@ -14,6 +14,7 @@ MASS   604 BZ1   39.057   ! D: CH2 + ipso/ortho ring carbons, C3H3 (as A1F of Ph
 MASS   605 BZ2   26.038   ! E: ring carbons, C2H2 (as A2F/A3F of Phe)
 MASS   607 LC3   42.081   ! F: alkyl, (CH2)3 or CH2-CH2-CH3 (as A2V of Val)
 MASS   608 LC2   29.062   ! G: alkyl, CH2-CH3 (chain end)
+MASS   609 HOE   31.034   ! H: hydroxymethyl, CH2-OH (as P1S of Ser)
 
 ! bead types for PEG/PEO
 MASS   606 PEG   44.000   ! EO unit, -CH2-O-CH2-
@@ -26,6 +27,8 @@ MASS   606 PEG   44.000   ! EO unit, -CH2-O-CH2-
 !      first CH2 of the dodecyl chain, SC2-SC5 the other 11 carbons (3 + 3 + 3 + 2)
 ! BMA: n-butyl methacrylate monomer, for qPDMAEMA-r-PBMA; SC1 (MAO) holds the first CH2
 !      of the butyl chain, SC2 the other 3 carbons
+! HEM: 2-hydroxyethyl methacrylate (HEMA) monomer; SC1 (MAO) holds the first CH2 of the
+!      hydroxyethyl group, SC2 the CH2-OH (Ser side-chain bead)
 ! PEG: EO unit of polyethylene glycol (PEG) or polyethylene oxide (PEO);
 !      bead name EO kept from the original HyRes definition
 ! bead names: BB for the backbone bead, SC1, SC2, ... for side-chain beads;
@@ -79,6 +82,16 @@ GROUP
 ATOM BB   MMA     0.00
 ATOM SC1  MAO     0.00
 ATOM SC2  LC3     0.00
+BOND BB   SC1     SC1  SC2     BB   +BB
+ANGL BB   SC1  SC2
+ANGL -BB  BB   +BB
+
+
+RESI HEM          0.00
+GROUP
+ATOM BB   MMA     0.00
+ATOM SC1  MAO     0.00
+ATOM SC2  HOE     0.00
 BOND BB   SC1     SC1  SC2     BB   +BB
 ANGL BB   SC1  SC2
 ANGL -BB  BB   +BB

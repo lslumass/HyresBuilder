@@ -6,6 +6,7 @@ Monomers:
     BZM  2-phenylethyl methacrylate BB (MMA), SC1 (MAO), SC2 (BZ1), SC3 (BZ2), SC4 (BZ2)
     BMA  n-butyl methacrylate       BB (MMA), SC1 (MAO), SC2 (LC3)
     LMA  lauryl methacrylate        BB (MMA), SC1 (MAO), SC2-SC4 (LC3), SC5 (LC2)
+    HEM  2-hydroxyethyl methacrylate BB (MMA), SC1 (MAO), SC2 (HOE)
 
 Beads are placed at the equilibrium geometry of the force field with random torsions,
 and every non-bonded bead pair is kept further apart than MIN_DIST:
@@ -31,6 +32,7 @@ import numpy as np
 BB_BB, BB_SC1 = 2.79, 2.82                    # bond lengths, A
 ANG_BB, ANG_SC = 145.0, 135.0                 # BB-BB-BB and BB-SC1-SC2 angles, deg
 QDM_SC1_SC2 = 4.00
+HEM_SC1_SC2 = 3.00
 BZM_SC1_SC2, BZM_RING, BZM_RING_EE = 3.90, 2.18, 1.73
 ANG_RING = 130.0                              # SC1-SC2-SC3/SC4, deg
 ANG_TAIL = 165.0                              # alkyl tail angles (BMA, LMA), deg
@@ -40,6 +42,7 @@ MIN_DIST = 4.0                                # minimum distance of non-bonded b
 ATOMS = {'QDM': ['BB', 'SC1', 'SC2'],
          'BZM': ['BB', 'SC1', 'SC2', 'SC3', 'SC4'],
          'BMA': ['BB', 'SC1', 'SC2'],
+         'HEM': ['BB', 'SC1', 'SC2'],
          'LMA': ['BB', 'SC1', 'SC2', 'SC3', 'SC4', 'SC5']}
 
 
@@ -115,8 +118,9 @@ def add_sidechains(bb, residues, rng, tries=500):
         for _ in range(tries):
             d1 = unit(out + 0.8 * perp(out, rng))
             s1 = bb[i] + BB_SC1 * d1
-            if res == 'QDM':
-                new = [s1, s1 + QDM_SC1_SC2 * next_dir(d1, ANG_SC, rng)]
+            if res in ('QDM', 'HEM'):
+                b = QDM_SC1_SC2 if res == 'QDM' else HEM_SC1_SC2
+                new = [s1, s1 + b * next_dir(d1, ANG_SC, rng)]
             elif res in TAILS:
                 new, d = [s1], d1
                 for k, b in enumerate(TAILS[res]):
