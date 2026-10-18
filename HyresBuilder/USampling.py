@@ -387,13 +387,18 @@ def US_create_windows(system, sim, group1, group2, r0, r1, window_num,
                        total_steps=100000, increment_steps=10):
     """Generate umbrella sampling window structures via SMD.
 
-    A COM-distance CV is defined between *group1* and *group2*.  A
-    harmonic bias ``0.5*fc_pull*(cv-r0)^2`` moves its anchor upward from
-    *r0* at constant velocity *v_pull* (the anchor is not clamped at *r1*),
-    so the groups are pulled apart.  Whenever the instantaneous CV reaches
-    the next window target (``cv >= target``), the current coordinates are
-    stored; after the run they are written as ``window_<i>.pdb`` in the
-    current directory.  The loop stops once all windows are captured.
+    A COM-distance CV is defined between *group1* and *group2*, and a
+    harmonic bias ``0.5*fc_pull*(cv-r0)^2`` is anchored at the CV value at
+    the start of the call.  If that value is above the first target *r0*,
+    the anchor is first moved inward at *v_pull* (stopping at *r0*) until
+    the CV reaches *r0* (``cv <= r0``), where window 0 is saved.  The anchor
+    then moves outward at *v_pull* (not clamped at *r1*), pulling the groups
+    apart, and each further window is saved when the CV reaches its target
+    (``cv >= target``).  If the starting CV is at or below *r0*, only the
+    outward pull is done.  After the run the saved coordinates are written as
+    ``window_<i>.pdb`` in the current directory.  The loop stops once all
+    windows are captured.  A warning is printed for every window saved more
+    than half a window spacing from its target.
 
     Parameters
     ----------
@@ -407,7 +412,7 @@ def US_create_windows(system, sim, group1, group2, r0, r1, window_num,
     group2 : list[int]
         Atom indices for the second centroid group (e.g. the ligand).
     r0 : float
-        Starting CV value / initial anchor position (nanometers).
+        First window target (nanometers).
     r1 : float
         Ending CV value; the furthest window target (nanometers).
     window_num : int
@@ -446,17 +451,24 @@ def US_create_windows(system, sim, group1, group2, r0, r1, window_num,
     v_pull  = v_pull  * unit.nanometers / unit.picosecond
     dt      = sim.integrator.getStepSize()
 
-    r0_nm  = float(r0)
     r1_nm  = float(r1)
-    r0_qty = r0_nm * unit.nanometers
-
-    pullingForce, _ = _set_pulling_force(system, sim, cv, fc_pull, r0_qty)
-
-    windows       = np.linspace(r0_nm, r1_nm, window_num)
+    windows       = np.linspace(float(r0), r1_nm, window_num)
     window_coords = []
     window_index  = 0
+    tolerance     = 0.5 * (windows[1] - windows[0]) if window_num > 1 else np.inf
 
-    print("SMD pulling", pullingForce.getCollectiveVariableValues(sim.context))
+    # anchor the bias at the current CV, so pulling starts smoothly in either direction
+    pullingForce, _ = _set_pulling_force(system, sim, cv, fc_pull, float(r0) * unit.nanometers)
+    r_start = pullingForce.getCollectiveVariableValues(sim.context)[0]
+    r0_nm   = r_start
+    r0_qty  = r0_nm * unit.nanometers
+    sim.context.setParameter('r0', r0_qty)
+    print(f'SMD pulling: start r = {r_start:.4f} nm, first window target = {windows[0]:.4f} nm')
+
+    # start above the first target: pull back to it first, then pull outward
+    pull_in = r_start > windows[0]
+    if pull_in:
+        print(f'start r is above the first target: pulling back to {windows[0]:.4f} nm first')
     log_every = max(1, 5000 // increment_steps)
 
     for i in range(total_steps // increment_steps):
@@ -466,14 +478,27 @@ def US_create_windows(system, sim, group1, group2, r0, r1, window_num,
         if i % log_every == 0:
             print(f'r0 = {r0_nm:.4f} nm  |  r = {current_cv_value:.4f} nm')
 
-        step_displacement = v_pull * dt * increment_steps
-        r0_nm  += step_displacement.value_in_unit(unit.nanometers)
-        r0_qty += step_displacement
+        step_nm = (v_pull * dt * increment_steps).value_in_unit(unit.nanometers)
+        if pull_in:
+            r0_nm = max(r0_nm - step_nm, windows[0])
+        else:
+            r0_nm += step_nm
+        r0_qty = r0_nm * unit.nanometers
         sim.context.setParameter('r0', r0_qty)
 
-        if window_index < len(windows) and current_cv_value >= windows[window_index]:
+        if window_index >= len(windows):
+            break
+        if pull_in:
+            reached = current_cv_value <= windows[window_index]
+        else:
+            reached = current_cv_value >= windows[window_index]
+        if reached:
+            pull_in = False                     # window 0 reached on the way back: pull outward from now on
             print(f'saving window {window_index}: target={windows[window_index]:.4f} nm  '
                   f'r={current_cv_value:.4f} nm')
+            if abs(current_cv_value - windows[window_index]) > tolerance:
+                print(f'WARNING: window {window_index} saved {current_cv_value - windows[window_index]:+.4f} nm '
+                      f'from its target (more than half the window spacing).')
             state = sim.context.getState(getPositions=True, enforcePeriodicBox=False)
             window_coords.append(state.getPositions())
             window_index += 1
