@@ -17,11 +17,14 @@ and every non-bonded bead pair is kept further apart than MIN_DIST:
     BMA/LMA: SC1-LC3 and LC3-LC3 3.60 A, LC3-LC2 3.00 A, BB-SC1-SC2 135 deg, tail angles 165 deg
 
 The sequence is a '-'-separated list of residue names, each optionally followed by a
-repeat count, e.g. QDM50 or QDM5-BZM-QDM5-BZM.
+repeat count, e.g. QDM50 or QDM5-BZM-QDM5-BZM. With --random the monomers of SEQUENCE
+are shuffled into a random order (ideal random copolymer with exactly that composition);
+the order depends on --seed and is written to the PDB REMARK and printed.
 
-usage: python build_polymer.py SEQUENCE -o NAME [--seed 2026]
+usage: python build_polymer.py SEQUENCE -o NAME [--seed 2026] [--random]
 e.g.:  python build_polymer.py QDM50 -o qPDMAEMA50
        python build_polymer.py QDM5-BZM-QDM5-BZM-QDM5-BZM-QDM5-BZM-QDM5-BZM -o qPDMAEMA25-PBzMA5
+       python build_polymer.py QDM45-BZM5 --random --seed 7 -o pBzMA_random
 then:  genpsf NAME.pdb NAME.psf
 """
 
@@ -78,6 +81,18 @@ def parse_sequence(seq):
             raise ValueError(f"Invalid monomer '{token}', supported: {', '.join(ATOMS)}")
         residues += [m.group(1)] * int(m.group(2) or 1)
     return residues
+
+
+def compact(residues):
+    """Write a residue list in the SEQUENCE syntax, e.g. QDM3-BZM-QDM9."""
+    out, i = [], 0
+    while i < len(residues):
+        j = i
+        while j < len(residues) and residues[j] == residues[i]:
+            j += 1
+        out.append(residues[i] + (str(j - i) if j - i > 1 else ''))
+        i = j
+    return '-'.join(out)
 
 
 def ring(s2, d2, rng):
@@ -174,11 +189,18 @@ def main():
     parser.add_argument("seq", help="sequence, e.g. QDM50 or QDM5-BZM-QDM5-BZM")
     parser.add_argument("-o", "--out", required=True, help="output name stem, writes NAME.pdb")
     parser.add_argument("--seed", type=int, default=2026, help="random seed")
+    parser.add_argument("--random", action="store_true",
+                        help="shuffle the monomers of SEQUENCE into a random order (same composition)")
     args = parser.parse_args()
 
     residues = parse_sequence(args.seq)
+    seq = args.seq
+    if args.random:
+        residues = list(np.random.default_rng(args.seed).permutation(residues))
+        seq = compact(residues)
+        print(f"random sequence (seed {args.seed}): {seq}")
     bb, sc = build(residues, args.seed)
-    write_pdb(args.out, args.seq, residues, bb, sc)
+    write_pdb(args.out, seq, residues, bb, sc)
     print(f"{len(residues)} monomers written to {args.out}.pdb")
 
 
