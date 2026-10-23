@@ -1141,7 +1141,7 @@ def rG4sSystem(psf, system, DH_params, modification=None):
     if num_G != 0:
         formula = f"""eps_GG*(5.0*(r_gg1/r1)^12-6.0*(r_gg1/r1)^10)*step1*step2;
                   r1=distance(d1,a1); step1=step(psi3)*psi3; psi3=cos(psi)^1; psi=dihedral(a2,a1,d1,d2);
-                  step2=step(phi3)*phi3; phi3=-cos(phi)^1; phi=angle(a3,a1,d3);
+                  step2=step(phi3)*phi3; phi3=-cos(phi)^3; phi=angle(a3,a1,d3);
                   eps_GG={eps_GG.value_in_unit(unit.kilojoule_per_mole)};
                   r_gg1={r_gg1.value_in_unit(unit.nanometer)};
                   """
@@ -1164,7 +1164,7 @@ def rG4sSystem(psf, system, DH_params, modification=None):
 
         formula = f"""eps_GG*(5.0*(r_gg2/r2)^12-6.0*(r_gg2/r2)^10)*step1*step2;
                   r2=distance(d1,a1); step1=step(psi3)*psi3; psi3=cos(psi)^1; psi=dihedral(a1,a2,d2,d1);
-                  step2=step(phi3)*phi3; phi3=-cos(phi)^3; phi=angle(d3,d1,a1);
+                  step2=step(phi3)*phi3; phi3=-cos(phi)^1; phi=angle(d3,d1,a1);
                   eps_GG={eps_GG.value_in_unit(unit.kilojoule_per_mole)};
                   r_gg2={r_gg2.value_in_unit(unit.nanometer)};
                   """
