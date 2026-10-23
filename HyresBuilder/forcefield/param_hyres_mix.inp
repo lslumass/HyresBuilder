@@ -61,6 +61,7 @@ A2F   A3F    300.0      2.22  ! phe CC-CD
 A1Y   A2Y    300.0      2.45  ! tyr CB-CC
 A1Y   P1Y    300.0      3.52  ! tyr CB-CD
 A2Y   P1Y    300.0      2.44  ! tyr CC-CD
+P1Y   PO3    200.0      2.45  ! ptyr CD-CE (tyr beads unchanged, phosphate bead added to CD)
 A1W   P1W    300.0      2.58  ! trp CB-CC
 A1W   A2W    300.0      2.53  ! trp CB-CD
 P1W   A2W    300.0      1.85  ! trp CC-CD
@@ -68,8 +69,10 @@ A2W   A3W    300.0      2.15  ! trp CD-CE
 A2W   A4W    300.0      2.15  ! trp CD-CF
 A3W   A4W    300.0      2.25  ! trp CE-CF
 !## CB-CC bonds for pSer and pThr           
-P2S   P3S    200.0      2.53  ! pSer CB-CC  
-P2T   P3T    200.0      3.20  ! pThr CB-CC  
+P2S   PO3    200.0      2.53  ! pSer CB-CC (PO3: phosphate bead shared by pSer and pThr)
+P2T   PO3    200.0      3.20  ! pThr CB-CC
+P2S   P3S    200.0      2.53  ! legacy pSer CB-CC, for PSFs built with P3S
+P2T   P3T    200.0      3.20  ! legacy pThr CB-CC, for PSFs built with P3T
 ! special bond in pro
 N     A2P    400.0      1.86  ! pro
 
@@ -167,11 +170,14 @@ C1E   A1F   A2F   10.0     116.0  ! phe CA-CB-CC
 C1E   A1F   A3F   20.0     140.2  ! phe CA-CB-CD
 C1E   A1Y   A2Y   10.0     115.8  ! tyr CA-CB-CC
 C1E   A1Y   P1Y   20.0     139.2  ! tyr CA-CB-CD
+A1Y   P1Y   PO3   20.0     145.0  ! ptyr CB-CD-CE; no CC-CD-CE angle, so the phosphate can rotate about the ring C-O bond
 C1E   A1W   P1W   20.0     125.6  ! trp CA-CB-CC
 C1E   A1W   A2W   20.0     133.7  ! trp CA-CB-CD
 !## for pSer and pThr                                   
-C1E   P2S   P3S   20.0     132.8  ! pSer CA-CB-CC (PO4) 
-C1E   P2T   P3T   20.0      72.6  ! pThr CA-CB-CC (PO4) 
+C1E   P2S   PO3   20.0     132.8  ! pSer CA-CB-CC (PO4)
+C1E   P2T   PO3   20.0      72.6  ! pThr CA-CB-CC (PO4)
+C1E   P2S   P3S   20.0     132.8  ! legacy pSer, for PSFs built with P3S
+C1E   P2T   P3T   20.0      72.6  ! legacy pThr, for PSFs built with P3T
 !CC-CD-CE, CC-CD-CF, CB-CD-CE, CB-CD-CF in trp
 !#A1W   A2W   A3W   50.0     161.0  ! trp
 P1W   A2W   A3W   50.0     127.9  ! trp
@@ -257,11 +263,15 @@ NH1   C1E   A1Y   A2Y     0.30    1     90.0   ! tyr
 NH1   C1E   A1W   P1W     0.80    3     0.0    ! trp
 NH1   C1E   A1W   P1W     0.80    1     85.0   ! trp
 !## for pSer                                         
-NH1   C1E   P2S   P3S     0.30    3     0.0    ! pSer
-NH1   C1E   P2S   P3S     0.50    1     75.0   ! pSer
+NH1   C1E   P2S   PO3     0.30    3     0.0    ! pSer
+NH1   C1E   P2S   PO3     0.50    1     75.0   ! pSer
+NH1   C1E   P2S   P3S     0.30    3     0.0    ! legacy pSer, for PSFs built with P3S
+NH1   C1E   P2S   P3S     0.50    1     75.0   ! legacy pSer, for PSFs built with P3S
 !## for pThr                                         
-NH1   C1E   P2T   P3T     0.30    3     0.0    ! pThr
-NH1   C1E   P2T   P3T     0.50    1     75.0   ! pThr
+NH1   C1E   P2T   PO3     0.30    3     0.0    ! pThr
+NH1   C1E   P2T   PO3     0.50    1     75.0   ! pThr
+NH1   C1E   P2T   P3T     0.30    3     0.0    ! legacy pThr, for PSFs built with P3T
+NH1   C1E   P2T   P3T     0.50    1     75.0   ! legacy pThr, for PSFs built with P3T
 
 !N-CA-CB-CD
 NH1   C1E   A4H   P2H     0.00    2     180.0  ! his N-CA-CB-CD
@@ -280,9 +290,11 @@ C     C1E   A1Y   P1Y     0.00    2     180.0  ! tyr C-CA-CB-CD
 C     C1E   A1W   P1W     0.00    2     180.0  ! trp C-CA-CB-CC
 C     C1E   A1W   A2W     0.00    2     180.0  ! trp C-CA-CB-CD
 !## for pSer                                          
-C     C1E   P2S   P3S     0.00    2     180.0  ! pSer 
+C     C1E   P2S   PO3     0.00    2     180.0  ! pSer
+C     C1E   P2S   P3S     0.00    2     180.0  ! legacy pSer, for PSFs built with P3S
 !## for pThr                                          
-C     C1E   P2T   P3T     0.00    2     180.0  ! pThr 
+C     C1E   P2T   PO3     0.00    2     180.0  ! pThr
+C     C1E   P2T   P3T     0.00    2     180.0  ! legacy pThr, for PSFs built with P3T
 
 !CA-CB-CC-CD (or CA-CB-CD-CC) for his, phe, tyr
 C1E   A4H   P1H   P2H     0.00    2     180.0  ! his CA-CB-CC-CD
@@ -291,6 +303,7 @@ C1E   A1F   A2F   A3F     0.00    2     180.0  ! phe CA-CB-CC-CD
 C1E   A1F   A3F   A2F     0.00    2     180.0  ! phe CA-CB-CD-CC
 C1E   A1Y   A2Y   P1Y     0.00    2     180.0  ! tyr CA-CB-CC-CD
 C1E   A1Y   P1Y   A2Y     0.00    2     180.0  ! tyr CA-CB-CD-CC
+C1E   A1Y   P1Y   PO3     0.00    2     180.0  ! ptyr CA-CB-CD-CE
 !for trp
 C1E   A1W   P1W   A2W     0.00    2     180.0  ! trp CA-CB-CC-CD
 C1E   A1W   A2W   P1W     0.00    2     180.0  ! trp CA-CB-CD-CC
@@ -1098,11 +1111,13 @@ A2W      0.00     -0.1353      2.0870   0.00     -0.1680       2.3870 ! trp,
 A3W      0.00     -0.1353      2.3293   0.00     -0.1680       2.6293 ! trp,    
 A4W      0.00     -0.1353      2.3292   0.00     -0.1680       2.6292 ! trp,      
 !## for pSer                                                           
-P2S      0.00     -0.1540      2.1158   0.00     -0.1540       2.1158 !
-P3S      0.00     -0.0700      2.2500   0.00     -0.0700       2.2500 !
+P2S      0.00     -0.0800      2.1158   0.00     -0.0800       2.1158 ! pSer CB (CH2 next to the phosphate), was -0.154
+P3S      0.00     -0.0700      2.2500   0.00     -0.0700       2.2500 ! legacy pSer phosphate (same as PO3)
 !## for pThr                                                           
-P2T      0.00     -0.2200      2.4350   0.00     -0.2200       2.4350 !
-P3T      0.00     -0.0700      2.2500   0.00     -0.0700       2.2500 !
+P2T      0.00     -0.1000      2.4350   0.00     -0.1000       2.4350 ! pThr CB (CH-CH3 next to the phosphate), was -0.220
+P3T      0.00     -0.0700      2.2500   0.00     -0.0700       2.2500 ! legacy pThr phosphate (same as PO3)
+!## phosphate group of pSer and pThr
+PO3      0.00     -0.0700      2.2500   0.00     -0.0700       2.2500 ! phosphate (-O-PO3 2-) of pSer and pThr
 
 NBFIX
 ! NBFIX for self-interactons to make sure customBNforce is used, instead of the default NBForce, which was deleted
@@ -1153,5 +1168,13 @@ QdR       A2W      -0.7000      4.6233
 QdK       A3F      -0.3000      4.6877
 QdK       P1Y      -0.3000      4.8113
 QdK       A2W      -0.4000      4.4459
+
+!# Ca2+ (CAL, partially dehydrated bead, Rmin/2 2.2) with carboxylates and the pSer/pThr phosphate:
+!# depth as RP-CAL (-0.50), contact = Rmin/2(bead) + Rmin/2(CAL); initial values, to calibrate
+QaD       CAL      -0.5000      4.8066
+QaE       CAL      -0.5000      5.0516
+PO3       CAL      -0.5000      4.4500   ! pSer/pThr phosphate, contact = 2.25 + 2.2
+P3S       CAL      -0.5000      4.4500   ! legacy, same as PO3
+P3T       CAL      -0.5000      4.4500   ! legacy, same as PO3
 
 END

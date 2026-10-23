@@ -13,8 +13,9 @@ Conversion models
 * **HyRes (protein)** -- backbone atoms N, H, CA, C, O are kept at their
   original positions; sidechain heavy atoms are collapsed into one to five
   geometric-center beads named CB, CC, CD, CE, CF depending on residue type.
-  Glycine has no sidechain bead. Histidine variants are written as HIS
-  (:func:`at2hyres`).
+  Glycine has no sidechain bead. Histidine variants are written as HIS.
+  Phosphorylated SEP, TPO and PTR (dianionic, phosphate O named O1P-O3P or
+  OP1-OP3) get a phosphate bead (:func:`at2hyres`).
 * **iConRNA (RNA)** -- each nucleotide is mapped to a phosphate bead (P), two
   sugar beads (C1 at C4', C2 at C1') and three or four base beads (NA-ND),
   each at the geometric center of its contributing atoms. Supported
@@ -536,7 +537,8 @@ def split_chains(pdb, renumber=False):
             chain's first residue name is not recognised.
     """
     aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
-           "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
+           "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL",
+           "SEP", "TPO", "PTR"]           # phosphoserine, phosphothreonine, phosphotyrosine
     rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
     dnas = ["DAD", "DGU", "DCY", "DTH", "DA", "DG", "DC", "DT"]
     ags = ["KAN"]
@@ -710,7 +712,12 @@ def at2hyres(pdb_in, pdb_out):
     into one or more beads at their geometric center, named CB, CC, CD, CE,
     CF in order: one bead for ALA, VAL, LEU, ILE, MET, ASN, ASP, GLN, GLU,
     CYS, SER, THR, PRO; two for LYS, ARG; three for HIS, PHE, TYR; five for
-    TRP; none for GLY. HSD, HSE and HSP are renamed HIS. Atoms are written
+    TRP; none for GLY. HSD, HSE and HSP are renamed HIS. Phosphorylated
+    residues: SEP (CB; CC = OG + PO3), TPO (CB = CB + CG2; CC = OG1 + PO3)
+    and PTR (CB, CC, CD as TYR; CE = PO3 without the phenolic O, which stays
+    in CD); phosphate oxygens may be named O1P-O3P or OP1-OP3, and hydrogens
+    (protonated phosphates) are dropped, so the bead is the -2 dianion of
+    the force field. Atoms are written
     per residue as: N/H/CA (input order), sidechain beads, then C/O (input
     order). Residues are keyed by residue number only, so the input should
     be a single chain. Atom serial numbers are encoded in hybrid-36 format
@@ -808,6 +815,7 @@ def at2hyres(pdb_in, pdb_out):
                 atom['resname'] = 'HIS'
 
     # Mapping rules for residues
+    PHOSPHATE_O = ['O1P', 'O2P', 'O3P', 'OP1', 'OP2', 'OP3']   # PDB/CHARMM and alternative names
     single_bead_sc = ['ALA', 'VAL', 'LEU', 'ILE', 'MET', 'ASN', 'ASP', 
                       'GLN', 'GLU', 'CYS', 'SER', 'THR', 'PRO']
     
@@ -817,7 +825,12 @@ def at2hyres(pdb_in, pdb_out):
         'HIS': [['CB', 'CG'], ['CD2', 'NE2'], ['ND1', 'CE1']],
         'PHE': [['CB', 'CG', 'CD1'], ['CD2', 'CE2'], ['CE1', 'CZ']],
         'TYR': [['CB', 'CG', 'CD1'], ['CD2', 'CE2'], ['CE1', 'CZ', 'OH']],
-        'TRP': [['CB', 'CG'], ['CD1', 'NE1'], ['CD2', 'CE2'], ['CZ2', 'CH2'], ['CE3', 'CZ3']]
+        'TRP': [['CB', 'CG'], ['CD1', 'NE1'], ['CD2', 'CE2'], ['CZ2', 'CH2'], ['CE3', 'CZ3']],
+        # phosphorylated residues; the phosphate bead (PO3 type) is the ester O + P + 3 O for
+        # SEP/TPO, and P + 3 O for PTR, whose CD keeps the phenolic O as in TYR
+        'SEP': [['CB'], ['OG', 'P'] + PHOSPHATE_O],
+        'TPO': [['CB', 'CG2'], ['OG1', 'P'] + PHOSPHATE_O],
+        'PTR': [['CB', 'CG', 'CD1'], ['CD2', 'CE2'], ['CE1', 'CZ', 'OH'], ['P'] + PHOSPHATE_O],
     }
     
     bb_atoms = ['CA', 'C', 'O', 'N', 'H']

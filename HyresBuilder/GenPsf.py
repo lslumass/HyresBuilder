@@ -451,7 +451,8 @@ def prepare_custom_metabolites(metabolite_names, verbose=True):
 # ===========================================================================
 
 aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
-       "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
+       "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL",
+       "SEP", "TPO", "PTR"]           # phosphoserine, phosphothreonine, phosphotyrosine
 rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
 dnas = ["DAD", "DCY", "DTH", "DGU", "DA", "DG", "DC", "DT"]
 ions = ["MG+", "SMG", "CA+"]

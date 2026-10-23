@@ -22,8 +22,20 @@ Workflow
 2. Load the protein and RNA topology files via ``utils.load_ff``.
 3. Register the input PDB as a ``psfgen`` segment with the ``mutate`` table
    applied at the ``add_segment`` step (:func:`mut`).
-4. Read the input coordinates, guess missing coordinates, regenerate angles
-   and dihedrals, and write the output PDB.
+4. Read the input coordinates, guess missing coordinates, place the phosphate
+   bead of phosphorylated residues (:func:`_place_phosphate`), regenerate
+   angles and dihedrals, and write the output PDB.
+
+Phosphorylation
+---------------
+Mutating to ``SEP`` (phosphoserine), ``TPO`` (phosphothreonine) or ``PTR``
+(phosphotyrosine) adds a phosphate bead (type ``PO3``) that psfgen cannot
+place, because the HyRes topology has no internal-coordinate tables. It is
+placed at the force-field bond length and angle (``PHOSPHO_BEADS``), with
+the free rotation about the anchor bond chosen to keep it as far as possible
+from all other beads. The mutated site must already have the anchor and
+reference beads in the input: CA and CB for SEP/TPO (e.g. from SER or THR),
+CB and CD for PTR (from TYR or PHE).
 
 A command-line interface is exposed via :func:`main` as the ``mutate``
 console script, taking the input and output PDB as positional arguments and
@@ -43,6 +55,74 @@ from HyresBuilder import utils
 import argparse
 import sys
 from pathlib import Path
+import numpy as np
+
+
+# Phosphate bead of phosphorylated residues: (new bead, anchor bead, reference bead,
+# bond anchor-new in A, angle reference-anchor-new in deg), as in forcefield/param_hyres_mix.inp
+PHOSPHO_BEADS = {
+    'SEP': ('CC', 'CB', 'CA', 2.53, 132.8),   # P2S-PO3, C1E-P2S-PO3
+    'TPO': ('CC', 'CB', 'CA', 3.20, 72.6),    # P2T-PO3, C1E-P2T-PO3
+    'PTR': ('CE', 'CD', 'CB', 2.45, 145.0),   # P1Y-PO3, A1Y-P1Y-PO3
+}
+
+
+def _input_atoms(pdb_in):
+    """Atom names of each residue (keyed by resid string) in the input PDB."""
+    atoms = {}
+    with open(pdb_in) as f:
+        for line in f:
+            if line.startswith(('ATOM', 'HETATM')):
+                atoms.setdefault(line[22:27].strip(), set()).add(line[12:16].strip())
+    return atoms
+
+
+def _place_phosphate(gen, segid, resid, resname, input_atoms):
+    """
+    Place the phosphate bead of a SEP, TPO or PTR residue built by psfgen.
+
+    The bead is put at the bond length and angle of ``PHOSPHO_BEADS`` from
+    its anchor bead; of 24 rotations (every 15 deg) about the reference-anchor
+    bond, the one farthest from all other beads in the segment is used.
+
+    Args:
+        gen (PsfGen): psfgen session holding the mutated segment.
+        segid (str): Segment ID.
+        resid (str): Residue ID of the phosphorylated residue.
+        resname (str): ``'SEP'``, ``'TPO'`` or ``'PTR'``.
+        input_atoms (set of str): Atom names of this residue in the input PDB.
+
+    Returns:
+        float: Distance (A) from the placed bead to the closest other bead.
+
+    Raises:
+        ValueError: If the anchor or reference bead was not in the input
+            residue (its position would only be guessed by psfgen).
+    """
+    bead, anchor, ref, bond, angle = PHOSPHO_BEADS[resname]
+    missing = [a for a in (ref, anchor) if a not in input_atoms]
+    if missing:
+        raise ValueError(f"Residue {resid} -> {resname}: bead(s) {', '.join(missing)} not in the input "
+                         f"residue, so the phosphate bead cannot be placed. Mutate from a residue that "
+                         f"has {ref} and {anchor} (SEP/TPO: e.g. SER or THR; PTR: TYR or PHE).")
+    xyz = dict(zip(gen.get_atom_names(segid, resid), (np.array(c) for c in gen.get_coordinates(segid, resid))))
+    others = np.array([c for r in gen.get_resids(segid)
+                       for n, c in zip(gen.get_atom_names(segid, r), gen.get_coordinates(segid, r))
+                       if not (str(r) == str(resid) and n == bead)])
+    e = xyz[anchor] - xyz[ref]
+    e /= np.linalg.norm(e)
+    p1 = np.cross(e, [1.0, 0.0, 0.0] if abs(e[0]) < 0.9 else [0.0, 1.0, 0.0])
+    p1 /= np.linalg.norm(p1)
+    p2 = np.cross(e, p1)
+    tilt = np.radians(180.0 - angle)
+    best, best_d = None, -1.0
+    for phi in np.radians(np.arange(0, 360, 15)):
+        x = xyz[anchor] + bond * (np.cos(tilt) * e + np.sin(tilt) * (np.cos(phi) * p1 + np.sin(phi) * p2))
+        d = np.min(np.linalg.norm(others - x, axis=1))
+        if d > best_d:
+            best, best_d = x, d
+    gen.set_position(segid, resid, bead, tuple(float(v) for v in best))
+    return best_d
 
 
 def mutate(pdb_in, sites, mutations, pdb_out=None, segid='P001'):
@@ -118,8 +198,9 @@ def mut(pdb_in, pdb_out, sites, mutations, segid):
     Loads the RNA and protein topologies, adds ``pdb_in`` as one segment
     with the mutation table (protein: ``auto_angles=False``; RNA:
     ``auto_angles=False, auto_dihedrals=False``), reads its coordinates,
-    guesses missing coordinates, regenerates angles and dihedrals and writes
-    ``pdb_out``. Progress is printed to stdout.
+    guesses missing coordinates, places the phosphate bead of any SEP, TPO
+    or PTR mutation (:func:`_place_phosphate`), regenerates angles and
+    dihedrals and writes ``pdb_out``. Progress is printed to stdout.
 
     Args:
         pdb_in (str): Input PDB file path.
@@ -131,8 +212,9 @@ def mut(pdb_in, pdb_out, sites, mutations, segid):
 
     Raises:
         FileNotFoundError: If ``pdb_in`` does not exist.
-        ValueError: If ``sites`` and ``mutations`` differ in length, or
-            ``segid`` does not start with 'P' or 'R'.
+        ValueError: If ``sites`` and ``mutations`` differ in length,
+            ``segid`` does not start with 'P' or 'R', or a SEP/TPO/PTR site
+            lacks the beads needed to place its phosphate.
     """
     # Validate inputs
     if not Path(pdb_in).exists():
@@ -175,6 +257,13 @@ def mut(pdb_in, pdb_out, sites, mutations, segid):
     print("Guessing missing coordinates...")
     gen.guess_coords()
 
+    # Place the phosphate bead of phosphorylated residues (psfgen cannot, without IC tables)
+    input_atoms = _input_atoms(pdb_in)
+    for site, mut_type in site_mut:
+        if mut_type in PHOSPHO_BEADS:
+            d = _place_phosphate(gen, segid, site, mut_type, input_atoms.get(site, set()))
+            print(f"  Placed {PHOSPHO_BEADS[mut_type][0]} of {mut_type} {site} ({d:.2f} A from the closest bead)")
+
     # Regenerate geometry
     print("Regenerating angles and dihedrals...")
     gen.regenerate_angles()
@@ -211,16 +300,19 @@ def main():
         epilog="""
 Examples:
   # Single mutation
-  python mutator.py input.pdb output.pdb -s 123 -m ALA
+  mutate input.pdb output.pdb -s 123 -m ALA
   
   # Multiple mutations
-  python mutator.py input.pdb output.pdb -s 123 456 789 -m ALA GLY TRP
+  mutate input.pdb output.pdb -s 123 456 789 -m ALA GLY TRP
+  
+  # Phosphorylation (SER/THR/TYR sites; the phosphate bead is placed automatically)
+  mutate input.pdb output.pdb -s 23 45 67 -m SEP TPO PTR
   
   # RNA mutations
-  python mutator.py rna.pdb rna_mut.pdb -s 10 20 -m G C -d R001
+  mutate rna.pdb rna_mut.pdb -s 10 20 -m GUA CYT -d R001
   
   # Multiple sites, same mutation type
-  python mutator.py input.pdb output.pdb -s 123 456 789 -m ALA
+  mutate input.pdb output.pdb -s 123 456 789 -m ALA
 
 Segment ID format:
   - Protein: P001, P002, etc.

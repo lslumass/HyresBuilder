@@ -41,8 +41,10 @@ Most builders construct, in order:
    Coulomb ``138.935456/er*q1*q2/r*exp(-r/dh)*kpmg`` with screening length
    ``dh`` and relative dielectric ``er``, cutoff 1.8 nm with switching from
    1.6 nm, and exclusions for pairs up to 3 bonds apart. ``kpmg`` equals
-   ``lmd`` for phosphate (``P``)–Mg2+ pairs and 1 otherwise, so ``lmd`` scales
-   only the P–Mg2+ interaction.
+   ``lmd`` for phosphate (``P``)–Mg2+/Ca2+ pairs and 1 otherwise, so ``lmd``
+   scales only the P–Mg2+ and P–Ca2+ interactions. Mg2+ and Ca2+ share the
+   same ``lmd``; they differ only in size and in their LJ/NBFIX interaction
+   with phosphate, which come from the parameter files.
 
 3. **1-4 nonbonded interactions** (``'1-4 interaction'``, ``CustomBondForce``)
    — LJ plus screened electrostatics for every ``NonbondedForce`` exception
@@ -61,7 +63,7 @@ See each builder's docstring for the exact terms and parameters it uses.
 
 Force groups
 ------------
-Except :func:`rG4sSystem`, every builder finally assigns each force a unique
+Every builder finally assigns each force a unique
 ``ForceGroup`` equal to its index in ``system.getForces()`` (0, 1, 2, …),
 allowing per-force energy decomposition via
 ``Context.getState(getEnergy=True, groups={i})``.
@@ -114,8 +116,8 @@ def buildSystem(psf, system, DH_params, modification=None):
        ``138.935456/er*q1*q2/r*exp(-r/dh)*kpmg`` via ``CustomNonbondedForce``
        (cutoff 1.8 nm, switching from 1.6 nm, nonbonded method copied from the
        ``NonbondedForce``, exclusions for pairs up to 3 bonds apart).
-       ``kpmg = lmd`` for P–MG pairs (atom names ``'P'`` and ``'MG'``) and 1
-       for all other pairs.
+       ``kpmg = lmd`` for P–MG and P–CAL pairs (atom names ``'P'`` with
+       ``'MG'`` or ``'CAL'``) and 1 for all other pairs.
     3. **1-4 nonbonded interactions** (``'1-4 interaction'``) — LJ plus
        screened electrostatics via ``CustomBondForce`` for every
        ``NonbondedForce`` exception with non-zero epsilon.
@@ -150,7 +152,7 @@ def buildSystem(psf, system, DH_params, modification=None):
                     - ``'dh'`` (Quantity) — Debye-Hückel screening length in
                       length units (e.g. ``1.2*unit.nanometer``).
                     - ``'lmd'`` (float) — Scaling factor for phosphate (P)–Mg2+
-                      charge-charge interactions.
+                      and P–Ca2+ charge-charge interactions (shared by both ions).
                     - ``'er'`` (float) — Relative dielectric constant.
 
         modification (callable, optional): A user-defined function
@@ -259,7 +261,7 @@ def buildSystem(psf, system, DH_params, modification=None):
         particle = nbforce.getParticleParameters(idx)
         if atoms[idx] == 'P':
             lb = 1
-        elif atoms[idx] == 'MG':
+        elif atoms[idx] in ('MG', 'CAL'):     # Mg2+ and Ca2+ share the P-ion scaling lmd
             lb = -1
         else:
             lb = 2
@@ -802,9 +804,9 @@ def rG4sSystem(psf, system, DH_params, modification=None):
     ``CustomHbondForce`` objects, each capturing a distinct contact geometry.
     No protein backbone hydrogen-bond term is added.
 
-    The ``NonbondedForce`` and ``HarmonicAngleForce`` are removed and then
-    ``modification`` is applied. Unlike the other builders, no force groups
-    are assigned.
+    The ``NonbondedForce`` and ``HarmonicAngleForce`` are removed, then
+    ``modification`` is applied, and each force is assigned a force group
+    equal to its index.
 
     Parameters
     ----------
@@ -841,9 +843,13 @@ def rG4sSystem(psf, system, DH_params, modification=None):
     Notes
     -----
     * ReB angles follow the same ``kReB`` rule as :func:`buildSystem`.
-    * Debye–Hückel (``'DH_ElecForce'``): pairs in which both atoms are
-      ``P``, ``MG`` or ``CAL`` use a dielectric constant of 20.0 instead of
-      ``er``; ``lmd`` scales P–MG/CAL pairs.
+    * Debye–Hückel (``'DH_ElecForce'``): with Mg²⁺/Ca²⁺ (``lmd != 0``),
+      pairs in which both atoms are ``P``, ``MG`` or ``CAL`` use a dielectric
+      constant of 20.0 instead of ``er`` (the calibrated Mg model) and ``lmd``
+      scales P–MG/CAL pairs; a warning is printed if other charged beads
+      (protein, small molecules, polymers) are present, since they stay at
+      ``er``. Without Mg²⁺ (``lmd == 0``), P–P pairs use ``er`` like every
+      other pair, as in :func:`buildSystem`.
     * Two ``CustomHbondForce`` objects (cutoff 0.65 nm) handle G-G pairing:
 
       - *GGpairForce1*: NC–NC contact (optimal distance 0.40 nm), gated by
@@ -853,7 +859,9 @@ def rG4sSystem(psf, system, DH_params, modification=None):
         ``-cos(angle(d3,d1,a1))``.
 
     * In both G-G forces, a G is excluded from pairing with itself and with
-      the next G in the list when their residue indices are consecutive.
+      the next G in the list when they are sequence neighbours (consecutive
+      residue indices in the same strand); terminal Gs of different strands
+      can pair.
     * The base energy scale is hard-coded as ``3.2 kcal/mol``; the ``scales``
       and ``r0s`` dictionaries mirror :func:`buildSystem` except that ``UU``
       uses ``0.4`` rather than ``0.1``. G-U wobble pairing is not included.
@@ -906,9 +914,11 @@ def rG4sSystem(psf, system, DH_params, modification=None):
     #get all atom name
     atoms = []
     ress = []    # all the resid for each atom
+    chains = []  # chain (segment) index of each atom
     for atom in psf.topology.atoms():
         atoms.append(atom.name)
         ress.append(atom.residue.index)
+        chains.append(atom.residue.chain.index)
     
     print('\n# replace HarmonicAngle with Restricted Bending (ReB) potential')
     # 3 Replace HarmonicAngle with Restricted Bending (ReB) potential
@@ -945,16 +955,30 @@ def rG4sSystem(psf, system, DH_params, modification=None):
     CNBForce.addPerParticleParameter('la')
     CNBForce.addPerParticleParameter('lb')
     
+    # The low dielectric (20) among P/MG/CAL belongs to the Mg model, where it is calibrated
+    # together with lmd; without Mg (lmd == 0) the P-P pairs use er, as in buildSystem.
+    mg_model = lmd != 0
+    other_charged = 0
     for idx in range(nbforce.getNumParticles()):
         particle = nbforce.getParticleParameters(idx)
         if atoms[idx] == 'P':
-            la, lb = 0, 1
+            la, lb = (0 if mg_model else 2), 1
         elif atoms[idx] in {'MG', 'CAL'}:
             la, lb = 0, -1
         else:
             la, lb = 2, 2
+            if particle[0].value_in_unit(unit.elementary_charge) != 0.0:
+                other_charged += 1
         perP = [particle[0], la, lb]
         CNBForce.addParticle(perP)
+    if mg_model:
+        print(f'    Mg model: dielectric 20.0 among P/MG/CAL, lmd = {lmd}')
+        if other_charged:
+            print(f'    WARNING: {other_charged} other charged beads (protein, small molecules, polymers) '
+                  f'use er = {er:.2f} while P/MG/CAL use 20.0; this mixed regime is not calibrated. '
+                  f'Consider utils.setup/buildSystem (uniform er, Mg via lmd) for such systems.')
+    else:
+        print(f'    no Mg (lmd = 0): all charged pairs, including P-P, use er = {er:.2f}')
     
     CNBForce.createExclusionsFromBonds(bondlist, 3)
     system.addForce(CNBForce)
@@ -1130,8 +1154,9 @@ def rG4sSystem(psf, system, DH_params, modification=None):
             pairGG.addAcceptor(g_c[idx], g_d[idx], g_b[idx])
             pairGG.addExclusion(idx, idx)
 
-            # exclude neighboring residues
-            if idx+1 < len(g_a) and ress[g_a[idx]] + 1 == ress[g_a[idx+1]]:
+            # exclude sequence neighbours: consecutive residues of the same strand
+            if idx+1 < len(g_a) and ress[g_a[idx]] + 1 == ress[g_a[idx+1]] \
+                    and chains[g_a[idx]] == chains[g_a[idx+1]]:
                 pairGG.addExclusion(idx, idx+1)
                 pairGG.addExclusion(idx+1, idx)
 
@@ -1152,8 +1177,9 @@ def rG4sSystem(psf, system, DH_params, modification=None):
             pairGG2.addAcceptor(g_d[idx], g_c[idx], -1)
             pairGG2.addExclusion(idx, idx)
 
-            # exclude neighboring residues
-            if idx+1 < len(g_a) and ress[g_a[idx]] + 1 == ress[g_a[idx+1]]:
+            # exclude sequence neighbours: consecutive residues of the same strand
+            if idx+1 < len(g_a) and ress[g_a[idx]] + 1 == ress[g_a[idx+1]] \
+                    and chains[g_a[idx]] == chains[g_a[idx+1]]:
                 pairGG2.addExclusion(idx, idx+1)
                 pairGG2.addExclusion(idx+1, idx)
 
@@ -1169,6 +1195,11 @@ def rG4sSystem(psf, system, DH_params, modification=None):
     # further modification defined in running scripts
     if callable(modification):
         modification(system)
+
+    # set unique ForceGroup id for each force
+    forces = system.getForces()
+    for i, force in enumerate(forces):
+        force.setForceGroup(i)
 
     return system
 
@@ -1536,7 +1567,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
        in ``['N', 'H', 'C', 'O']``, ``kReB = 0`` (harmonic) otherwise.
     2. **Debye-Hückel electrostatics** (``'DH_ElecForce'``) — same as
        :func:`buildSystem` (cutoff 1.8 nm, switching from 1.6 nm, exclusions
-       up to 3 bonds, ``lmd`` scaling only P–MG pairs).
+       up to 3 bonds, ``lmd`` scaling only P–MG and P–CAL pairs).
     3. **1-4 nonbonded interactions** (``'1-4 interaction'``) — LJ plus
        screened electrostatics for ``NonbondedForce`` exceptions with
        non-zero epsilon.
@@ -1568,7 +1599,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
                     - ``'dh'`` (Quantity) — Debye-Hückel screening length in
                       length units (e.g. ``1.2*unit.nanometer``).
                     - ``'lmd'`` (float) — Scaling factor for phosphate (P)–Mg2+
-                      charge-charge interactions.
+                      and P–Ca2+ charge-charge interactions (shared by both ions).
                     - ``'er'`` (float) — Relative dielectric constant.
 
         modification (callable, optional): A user-defined function
@@ -1677,7 +1708,7 @@ def iConDNASystem(psf, system, DH_params, modification=None):
         particle = nbforce.getParticleParameters(idx)
         if atoms[idx] == 'P':
             lb = 1
-        elif atoms[idx] == 'MG':
+        elif atoms[idx] in ('MG', 'CAL'):     # Mg2+ and Ca2+ share the P-ion scaling lmd
             lb = -1
         else:
             lb = 2

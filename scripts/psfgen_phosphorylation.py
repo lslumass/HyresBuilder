@@ -27,7 +27,7 @@ def main():
     parser.add_argument("-o", "--output_pdb_file", help="output name/path for phosphosrylated Hyres PDB", required=True)
     parser.add_argument("-p", "--output_psf_file", help="output name/path for phosphosrylated Hyres PSF", required=True)
     parser.add_argument("-s", "--phos_sites", help="the phosphosrylated sites", nargs="+")
-    parser.add_argument("-t", "--mutation", default=['SEP',], help="phosphosrylated residue name, SEP or THP", nargs="+")
+    parser.add_argument("-t", "--mutation", default=['SEP',], help="phosphosrylated residue name, SEP, TPO or PTR", nargs="+")
     parser.add_argument("-c", "--charge", default="neutral", help="charge of the ternimus, choose from neutral, charged, NT, or CT")
     args = parser.parse_args()
 
