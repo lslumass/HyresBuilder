@@ -106,8 +106,8 @@ NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
 MMA      0.00     -0.1500      2.7000   0.00     -0.1500       2.7000 ! from C3E (-0.1200), adjusted; 3 heavy atoms
 MAO      0.00     -0.0600      2.8500   0.00     -0.0600       2.8500 ! from P1T (-0.0502), adjusted; 4 heavy atoms
 NC4      0.00     -0.0150      2.9000   0.00     -0.0150       2.9000 ! as QdK, 5 heavy atoms
-BZ1      0.00     -0.2208      1.9082   0.00     -0.2208       1.9082 ! A1F eps; Martini 3 tiny bead size (sigma 0.34 nm)
-BZ2      0.00     -0.2208      1.9082   0.00     -0.2208       1.9082 ! A1F eps; Martini 3 tiny bead size (sigma 0.34 nm)
+BZ1      0.00     -0.2408      1.9082   0.00     -0.2408       1.9082 ! A1F eps; Martini 3 tiny bead size (sigma 0.34 nm)
+BZ2      0.00     -0.2408      1.9082   0.00     -0.2408       1.9082 ! A1F eps; Martini 3 tiny bead size (sigma 0.34 nm)
 ! for LMA and BMA
 LC3      0.00     -0.2191      2.7541   0.00     -0.2191       2.7541 ! as A2V (Val side chain, C3H7); 3 heavy atoms, also the BMA chain end
 LC2      0.00     -0.1700      2.3500   0.00     -0.1700       2.3500 ! between C3E (1 C, -0.120) and A2V (3 C, -0.219); 2 heavy atoms
@@ -123,8 +123,8 @@ NBFIX
 MMA       MMA      -0.1500      5.4000       -0.1500      5.4000
 MAO       MAO      -0.0600      5.7000       -0.0600      5.7000
 NC4       NC4      -0.0150      5.8000       -0.0150      5.8000
-BZ1       BZ1      -0.2208      3.8164       -0.2208      3.8164
-BZ2       BZ2      -0.2208      3.8164       -0.2208      3.8164
+BZ1       BZ1      -0.2408      3.8164       -0.2408      3.8164
+BZ2       BZ2      -0.2408      3.8164       -0.2408      3.8164
 LC3       LC3      -0.2191      5.5082       -0.2191      5.5082
 LC2       LC2      -0.1700      4.7000       -0.1700      4.7000
 HOE       HOE      -0.0480      4.6474       -0.0480      4.6474
