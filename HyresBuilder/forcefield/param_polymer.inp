@@ -132,7 +132,7 @@ PEG       PEG      -0.0480      5.3000       -0.0480      5.3000
 
 !# cation-pi of the BZM ring beads, copied from QdK-A3F (4.6877) and QdR-A1F (4.8651); Rmin shifted by the change
 !# in Rmin/2 to the Martini 3 tiny bead (1.9082 vs A3F 2.3288 / A1F 2.6414)
-!QdK       BZ1      -0.3000      4.8671
-!QdR       BZ1      -0.5000      4.8319
+QdK       BZ1      -0.3000      4.8671
+QdR       BZ1      -0.5000      4.8319
 
 END
