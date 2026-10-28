@@ -219,7 +219,6 @@ PHO       PHO       -0.15000       4.8680
 !! specific NBFIX
 RP        MG        -0.50000       5.0000
 RP        CAL       -0.50000       4.6000           ! partially dehydrated Ca2+: closer contact than RP-MG, same depth (to calibrate)
-RP        H	    -0.22000       3.0000	    ! protein backbone-phosphate interactions
 
 ! for pairing 
 RA3       RU2       -0.12000       3.5000
