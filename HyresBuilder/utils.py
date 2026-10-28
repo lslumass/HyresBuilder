@@ -1042,7 +1042,7 @@ def rG4s_setup(params, GG=3.0, modification=None):
 
     # 6. construct force field
     system = rG4sSystem(psf, system, DH_params, modification=modification)
-    print("buildSystem for HyRes_iConRNA")
+    print("rG4sSystem for HyRes_iConRNA with G-G Hoogsteen pairing")
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')
@@ -1605,7 +1605,7 @@ def iConDNA_setup(params, modification=None):
 
     # 6. construct force field
     system = iConDNASystem(psf, system, DH_params, modification=modification)
-    print("buildSystem for HyRes_iConDNA")
+    print("iConDNASystem for HyRes_iConDNA")
 
     # 7. set simulation
     print('\n################### prepare simulation ####################')

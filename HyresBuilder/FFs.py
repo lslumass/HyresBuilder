@@ -802,7 +802,9 @@ def rG4sSystem(psf, system, DH_params, modification=None):
     pairing) and additionally models the G-G Hoogsteen pairing required for
     G-quadruplex tetrad formation. G-G pairing is implemented via two separate
     ``CustomHbondForce`` objects, each capturing a distinct contact geometry.
-    No protein backbone hydrogen-bond term is added.
+    For protein-RNA systems, the HyRes protein backbone hydrogen bond
+    (``'N-H--O HBForce'``) is added exactly as in :func:`buildSystem`; it is
+    skipped when the system has no backbone N-H donors.
 
     The ``NonbondedForce`` and ``HarmonicAngleForce`` are removed, then
     ``modification`` is applied, and each force is assigned a force group
@@ -871,6 +873,8 @@ def rG4sSystem(psf, system, DH_params, modification=None):
     KeyError
         If any required key is absent from *DH_params* (``'dh'``, ``'lmd'``,
         ``'er'``, ``'GG'``); no explicit validation is performed.
+    AssertionError
+        If the numbers of donor ``N`` (non-PRO) and ``H`` atoms differ.
 
     Examples
     --------
@@ -998,6 +1002,38 @@ def rG4sSystem(psf, system, DH_params, modification=None):
         if ex[4].value_in_unit(unit.kilojoule_per_mole) != 0.0:
             Force14.addBond(ex[0], ex[1], [ex[2], ex[3], ex[4]])
     system.addForce(Force14)
+
+    # add the custom hydrogen bond force for protein backbone, as in buildSystem
+    Ns, Hs, Os = [], [], []
+    for atom in psf.topology.atoms():
+        if atom.name == "N" and atom.residue.name != 'PRO':
+            Ns.append(int(atom.index))
+        if atom.name == "H":
+            Hs.append(int(atom.index))
+        if atom.name == "O":
+            Os.append(int(atom.index))
+
+    assert len(Ns) == len(Hs), f"N/H mismatch: {len(Ns)} N vs {len(Hs)} H"
+
+    if len(Ns) != 0:
+        print('\n# add protein backbone hydrogen bond force')
+        sigma_hb = 0.29*unit.nanometer
+        eps_hb = 2.2*unit.kilocalorie_per_mole
+        formula = f"""epsilon*(5*(sigma/r)^12-6*(sigma/r)^10)*step(cos3)*cos3;
+                r=distance(a1,d1); cos3=-cos(phi)^3; phi=angle(a1,d2,d1);
+                sigma = {sigma_hb.value_in_unit(unit.nanometer)}; epsilon = {eps_hb.value_in_unit(unit.kilojoule_per_mole)};
+        """
+        HBforce = CustomHbondForce(formula)
+        HBforce.setName('N-H--O HBForce')
+        HBforce.setNonbondedMethod(nbforce.getNonbondedMethod())
+        HBforce.setCutoffDistance(0.45*unit.nanometers)
+        for idx in range(len(Hs)):
+            HBforce.addDonor(Ns[idx], Hs[idx], -1)
+        for idx in range(len(Os)):
+            HBforce.addAcceptor(Os[idx], -1, -1)
+        if HBforce.getNumAcceptors() != 0 and HBforce.getNumDonors() != 0:
+            system.addForce(HBforce)
+            print('    add ', HBforce.getNumDonors(), 'donors and', HBforce.getNumAcceptors(), 'acceptors')
 
     print('\n# add RNA base stacking force')
     # base stakcing and paring
