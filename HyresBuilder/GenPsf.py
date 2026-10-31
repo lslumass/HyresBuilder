@@ -82,7 +82,7 @@ import tempfile
 import shutil
 import sys
 from importlib.resources import files
-from HyresBuilder.psfbuilder import PsfGen
+from HyresBuilder.psfbuilder import PsfGen, summarize_psf
 from HyresBuilder import utils
 
 # ===========================================================================
@@ -751,6 +751,7 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix', custom_top_files=None
     gen.write_psf(filename=psf_out)
     for file_path in glob.glob("psfgentmp_*.pdb"):
         os.remove(file_path)
+    summarize_psf(psf_out)
 
 def _apply_terminus_to_template(atoms, charge_status):
     """Set terminus charges directly on parsed PSF atom tokens (in place).
@@ -957,6 +958,7 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
     if verbose:
         total_atoms = sum(len(b) for b in atom_blocks)
         print(f"[fast] wrote {psf_out}: {total_atoms} atoms total")
+    summarize_psf(psf_out)
 
 # ===========================================================================
 # SECTION 4: Command-Line Interface

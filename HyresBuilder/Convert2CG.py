@@ -69,7 +69,7 @@ Dependencies
 * HyresBuilder force-field topology files, loaded via ``utils.load_ff``.
 """
 
-from .psfbuilder import PsfGen
+from .psfbuilder import PsfGen, summarize_psf
 import numpy as np
 import os
 import warnings
@@ -1600,6 +1600,7 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, renumber=False,
     psf_file = f'{pdb_out[:-4]}.psf'
     gen.write_psf(filename=psf_file)
     print(f"PSF file written to {psf_file}")
+    summarize_psf(psf_file)
     
     # Clean up temporary files
     if cleanup:

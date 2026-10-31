@@ -25,7 +25,7 @@ Example:
 
 import numpy as np
 
-__all__ = ['PsfBuilder', 'PsfGen']
+__all__ = ['PsfBuilder', 'PsfGen', 'summarize_psf']
 
 
 class _ResidueDef:
@@ -127,11 +127,23 @@ class PsfBuilder:
     """
 
     def __init__(self, output=None):
-        # ``output`` is accepted for psfgen compatibility and ignored
+        """
+        Args:
+            output (str, optional): File warnings are appended to (e.g.
+                ``os.devnull`` to silence them). Default None prints them.
+        """
+        self.output = output
         self.masses = {}
         self.residue_defs = {}
         self.segments = []
         self.topology_files = []
+
+    def _log(self, msg):
+        if self.output is None:
+            print(f"psfbuilder) {msg}")
+        else:
+            with open(self.output, 'a') as f:
+                f.write(f"psfbuilder) {msg}\n")
 
     # ------------------------------------------------------------------
     # topology
@@ -153,7 +165,10 @@ class PsfBuilder:
                 tok = line.split()
                 key = tok[0].upper()[:4]
                 if key == 'MASS':
-                    self.masses[tok[2].upper()] = float(tok[3])
+                    atype, mass = tok[2].upper(), float(tok[3])
+                    if atype in self.masses and self.masses[atype] != mass:
+                        self._log(f"Warning: MASS {atype} redefined: {self.masses[atype]} -> {mass}")
+                    self.masses[atype] = mass
                 elif key in ('RESI', 'PRES'):
                     charge = float(tok[2]) if len(tok) > 2 else 0.0
                     current = _ResidueDef(tok[1].upper(), charge, is_patch=(key == 'PRES'))
@@ -423,6 +438,7 @@ class PsfBuilder:
         starting point for minimization.
         """
         rng = np.random.default_rng(0)
+        unplaced = 0
         for seg in self.segments:
             nbr = self._neighbours(seg.bonds)
             atoms = [a for r in seg.residues for a in r.atoms.values()]
@@ -455,6 +471,9 @@ class PsfBuilder:
                 if not progress:
                     break
                 missing = [a for a in missing if a.pos is None]
+            unplaced += len(missing)
+        if unplaced:
+            self._log(f"Warning: failed to guess coordinates for {unplaced} atoms")
 
     # ------------------------------------------------------------------
     # queries and edits
@@ -645,6 +664,47 @@ class PsfBuilder:
                           f"{resseq:>4s}{icode:1s}   {xyz[0]:8.3f}{xyz[1]:8.3f}{xyz[2]:8.3f}"
                           f"{atom.occupancy:6.2f}{0.0:6.2f}      {seg.segid:<4s}{atom.element:>2s}\n")
             out.write('END\n')
+
+
+_SEGMENT_TYPES = {'P': 'Protein', 'R': 'RNA', 'D': 'DNA', 'I': 'Ion', 'S': 'Polymer', 'M': 'Metabolite'}
+
+
+def summarize_psf(filename):
+    """Print a brief summary of a PSF file: molecules per segment type, net charge and term counts.
+
+    Segment types follow the GenPsf segid prefixes (``P`` protein, ``R`` RNA,
+    ``D`` DNA, ``I`` ion, ``S`` polymer, ``M`` metabolite); other prefixes are
+    listed under the prefix itself.
+    """
+    groups = {}             # prefix -> [segids, residues, atoms]
+    charge = 0.0
+    counts = {}
+    with open(filename) as f:
+        lines = iter(f)
+        for line in lines:
+            if '!N' not in line:
+                continue
+            n, label = int(line.split()[0]), line.split('!')[1].split(':')[0].strip()
+            counts[label] = n
+            if label == 'NATOM':
+                for _ in range(n):
+                    tok = next(lines).split()
+                    segid, resid = tok[1], tok[2]
+                    g = groups.setdefault(segid[0], [set(), set(), 0])
+                    g[0].add(segid)
+                    g[1].add((segid, resid))
+                    g[2] += 1
+                    charge += float(tok[6])
+
+    print(f"System summary ({filename}):")
+    for prefix, (segs, res, natom) in groups.items():
+        name = _SEGMENT_TYPES.get(prefix, prefix)
+        print(f"  {name:<10s} {len(segs):6d} segments {len(res):8d} residues {natom:9d} atoms")
+    print(f"  {'Total':<10s} {sum(len(g[0]) for g in groups.values()):6d} segments "
+          f"{sum(len(g[1]) for g in groups.values()):8d} residues {counts.get('NATOM', 0):9d} atoms, "
+          f"net charge {charge:+.2f}")
+    print(f"  {counts.get('NBOND', 0)} bonds, {counts.get('NTHETA', 0)} angles, {counts.get('NPHI', 0)} dihedrals, "
+          f"{counts.get('NIMPHI', 0)} impropers, {counts.get('NCRTERM', 0)} cross-terms")
 
 
 # psfgen-compatible name
