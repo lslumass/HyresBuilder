@@ -23,8 +23,8 @@ MASS   315 DT1   36.018   ! base -C-N-              , increase from 26 to 36
 MASS   317 DT2   55.054   ! base =(CH3-)C-C(=O) for T
 MASS   317 DT3   43.025   ! base -C(=O)-NH- for G, T
 
-MASS   320 MG    24.305   ! fully hydrated Mg2+
-MASS   319 CAL   40.080   ! fully hydrated Ca2+
+MASS   320 MG    90.000   ! fully hydrated Mg2+
+MASS   319 CAL   90.000   ! fully hydrated Ca2+
 
 DECL -C1
 DECL +P

@@ -3,7 +3,7 @@ Residue mutation utilities for HyRes and iConRNA coarse-grained PDB structures.
 
 This module applies in silico point mutations to coarse-grained PDB files
 produced by the HyRes (protein) and iConRNA (RNA) pipelines. Mutations are
-performed via ``psfgen``: the mutated residues are rebuilt from the topology,
+performed via ``psfbuilder``: the mutated residues are rebuilt from the topology,
 coordinates of atoms not present in the input are guessed, and the resulting
 structure is written as a PDB (no PSF is written).
 
@@ -20,7 +20,7 @@ Workflow
 1. Normalise sites and mutation types into matched lists (:func:`mutate`, or
    :func:`main` on the command line).
 2. Load the protein and RNA topology files via ``utils.load_ff``.
-3. Register the input PDB as a ``psfgen`` segment with the ``mutate`` table
+3. Register the input PDB as a ``psfbuilder`` segment with the ``mutate`` table
    applied at the ``add_segment`` step (:func:`mut`).
 4. Read the input coordinates, guess missing coordinates, place the phosphate
    bead of phosphorylated residues (:func:`_place_phosphate`), regenerate
@@ -29,8 +29,8 @@ Workflow
 Phosphorylation
 ---------------
 Mutating to ``SEP`` (phosphoserine), ``TPO`` (phosphothreonine) or ``PTR``
-(phosphotyrosine) adds a phosphate bead (type ``PO3``) that psfgen cannot
-place, because the HyRes topology has no internal-coordinate tables. It is
+(phosphotyrosine) adds a phosphate bead (type ``PO3``) that ``guess_coords`` can only place
+roughly, because the HyRes topology has no internal-coordinate tables. It is
 placed at the force-field bond length and angle (``PHOSPHO_BEADS``), with
 the free rotation about the anchor bond chosen to keep it as far as possible
 from all other beads. The mutated site must already have the anchor and
@@ -46,11 +46,11 @@ Date:       Feb 14, 2026
 
 Dependencies
 ------------
-* `psfgen <https://github.com/MDAnalysis/psfgen>`_ (``psfgen.PsfGen``)
+* ``HyresBuilder.psfbuilder`` (pure-Python, psfgen-compatible ``PsfGen``)
 * HyresBuilder force-field topology files, loaded via ``utils.load_ff``.
 """
 
-from psfgen import PsfGen
+from HyresBuilder.psfbuilder import PsfGen
 from HyresBuilder import utils
 import argparse
 import sys
@@ -79,14 +79,14 @@ def _input_atoms(pdb_in):
 
 def _place_phosphate(gen, segid, resid, resname, input_atoms):
     """
-    Place the phosphate bead of a SEP, TPO or PTR residue built by psfgen.
+    Place the phosphate bead of a SEP, TPO or PTR residue built by psfbuilder.
 
     The bead is put at the bond length and angle of ``PHOSPHO_BEADS`` from
     its anchor bead; of 24 rotations (every 15 deg) about the reference-anchor
     bond, the one farthest from all other beads in the segment is used.
 
     Args:
-        gen (PsfGen): psfgen session holding the mutated segment.
+        gen (PsfGen): psfbuilder session holding the mutated segment.
         segid (str): Segment ID.
         resid (str): Residue ID of the phosphorylated residue.
         resname (str): ``'SEP'``, ``'TPO'`` or ``'PTR'``.
@@ -97,7 +97,7 @@ def _place_phosphate(gen, segid, resid, resname, input_atoms):
 
     Raises:
         ValueError: If the anchor or reference bead was not in the input
-            residue (its position would only be guessed by psfgen).
+            residue (its position would only be guessed).
     """
     bead, anchor, ref, bond, angle = PHOSPHO_BEADS[resname]
     missing = [a for a in (ref, anchor) if a not in input_atoms]
@@ -193,7 +193,7 @@ def mutate(pdb_in, sites, mutations, pdb_out=None, segid='P001'):
 
 def mut(pdb_in, pdb_out, sites, mutations, segid):
     """
-    Perform mutations on a PDB file using psfgen.
+    Perform mutations on a PDB file using psfbuilder.
 
     Loads the RNA and protein topologies, adds ``pdb_in`` as one segment
     with the mutation table (protein: ``auto_angles=False``; RNA:
@@ -228,7 +228,7 @@ def mut(pdb_in, pdb_out, sites, mutations, segid):
     RNA_topology, _ = utils.load_ff('RNA')
     protein_topology, _ = utils.load_ff('Protein')
     
-    # Initialize psfgen
+    # Initialize the PSF builder
     gen = PsfGen()
     gen.read_topology(RNA_topology)
     gen.read_topology(protein_topology)
@@ -257,7 +257,7 @@ def mut(pdb_in, pdb_out, sites, mutations, segid):
     print("Guessing missing coordinates...")
     gen.guess_coords()
 
-    # Place the phosphate bead of phosphorylated residues (psfgen cannot, without IC tables)
+    # Place the phosphate bead of phosphorylated residues (only roughly guessed without IC tables)
     input_atoms = _input_atoms(pdb_in)
     for site, mut_type in site_mut:
         if mut_type in PHOSPHO_BEADS:
@@ -295,7 +295,7 @@ def main():
     status 1.
     """
     parser = argparse.ArgumentParser(
-        description="Perform site mutations on PDB file using psfgen",
+        description="Perform site mutations on PDB file using psfbuilder",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

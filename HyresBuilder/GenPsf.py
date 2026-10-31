@@ -5,16 +5,16 @@ This module builds CHARMM-style PSF topology files from coarse-grained PDB
 structures for the HyRes (protein) and iCon (RNA, DNA) force fields, plus
 ions, CG polymers, metabolites (including aminoglycosides such as KAN) and
 user-supplied custom metabolites. Molecule types are detected from residue
-names, each chain is assigned a structured segment ID, and ``psfgen`` is used
+names, each chain is assigned a structured segment ID, and ``psfbuilder`` is used
 to build and write the topology.
 
 Two generation paths are provided:
 
 * :func:`genpsf` (default) -- one mixed PDB containing any number of chains
-  of any supported type. Every chain is added to a single ``psfgen`` session.
+  of any supported type. Every chain is added to a single ``psfbuilder`` session.
 * :func:`custom_genpsf_fast` (``--fast``) -- a list of single-molecule PDBs
   and a copy number for each. One template PSF is built per PDB with
-  ``psfgen`` and then replicated N times by text-level PSF parsing and index
+  ``psfbuilder`` and then replicated N times by text-level PSF parsing and index
   offsetting, which is much faster for systems with many identical copies.
 
 Workflow (default path)
@@ -24,7 +24,7 @@ Workflow (default path)
    segment and write each block to ``psfgentmp_{i}.pdb``
    (:func:`split_chains`).
 2. Load all force-field topologies (RNA, Protein, DNA, AGs, Metabolite,
-   Polymer and any custom topologies) and add each block to ``psfgen`` with
+   Polymer and any custom topologies) and add each block to ``psfbuilder`` with
    a segment ID following the convention below (:func:`genpsf`).
 3. Optionally set terminus charges on protein segments (:func:`set_terminus`).
 4. Write the PSF and delete the ``psfgentmp_*.pdb`` files.
@@ -55,7 +55,7 @@ Custom metabolites
 ``--custom ABC,XYZ`` appends the codes to the module-level ``metabolites``
 list (so they are typed as ``M``) and, for each code, converts ``ABC.itp`` in
 the current directory into ``ABC.top`` and ``ABC.par`` with
-``utils.itp2charmm``; the ``.top`` files are then loaded into ``psfgen``
+``utils.itp2charmm``; the ``.top`` files are then loaded into ``psfbuilder``
 (:func:`prepare_custom_metabolites`).
 
 Command line
@@ -69,7 +69,7 @@ Exposed via :func:`main` as the ``genpsf`` console script (also runnable as
 
 Dependencies
 ------------
-* `psfgen <https://github.com/MDAnalysis/psfgen>`_ (``psfgen.PsfGen``)
+* ``HyresBuilder.psfbuilder`` (pure-Python, psfgen-compatible ``PsfGen``)
 * HyresBuilder force-field topology files, loaded via ``utils.load_ff``.
 * For custom metabolites: ``.itp`` files converted via ``utils.itp2charmm``.
 """
@@ -82,7 +82,7 @@ import tempfile
 import shutil
 import sys
 from importlib.resources import files
-from psfgen import PsfGen
+from HyresBuilder.psfbuilder import PsfGen
 from HyresBuilder import utils
 
 # ===========================================================================
@@ -407,7 +407,7 @@ def prepare_custom_metabolites(metabolite_names, verbose=True):
 
     Returns:
         list of str: Paths of the generated ``.top`` files (relative to the
-        current directory), ready to load into ``psfgen``.
+        current directory), ready to load into ``psfbuilder``.
 
     Note:
         Calls ``sys.exit(1)`` if an ``.itp`` file is missing, if the expected
@@ -457,7 +457,7 @@ rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
 dnas = ["DAD", "DCY", "DTH", "DGU", "DA", "DG", "DC", "DT"]
 ions = ["MG+", "SMG", "CA+"]
 polymer = ['PHO', 'PEG', 'QDM', 'BZM', 'LMA', 'BMA', 'HEM']
-auto_polymer = ['PHO']     # polymers relying on psfgen auto angles/dihedrals in the fast path
+auto_polymer = ['PHO']     # polymers relying on automatic angles/dihedrals in the fast path
 metabolites = ['KAN', 'LLL', 'SRY',
                'UN1', 'AYA', 'ACA', 'NLG', 'C3C', 'C4C', 'C5C', '152', 'CHT', 'CIT',
                'CTT', 'ABU', 'CH5', 'GSH', 'MTA', 'SHR', 'TAU', 'BET', '3PG', 'G6P',
@@ -610,14 +610,14 @@ def split_chains(pdb):
     return types
 
 def set_terminus(gen, segid, charge_status):
-    """Set terminus charges on a protein segment in a ``psfgen`` session.
+    """Set terminus charges on a protein segment in a ``psfbuilder`` session.
 
     Only segments whose ID starts with ``P`` are modified; others are left
     unchanged. The N-terminus is atom ``N`` of the first residue and the
     C-terminus is atom ``O`` of the last residue.
 
     Args:
-        gen (psfgen.PsfGen): Session containing the segment.
+        gen (psfbuilder.PsfGen): Session containing the segment.
         segid (str): Segment ID.
         charge_status (str): One of
 
@@ -801,7 +801,7 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
     For each ``(pdb, num)`` pair with ``num > 0``, the molecule type is taken
     from the first ATOM residue of ``pdb`` (:func:`get_type`); the whole file
     is treated as one segment. A template PSF is built with a fresh
-    ``psfgen`` session (all topologies loaded, as in :func:`genpsf`) and
+    ``psfbuilder`` session (all topologies loaded, as in :func:`genpsf`) and
     written to a temporary ``genpsf_fast_*`` directory, parsed with
     :func:`parse_psf`, and replicated ``num`` times with
     :func:`replicate_segment`. Segment IDs continue the per-type counters
@@ -809,8 +809,8 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
     title line is added for each copy. All copies are written to ``psf_out``
     with :func:`write_merged_psf`.
 
-    Template ``psfgen`` options: proteins use ``auto_angles=False``;
-    polymers listed in ``auto_polymer`` (PHO) keep psfgen's automatic angles
+    Template ``add_segment`` options: proteins use ``auto_angles=False``;
+    polymers listed in ``auto_polymer`` (PHO) keep the automatic angles
     and dihedrals; all other types use ``auto_angles=False,
     auto_dihedrals=False``. For protein templates, a non-``'neutral'``
     ``terminal`` is applied via :func:`_apply_terminus_to_template`.

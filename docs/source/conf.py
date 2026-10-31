@@ -5,7 +5,6 @@ from unittest.mock import MagicMock
 
 # 1. Setup the mocks
 MOCK_MODULES = [
-    'psfgen',
     'openmm',
     'openmm.app',
     'openmm.unit',

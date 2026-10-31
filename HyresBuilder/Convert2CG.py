@@ -5,7 +5,7 @@ This module converts all-atom protein, RNA, DNA and aminoglycoside (AGs)
 structures into coarse-grained representations compatible with the HyRes
 (protein), iConRNA (RNA), iConDNA (DNA) and AGs CG models. It handles the full
 pipeline -- optional backbone hydrogen addition, CG bead placement, topology
-generation with ``psfgen`` and PSF writing -- and can process mixed systems in
+generation with ``psfbuilder`` and PSF writing -- and can process mixed systems in
 a single call.
 
 Conversion models
@@ -39,7 +39,7 @@ The top-level function :func:`at2cg` orchestrates the workflow:
    ``aa2cgtmp_{i}_aa.pdb``, detect molecule types and assign segment IDs
    (:func:`split_chains`), optionally renumbering residues from 1.
 4. Apply the CG mapping per chain (:func:`at2hyres`, :func:`at2RNA`,
-   :func:`at2DNA` or :func:`at2AGs`) and add each chain to ``psfgen``.
+   :func:`at2DNA` or :func:`at2AGs`) and add each chain to ``psfbuilder``.
 5. Write the CG PDB, set protein terminus charges (:func:`set_terminus`),
    write the PSF, remove the ``aa2cgtmp_*.pdb`` files (unless
    ``cleanup=False``) and renumber the PDB atom serials, using hybrid-36
@@ -64,12 +64,12 @@ serials are written in hybrid-36: ``A0000``-``ZZZZZ`` for atoms
 
 Dependencies
 ------------
-* `psfgen <https://github.com/MDAnalysis/psfgen>`_ (``psfgen.PsfGen``)
+* ``HyresBuilder.psfbuilder`` (pure-Python, psfgen-compatible ``PsfGen``)
 * `NumPy <https://numpy.org>`_ (``numpy``)
 * HyresBuilder force-field topology files, loaded via ``utils.load_ff``.
 """
 
-from psfgen import PsfGen
+from .psfbuilder import PsfGen
 import numpy as np
 import os
 import warnings
@@ -668,14 +668,14 @@ def split_chains(pdb, renumber=False):
 
 
 def set_terminus(gen, segid, terminal):
-    """Set terminus charges on a protein segment in a ``psfgen`` session.
+    """Set terminus charges on a protein segment in a ``psfbuilder`` session.
 
     Segments whose ID does not start with ``P`` are left unchanged. The
     N-terminus is atom ``N`` of the first residue and the C-terminus is atom
     ``O`` of the last residue.
 
     Args:
-        gen (psfgen.PsfGen): Session containing the segment.
+        gen (psfbuilder.PsfGen): Session containing the segment.
         segid (str): Segment ID.
         terminal (str): ``'neutral'`` (no change), ``'charged'`` (N +1.00,
             O -1.00), ``'NT'`` (N +1.00 only) or ``'CT'`` (O -1.00 only).
@@ -1413,8 +1413,8 @@ def at2AGs(pdb_in, pdb_out):
 
 def fix_pdb_serial(pdb_file, output_file=None):
     """
-    Fix PDB files where atom serial numbers exceed 99999 and have been written
-    as '******' by psfgen-python. Re-numbers all ATOM/HETATM records
+    Fix PDB files where atom serial numbers exceed 99999 (written as '******'
+    by psfgen-python, or wrapped by other tools). Re-numbers all ATOM/HETATM records
     sequentially from 1 using hybrid-36 encoding, so serial numbers beyond
     99999 are written as ``A0000``-``ZZZZZ``, then ``a0000``-``zzzzz``.
     Other records are copied unchanged.
@@ -1484,10 +1484,10 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, renumber=False,
     Automatically detects molecule types (protein, RNA, DNA or AGs) by chain
     (:func:`split_chains`), then applies :func:`at2hyres` for protein chains,
     :func:`at2RNA` for RNA, :func:`at2DNA` for DNA and :func:`at2AGs` for
-    AGs (KAN). Each CG chain is added to psfgen (RNA, DNA, Protein and AGs
+    AGs (KAN). Each CG chain is added to psfbuilder (RNA, DNA, Protein and AGs
     topologies) using the segids from :func:`split_chains`; proteins use
     ``auto_angles=False``, the other types also ``auto_dihedrals=False``.
-    psfgen writes ``pdb_out``, terminus charges are then set, and the PSF is
+    psfbuilder writes ``pdb_out``, terminus charges are then set, and the PSF is
     written to ``pdb_out`` with its last four characters replaced by
     ``.psf``. Temporary ``aa2cgtmp_*.pdb`` files in the current directory are
     removed unless ``cleanup=False``. Finally ``pdb_out`` is rewritten by
@@ -1545,7 +1545,7 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, renumber=False,
     protein_topology, _ = load_ff('Protein')
     AGs_topology, _ = load_ff('AGs')
     
-    # Set up psfgen
+    # Set up the PSF builder
     gen = PsfGen()
     gen.read_topology(RNA_topology)
     gen.read_topology(DNA_topology)
@@ -1607,9 +1607,9 @@ def at2cg(pdb_in, pdb_out, terminal='neutral', cleanup=True, renumber=False,
             if file.startswith("aa2cgtmp_") and file.endswith(".pdb"):
                 os.remove(file)
     
-    # psfgen-python cannot encode serial numbers > 99999; it writes '******'
-    # for those atoms. Re-number every ATOM/HETATM record sequentially using
-    # hybrid-36 so the output PDB is always valid.
+    # Serial numbers > 99999 do not fit the PDB format; re-number every
+    # ATOM/HETATM record sequentially using hybrid-36 so the output PDB is
+    # always valid.
     fix_pdb_serial(pdb_out, pdb_out)
 
     return pdb_out, psf_file

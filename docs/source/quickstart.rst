@@ -21,13 +21,10 @@ Installation
 **Dependencies:**
 
 - `OpenMM <https://openmm.org/>`_
-- psfgen (install via conda):
-
-  .. code-block:: bash
-
-     conda install -c conda-forge psfgen
-
 - numpy, numba, MDAnalysis
+
+PSF files are built by HyresBuilder's own pure-Python builder
+(:mod:`HyresBuilder.psfbuilder`); psfgen is not needed.
 
 ----
 

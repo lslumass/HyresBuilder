@@ -12,11 +12,11 @@ Main functions:
 - convert all-atom structures to CG ones (``HyresBuilder.Convert2CG``)
 - construct CG models from sequence (``HyresBuilder.PeptideBuilder``,
   ``HyresBuilder.iConBuilder``) and generate PSF files
-  (``HyresBuilder.GenPsf``)
+  (``HyresBuilder.GenPsf``, built on the pure-Python
+  ``HyresBuilder.psfbuilder``; psfgen is not required)
 
 Submodules are not imported automatically; import them explicitly, e.g.
-``from HyresBuilder import utils``. Importing the package raises
-``ImportError`` if ``psfgen`` is not installed.
+``from HyresBuilder import utils``.
 """
 
 __version__ = "4.0.0"
@@ -33,13 +33,4 @@ __all__ = [
     '__url__',
 ]
 
-
-try:
-    import psfgen
-except ImportError:
-    raise ImportError(
-        "psfgen is required but not installed. "
-        "Install it via conda:\n\n"
-        "    conda install -c conda-forge psfgen\n"
-    )
 

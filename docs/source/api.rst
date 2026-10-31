@@ -12,6 +12,7 @@ API Reference
    api/utils
    api/Metabolome
    api/Mutator
+   api/psfbuilder
    api/Restraints
    api/addRestraints
    api/Rigid

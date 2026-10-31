@@ -15,8 +15,9 @@ For details, please follow the related papers and the [docs](https://hyresbuilde
 
 ## Dependencies:
 1. [OpenMM](https://openmm.org/)
-2. [psfgen-python](https://psfgen.robinbetz.com/) (install through "conda install -c conda-forge psfgen", python <= 3.11)
-3. basis: numpy, numba, MDAnalysis
+2. basis: numpy, numba, MDAnalysis
+
+PSF files are built by HyresBuilder's own pure-Python builder (`HyresBuilder.psfbuilder`), so psfgen is no longer needed.
 
 ## Installation: 
 1. git clone https://github.com/lslumass/HyresBuilder.git   
