@@ -69,6 +69,17 @@ iConBuilder.build_rna("name", "sequence")
 ```
 
 ### C. Convert atomistic structure into HyRes model
+
+0. (Optional) pdb fixing and quick energy minimization and relaxtion)
+
+```
+usage: ../scripts/omm_relax.py your_raw_pdb.pdb relaxed.pdb
+```
+
+- Backbone atoms are restrained during the relaxation
+- resolve possible side chain clashes
+
+
 1. from command line, use ```convert2cg```:   
 ```
 usage: convert2cg [-h] [--hydrogen] [--terminal TERMINAL] aa cg
