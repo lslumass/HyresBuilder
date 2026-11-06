@@ -283,10 +283,10 @@ def replicate_segment(template: PSF, n_copies: int, segid_for_copy, start_offset
             nnb=nnb, groups=groups, crossterms=crossterms,
         )
 
-def _write_int_section(out, label, count, flat_ints, per_line):
-    out.write(f"{count:>8d} !{label}\n")
+def _write_int_section(out, label, count, flat_ints, per_line, width=8):
+    out.write(f"{count:>{width}d} !{label}\n")
     for k in range(0, len(flat_ints), per_line):
-        out.write("".join(f"{v:>8d}" for v in flat_ints[k:k + per_line]))
+        out.write("".join(f"{v:>{width}d}" for v in flat_ints[k:k + per_line]))
         out.write("\n")
     out.write("\n")
 
@@ -306,12 +306,19 @@ def write_merged_psf(out_path, title_lines, flags, atom_blocks, bond_blocks,
         * ``group_blocks`` and ``ngrp_nst2`` are accepted but ignored: a single
           NGRP group (``0 0 0``) is always written.
         * The NCRTERM section is written only if there are cross-terms.
+        * The extended (``EXT``) format -- 10-wide integers and 8-wide name
+          fields, as written by ``psfbuilder`` -- is used when ``flags``
+          contains ``EXT``, when any segment ID, resid, residue name, atom
+          name or atom type is longer than 4 characters (e.g. segment IDs
+          beyond :func:`encode_segid`'s 4-character range), or when there
+          are more than 99,999,999 atoms; ``EXT`` is then added to the
+          header flags.
 
     Args:
         out_path (str): Output PSF path (overwritten).
         title_lines (list of str): Title (REMARKS) lines.
         flags (list of str): Header flags written after ``PSF``
-            (e.g. ``EXT``).
+            (e.g. ``EXT``, ``CMAP``).
         atom_blocks (list): Lists of atom token lists.
         bond_blocks, angle_blocks, dihedral_blocks, improper_blocks,
         donor_blocks, acceptor_blocks, crossterm_blocks (list): Lists of
@@ -332,61 +339,75 @@ def write_merged_psf(out_path, title_lines, flags, atom_blocks, bond_blocks,
     nnb_total = sum(len(b) for b in nnb_blocks)
     ncrterm = sum(len(b) for b in crossterm_blocks)
 
+    flags = list(flags or [])
+    ext = ("EXT" in flags or natom > 99999999 or
+           any(len(tok[k]) > 4 for block in atom_blocks for tok in block for k in range(1, 6)))
+    if ext and "EXT" not in flags:
+        flags.insert(0, "EXT")
+    w = 10 if ext else 8
+
     with open(out_path, "w") as out:
         header = "PSF"
         if flags:
             header += " " + " ".join(flags)
         out.write(header + "\n\n")
-        out.write(f"{len(title_lines):>8d} !NTITLE\n")
+        out.write(f"{len(title_lines):>{w}d} !NTITLE\n")
         for t in title_lines:
             out.write(t + "\n")
         out.write("\n")
 
-        out.write(f"{natom:>8d} !NATOM\n")
+        out.write(f"{natom:>{w}d} !NATOM\n")
         for block in atom_blocks:
             for tok in block:
-                out.write(
-                    f"{int(tok[0]):8d} {tok[1]:<4s} {tok[2]:<4s} {tok[3]:<4s} "
-                    f"{tok[4]:<4s} {tok[5]:<4s} {float(tok[6]):10.6f} "
-                    f"{float(tok[7]):13.4f} {int(tok[8]):11d}\n"
-                )
+                if ext:
+                    out.write(
+                        f"{int(tok[0]):10d} {tok[1]:<8s} {tok[2]:<8s} {tok[3]:<8s} "
+                        f"{tok[4]:<8s} {tok[5]:<6s} {float(tok[6]):10.6f}    "
+                        f"{float(tok[7]):10.4f}  {int(tok[8]):10d}\n"
+                    )
+                else:
+                    out.write(
+                        f"{int(tok[0]):8d} {tok[1]:<4s} {tok[2]:<4s} {tok[3]:<4s} "
+                        f"{tok[4]:<4s} {tok[5]:<4s} {float(tok[6]):10.6f} "
+                        f"{float(tok[7]):13.4f} {int(tok[8]):11d}\n"
+                    )
         out.write("\n")
 
         flat = [v for block in bond_blocks for pair in block for v in pair]
-        _write_int_section(out, "NBOND: bonds", nbond, flat, 8)
+        _write_int_section(out, "NBOND: bonds", nbond, flat, 8, w)
 
         flat = [v for block in angle_blocks for tri in block for v in tri]
-        _write_int_section(out, "NTHETA: angles", ntheta, flat, 9)
+        _write_int_section(out, "NTHETA: angles", ntheta, flat, 9, w)
 
         flat = [v for block in dihedral_blocks for q in block for v in q]
-        _write_int_section(out, "NPHI: dihedrals", nphi, flat, 8)
+        _write_int_section(out, "NPHI: dihedrals", nphi, flat, 8, w)
 
         flat = [v for block in improper_blocks for q in block for v in q]
-        _write_int_section(out, "NIMPHI: impropers", nimphi, flat, 8)
+        _write_int_section(out, "NIMPHI: impropers", nimphi, flat, 8, w)
 
         flat = [v for block in donor_blocks for pair in block for v in pair]
-        _write_int_section(out, "NDON: donors", ndon, flat, 8)
+        _write_int_section(out, "NDON: donors", ndon, flat, 8, w)
 
         flat = [v for block in acceptor_blocks for pair in block for v in pair]
-        _write_int_section(out, "NACC: acceptors", nacc, flat, 8)
+        _write_int_section(out, "NACC: acceptors", nacc, flat, 8, w)
 
         flat = [v for block in nnb_blocks for v in block]
         if len(flat) != natom:
             flat = [0] * natom
             nnb_total = natom
 
-        out.write(f"{nnb_total:>8d} !{nnb_label}\n")
+        out.write(f"{nnb_total:>{w}d} !{nnb_label}\n")
         for k in range(0, len(flat), 8):
-            out.write("".join(f"{v:>8d}" for v in flat[k:k + 8]))
+            out.write("".join(f"{v:>{w}d}" for v in flat[k:k + 8]))
             out.write("\n")
         out.write("\n")
 
-        out.write(f"{1:>8d} {0:>7d} !NGRP\n")
-        out.write("       0       0       0\n\n")
+        out.write(f"{1:>{w}d} {0:>{w - 1}d} !NGRP\n")
+        out.write("".join(f"{0:>{w}d}" for _ in range(3)) + "\n\n")
 
         if ncrterm:
             flat = [v for block in crossterm_blocks for ct in block for v in ct]
-            _write_int_section(out, "NCRTERM: cross-terms", ncrterm, flat, 8)
+            _write_int_section(out, "NCRTERM: cross-terms", ncrterm, flat, 8, w)
 
 # ===========================================================================
 # SECTION 2: Custom Metabolite Topology Preparation
@@ -476,7 +497,7 @@ def get_type(resname):
     """Return the molecule-type code for a residue name.
 
     Args:
-        resname (str): Residue name (as in PDB columns 18-20, stripped).
+        resname (str): Residue name (as in PDB columns 18-21, stripped).
 
     Returns:
         str or None: ``'P'`` protein (``aas``), ``'R'`` RNA (``rnas``),
@@ -568,7 +589,7 @@ def split_chains(pdb):
             if line.startswith('ATOM'):
                 chainid = line[21]
                 segid = line[72:76].strip()
-                resname = line[17:20].strip()
+                resname = line[17:21].strip()
                 key = (chainid, segid)
 
                 if key != currentKey:
@@ -866,7 +887,7 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
             with open(pdb, 'r') as f:
                 for line in f:
                     if line.startswith('ATOM'):
-                        resname = line[17:20].strip()
+                        resname = line[17:21].strip()
                         chaintype = get_type(resname)
                         break
             if chaintype is None:
