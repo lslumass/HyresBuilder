@@ -29,8 +29,10 @@ The top-level function :func:`build_peptide` orchestrates the full workflow:
    or alternate template.
 2. Superpose the new residue onto the previous residue's C, O, N+ (and
    H+) atoms via :func:`align_residues` / :func:`kabsch`.
-3. Accumulate the transformed atoms (alignment-only atoms excluded) and
-   translate the chain so that the first CA sits at (5000, 5000, 5000) Å.
+3. Accumulate the transformed atoms (alignment-only atoms excluded),
+   starting with the first CA at (0, 0, 0). A residue that would get a
+   coordinate below -999 Å (the PDB format limit) is redone with its other
+   template, or the nearest earlier residue is switched (:func:`_build_chain`).
 4. Optionally run a CA-only clash check (:func:`detect_clashes`) and
    rebuild with fresh random choices if clashes are found, up to
    ``max_retries`` attempts.
@@ -727,6 +729,98 @@ def write_pdb(atoms, filename):
             f.write(line)
         f.write("END\n")
 
+PDB_COORD_MIN = -999.0     # lowest value written in full by the PDB 8.3f fields
+PDB_COORD_MAX = 9999.0     # highest value written in full by the PDB 8.3f fields
+MAX_REDOS = 1000           # residue redos allowed per chain build
+
+
+def _template_options(aa):
+    """Distinct templates for one-letter code *aa*: the primary, then the alternate if it differs."""
+    opts = [aa]
+    alt = AMINO_ACID_STRUCTURES.get(aa + '0')
+    if alt is not None and alt != AMINO_ACID_STRUCTURES[aa]:
+        opts.append(aa + '0')
+    return opts
+
+
+def _in_pdb_range(atoms):
+    """True if every coordinate of *atoms* fits the PDB 8.3f fields."""
+    xyz = np.array([a['coords'] for a in atoms])
+    return xyz.min() >= PDB_COORD_MIN and xyz.max() <= PDB_COORD_MAX
+
+
+def _build_chain(sequence, random_conf):
+    """Place the residues of *sequence* one by one, first CA at (0, 0, 0).
+
+    The first template is translated so that its CA sits at the origin; each
+    following residue is superposed onto the previous one
+    (:func:`align_residues`). With *random_conf*, residues 4, 8, 12, ... pick
+    their primary or alternate template at random.
+
+    A residue with a coordinate below :data:`PDB_COORD_MIN` (or above
+    :data:`PDB_COORD_MAX`) is redone with its other template, which bends the
+    chain in a new direction. If no untried template is left for it, the
+    nearest earlier residue with an untried template is switched instead and
+    the chain is rebuilt from there. This also applies with
+    ``random_conf=False``, where alternate templates are otherwise unused.
+
+    Returns:
+        tuple[list[list[dict]], int]: The placed atoms of each residue
+        (alignment-only atoms excluded; no residue numbering yet) and the
+        number of redos.
+
+    Raises:
+        ValueError: If the chain cannot be kept within the PDB coordinate
+            range (no template choice left, or more than :data:`MAX_REDOS`
+            redos).
+    """
+    keys = []
+    for i, aa in enumerate(sequence):
+        if aa not in AMINO_ACID_STRUCTURES:
+            raise ValueError(f"Amino acid '{aa}' not found in structure database")
+        opts = _template_options(aa)
+        keys.append(random.choice(opts) if random_conf and (i + 1) % 4 == 0 else aa)
+
+    tried = [set() for _ in sequence]
+    placed = []                         # (ref, atoms) per residue
+    redos = 0
+    i = 0
+    while i < len(sequence):
+        key = keys[i]
+        tried[i].add(key)
+        if i == 0:
+            ref = get_amino_acid(key)
+            ca = next(a['coords'] for a in ref if a['name'] == 'CA')
+            shift = -ca
+            for a in ref:
+                a['coords'] = a['coords'] + shift
+            atoms = ref[2:-2]
+        else:
+            ref, atoms = align_residues(placed[i - 1][0], sequence[i - 1], key)
+
+        if _in_pdb_range(atoms):
+            placed.append((ref, atoms))
+            i += 1
+            continue
+
+        # redo: switch this residue's template, or the nearest earlier one with a template left
+        redos += 1
+        j = i
+        while j >= 0 and all(k in tried[j] for k in _template_options(sequence[j])):
+            j -= 1
+        if j < 0 or redos > MAX_REDOS:
+            raise ValueError(
+                f"cannot keep residue {i + 1} ({sequence[i]}) within the PDB coordinate range "
+                f"[{PDB_COORD_MIN}, {PDB_COORD_MAX}] Å")
+        keys[j] = next(k for k in _template_options(sequence[j]) if k not in tried[j])
+        for k in range(j + 1, len(sequence)):
+            tried[k] = set()
+        del placed[j:]
+        i = j
+
+    return [atoms for _, atoms in placed], redos
+
+
 def detect_clashes(all_atoms, threshold=4.5):
     """Detect clashes between non-adjacent CA atoms.
 
@@ -770,9 +864,11 @@ def build_peptide(name, sequence, random_conf=True, check_clash=False, max_retri
     previous one via the Kabsch algorithm. When random_conf is enabled, residues at
     positions 4, 8, 12, ... are drawn at random (50/50) from the primary template or
     its alternate ('0'-suffixed entry in AMINO_ACID_STRUCTURES), introducing
-    conformational variation into the chain. The finished chain is translated so that
-    the first CA sits at (5000, 5000, 5000) Å. Residue names are written as
-    three-letter codes in chain A.
+    conformational variation into the chain. The chain starts with the first CA at
+    (0, 0, 0) Å. A residue that would get a coordinate below -999 Å (the PDB 8.3f
+    limit) is redone with its other template, or, if it has none left, the nearest
+    earlier residue is switched instead (:func:`_build_chain`). Residue names are
+    written as three-letter codes in chain A.
 
     Args:
         name        (str):  Stem of the output file. The PDB is written to '<name>.pdb'.
@@ -797,7 +893,8 @@ def build_peptide(name, sequence, random_conf=True, check_clash=False, max_retri
 
     Raises:
         ValueError: If any single-letter code in sequence is absent from
-                    AMINO_ACID_STRUCTURES.
+                    AMINO_ACID_STRUCTURES, or if the chain cannot be kept within
+                    the PDB coordinate range.
 
     Examples:
         >>> from HyresBuilder.PeptideBuilder import build_peptide
@@ -813,47 +910,20 @@ def build_peptide(name, sequence, random_conf=True, check_clash=False, max_retri
     output_file = f"{name}.pdb"
 
     for attempt in range(1, max_retries + 1):
+        residues, redos = _build_chain(sequence, random_conf)
         all_atoms = []
         atom_counter = 1
-        ref = None
-
-        for i, aa in enumerate(sequence):
-            alt = aa + '0'
-            if random_conf and alt in AMINO_ACID_STRUCTURES and (i + 1) % 4 == 0:
-                res_key = random.choice([aa, alt])
-            else:
-                res_key = aa
-
-            if aa not in AMINO_ACID_STRUCTURES:
-                raise ValueError(f"Amino acid '{aa}' not found in structure database")
-
-            if i == 0:
-                res0 = get_amino_acid(res_key)
-                ref = res0
-                atoms = [{'index': a['index'], 'name': a['name'],
-                        'coords': a['coords'].copy()} for a in res0[2:-2]]
-                for atom in atoms:
-                    atom['res_num'] = i + 1
-                    atom['res_name'] = AA_THREE_LETTER.get(aa, aa)
-                    atom['global_index'] = atom_counter
-                    atom_counter += 1
-                all_atoms.extend(atoms)
-            else:
-                ref, new_res = align_residues(ref, sequence[i-1], res_key)
-                atoms = [{'index': a['index'], 'name': a['name'],
-                        'coords': a['coords'].copy()} for a in new_res]
-                for atom in atoms:
-                    atom['res_num'] = i + 1
-                    atom['res_name'] = AA_THREE_LETTER.get(aa, aa)
-                    atom['global_index'] = atom_counter
-                    atom_counter += 1
-                all_atoms.extend(atoms)
-
-        # Translate so first CA is at (5000, 5000, 5000)
-        first_CA = next(a['coords'] for a in all_atoms if a['name'] == 'CA')
-        offset = np.array([5000.0, 5000.0, 5000.0]) - first_CA
-        for atom in all_atoms:
-            atom['coords'] += offset
+        for i, (aa, res_atoms) in enumerate(zip(sequence, residues)):
+            for a in res_atoms:
+                all_atoms.append({'index': a['index'], 'name': a['name'],
+                                  'coords': a['coords'].copy(),
+                                  'res_num': i + 1,
+                                  'res_name': AA_THREE_LETTER.get(aa, aa),
+                                  'global_index': atom_counter})
+                atom_counter += 1
+        if redos:
+            print(f"  {redos} residue redo(s) to keep coordinates within "
+                  f"[{PDB_COORD_MIN:.0f}, {PDB_COORD_MAX:.0f}] Å")
 
         # Clash check
         if not random_conf or not check_clash:
