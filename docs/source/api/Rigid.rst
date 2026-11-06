@@ -2,4 +2,4 @@ RigidBody
 =========
 
 .. automodule:: HyresBuilder.Rigid
-   :members: createRigidBodies, createRigidSegments
+   :members: createRigidBodies, createRigidSegments, createRigidComplex

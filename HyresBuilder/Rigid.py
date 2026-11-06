@@ -34,7 +34,7 @@ a well-conditioned out-of-plane coordinate frame.
 
 Interface levels
 ----------------
-Five functions are provided at increasing levels of abstraction:
+Six functions are provided at increasing levels of abstraction:
 
 * :func:`createRigidBodies` — low-level; accepts pre-built lists of atom
   indices directly.
@@ -50,6 +50,12 @@ Five functions are provided at increasing levels of abstraction:
   ``loop=False`` coil residues, as assigned by DSSP (MDTraj), are left out so
   only helix and strand residues are rigid; with ``CA=True`` only the CA atoms
   go into each body.
+* :func:`createRigidComplex` — high-level; same selection options as
+  :func:`createRigidSegments`, but the selected residues of all listed
+  segments form a *single* rigid body, e.g. two interacting domains on two
+  chains held together as one complex. Residues can be the same for every
+  segment ("27-95") or given per segment
+  (``{"P001": "27-95", "P002": "110-180"}``).
 * :func:`createRigidCA` — high-level; identical to
   :func:`createRigidSegments` except that only atoms with selected names are
   placed in each body ("CA" by default, e.g. "P" for nucleic acids). Produces
@@ -103,7 +109,7 @@ Dependencies
 * `OpenMM <https://openmm.org>`_ (``openmm``, ``openmm.unit``)
 * `NumPy <https://numpy.org>`_ (``numpy``, ``numpy.linalg``)
 * `MDTraj <https://mdtraj.org>`_ (optional; only for ``createRigidSegments``
-  with ``loop=False``, to run DSSP)
+  / ``createRigidComplex`` with ``loop=False``, to run DSSP)
 """
 __author__ = "Peter Eastman"
 __version__ = "1.0"
@@ -413,6 +419,158 @@ def createRigidSegments(system, psf, pdb, residues, segments, loop=True, CA=Fals
     print(msg + ".")
     createRigidBodies(system, positions, bodies)
     return len(bodies)
+
+
+def createRigidComplex(system, psf, pdb, residues, segments=None, loop=True, CA=False):
+    """Make one rigid body out of selected residues of several PSF segments,
+    e.g. two interacting domains on two chains held together as a complex.
+
+    Same selection options as :func:`createRigidSegments`, but instead of one
+    body per segment, the atoms selected from *all* listed segments go into a
+    single rigid body. The complex is frozen in its PDB geometry, so the
+    domains keep their relative pose (bound interface) for the whole
+    simulation while everything outside the body stays flexible.
+
+    Parameters
+    ----------
+    system : openmm.System
+        The System to modify.
+    psf : str or openmm.app.CharmmPsfFile
+        Either a path to a PSF file (str) or an already-loaded CharmmPsfFile object.
+    pdb : str or openmm.app.PDBFile
+        Either a path to a PDB file (str) or an already-loaded PDBFile object.
+        Positions are extracted from this file; the complex must be whole
+        (not split across the periodic box) in it.
+    residues : str or dict
+        Which author residue numbers to take from each segment.
+
+        * str, e.g. "27-95": the same residues from every segment in
+          `segments`.
+        * dict mapping segment specs to residue specs, for different
+          residues on each chain, e.g.
+          ``{"P001": "27-95", "P002": "110-180"}``. Keys may be segment
+          ranges or lists like the `segments` string ("P001-P004" or
+          "P001,P003"). `segments` must then be None.
+    segments : str, optional
+        Comma-separated segment-ID ranges, e.g. "P001-P002" or "P001,P005".
+        Required when `residues` is a str.
+    loop : bool, optional
+        If True (default), every listed residue is included. If False, residues
+        that DSSP (MDTraj) assigns as coil ('C') are left out. Requires MDTraj.
+    CA : bool, optional
+        If True, only the CA atoms of the selected residues go into the body.
+
+    Returns
+    -------
+    numAtoms : int
+        The number of atoms in the rigid body.
+
+    Raises
+    ------
+    ValueError
+        If `residues`/`segments` are inconsistent, if a segment appears twice,
+        if fewer than three atoms are selected, or (from
+        :func:`createRigidBodies`) if the body is degenerate.
+    ImportError
+        If ``loop=False`` and MDTraj is not installed.
+
+    Notes
+    -----
+    Segment IDs not found in the PSF, and listed segments from which no atom
+    is selected, are skipped with a warning. Call this once per complex; an
+    atom must not belong to more than one rigid body, so do not also rigidify
+    the same residues with :func:`createRigidSegments`. Nonbonded forces
+    between atoms of the same body are still computed but have no effect.
+    The constraint caveats of :func:`createRigidSegments` (``loop=False``,
+    ``CA=True``) apply here as well.
+
+    Example
+    -------
+    ::
+
+        from HyresBuilder.Rigid import createRigidComplex
+
+        # Residues 27-95 of P001 and 110-180 of P002 form one rigid complex.
+        def modification(system):
+            createRigidComplex(system, 'conf.psf', 'conf.pdb',
+                               residues={"P001": "27-95", "P002": "110-180"})
+
+        # Same residue range on both chains of a homodimer.
+        def modification(system):
+            createRigidComplex(system, 'conf.psf', 'conf.pdb',
+                               residues="27-95", segments="P001-P002")
+    """
+    import warnings
+
+    if isinstance(residues, dict):
+        if segments is not None:
+            raise ValueError("Give `segments` only when `residues` is a string; "
+                             "with a dict the segments are its keys.")
+        selection = [(segid, set(_parseIndexRanges(resSpec)))
+                     for segSpec, resSpec in residues.items()
+                     for segid in _parseSegmentRange(segSpec)]
+    else:
+        if segments is None:
+            raise ValueError("`segments` is required when `residues` is a string.")
+        resSet = set(_parseIndexRanges(residues))
+        selection = [(segid, resSet) for segid in _parseSegmentRange(segments)]
+
+    segIDs = [segid for segid, _ in selection]
+    dup = sorted({s for s in segIDs if segIDs.count(s) > 1})
+    if dup:
+        raise ValueError(f"Segment(s) listed more than once: {dup}")
+
+    psf, pdb = _loadPsfPdb(psf=psf, pdb=pdb)
+    positions = pdb.positions
+    ssCodes = None if loop else _dsspCodes(psf, pdb)
+    chain_map = {chain.id: chain for chain in psf.topology.chains()}
+
+    body_atoms = []
+    missing = []
+    empty = []
+    used = []
+    nCoil = 0
+    for segid, resSet in selection:
+        if segid not in chain_map:
+            missing.append(segid)
+            continue
+
+        n0 = len(body_atoms)
+        for residue in chain_map[segid].residues():
+            try:
+                res_num = int(residue.id)
+            except ValueError:
+                continue   # skip insertion-code residues e.g. '27A'
+            if res_num not in resSet:
+                continue
+            if ssCodes is not None and ssCodes[residue.index] == 'C':
+                nCoil += 1
+                continue   # coil residue -> left out of the body
+            for atom in residue.atoms():
+                if not CA or atom.name == 'CA':
+                    body_atoms.append(atom.index)
+        (used if len(body_atoms) > n0 else empty).append(segid)
+
+    if missing:
+        warnings.warn(f"{len(missing)} segment(s) not found in PSF and were skipped: "
+                      f"{missing[:10]}{'...' if len(missing) > 10 else ''}")
+    if empty:
+        warnings.warn(f"No atoms selected from {len(empty)} segment(s) "
+                      f"(loop={loop}, CA={CA}): {empty[:10]}{'...' if len(empty) > 10 else ''}")
+    if len(body_atoms) < 3:
+        raise ValueError(f"Only {len(body_atoms)} atom(s) selected for the rigid complex -- "
+                         f"check `residues`, `segments`, loop={loop} and CA={CA}.")
+
+    msg = (f"[Rigid] Built 1 rigid complex of {len(body_atoms)} atoms from "
+           f"{len(used)} segment(s): {', '.join(used[:10])}{'...' if len(used) > 10 else ''}")
+    if not loop:
+        msg += f"; {nCoil} coil residue(s) excluded by DSSP"
+    if CA:
+        msg += "; CA atoms only"
+    print(msg + ".")
+    createRigidBodies(system, positions, [body_atoms])
+    return len(body_atoms)
+
 
 def createRigidCA(system, psf, pdb, residues, segments, atomNames='CA'):
     """Apply the same residue-range rigid-body definition to many PSF segments
