@@ -57,7 +57,7 @@ example:
     util.setup(params, modification=mod)
 """        
 def mod(system):
-    utils.crowding_effect(system, crowding_factor=1.4)
+    utils.crowding_effect(system, crowding_factor=1.4, psf=params.psf)   # mode='no_backbone' (default)
 
 system, sim = utils.setup(params, modification=mod)
 

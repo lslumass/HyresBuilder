@@ -66,7 +66,8 @@ and velocities set. They differ in the builder used and the files loaded:
 
 Each returns a ``(system, sim)`` tuple. :func:`crowding_effect` can be
 applied to a built ``System`` (before creating a ``Simulation``) to scale
-the LJ well depth uniformly and mimic crowding.
+the LJ well depth and mimic crowding, for all but backbone-backbone pairs
+(default), side chain-side chain pairs only, or all pairs.
 
 Dependencies
 ------------
@@ -1630,22 +1631,44 @@ def iConDNA_setup(params, modification=None):
     return system, sim
 
 
-def crowding_effect(system: System, crowding_factor: float = 1.0) -> None:
+_CROWDING_MODES = ('all', 'sidechain', 'no_backbone')
+
+
+def crowding_effect(system: System, crowding_factor: float = 1.0,
+                    mode: str = 'no_backbone', psf=None) -> CustomNonbondedForce:
     """
     Scale the LJ well depth of the "LJ Force w/ NBFIX" force to mimic crowding.
 
     Rewrites the energy function of the ``CustomNonbondedForce`` named
     ``'LJ Force w/ NBFIX'`` (the NBFIX LJ force that the FFs builders rename;
-    it exists only if the parameter set contains NBFIX terms) and adds a
-    global parameter ``crowding_factor``:
+    it exists only if the parameter set contains NBFIX terms; it holds the LJ
+    of every bead) and adds a global parameter ``crowding_factor``:
 
     - Original energy: ``(a/r6)^2 - b/r6``
-    - New energy:      ``(a*sqrt(crowding_factor)/r6)^2 - b*crowding_factor/r6``
+    - New energy:      ``(a*sqrt(fc)/r6)^2 - b*fc/r6``, where ``fc`` is
+      ``crowding_factor`` for the pairs selected by ``mode`` and 1 otherwise.
 
     Since ``a`` scales as sqrt(epsilon) and ``b`` as epsilon, this multiplies
-    the effective LJ epsilon of every pair by ``crowding_factor`` while
-    leaving sigma unchanged. The new expression replaces the original one
-    verbatim (it assumes the standard ``acoef``/``bcoef`` NBFIX form).
+    the effective LJ epsilon of every selected pair by ``crowding_factor``
+    while leaving sigma unchanged. The new expression replaces the original
+    one verbatim (it assumes the standard ``acoef``/``bcoef`` NBFIX form).
+
+    Scaling modes (``mode``):
+
+    - ``'no_backbone'`` (default): every pair except those of two protein
+      backbone beads, i.e. backbone-side chain and all non-protein pairs
+      (nucleic acids, ions, polymers, metabolites) are scaled too.
+    - ``'sidechain'``: only pairs of two protein side-chain beads.
+    - ``'all'``: every pair (the behaviour before modes were added).
+
+    Protein backbone beads are N, H, CA, C and O of residues in
+    ``GenPsf.aas``; all other atoms of those residues are side-chain beads.
+    For the two residue-based modes each bead gets a per-particle parameter
+    ``kind`` (0 backbone, 1 side chain, 2 non-protein), read from ``psf``.
+
+    Only the LJ force is changed: the backbone N-H--O hydrogen-bond force,
+    the ``'1-4 interaction'`` force and the Debye-Hückel electrostatics are
+    never scaled, in any mode.
 
     Must be called BEFORE creating a ``Context``/``Simulation``; changes made
     afterwards do not affect an existing Context. The parameter can later be
@@ -1655,26 +1678,46 @@ def crowding_effect(system: System, crowding_factor: float = 1.0) -> None:
         system (System): System containing the target force; modified in place.
         crowding_factor (float): Initial value of ``crowding_factor``
             (must be >= 0). 1.0 = original epsilon; >1 strengthens and <1
-            weakens LJ interactions; 0 disables LJ. Default ``1.0``.
+            weakens LJ interactions; 0 disables LJ of the selected pairs.
+            Default ``1.0``.
+        mode (str): ``'no_backbone'``, ``'sidechain'`` or ``'all'`` (see
+            above). Default ``'no_backbone'``.
+        psf (str or CharmmPsfFile, optional): PSF the System was built from
+            (same atom order). Required for ``'sidechain'`` and
+            ``'no_backbone'``; ignored for ``'all'``.
 
     Returns:
-        CustomNonbondedForce: The modified force (despite the ``-> None``
-        annotation).
+        CustomNonbondedForce: The modified force.
 
     Raises:
-        ValueError: If ``crowding_factor`` is negative, if no or more than one
-                    ``CustomNonbondedForce`` named ``'LJ Force w/ NBFIX'`` is
-                    found, or if the force already has a ``crowding_factor``
-                    global parameter.
+        ValueError: If ``crowding_factor`` is negative, if ``mode`` is unknown,
+                    if ``psf`` is missing or its atom count differs from the
+                    force, if no or more than one ``CustomNonbondedForce``
+                    named ``'LJ Force w/ NBFIX'`` is found, or if the force
+                    already has a ``crowding_factor`` global parameter.
 
     Example:
         >>> from HyresBuilder.utils import setup, crowding_effect
+        >>> # all pairs except backbone-backbone (default)
         >>> def mod(system):
-        ...     crowding_effect(system, crowding_factor=1.4)
+        ...     crowding_effect(system, crowding_factor=1.4, psf=params.psf)
         >>> system, sim = setup(params, modification=mod)
+
+        >>> # side chain - side chain pairs only
+        >>> def mod(system):
+        ...     crowding_effect(system, 1.4, mode='sidechain', psf=params.psf)
+
+        >>> # every pair, no PSF needed
+        >>> def mod(system):
+        ...     crowding_effect(system, 1.4, mode='all')
     """
     if crowding_factor < 0:
         raise ValueError(f"crowding_factor must be >= 0, got {crowding_factor}")
+    if mode not in _CROWDING_MODES:
+        raise ValueError(f"mode must be one of {_CROWDING_MODES}, got '{mode}'")
+    if mode != 'all' and psf is None:
+        raise ValueError(f"mode='{mode}' needs the PSF (psf=...) to tell backbone "
+                         "from side-chain beads")
 
     force_name = "LJ Force w/ NBFIX"
     param_name = "crowding_factor"
@@ -1710,17 +1753,50 @@ def crowding_effect(system: System, crowding_factor: float = 1.0) -> None:
 
     original_energy = target_force.getEnergyFunction()
 
-    new_energy = (
-        f"(a*sqrt({param_name})/r6)^2 - b*{param_name}/r6; "
-        "r6=r^6; a=acoef(type1, type2); b=bcoef(type1, type2)"
-    )
+    if mode == 'all':
+        new_energy = (
+            f"(a*sqrt({param_name})/r6)^2 - b*{param_name}/r6; "
+            "r6=r^6; a=acoef(type1, type2); b=bcoef(type1, type2)"
+        )
+    else:
+        from .GenPsf import aas          # local import: GenPsf imports utils
+        if isinstance(psf, str):
+            psf = CharmmPsfFile(psf)
+        if psf.topology.getNumAtoms() != target_force.getNumParticles():
+            raise ValueError(
+                f"PSF has {psf.topology.getNumAtoms()} atoms but '{force_name}' has "
+                f"{target_force.getNumParticles()} particles; use the PSF the System was built from."
+            )
+        backbone = {'N', 'H', 'CA', 'C', 'O'}
+        kinds = []
+        target_force.addPerParticleParameter('kind')
+        for atom in psf.topology.atoms():
+            if atom.residue.name not in aas:
+                kind = 2.0                                  # non-protein bead
+            elif atom.name in backbone:
+                kind = 0.0                                  # protein backbone
+            else:
+                kind = 1.0                                  # protein side chain
+            kinds.append(kind)
+            target_force.setParticleParameters(
+                atom.index, list(target_force.getParticleParameters(atom.index)) + [kind])
+        if mode == 'sidechain':
+            selected = "delta(kind1-1)*delta(kind2-1)"      # both side chain
+        else:
+            selected = "1-delta(kind1)*delta(kind2)"        # not both backbone
+        new_energy = (
+            f"(a*sqrt(fc)/r6)^2 - b*fc/r6; fc=1+({param_name}-1)*({selected}); "
+            "r6=r^6; a=acoef(type1, type2); b=bcoef(type1, type2)"
+        )
+        print(f"[crowding_effect] mode '{mode}': {kinds.count(0.0)} backbone, "
+              f"{kinds.count(1.0)} side-chain, {kinds.count(2.0)} non-protein beads.")
 
     target_force.setEnergyFunction(new_energy)
     target_force.addGlobalParameter(param_name, crowding_factor)
 
     print(
         f"[crowding_effect] '{force_name}': energy function updated, "
-        f"'{param_name}' added (initial value = {crowding_factor}).\n"
+        f"'{param_name}' added (initial value = {crowding_factor}, mode = '{mode}').\n"
         f"  Original energy: {original_energy}\n"
         f"  New energy:      {new_energy}"
     )
