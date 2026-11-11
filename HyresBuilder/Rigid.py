@@ -10,27 +10,34 @@ the constrained regions.
 
 Implementation strategy
 -----------------------
-For each rigid body, four atoms are designated as "real" particles whose
+For each rigid body, a few atoms are designated as "real" particles whose
 positions are integrated normally. All remaining atoms in the body are
 converted to ``OutOfPlaneSite`` virtual sites whose positions are recomputed
-analytically at every step from the four real particles. Constraints are
+analytically at every step from three of the real particles. Constraints are
 added between every pair of real particles to maintain their pairwise
 distances. Any pre-existing constraints that couple two atoms within the same
 body are automatically removed to avoid conflicts. Reference geometry is taken
 from the positions passed in (normally the PDB file), so each body is frozen
 in that conformation.
 
-The four real particles and their masses are chosen so that the total mass and
-center of mass of the rigid body exactly match those of the original atom set
-(among the valid choices, the most mass-balanced set is preferred, because a
-very light real particle is unstable at large time steps). For bodies with
-fewer than five atoms, all atoms are treated as real particles and keep their
-masses. The moment of inertia will be similar but not identical to the
-original distribution.
+The number of real particles depends on the body's shape:
 
-The three reference atoms used to define the virtual-site frame are selected
-from the real particles by maximising the norm of their cross product, ensuring
-a well-conditioned out-of-plane coordinate frame.
+* 3D bodies use four real particles forming a tetrahedron that is not flat
+  (height at least 0.25 of its longest edge where possible). Four coplanar
+  real particles must be avoided: their six constraints do not hold the body
+  rigid out of their plane, and such bodies crash to NaN within a few hundred
+  steps even at 1 fs.
+* Flat or nearly flat bodies (no tetrahedron at least 0.10 high relative to
+  its longest edge, e.g. aromatic rings, and every three-atom body) use three
+  real particles forming a triangle.
+
+The masses of the real particles are chosen so that the total mass and center
+of mass of the body match those of the original atom set (for a nearly flat
+body the center of mass can be off by at most about the body's thickness).
+Balanced masses are preferred -- at least half of the mean real mass where
+possible -- because a very light real particle is unstable at large time
+steps. The moment of inertia will be similar but not identical to the
+original distribution.
 
 Interface levels
 ----------------
@@ -886,6 +893,153 @@ def RigidSmallMols(system, psf, pdb, atoms=None, segments=None):
     createRigidBodies(system, positions, bodies)
     return len(bodies)
 
+# --- selection of the real particles -------------------------------------------------
+# A tetrahedron is scored by its flatness, height/longest edge (min over faces;
+# 0.816 for a regular tetrahedron, 0 when the four are coplanar), and a triangle by
+# its fatness, height/longest edge (0.866 equilateral, 0 collinear). Masses are
+# scored by balance, the lightest real mass over the mean real mass.
+_TETRA_FLAT_TARGET = 0.25    # tetrahedra at least this fat count as good
+_TETRA_FLAT_MIN = 0.10       # below this no usable tetrahedron exists -> 3 real particles
+_TRI_FAT_TARGET = 0.30       # triangles at least this fat count as good
+_BALANCE_TARGET = 0.5        # lightest real mass >= half the mean (M/8 for 4, M/6 for 3)
+_LINEAR_TOL = 1e-3           # 2nd/1st principal extent below this: atoms on a line
+_POOL_RANKED = 18            # candidates closest to the RMS radius ...
+_RANDOM_TRIALS = 100000      # ... and random sets over all atoms if none of those is valid
+
+
+def _candidatePool(r):
+    """Indices (into r) of candidate real particles: atoms closest to the body's RMS
+    radius plus the two extremes along each principal axis."""
+    n = len(r)
+    if n <= _POOL_RANKED + 6:
+        return np.arange(n)
+    d = np.linalg.norm(r, axis=1)
+    rms = np.sqrt(np.mean(d**2))
+    ranked = list(np.argsort(np.abs(d - rms))[:_POOL_RANKED])
+    _, _, vt = np.linalg.svd(r, full_matrices=False)
+    proj = r @ vt.T
+    extremes = [int(np.argmin(proj[:, k])) for k in range(3)] + [int(np.argmax(proj[:, k])) for k in range(3)]
+    pool = []
+    for i in ranked + extremes:
+        if i not in pool:
+            pool.append(int(i))
+    return np.array(pool)
+
+
+def _score(balance, shape, shape_target):
+    """Higher is better: reach both targets first, then prefer balanced and fat sets."""
+    return (np.minimum(1.0, balance/_BALANCE_TARGET)*np.minimum(1.0, shape/shape_target)
+            + 1e-3*balance*shape)
+
+
+def _bestTetrahedron(r, totalMass, combos):
+    """Best set of four real particles among `combos` (array (N, 4) of indices into r).
+
+    Returns (combo, masses, flatness) or None if no set has all masses positive.
+    The masses reproduce the total mass and the centre of mass (the origin of r).
+    """
+    P = r[combos]                                      # (N, 4, 3)
+    E = P[:, 1:] - P[:, :1]                            # edges from vertex 0
+    vol = np.abs(np.linalg.det(E))/6.0
+    faces = [(0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3)]
+    area = np.max([0.5*np.linalg.norm(np.cross(P[:, b] - P[:, a], P[:, c] - P[:, a]), axis=1)
+                   for a, b, c in faces], axis=0)
+    edge = np.max([np.linalg.norm(P[:, a] - P[:, b], axis=1)
+                   for a, b in combinations(range(4), 2)], axis=0)
+    flat = np.where(area > 0, 3.0*vol/np.where(area > 0, area, 1.0), 0.0)/np.where(edge > 0, edge, 1.0)
+    ok = flat > 1e-6                                   # coplanar sets cannot carry the COM
+    if not ok.any():
+        return None
+    A = np.ones((ok.sum(), 4, 4))
+    A[:, :3, :] = np.transpose(P[ok], (0, 2, 1))
+    w = np.linalg.solve(A, np.broadcast_to(np.array([0.0, 0.0, 0.0, totalMass]), (ok.sum(), 4))[..., None])[..., 0]
+    valid = np.all(w > 0, axis=1)
+    if not valid.any():
+        return None
+    w, f, c = w[valid], flat[ok][valid], combos[ok][valid]
+    k = int(np.argmax(_score(w.min(axis=1)/(totalMass/4), f, _TETRA_FLAT_TARGET)))
+    return c[k], w[k], float(f[k])
+
+
+def _bestTriangle(r, totalMass, combos, axes):
+    """Best set of three real particles among `combos` (array (N, 3)) for a flat body.
+
+    The masses reproduce the total mass and the in-plane position of the centre of
+    mass; `axes` (2, 3) span the body's plane. Returns (combo, masses, fatness) or None.
+    """
+    Q = r[combos] @ axes.T                             # (N, 3, 2) in-plane coordinates
+    area = 0.5*np.abs((Q[:, 1, 0] - Q[:, 0, 0])*(Q[:, 2, 1] - Q[:, 0, 1])
+                      - (Q[:, 1, 1] - Q[:, 0, 1])*(Q[:, 2, 0] - Q[:, 0, 0]))
+    edge = np.max([np.linalg.norm(Q[:, a] - Q[:, b], axis=1) for a, b in ((0, 1), (0, 2), (1, 2))], axis=0)
+    fat = np.where(edge > 0, 2.0*area/np.where(edge > 0, edge, 1.0)**2, 0.0)
+    ok = fat > 1e-6
+    if not ok.any():
+        return None
+    A = np.ones((ok.sum(), 3, 3))
+    A[:, :2, :] = np.transpose(Q[ok], (0, 2, 1))
+    w = np.linalg.solve(A, np.broadcast_to(np.array([0.0, 0.0, totalMass]), (ok.sum(), 3))[..., None])[..., 0]
+    valid = np.all(w > 0, axis=1)
+    if not valid.any():
+        return None
+    w, f, c = w[valid], fat[ok][valid], combos[ok][valid]
+    k = int(np.argmax(_score(w.min(axis=1)/(totalMass/3), f, _TRI_FAT_TARGET)))
+    return c[k], w[k], float(f[k])
+
+
+def _combos(pool, k):
+    return np.array(list(combinations(pool, k)), dtype=int).reshape(-1, k)
+
+
+def _randomCombos(n, k, count, rng):
+    c = np.array([rng.choice(n, size=k, replace=False) for _ in range(count)])
+    return np.unique(np.sort(c, axis=1), axis=0)
+
+
+def _selectRealParticles(xyz, mass):
+    """Choose the real particles of one body.
+
+    Args:
+        xyz (ndarray (n, 3)): positions in nm.
+        mass (ndarray (n,)): masses in amu.
+
+    Returns:
+        (local indices, masses in amu, kind) where kind is 'tetrahedron' or 'triangle'.
+
+    Raises:
+        ValueError: fewer than three atoms, atoms on a line, or no valid set.
+    """
+    n = len(xyz)
+    if n < 3:
+        raise ValueError("a rigid body needs at least three atoms")
+    totalMass = float(mass.sum())
+    r = xyz - (mass[:, None]*xyz).sum(axis=0)/totalMass
+    sv = np.linalg.svd(r, compute_uv=False)
+    if sv[0] == 0 or sv[1]/sv[0] < _LINEAR_TOL:
+        raise ValueError("its atoms lie on a straight line, which cannot be made rigid this way")
+
+    pool = _candidatePool(r)
+    rng = np.random.default_rng(0)
+    tet = None
+    if n >= 4:
+        tet = _bestTetrahedron(r, totalMass, _combos(pool, 4))
+        if tet is None and n > len(pool):
+            tet = _bestTetrahedron(r, totalMass, _randomCombos(n, 4, _RANDOM_TRIALS, rng))
+    if tet is not None and tet[2] >= _TETRA_FLAT_MIN:
+        return tet[0], tet[1], 'tetrahedron'
+
+    # flat or nearly flat body: three real particles spanning the body's plane
+    _, _, vt = np.linalg.svd(r, full_matrices=False)
+    tri = _bestTriangle(r, totalMass, _combos(pool, 3), vt[:2])
+    if tri is None and n > len(pool):
+        tri = _bestTriangle(r, totalMass, _randomCombos(n, 3, _RANDOM_TRIALS, rng), vt[:2])
+    if tri is not None:
+        return tri[0], tri[1], 'triangle'
+    if tet is not None:                    # no triangle carries the COM: keep the flat tetrahedron
+        return tet[0], tet[1], 'tetrahedron'
+    raise ValueError("no set of real particles reproduces its total mass and centre of mass "
+                     "with positive masses")
+
+
 def createRigidBodies(system, positions, bodies):
     """Modify a System to turn specified sets of particles into rigid bodies.
 
@@ -893,28 +1047,37 @@ def createRigidBodies(system, positions, bodies):
     For a higher-level interface that accepts PSF segment IDs and residue ranges, use
     createRigidSegments() instead.
 
-    For every rigid body, four particles are selected as "real" particles whose positions are integrated.
-    Constraints are added between them to make them move as a rigid body.  All other particles in the body
-    are then turned into virtual sites whose positions are computed based on the "real" particles.
+    For every rigid body a few particles are selected as "real" particles whose positions are
+    integrated, with constraints between every pair of them so that they move as a rigid body. All
+    other particles in the body become massless ``OutOfPlaneSite`` virtual sites placed from three
+    of the real particles. The masses of the real particles are chosen so that the total mass and
+    center of mass of each body match those of the original particles; the moment of inertia is
+    similar but not identical.
 
-    Because virtual sites are massless, the mass properties of the rigid bodies will be slightly different
-    from the corresponding sets of particles in the original system.  The masses of the non-virtual particles
-    are chosen to guarantee that the total mass and center of mass of each rigid body exactly match those of
-    the original particles.  The moment of inertia will be similar to that of the original particles, but
-    not identical.
+    How the real particles are chosen depends on the body's shape:
+
+    * **3D bodies -- four real particles** (a tetrahedron). Candidate sets are drawn from the
+      atoms closest to the body's RMS radius plus the extreme atoms along each principal axis
+      (random sets over all atoms if none of those works); masses come from solving for the
+      total mass and center of mass, and sets with any non-positive mass are rejected. Among the
+      valid sets the one preferred reaches both targets -- every mass at least 1/8 of the body's
+      total mass (a very light real particle blows up at large time steps) and a tetrahedron that
+      is not flat (height at least 0.25 of its longest edge) -- and is otherwise the best
+      compromise. Four (nearly) coplanar real particles must not be used: their six constraints
+      do not hold the body rigid out of their plane, and such bodies crash to NaN within a few
+      hundred steps even at 1 fs.
+    * **Flat or nearly flat bodies -- three real particles** (a triangle). If no tetrahedron of
+      the body is at least 0.10 high relative to its longest edge (e.g. aromatic rings or other
+      planar molecules, and every body of three atoms), three particles whose triangle contains
+      the center of mass are used instead, preferring masses of at least 1/6 of the total and a
+      fat triangle. The masses reproduce the total mass and the in-plane position of the center
+      of mass; for a nearly flat body the center of mass can be off by at most about the body's
+      thickness.
 
     Care is needed when using constraints, since virtual particles cannot participate in constraints.  If the
     input system includes any constraints, this function will automatically remove ones that connect two
     particles in the same rigid body.  But if there is a constraint between a particle in a rigid body and
     another particle not in that body, it will likely lead to an exception when you try to create a context.
-
-    For bodies with five or more particles, candidate sets of four real particles are tried (closest to
-    the body's RMS radius first) and their masses are obtained by solving for the total mass and COM; sets
-    with any non-positive mass are rejected.  The search stops at the first set in which every mass is at
-    least 1/8 of the body's total mass, otherwise it returns the most balanced valid set found (searching
-    at most 200000 combinations once a valid set exists).  Bodies with fewer than five particles keep all
-    of them as real particles with their original masses.  Virtual sites are ``OutOfPlaneSite`` objects
-    defined on the three real particles with the largest cross product, and their masses are set to zero.
 
     Parameters
     ----------
@@ -925,17 +1088,20 @@ def createRigidBodies(system, positions, bodies):
         rigid geometry.
     bodies : list of list of int
         Each element defines one rigid body as a list of atom indices. Every body needs at least three
-        non-collinear particles.
+        particles that do not all lie on one line; a particle may belong to only one body.
 
     Returns
     -------
-    None
+    dict
+        Counts of the bodies built with four (``'tetrahedron'``) and three (``'triangle'``) real
+        particles.
 
     Raises
     ------
     ValueError
-        If no set of four real particles with positive masses exists for a body, or if no three
-        non-collinear real particles can be found (this includes any body with fewer than three particles).
+        If a body has fewer than three particles, if its particles lie on a straight line, if a
+        particle appears in more than one body, or if no set of real particles with positive
+        masses exists.
 
     Example
     -------
@@ -949,128 +1115,51 @@ def createRigidBodies(system, positions, bodies):
         bodies = [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]
         createRigidBodies(system, pdb.positions, bodies)
     """
-    # Remove any constraints involving particles in rigid bodies.
-    
+    bodyOf = {}
+    for b, particles in enumerate(bodies):
+        for i in particles:
+            if i in bodyOf and bodyOf[i] != b:
+                raise ValueError(f"particle {i} belongs to more than one rigid body")
+            bodyOf[i] = b
+
+    # Remove any constraints between two particles of the same rigid body.
     for i in range(system.getNumConstraints()-1, -1, -1):
         p1, p2, distance = system.getConstraintParameters(i)
-        if (any(p1 in body and p2 in body for body in bodies)):
+        if p1 in bodyOf and bodyOf.get(p2) == bodyOf[p1]:
             system.removeConstraint(i)
-    
-    # Loop over rigid bodies and process them.
-    
+
+    counts = {'tetrahedron': 0, 'triangle': 0}
     for particles in bodies:
-        if len(particles) < 5:
-            # All the particles will be "real" particles.
-            
-            realParticles = particles
-            realParticleMasses = [system.getParticleMass(i) for i in particles]
-        else:
-            # Select four particles to use as the "real" particles.  All others will be virtual sites.
-            
-            pos = [positions[i] for i in particles]
-            mass = [system.getParticleMass(i) for i in particles]
-            cm = unit.sum([p*m for p, m in zip(pos, mass)])/unit.sum(mass)
-            r = [p-cm for p in pos]
-            avgR = unit.sqrt(unit.sum([unit.dot(x, x) for x in r])/len(particles))
-            rank = sorted(range(len(particles)), key=lambda i: abs(unit.norm(r[i])-avgR))
-            realParticles = None
-            # Prefer a balanced set: every real particle should carry at least half of the mean
-            # mass (total/8).  Any positive set reproduces the mass and COM exactly, but a very
-            # light real particle (e.g. 80 Da out of 2700 Da) takes a large share of the forces
-            # and torque on the body, and that blows up to NaN at large time steps (e.g. 8 fs).
-            # If no balanced set turns up, use the most balanced positive set found.
-            totalMass = unit.sum(mass).value_in_unit(unit.amu)
-            minWeight = 0.125*totalMass
-            maxTrials = 200000
-            best = None
-            for trial, p in enumerate(combinations(rank, 4)):
-                if best is not None and trial >= maxTrials:
-                    break
-                # Select masses for the "real" particles.  If any is negative, reject this set of particles
-                # and keep going.
+        particles = list(particles)
+        xyz = np.array([positions[i].value_in_unit(unit.nanometer) for i in particles], dtype=float)
+        mass = np.array([system.getParticleMass(i).value_in_unit(unit.amu) for i in particles], dtype=float)
+        try:
+            local, realMasses, kind = _selectRealParticles(xyz, mass)
+        except ValueError as e:
+            raise ValueError(f"Cannot build rigid body {particles[:10]}"
+                             f"{'...' if len(particles) > 10 else ''} ({len(particles)} particles): {e}.")
+        counts[kind] += 1
+        realParticles = [particles[k] for k in local]
+        realSet = set(realParticles)
 
-                matrix = np.zeros((4, 4))
-                for i in range(4):
-                    particleR = r[p[i]].value_in_unit(unit.nanometers)
-                    matrix[0][i] = particleR[0]
-                    matrix[1][i] = particleR[1]
-                    matrix[2][i] = particleR[2]
-                    matrix[3][i] = 1.0
-                rhs = np.array([0.0, 0.0, 0.0, totalMass])
-                try:
-                    weights = lin.solve(matrix, rhs)
-                except lin.LinAlgError:
-                    # The four chosen particles are coplanar (or collinear) --
-                    # common for planar small molecules like aromatic rings --
-                    # so the mass/COM system is rank-deficient rather than
-                    # having no solution.  Fall back to a least-squares solve
-                    # and only accept it if it still satisfies the mass/COM
-                    # constraints to a tight tolerance.
-                    weights, _, _, _ = lin.lstsq(matrix, rhs, rcond=None)
-                    if not np.allclose(matrix.dot(weights), rhs, atol=1e-8):
-                        continue
-                if all(w > 0.0 for w in weights):
-                    # We have a valid set of particles.  Keep it if it is the most balanced so far.
+        # Set particle masses and constrain every pair of real particles.
+        for i, m in zip(realParticles, realMasses):
+            system.setParticleMass(i, float(m)*unit.amu)
+        for a, b in combinations(range(len(local)), 2):
+            system.addConstraint(realParticles[a], realParticles[b],
+                                 float(np.linalg.norm(xyz[local[a]] - xyz[local[b]]))*unit.nanometer)
 
-                    if best is None or min(weights) > min(best[1]):
-                        best = (p, weights)
-                    if min(weights) >= minWeight:
-                        break
-            if best is not None:
-                realParticles = [particles[i] for i in best[0]]
-                realParticleMasses = [float(w) for w in best[1]]*unit.amu
-            if realParticles is None:
-                raise ValueError(
-                    f"Could not select four 'real' particles with positive mass "
-                    f"weights for rigid body {particles}. This usually means the "
-                    f"atom group is planar or otherwise degenerate in a way that "
-                    f"no four-particle combination can reproduce its total mass "
-                    f"and center of mass with positive weights. Consider "
-                    f"double-checking the atom selection for this body.")
-        
-        # Set particle masses.
-        
-        for i, m in zip(realParticles, realParticleMasses):
-            system.setParticleMass(i, m)
-        
-        # Add constraints between the real particles.
-        
-        for p1, p2 in combinations(realParticles, 2):
-            distance = unit.norm(positions[p1]-positions[p2])
-            key = (min(p1, p2), max(p1, p2))
-            system.addConstraint(p1, p2, distance)
-        
-        # Select which three particles to use for defining virtual sites.
-        
-        bestNorm = 0
-        vsiteParticles = None
-        for p1, p2, p3 in combinations(realParticles, 3):
-            d12 = (positions[p2]-positions[p1]).value_in_unit(unit.nanometer)
-            d13 = (positions[p3]-positions[p1]).value_in_unit(unit.nanometer)
-            crossNorm = unit.norm((d12[1]*d13[2]-d12[2]*d13[1], d12[2]*d13[0]-d12[0]*d13[2], d12[0]*d13[1]-d12[1]*d13[0]))
-            if crossNorm > bestNorm:
-                bestNorm = crossNorm
-                vsiteParticles = (p1, p2, p3)
-        if vsiteParticles is None:
-            raise ValueError(
-                f"Could not find three non-collinear 'real' particles to define "
-                f"the virtual-site frame for rigid body {particles}. This means "
-                f"all of the real particles selected for this body lie on a "
-                f"single line.")
-        
-        # Create virtual sites.
-        
-        d12 = (positions[vsiteParticles[1]]-positions[vsiteParticles[0]]).value_in_unit(unit.nanometer)
-        d13 = (positions[vsiteParticles[2]]-positions[vsiteParticles[0]]).value_in_unit(unit.nanometer)
-        cross = mm.Vec3(d12[1]*d13[2]-d12[2]*d13[1], d12[2]*d13[0]-d12[0]*d13[2], d12[0]*d13[1]-d12[1]*d13[0])
-        matrix = np.zeros((3, 3))
-        for i in range(3):
-            matrix[i][0] = d12[i]
-            matrix[i][1] = d13[i]
-            matrix[i][2] = cross[i]
-        for i in particles:
-            if i not in realParticles:
+        # Virtual-site frame: the three real particles with the largest cross product.
+        frame = max(combinations(range(len(local)), 3),
+                    key=lambda t: np.linalg.norm(np.cross(xyz[local[t[1]]] - xyz[local[t[0]]],
+                                                          xyz[local[t[2]]] - xyz[local[t[0]]])))
+        o, p, q = (xyz[local[k]] for k in frame)
+        d12, d13 = p - o, q - o
+        matrix = np.column_stack([d12, d13, np.cross(d12, d13)])
+        f0, f1, f2 = (realParticles[k] for k in frame)
+        for k, i in enumerate(particles):
+            if i not in realSet:
                 system.setParticleMass(i, 0)
-                rhs = np.array((positions[i]-positions[vsiteParticles[0]]).value_in_unit(unit.nanometer))
-                weights = lin.solve(matrix, rhs)
-                system.setVirtualSite(i, mm.OutOfPlaneSite(vsiteParticles[0], vsiteParticles[1], vsiteParticles[2], weights[0], weights[1], weights[2]))
+                w = np.linalg.solve(matrix, xyz[k] - o)
+                system.setVirtualSite(i, mm.OutOfPlaneSite(f0, f1, f2, w[0], w[1], w[2]))
+    return counts
