@@ -115,6 +115,7 @@ LC2      0.00     -0.1700      2.3500   0.00     -0.1700       2.3500 ! between 
 HOE      0.00     -0.0480      2.3237   0.00     -0.0480       2.3237 ! as P1S (Ser side chain, CH2-OH); 2 heavy atoms
 ! for PEG/PEO
 PEG      0.00     -0.0480      2.6500   0.00     -0.0480       2.6500 ! as P1S, 3 heavy atoms
+PGS      0.00     -0.0010      6.0000   0.00     -0.0010       6.0000 ! PEG crowder shell bead
 
 NBFIX
 !                 Emin         Rmin

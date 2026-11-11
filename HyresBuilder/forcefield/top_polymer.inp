@@ -18,6 +18,7 @@ MASS   609 HOE   31.034   ! H: hydroxymethyl, CH2-OH (as P1S of Ser)
 
 ! bead types for PEG/PEO
 MASS   606 PEG   44.000   ! EO unit, -CH2-O-CH2-
+MASS   607 PGS  209.524   ! shell bead; 42 x 209.524 = 8800 amu per cluster
 
 
 !! polymers
@@ -102,5 +103,52 @@ GROUP
 ATOM EO   PEG     0.00
 BOND EO   +EO
 ANGL -EO  EO   +EO
+
+
+RESI PGC          0.00
+GROUP
+ATOM S01  PGS     0.00
+ATOM S02  PGS     0.00
+ATOM S03  PGS     0.00
+ATOM S04  PGS     0.00
+ATOM S05  PGS     0.00
+ATOM S06  PGS     0.00
+ATOM S07  PGS     0.00
+ATOM S08  PGS     0.00
+ATOM S09  PGS     0.00
+ATOM S10  PGS     0.00
+ATOM S11  PGS     0.00
+ATOM S12  PGS     0.00
+ATOM S13  PGS     0.00
+ATOM S14  PGS     0.00
+ATOM S15  PGS     0.00
+ATOM S16  PGS     0.00
+ATOM S17  PGS     0.00
+ATOM S18  PGS     0.00
+ATOM S19  PGS     0.00
+ATOM S20  PGS     0.00
+ATOM S21  PGS     0.00
+ATOM S22  PGS     0.00
+ATOM S23  PGS     0.00
+ATOM S24  PGS     0.00
+ATOM S25  PGS     0.00
+ATOM S26  PGS     0.00
+ATOM S27  PGS     0.00
+ATOM S28  PGS     0.00
+ATOM S29  PGS     0.00
+ATOM S30  PGS     0.00
+ATOM S31  PGS     0.00
+ATOM S32  PGS     0.00
+ATOM S33  PGS     0.00
+ATOM S34  PGS     0.00
+ATOM S35  PGS     0.00
+ATOM S36  PGS     0.00
+ATOM S37  PGS     0.00
+ATOM S38  PGS     0.00
+ATOM S39  PGS     0.00
+ATOM S40  PGS     0.00
+ATOM S41  PGS     0.00
+ATOM S42  PGS     0.00
+
 
 END
