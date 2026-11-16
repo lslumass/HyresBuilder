@@ -52,6 +52,9 @@ and velocities set. They differ in the builder used and the files loaded:
 
 * :func:`setup` — general entry point; :func:`FFs.buildSystem`; loads
   Protein, RNA, DNA, AGs, Metabolite, Polymer (+ optional custom ``.itp``).
+* :func:`setup_crowd` — same as :func:`setup`, plus side-chain epsilon
+  scaled by ``crowding_factor`` at parameter load
+  (:func:`scale_sidechain_eps`).
 * :func:`setup2` — older argument-style variant; :func:`FFs.buildSystem`;
   loads Protein, RNA, Polymer.
 * :func:`rG4s_setup` — RNA G-quadruplexes; :func:`FFs.rG4sSystem`; loads
@@ -703,6 +706,301 @@ def setup(params, modification=None):
         top_list = top_list + custom_tops
         param_list = custom_pars + param_list
     ffparams = CharmmParameterSet(*top_list, *param_list)
+    # ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets)
+
+    print('\n################## load coordinates and topology ###################')
+    # 5. import coordinates and topology form charmm pdb and psf
+    pdb = PDBFile(pdb_file)
+    psf = CharmmPsfFile(psf_file)
+    top = psf.topology
+    print(f"coordinate file: {pdb_file}")
+    print(f"topology file: {psf_file}")
+
+    print('\n################## create system ###################')
+    if ensemble == 'non':
+        system = psf.createSystem(ffparams, nonbondedMethod=CutoffNonPeriodic, constraints=HBonds,
+                                  nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
+    else:
+        psf.setBox(lx, ly, lz)
+        top.setPeriodicBoxVectors((a, b, c))
+        top.setUnitCellDimensions((lx, ly,lz))
+        system = psf.createSystem(ffparams, nonbondedMethod=CutoffPeriodic, constraints=HBonds,
+                                  nonbondedCutoff=cutoff, switchDistance=d_switch, temperature=temperature)
+        system.setDefaultPeriodicBoxVectors(a, b, c)
+    
+    print(f"nonbonded cutoff: {cutoff}")
+    print(f"switch distance: {d_switch}")
+
+    # 6. construct force field
+    system = buildSystem(psf, system, DH_params, modification=modification)
+    print("buildSystem for HyRes_iConRNA")
+
+    # 7. set simulation
+    print('\n################### prepare simulation ####################')
+    if ensemble == 'NPT':
+        print('This is a NPT system')
+        system.addForce(MonteCarloBarostat(pressure, temperature, 25))
+    elif ensemble == 'NVT':
+        print('This is a NVT system')
+    elif ensemble == 'non':
+        print('This is a non-periodic system')
+    else:
+        print("Error: The ensemble must be NPT, NVT or non. The input value is {}.".format(ensemble))
+        exit(1)
+
+    integrator = LangevinIntegrator(temperature, friction, dt)
+    plat = Platform.getPlatformByName('CUDA')
+    prop = {'Precision': 'mixed', 'DeviceIndex': gpu_id}
+    sim = Simulation(top, system, integrator, plat, prop)
+    sim.context.setPositions(pdb.positions)
+    sim.context.setVelocitiesToTemperature(temperature)
+    print(f'Langevin, CUDA, {temperature}')
+    return system, sim
+
+
+def _sidechain_types() -> set:
+    """
+    Read the protein side-chain atom types from ``param_hyres_mix.inp``.
+
+    Returns, upper-cased, every type defined in the NONBONDED section between the
+    ``!! side chain atoms`` marker and ``NBFIX``: the 20 amino-acid side
+    chains plus the pSer/pThr types (P2S, P3S, P2T, P3T, PO3).
+    """
+    _, param_pro = load_ff('Protein')
+    types, inside = set(), False
+    with open(param_pro) as fh:
+        for line in fh:
+            s = line.strip()
+            if s.startswith('!! side chain atoms'):
+                inside = True
+                continue
+            if not inside:
+                continue
+            if s.upper().startswith('NBFIX'):
+                break
+            if s and not s.startswith('!'):
+                types.add(s.split()[0].upper())   # CharmmParameterSet upper-cases type names
+    if not types:
+        raise RuntimeError(f"no side-chain atom types found in {param_pro}")
+    return types
+
+
+def scale_sidechain_eps(ffparams, crowding_factor: float = 1.0) -> int:
+    """
+    Scale the LJ well depth of protein side-chain atom types in a loaded
+    ``CharmmParameterSet``, in place, before ``createSystem`` is called.
+
+    Each side-chain type (see :func:`_sidechain_types`) gets a factor
+    ``s = crowding_factor``; every other type gets ``s = 1``. Then
+
+    * the type epsilon is multiplied by ``s`` (``epsilon_14`` is unchanged);
+    * every NBFIX pair epsilon is multiplied by ``sqrt(s_i * s_j)`` (the 1-4
+      NBFIX epsilon is unchanged).
+
+    Because pair epsilons are geometric means, the resulting pair scaling is
+    ``f`` for side chain-side chain, ``sqrt(f)`` for side chain-anything else
+    (backbone, RNA/DNA, polymer, ...) and ``1`` for all other pairs.
+
+    Note:
+        Atom types are shared across molecules: aminoglycosides (e.g. P1S,
+        QdK, QdR) and metabolites (e.g. A1F, A1L, A2V) reuse protein
+        side-chain types and are scaled too. The scaling is fixed into the
+        System; it cannot be changed later with ``context.setParameter``.
+
+    Args:
+        ffparams (CharmmParameterSet): Loaded parameter set; modified in place.
+        crowding_factor (float): Scaling factor ``f`` (> 0). ``1.0`` is a no-op.
+
+    Returns:
+        int: Number of side-chain atom types that were scaled.
+    """
+    import math
+    f = float(crowding_factor)
+    if f <= 0:
+        raise ValueError(f"crowding_factor must be > 0, got {crowding_factor}")
+    sc = _sidechain_types()
+    scale = {name: (f if name.upper() in sc else 1.0) for name in ffparams.atom_types_str}
+    if f == 1.0:
+        return 0
+    for name, typ in ffparams.atom_types_str.items():
+        if typ.epsilon is not None:          # types with no NONBONDED entry stay None
+            typ.epsilon *= scale[name]
+        for other, (rij, eps, rij14, eps14) in list(typ.nbfix.items()):
+            typ.nbfix[other] = (rij, eps * math.sqrt(scale[name] * scale.get(other, 1.0)),
+                                rij14, eps14)
+    return len([name for name in ffparams.atom_types_str if name.upper() in sc])
+
+
+def setup_crowd(params, crowding_factor=1.0, modification=None):
+    """
+    Same as :func:`setup`, but scales the LJ well depth of protein side-chain
+    atom types by ``crowding_factor`` when the parameter files are loaded.
+
+    After the ``CharmmParameterSet`` is built, :func:`scale_sidechain_eps` is
+    applied before ``psf.createSystem``. Pair scaling is ``f`` for side
+    chain-side chain, ``sqrt(f)`` for side chain-other, ``1`` otherwise; 1-4
+    terms are not scaled. Aminoglycosides and metabolites that reuse
+    side-chain types are scaled too. Unlike :func:`crowding_effect`, the
+    factor is fixed into the System.
+
+    Pipeline: read ``params``; set up the periodic box (NPT/NVT); compute
+    ``er`` (:func:`cal_er` scaled by ``er_ref/77.6``) and ``dh``
+    (:func:`cal_dh`); load Protein, RNA, DNA, AGs, Metabolite and Polymer
+    files via :func:`load_ff` plus optional custom molecules; read PDB/PSF and
+    call ``psf.createSystem`` (cutoff 1.2 nm, switch 1.1 nm, ``HBonds``
+    constraints, ``CutoffPeriodic`` or ``CutoffNonPeriodic`` for ``'non'``);
+    build the force field with :func:`FFs.buildSystem`; add a
+    ``MonteCarloBarostat`` (every 25 steps) for NPT; create a
+    ``LangevinIntegrator``.
+
+    Args:
+        params (argparse.Namespace): Simulation parameters with attributes:
+
+                                     - ``pdb`` (str) — path to input PDB file
+                                       (coordinates).
+                                     - ``psf`` (str) — path to CHARMM PSF file.
+                                     - ``temp`` (float) — temperature in Kelvin.
+                                     - ``salt`` (float) — monovalent salt
+                                       concentration in mM (converted to M for
+                                       :func:`cal_dh`; must be > 0).
+                                     - ``lmd`` (float, optional) — scaling of
+                                       the phosphate(P)–Mg²⁺ Debye–Hückel
+                                       interaction (see :func:`nMg2lmd`);
+                                       defaults to 0 if absent.
+                                     - ``ens`` (str) — ensemble: ``'NPT'``,
+                                       ``'NVT'``, or ``'non'`` (non-periodic).
+                                     - ``box`` (list of float) — box lengths
+                                       in nm, one value (cubic) or three
+                                       (orthorhombic); required for NPT/NVT.
+                                     - ``dt`` (Quantity) — integration time step.
+                                     - ``er_ref`` (float) — reference dielectric;
+                                       ``er = cal_er(temp) * er_ref / 77.6``.
+                                     - ``pressure`` (Quantity) — barostat
+                                       pressure (used for NPT only).
+                                     - ``friction`` (Quantity) — Langevin friction
+                                       coefficient.
+                                     - ``gpu_id`` (str) — CUDA device index
+                                       (e.g. ``'0'``).
+                                     - ``custom`` (str or None) — required
+                                       attribute; comma-separated names of
+                                       custom molecules. For each name ``X``,
+                                       ``X.itp`` must exist in the working
+                                       directory; it is converted with
+                                       :func:`itp2charmm` and ``X.top`` /
+                                       ``X.par`` are added to the parameter
+                                       set. Falsy values skip this.
+
+        crowding_factor (float, optional): Side-chain epsilon scaling factor
+                                           ``f`` (> 0). Default ``1.0`` (no
+                                           scaling, identical to :func:`setup`).
+
+        modification (callable, optional): Function ``modification(system)``
+                                           passed to :func:`FFs.buildSystem`,
+                                           which calls it after its built-in
+                                           forces are added. Default ``None``.
+
+    Returns:
+        tuple: ``(system, sim)`` — the constructed OpenMM ``System`` and a
+        ``Simulation`` on the CUDA platform (mixed precision) with positions
+        set from the PDB and velocities drawn at ``temp``.
+
+    Raises:
+        SystemExit: Printed error and ``exit(1)`` if ``ens`` is not
+                    ``'NPT'``/``'NVT'``/``'non'``, if ``ens == 'non'`` with
+                    non-zero ``lmd``, or if ``box`` does not have 1 or 3
+                    values. Also exits if a custom ``.itp`` file is missing.
+
+    Example:
+        >>> from HyresBuilder.utils import setup_crowd
+        >>> system, sim = setup_crowd(params, crowding_factor=1.2)
+
+        >>> # With a custom force modification
+        >>> def my_mod(system):
+        ...     pass  # add or remove forces here
+        >>> system, sim = setup_crowd(params, 1.2, modification=my_mod)
+    """
+    
+    print('\n################## set up simulation parameters ###################')
+    # 1. input parameters
+    pdb_file = params.pdb
+    psf_file = params.psf
+    T = params.temp
+    c_ion = params.salt/1000.0                                   # concentration of ions in M
+    lmd = getattr(params, "lmd", 0)                              # lmd for Mg²⁺-RNA interaction, if don't give, it's 0.
+    ensemble = params.ens
+
+    dt = params.dt
+    er_ref = params.er_ref
+    pressure = params.pressure
+    friction = params.friction
+    gpu_id = params.gpu_id
+    
+    # 2. set pbc and box vector
+    if ensemble == 'non' and lmd != 0.0:
+        print("Error: Mg ion cannot be run in non-periodic system.")
+        exit(1)
+    if ensemble in ['NPT', 'NVT']:
+        # pbc box length
+        if len(params.box) == 1:
+            lx, ly, lz = params.box[0], params.box[0], params.box[0]
+        elif len(params.box) == 3:
+            lx = params.box[0]
+            ly = params.box[1]
+            lz = params.box[2]
+        else:
+            print("Error: You must provide either one or three values for box.")
+            exit(1)
+        a = Vec3(lx, 0.0, 0.0)
+        b = Vec3(0.0, ly, 0.0)
+        c = Vec3(0.0, 0.0, lz)
+    elif ensemble not in ['NPT', 'NVT', 'non']:
+        print("Error: The ensemble must be NPT, NVT or non. The input value is {}.".format(ensemble))
+        exit(1)
+    
+    # 3. force field parameters
+    cutoff = 1.2*unit.nanometer                                 # nonbonded cutoff
+    d_switch = 1.1*unit.nanometer                               # switch function starting distance
+    temperature = T*unit.kelvin 
+    er_t = cal_er(T)                                                   # relative electric constant
+    er = er_t*er_ref/77.6
+    dh = cal_dh(c_ion, T)                                            # Debye-Huckel screening length in nm
+    print(f"dielectric constant: er = {er:.2f}")
+    print(f"Debye screening length: dh = {dh.value_in_unit(unit.nanometers):.2f} nm")
+    print(f'Mg-RNA interaction: lmd = {lmd:.2f}')
+
+    DH_params = {
+        'lmd': lmd,                                                # Charge scaling factor of P-Mg interaction
+        'dh': dh,                                                  # Debye Huckel screening length
+        'er': er,                                                  # relative dielectric constant
+    }
+
+    # 4. load force field files
+    top_pro, param_pro = load_ff('Protein')
+    top_RNA, param_RNA = load_ff('RNA')
+    top_DNA, param_DNA = load_ff('DNA')
+    top_AGs, param_AGs = load_ff('AGs')
+    top_mets, param_mets = load_ff('Metabolite')
+    top_poly, param_poly = load_ff('Polymer')
+    top_list = [top_pro, top_RNA, top_DNA, top_AGs, top_mets, top_poly]
+    param_list = [param_pro, param_RNA, param_DNA, param_AGs, param_mets, param_poly]
+    if params.custom:
+        custom_list = [mol.strip() for mol in params.custom.split(',')]
+        custom_tops = []
+        custom_pars = []
+        for mol in custom_list:
+            itp_file =f'{mol}.itp'
+            if not os.path.isfile(itp_file):
+                print(f"Error: The custom itp file {itp_file} does not exist.")
+                exit(1)
+            itp2charmm(itp_file)
+            custom_tops.append(f"{mol}.top")
+            custom_pars.append(f"{mol}.par")
+
+        top_list = top_list + custom_tops
+        param_list = custom_pars + param_list
+    ffparams = CharmmParameterSet(*top_list, *param_list)
+    n_sc = scale_sidechain_eps(ffparams, crowding_factor)
+    print(f"crowding: side-chain epsilon x {crowding_factor} ({n_sc} atom types)")
     # ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets)
 
     print('\n################## load coordinates and topology ###################')
