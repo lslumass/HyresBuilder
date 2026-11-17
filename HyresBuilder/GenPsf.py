@@ -475,7 +475,7 @@ aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
        "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL",
        "SEP", "TPO", "PTR",           # phosphoserine, phosphothreonine, phosphotyrosine
        "A48", "A59"]                  # Alexa Fluor 488 / 594 on Cys
-rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U"]
+rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U", "R59", "R48"]
 dnas = ["DAD", "DCY", "DTH", "DGU", "DA", "DG", "DC", "DT"]
 ions = ["MG+", "SMG", "CA+"]
 polymer = ['PHO', 'PEG', 'QDM', 'BZM', 'LMA', 'BMA', 'HEM', 'PGC']

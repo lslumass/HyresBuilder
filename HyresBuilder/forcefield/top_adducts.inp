@@ -1,9 +1,11 @@
 * topology file for HyRes amino acid adducts and modified residues
-* (e.g. fluorescent dyes attached to Cys). Residues here are protein residues:
-* backbone N, H, CA, C, O as in top_hyres_mix.inp.
-* Load together with top_hyres_mix.inp (backbone and side-chain types) and
-* top_metabolome.inp (M03, M06, M07, MSO); utils.load_ff('Adduct').
-* New residue names must also be added to GenPsf.aas.
+* (e.g. fluorescent dyes attached to Cys or to an RNA end). Protein residues
+* keep backbone N, H, CA, C, O as in top_hyres_mix.inp; RNA end residues bond
+* to the P / C1 beads of top_RNA_mix.inp.
+* Load together with top_hyres_mix.inp (backbone and side-chain types),
+* top_RNA_mix.inp (RP, RS1, RS2) and top_metabolome.inp (M03, M05, M06, M07,
+* MSO); utils.load_ff('Adduct').
+* New residue names must also be added to GenPsf.aas (protein) or GenPsf.rnas (RNA).
 *
    20    1
 
@@ -20,6 +22,12 @@ DECL +H
 DECL +CA
 DECL +EO
 DECL -EO
+DECL +P
+DECL +C1
+DECL +C2
+DECL -P
+DECL -C1
+DECL -C2
 
 AUTOGENERATE DIHE
 DEFA FIRS NTER LAST CTER
@@ -158,5 +166,94 @@ DIHE CB   A01  A02  A03       A01  A02  A03  A04       A01  A03  A04  A05
 DIHE A03  A04  A05  A06       A04  A05  A06  A08       A05  A06  A08  A07
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
+
+!## 5'-Alexa Fluor 594 on RNA: dye-NH-(CH2)5-succinimide-S-(CH2)6-O-P(5') of the first nucleotide.
+!## The 5' phosphate (P, O-(CH2)6 oxygen included) is the P bead of the next (first RNA) residue.
+!## A01-A23 are the beads of RESI A59 (same types, charges and dye bonds); the Cys CB is replaced by
+!##   L2 A5M S-(CH2)3 | L1 A2V (CH2)3, bonded to +P
+RESI R59    -2.00000
+GROU
+ATOM L1   A2V     0.00
+ATOM L2   A5M     0.00
+GROU
+ATOM A01  M07     0.00
+ATOM A02  M07     0.00
+ATOM A03  C3E     0.00
+ATOM A04  A2V     0.00
+ATOM A05  M03     0.00
+GROU
+ATOM A06  XAR     0.00
+ATOM A07  XAR     0.00
+ATOM A08  XAR     0.00
+ATOM A09  QaD    -1.00
+GROU
+ATOM A10  XAN     0.00
+ATOM A11  XAR     0.00
+ATOM A12  A2Y     0.00
+ATOM A13  MSO    -1.00
+ATOM A14  A2V     0.00
+ATOM A15  M06     0.50
+ATOM A16  XAR     0.00
+ATOM A17  XAR     0.00
+ATOM A18  XAR     0.00
+ATOM A19  M06     0.50
+ATOM A20  A2V     0.00
+ATOM A21  A2Y     0.00
+ATOM A22  MSO    -1.00
+ATOM A23  XAR     0.00
+BOND L1   +P        L1   L2        L2   A01
+! dye: succinimide ring, linker, phenyl ring (as RESI A59)
+BOND A01  A02       A01  A03       A02  A03       A03  A04
+BOND A04  A05       A05  A06       A06  A07       A06  A08       A07  A08
+BOND A07  A09       A08  A10
+BOND A10  A11       A11  A16       A16  A17       A17  A18       A18  A23
+BOND A23  A10       A10  A17       A11  A17       A23  A17
+BOND A11  A12       A12  A14       A14  A15       A15  A16       A12  A16
+BOND A14  A16       A12  A13
+BOND A23  A21       A21  A20       A20  A19       A19  A18       A21  A18
+BOND A20  A18       A21  A22
+! RNA segments get no automatic angles/dihedrals: junction terms + the A59 linker terms (CB -> L2)
+ANGL L1   +P   +C1       L2   L1   +P        L1   L2   A01       L2   A01  A02
+ANGL A02  A03  A04       A03  A04  A05       A04  A05  A06       A05  A06  A08
+DIHE L1   +P   +C1  +C2       L2   L1   +P   +C1       L1   L2   A01  A02
+DIHE L2   A01  A02  A03       A01  A02  A03  A04       A01  A03  A04  A05
+DIHE A03  A04  A05  A06       A04  A05  A06  A08       A05  A06  A08  A07
+
+!## 3'-Alexa Fluor 488 on RNA: dye-C(=O)NH-CH2-CH2-O-CH2-CH(OH)-CH(-O3') on the last nucleotide.
+!## A05-A18 are the beads of RESI A48 (same types, charges and dye bonds); the linker is
+!##   L1 M05 CH(OH)-CH-O3' (O3' of the last nucleotide, as in the iConRNA P bead), bonded to -C1
+!##   L2 P1T CH2-O-CH2 | A05 M03 CH2-NH-C(=O)
+RESI R48    -2.00000
+GROU
+ATOM L1   M05     0.00
+ATOM L2   P1T     0.00
+ATOM A05  M03     0.00
+GROU
+ATOM A06  XAR     0.00
+ATOM A07  XAR     0.00
+ATOM A08  XAR     0.00
+ATOM A09  QaD    -1.00
+GROU
+ATOM A11  XAN     0.00
+ATOM A12  XAR     0.00
+ATOM A13  P1W     0.50
+ATOM A14  MSO    -1.00
+ATOM A15  XAR     0.00
+ATOM A16  P1W     0.50
+ATOM A17  MSO    -1.00
+ATOM A18  XAR     0.00
+BOND -C1  L1        L1   L2        L2   A05
+! dye: phenyl ring and xanthene (as RESI A48)
+BOND A05  A06       A06  A07       A06  A08       A07  A08
+BOND A07  A09       A08  A11
+BOND A11  A12       A12  A13       A13  A14       A14  A15       A11  A15
+BOND A12  A15       A13  A15
+BOND A11  A18       A18  A16       A16  A17       A17  A15       A18  A15
+BOND A16  A15
+! RNA segments get no automatic angles/dihedrals: junction terms + the A48 linker terms
+ANGL -P   -C1  L1        -C2  -C1  L1        -C1  L1   L2        L1   L2   A05
+ANGL L2   A05  A06       A05  A06  A08
+DIHE -P   -C1  L1   L2        -C1  L1   L2   A05       L1   L2   A05  A06
+DIHE L2   A05  A06  A08       A05  A06  A08  A07
 
 END
