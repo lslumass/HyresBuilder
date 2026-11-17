@@ -1,7 +1,8 @@
 * parameter file for HyRes amino acid adducts and modified residues
 * (e.g. fluorescent dyes attached to Cys); companion of top_adducts.inp.
 * Load together with param_hyres_mix.inp and param_metabolome.inp; utils.load_ff('Adduct').
-* Bonded terms for the dye residues A48/A59 are still to be added.
+* Dye linker bonded terms fitted from the AA A488-Cys trajectory (FRET/A488/amber);
+* bonds inside the rigid phenyl + xanthene are K = 0 placeholders (use createRigidBodies).
 *
 
 BOND
@@ -12,6 +13,26 @@ BOND
 !b0: A
 !
 !atom type    Kb      b0
+!## A48/A59 dye linker, Boltzmann inversion (moment matched, 300 K) of the AA A488-Cys
+!## trajectory (FRET/A488/amber, 26110 frames; bonddist.xvg, A04-A05/A05-A06 from cg.xtc)
+P1C   M07      9.81    2.777  ! CB-A01
+M07   M07    495.82    2.899  ! A01-A02 (succinimide)
+C3E   M07    258.97    2.300  ! A01-A03 and A02-A03 (shared); overrides param_metabolome C3E-M07
+A2V   C3E      8.78    2.959  ! A03-A04; overrides param_metabolome C3E-A2V
+A2V   M03      2.78    3.628  ! A04-A05; overrides param_metabolome M03-A2V
+M03   XAR    267.79    2.700  ! A05-A06
+!## bonds inside the rigid phenyl + xanthene body (createRigidBodies): placeholders, K = 0
+XAR   XAR      0.00    1.000  ! A48/A59 ring bonds
+XAN   XAR      0.00    1.000
+QAD   XAR      0.00    1.000  ! A07-A09 carboxylate
+P1W   XAR      0.00    1.000  ! A48
+MSO   XAR      0.00    1.000  ! A48
+MSO   P1W      0.00    1.000  ! A48
+A2V   A2Y      0.00    1.000  ! A59
+A2V   XAR      0.00    1.000  ! A59
+A2Y   MSO      0.00    1.000  ! A59
+A2Y   XAR      0.00    1.000  ! A59
+M06   XAR      0.00    1.000  ! A59
 
 THETAS
 !
@@ -21,6 +42,13 @@ THETAS
 !Theta0: degrees
 !
 !atom types     Ktheta    Theta0
+!## A48/A59 dye linker; ReB angles (V = K (t-t0)^2/sin^2 t), K and t0 chosen so the 300 K
+!## distribution reproduces the AA mean and standard deviation (angle_0-4.xvg)
+P1C   M07   M07     17.23     92.1  ! CB-A01-A02     (AA  91.9 +-  7.1)
+M07   C3E   A2V      4.07    128.7  ! A02-A03-A04    (AA 122.3 +- 12.3)
+C3E   A2V   M03      1.27    162.2  ! A03-A04-A05    (AA 138.0 +- 19.9)
+A2V   M03   XAR      3.19    129.1  ! A04-A05-A06    (AA 121.4 +- 13.6)
+M03   XAR   XAR      9.97    172.2  ! A05-A06-A08    (AA 170.9 +-  2.2)
 
 PHI
 !
@@ -31,6 +59,25 @@ PHI
 !delta: degrees
 !
 !atom types             Kchi    n   delta
+!## A48/A59 dye linker; Boltzmann inversion of dihed_0-5.xvg (300 K), 3-term Fourier fit
+P1C   M07   M07   C3E     1.501   1   -35.4  ! CB-A01-A02-A03
+P1C   M07   M07   C3E     1.337   2   112.8
+P1C   M07   M07   C3E     1.072   3   -89.3
+M07   M07   C3E   A2V     1.782   1     3.1  ! A01-A02-A03-A04
+M07   M07   C3E   A2V     1.012   2     0.5
+M07   M07   C3E   A2V     0.466   3  -175.2
+M07   C3E   A2V   M03     0.138   1   158.1  ! A01-A03-A04-A05
+M07   C3E   A2V   M03     0.055   2    33.3
+M07   C3E   A2V   M03     0.109   3  -168.7
+C3E   A2V   M03   XAR     0.136   1  -168.7  ! A03-A04-A05-A06
+C3E   A2V   M03   XAR     0.209   2   171.6
+C3E   A2V   M03   XAR     0.159   3     0.0
+A2V   M03   XAR   XAR     1.813   1     0.0  ! A04-A05-A06-A08
+A2V   M03   XAR   XAR     0.516   2    -1.7
+A2V   M03   XAR   XAR     0.134   3    -4.1
+M03   XAR   XAR   XAR    11.916   1   177.3  ! A05-A06-A08-A07
+M03   XAR   XAR   XAR     3.023   2   -10.0
+M03   XAR   XAR   XAR     0.231   3   132.8
 
 IMPHI
 !
