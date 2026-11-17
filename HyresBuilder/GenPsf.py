@@ -710,8 +710,8 @@ def encode_segid(n: int) -> str:
 def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix', custom_top_files=None):
     """Generate a PSF for a mixed CG system from a single PDB.
 
-    Loads the RNA, Protein, DNA, AGs, Metabolite and Polymer topologies (plus
-    any custom ones), splits the PDB with :func:`split_chains`, and adds
+    Loads the RNA, Protein, DNA, AGs, Metabolite, Polymer and Adduct
+    topologies (plus any custom ones), splits the PDB with :func:`split_chains`, and adds
     each block as a segment named ``<type><encode_segid(k)>`` with ``k``
     counted from 1 per type. Protein segments use ``auto_angles=False``;
     all other types use ``auto_angles=False, auto_dihedrals=False``. If
@@ -741,6 +741,7 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix', custom_top_files=None
     AGs_topology, _ = utils.load_ff('AGs')
     Mats_topology, _ = utils.load_ff('Metabolite')
     polymer_topology, _ = utils.load_ff('Polymer')
+    adduct_topology, _ = utils.load_ff('Adduct')
 
     gen = PsfGen()
     gen.read_topology(RNA_topology)
@@ -749,6 +750,7 @@ def genpsf(pdb_in, psf_out, terminal='neutral', RNA='mix', custom_top_files=None
     gen.read_topology(AGs_topology)
     gen.read_topology(Mats_topology)
     gen.read_topology(polymer_topology)
+    gen.read_topology(adduct_topology)
     
     # Load custom metabolite topologies if provided
     if custom_top_files:
@@ -866,6 +868,7 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
     AGs_topology, _ = utils.load_ff('AGs')
     Mats_topology, _ = utils.load_ff('Metabolite')
     polymer_topology, _ = utils.load_ff('Polymer')
+    adduct_topology, _ = utils.load_ff('Adduct')
 
     atom_blocks, bond_blocks, angle_blocks = [], [], []
     dihedral_blocks, improper_blocks = [], []
@@ -902,6 +905,7 @@ def custom_genpsf_fast(pdb_list, num_list, psf_out, terminal='neutral', RNA='mix
             gen.read_topology(AGs_topology)
             gen.read_topology(Mats_topology)
             gen.read_topology(polymer_topology)
+            gen.read_topology(adduct_topology)
             
             # Load custom metabolite topologies if provided
             if custom_top_files:

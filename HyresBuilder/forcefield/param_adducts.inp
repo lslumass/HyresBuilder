@@ -1,0 +1,63 @@
+* parameter file for HyRes amino acid adducts and modified residues
+* (e.g. fluorescent dyes attached to Cys); companion of top_adducts.inp.
+* Load together with param_hyres_mix.inp and param_metabolome.inp; utils.load_ff('Adduct').
+* Bonded terms for the dye residues A48/A59 are still to be added.
+*
+
+BOND
+!
+!V(bond) = Kb(b - b0)**2
+!
+!Kb: kcal/mole/A**2
+!b0: A
+!
+!atom type    Kb      b0
+
+THETAS
+!
+!V(angle) = Ktheta(Theta - Theta0)**2
+!
+!Ktheta: kcal/mole/rad**2
+!Theta0: degrees
+!
+!atom types     Ktheta    Theta0
+
+PHI
+!
+!V(dihedral) = Kchi(1 + cos(n(chi) - delta))
+!
+!Kchi: kcal/mole
+!n: multiplicity
+!delta: degrees
+!
+!atom types             Kchi    n   delta
+
+IMPHI
+!
+!V(improper) = Kpsi(psi - psi0)**2
+!
+!Kpsi: kcal/mole/rad**2
+!psi0: degrees
+!
+!atom types           Kpsi                   psi0
+
+NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
+     CUTNB 12.0  CTOFNB 12.0  CTONNB 11.0
+
+!
+!V(Lennard-Jones) = Eps,i,j[(Rmin,i,j/ri,j)**12 - 2(Rmin,i,j/ri,j)**6]
+!
+!epsilon: kcal/mole, Eps,i,j = sqrt(eps,i * eps,j)
+!Rmin/2: A, Rmin,i,j = Rmin/2,i + Rmin/2,j
+!
+!atom  ignored    epsilon      Rmin/2   ignored   eps,1-4       Rmin/2,1-4
+!
+!## dye beads
+XAN      0.00     -0.0880      2.3444   0.00     -0.0810       2.3444 ! dye xanthene C9; generic LJ as A4H, stacking via NBFIX XAN pairs
+XAR      0.00     -0.0880      2.3444   0.00     -0.0810       2.3444 ! dye aromatic ring bead, LJ as A4H
+
+NBFIX
+!                 Emin         Rmin
+!                 (kcal/mol)   (A)
+
+END

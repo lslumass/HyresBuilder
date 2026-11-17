@@ -1118,9 +1118,6 @@ P2T      0.00     -0.1000      2.4350   0.00     -0.1000       2.4350 ! pThr CB 
 P3T      0.00     -0.0700      2.2500   0.00     -0.0700       2.2500 ! legacy pThr phosphate (same as PO3)
 !## phosphate group of pSer and pThr
 PO3      0.00     -0.0700      2.2500   0.00     -0.0700       2.2500 ! phosphate (-O-PO3 2-) of pSer and pThr
-!## dye xanthene centre (A48 A11, A59 A10): generic LJ as A4H; set stacking with NBFIX XAN pairs
-XAN      0.00     -0.0880      2.3444   0.00     -0.0810       2.3444 ! dye xanthene C9
-XAR      0.00     -0.0880      2.3444   0.00     -0.0810       2.3444 ! dye aromatic ring bead, LJ as A4H
 
 NBFIX
 ! NBFIX for self-interactons to make sure customBNforce is used, instead of the default NBForce, which was deleted

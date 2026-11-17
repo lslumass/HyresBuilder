@@ -27,6 +27,9 @@ AGs        aminoglycosides, e.g. KAN (``top_AGs`` / ``param_AGs``)
 Metabolite metabolites (``top_metabolome`` / ``param_metabolome``)
 Polymer    CG polymers: QDM (quaternized DMAEMA), BZM (2-phenylethyl
            methacrylate), PEG/PEO (``top_polymer`` / ``param_polymer``)
+Adduct     amino acid adducts / modified residues, e.g. dye-labelled Cys
+           A48 (Alexa 488) and A59 (Alexa 594) (``top_adducts`` /
+           ``param_adducts``); needs Protein and Metabolite loaded too
 ========== ===============================================================
 
 Custom molecules can be converted from an ``.itp``-style definition into
@@ -51,7 +54,8 @@ for NPT, and create a CUDA (mixed precision) ``Simulation`` with positions
 and velocities set. They differ in the builder used and the files loaded:
 
 * :func:`setup` — general entry point; :func:`FFs.buildSystem`; loads
-  Protein, RNA, DNA, AGs, Metabolite, Polymer (+ optional custom ``.itp``).
+  Protein, RNA, DNA, AGs, Metabolite, Polymer, Adduct (+ optional custom
+  ``.itp``).
 * :func:`setup_crowd` — same as :func:`setup`, plus side-chain epsilon
   scaled by ``crowding_factor`` at parameter load
   (:func:`scale_sidechain_eps`).
@@ -60,12 +64,12 @@ and velocities set. They differ in the builder used and the files loaded:
 * :func:`rG4s_setup` — RNA G-quadruplexes; :func:`FFs.rG4sSystem`; loads
   Protein, RNA, AGs, Polymer and passes the G–G strength ``GG``.
 * :func:`iConRNA_setup` — original iConRNA model; :func:`FFs.iConRNASystem`;
-  loads ``top_RNA``/``param_RNA`` plus Protein, DNA, AGs, Metabolite, Polymer
-  (+ optional custom ``.itp``).
+  loads ``top_RNA``/``param_RNA`` plus Protein, DNA, AGs, Metabolite, Polymer,
+  Adduct (+ optional custom ``.itp``).
 * :func:`setupMg` — explicit Mg²⁺/Ca²⁺ systems; :func:`FFs.buildMgSystem`;
-  loads Protein, RNA, AGs, Metabolite, Polymer.
+  loads Protein, RNA, AGs, Metabolite, Polymer, Adduct.
 * :func:`iConDNA_setup` — iConDNA systems; :func:`FFs.iConDNASystem`;
-  loads Protein, DNA, AGs, Metabolite, Polymer.
+  loads Protein, DNA, AGs, Metabolite, Polymer, Adduct.
 
 Each returns a ``(system, sim)`` tuple. :func:`crowding_effect` can be
 applied to a built ``System`` (before creating a ``Simulation``) to scale
@@ -329,6 +333,10 @@ def load_ff(model: str) -> tuple[str, str]:
                      - ``'Polymer'`` — CG polymers: QDM (quaternized
                        DMAEMA), BZM (2-phenylethyl methacrylate), PEG/PEO
                        (``top_polymer`` / ``param_polymer``)
+                     - ``'Adduct'`` — amino acid adducts and modified
+                       residues, e.g. dye-labelled Cys A48/A59
+                       (``top_adducts`` / ``param_adducts``); uses types
+                       from Protein and Metabolite
 
     Returns:
         tuple[str, str]: ``(top_inp, param_inp)``, the POSIX paths of the
@@ -371,8 +379,11 @@ def load_ff(model: str) -> tuple[str, str]:
     elif model == 'Polymer':
         path1 = ff / "top_polymer.inp"
         path2 = ff / "param_polymer.inp"
+    elif model == 'Adduct':
+        path1 = ff / "top_adducts.inp"
+        path2 = ff / "param_adducts.inp"
     else:
-        print("Error: The model type {} is not supported, only for Protein, RNA, DNA, rG4s, ATP, AGs, Metabolite, and Polymer.".format(model))
+        print("Error: The model type {} is not supported, only for Protein, RNA, DNA, rG4s, ATP, AGs, Metabolite, Polymer, and Adduct.".format(model))
         exit(1)
 
     top_inp, param_inp = path1.as_posix(), path2.as_posix()
@@ -688,8 +699,9 @@ def setup(params, modification=None):
     top_AGs, param_AGs = load_ff('AGs')
     top_mets, param_mets = load_ff('Metabolite')
     top_poly, param_poly = load_ff('Polymer')
-    top_list = [top_pro, top_RNA, top_DNA, top_AGs, top_mets, top_poly]
-    param_list = [param_pro, param_RNA, param_DNA, param_AGs, param_mets, param_poly]
+    top_add, param_add = load_ff('Adduct')
+    top_list = [top_pro, top_RNA, top_DNA, top_AGs, top_mets, top_poly, top_add]
+    param_list = [param_pro, param_RNA, param_DNA, param_AGs, param_mets, param_poly, param_add]
     if params.custom:
         custom_list = [mol.strip() for mol in params.custom.split(',')]
         custom_tops = []
@@ -760,29 +772,37 @@ def setup(params, modification=None):
 
 def _sidechain_types() -> set:
     """
-    Read the protein side-chain atom types from ``param_hyres_mix.inp``.
+    Read the protein side-chain atom types from the parameter files.
 
-    Returns, upper-cased, every type defined in the NONBONDED section between the
-    ``!! side chain atoms`` marker and ``NBFIX``: the 20 amino-acid side
-    chains plus the pSer/pThr types (P2S, P3S, P2T, P3T, PO3).
+    Returns, upper-cased, every type defined in the NONBONDED section of
+    ``param_hyres_mix.inp`` between the ``!! side chain atoms`` marker and
+    ``NBFIX`` (the 20 amino-acid side chains plus the pSer/pThr types P2S,
+    P3S, P2T, P3T, PO3), plus every type defined in the NONBONDED section of
+    ``param_adducts.inp`` (modified residues / adducts such as the dye beads
+    XAN and XAR).
     """
+    def _read(path, marker):
+        types, inside = set(), False
+        with open(path) as fh:
+            for line in fh:
+                s = line.strip()
+                if not inside:
+                    if (marker is not None and s.startswith(marker)) or \
+                       (marker is None and s.upper().startswith('NONBONDED')):
+                        inside = True
+                    continue
+                if s.upper().startswith('NBFIX'):
+                    break
+                if s and not s.startswith('!') and not s.upper().startswith('CUTNB'):
+                    types.add(s.split()[0].upper())   # CharmmParameterSet upper-cases type names
+        return types
+
     _, param_pro = load_ff('Protein')
-    types, inside = set(), False
-    with open(param_pro) as fh:
-        for line in fh:
-            s = line.strip()
-            if s.startswith('!! side chain atoms'):
-                inside = True
-                continue
-            if not inside:
-                continue
-            if s.upper().startswith('NBFIX'):
-                break
-            if s and not s.startswith('!'):
-                types.add(s.split()[0].upper())   # CharmmParameterSet upper-cases type names
+    _, param_add = load_ff('Adduct')
+    types = _read(param_pro, '!! side chain atoms')
     if not types:
         raise RuntimeError(f"no side-chain atom types found in {param_pro}")
-    return types
+    return types | _read(param_add, None)
 
 
 def scale_sidechain_eps(ffparams, crowding_factor: float = 1.0) -> int:
@@ -981,8 +1001,9 @@ def setup_crowd(params, crowding_factor=1.0, modification=None):
     top_AGs, param_AGs = load_ff('AGs')
     top_mets, param_mets = load_ff('Metabolite')
     top_poly, param_poly = load_ff('Polymer')
-    top_list = [top_pro, top_RNA, top_DNA, top_AGs, top_mets, top_poly]
-    param_list = [param_pro, param_RNA, param_DNA, param_AGs, param_mets, param_poly]
+    top_add, param_add = load_ff('Adduct')
+    top_list = [top_pro, top_RNA, top_DNA, top_AGs, top_mets, top_poly, top_add]
+    param_list = [param_pro, param_RNA, param_DNA, param_AGs, param_mets, param_poly, param_add]
     if params.custom:
         custom_list = [mol.strip() for mol in params.custom.split(',')]
         custom_tops = []
@@ -1504,8 +1525,9 @@ def iConRNA_setup(params, modification=None):
     top_DNA, param_DNA = load_ff('DNA')
     top_mets, param_mets = load_ff('Metabolite')
     top_poly, param_poly = load_ff('Polymer')
-    top_list = [top_pro, top_RNA, top_DNA, top_AGs, top_mets, top_poly]
-    param_list = [param_pro, param_RNA, param_DNA, param_AGs, param_mets, param_poly]
+    top_add, param_add = load_ff('Adduct')
+    top_list = [top_pro, top_RNA, top_DNA, top_AGs, top_mets, top_poly, top_add]
+    param_list = [param_pro, param_RNA, param_DNA, param_AGs, param_mets, param_poly, param_add]
     if params.custom:
         custom_list = [mol.strip() for mol in params.custom.split(',')]
         custom_tops = []
@@ -1702,7 +1724,8 @@ def setupMg(params, modification=None):
     top_AGs, param_AGs = load_ff('AGs')
     top_mets, param_mets = load_ff('Metabolite')
     top_poly, param_poly = load_ff('Polymer')
-    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets, top_poly, param_poly)
+    top_add, param_add = load_ff('Adduct')
+    ffparams = CharmmParameterSet(top_RNA, param_RNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets, top_poly, param_poly, top_add, param_add)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
@@ -1877,7 +1900,8 @@ def iConDNA_setup(params, modification=None):
     top_AGs, param_AGs = load_ff('AGs')
     top_mets, param_mets = load_ff('Metabolite')
     top_poly, param_poly = load_ff('Polymer')
-    ffparams = CharmmParameterSet(top_DNA, param_DNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets, top_poly, param_poly)
+    top_add, param_add = load_ff('Adduct')
+    ffparams = CharmmParameterSet(top_DNA, param_DNA, top_pro, param_pro, top_AGs, param_AGs, top_mets, param_mets, top_poly, param_poly, top_add, param_add)
 
     print('\n################## load coordinates and topology ###################')
     # 5. import coordinates and topology form charmm pdb and psf
