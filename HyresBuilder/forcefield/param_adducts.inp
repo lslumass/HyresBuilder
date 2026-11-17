@@ -22,17 +22,13 @@ A2V   C3E      8.78    2.959  ! A03-A04; overrides param_metabolome C3E-A2V
 A2V   M03      2.78    3.628  ! A04-A05; overrides param_metabolome M03-A2V
 M03   XAR    267.79    2.700  ! A05-A06
 !## bonds inside the rigid phenyl + xanthene body (createRigidBodies): placeholders, K = 0
-XAR   XAR      0.00    1.000  ! A48/A59 ring bonds
+XAR   XAR      0.00    1.000  ! A48/A59/R48/R59 ring bonds
 XAN   XAR      0.00    1.000
 QAD   XAR      0.00    1.000  ! A07-A09 carboxylate
-P1W   XAR      0.00    1.000  ! A48
-MSO   XAR      0.00    1.000  ! A48
-MSO   P1W      0.00    1.000  ! A48
-A2V   A2Y      0.00    1.000  ! A59
-A2V   XAR      0.00    1.000  ! A59
-A2Y   MSO      0.00    1.000  ! A59
-A2Y   XAR      0.00    1.000  ! A59
-M06   XAR      0.00    1.000  ! A59
+QDK   XAR      0.00    1.000  ! amine (A48/R48) and N(+) (A59/R59) beads
+MSO   QDK      0.00    1.000  ! A48/R48
+MSO   XAR      0.00    1.000  ! A59/R59
+A2V   XAR      0.00    1.000  ! A59/R59
 !## R59/R48 (dyes on RNA ends) junction terms, Boltzmann inversion (300 K) of the CG-mapped
 !## rA19 HCG ensemble (FRET/rA19, 10000 models); same fitting as the A48/A59 linker
 A2V   RP      12.22    3.577  ! R59 A01-+P

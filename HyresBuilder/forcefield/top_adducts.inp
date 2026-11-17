@@ -3,7 +3,7 @@
 * keep backbone N, H, CA, C, O as in top_hyres_mix.inp; RNA end residues bond
 * to the P / C1 beads of top_RNA_mix.inp.
 * Load together with top_hyres_mix.inp (backbone and side-chain types),
-* top_RNA_mix.inp (RP, RS1, RS2) and top_metabolome.inp (M03, M05, M06, M07,
+* top_RNA_mix.inp (RP, RS1, RS2) and top_metabolome.inp (M03, M05, M07,
 * MSO); utils.load_ff('Adduct').
 * New residue names must also be added to GenPsf.aas (protein) or GenPsf.rnas (RNA).
 *
@@ -36,7 +36,7 @@ DEFA FIRS NTER LAST CTER
 !## dye beads A01-A18 follow the numbering of the A488 mapping figure (there is no A10); HyRes bead types:
 !##   A01,A02 M07 imide C(=O) | A03 C3E N-CH2 | A04 A2V (CH2)3 | A05 M03 CH2-NH-C(=O)
 !##   A06,A07,A08 XAR phenyl | A09 QaD COO(-) | A11 XAN xanthene C9 (stacking) | A12,A18 XAR CH=CH
-!##   A13,A16 P1W C-NH2 (+0.5 each) | A14,A17 MSO C-SO3(-) | A15 XAR C-O-C
+!##   A13,A16 QdK C-NH2 (+0.5 each) | A14,A17 MSO C-SO3(-) | A15 XAR C-O-C
 !##   M07, M03 and MSO are metabolome types (top_metabolome.inp)
 RESI A48    -2.00000
 GROU
@@ -59,10 +59,10 @@ ATOM A09  QaD    -1.00
 GROU
 ATOM A11  XAN     0.00
 ATOM A12  XAR     0.00
-ATOM A13  P1W     0.50
+ATOM A13  QdK     0.50
 ATOM A14  MSO    -1.00
 ATOM A15  XAR     0.00
-ATOM A16  P1W     0.50
+ATOM A16  QdK     0.50
 ATOM A17  MSO    -1.00
 ATOM A18  XAR     0.00
 GROU
@@ -74,11 +74,9 @@ BOND CA   CB
 BOND CB   A01       A01  A02       A01  A03       A02  A03       A03  A04
 BOND A04  A05       A05  A06       A06  A07       A06  A08       A07  A08
 BOND A07  A09       A08  A11
-! dye: xanthene, left ring A11-A12-A13-A14-A15, right ring A11-A18-A16-A17-A15, triangulated through A15
-BOND A11  A12       A12  A13       A13  A14       A14  A15       A11  A15
-BOND A12  A15       A13  A15
-BOND A11  A18       A18  A16       A16  A17       A17  A15       A18  A15
-BOND A16  A15
+! dye: xanthene (bonds only define exclusions; the phenyl + xanthene part is a rigid body)
+BOND A11  A12       A12  A13       A13  A14       A11  A15       A13  A15
+BOND A11  A18       A18  A16       A16  A17       A16  A15
 ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
@@ -94,14 +92,49 @@ DIHE A03  A04  A05  A06       A04  A05  A06  A08       A05  A06  A08  A07
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
 
+!## 3'-Alexa Fluor 488 on RNA: dye-C(=O)NH-CH2-CH2-O-CH2-CH(OH)-CH(-O3') on the last nucleotide.
+!## Beads A01-A15 follow the numbering of the R48 mapping figure:
+!##   A01 M05 CH(OH)-CH-O3' (O3' of the last nucleotide, as in the iConRNA P bead), bonded to -C1
+!##   A02 P1T CH2-O-CH2 | A03 M03 CH2-NH-C(=O) | A03-A15 = A05-A09, A11-A18 of RESI A48
+RESI R48    -2.00000
+GROU
+ATOM A01  M05     0.00
+ATOM A02  P1T     0.00
+ATOM A03  M03     0.00
+GROU
+ATOM A04  XAR     0.00
+ATOM A05  XAR     0.00
+ATOM A06  XAR     0.00
+ATOM A07  QaD    -1.00
+GROU
+ATOM A08  XAN     0.00
+ATOM A09  XAR     0.00
+ATOM A10  QdK     0.50
+ATOM A11  MSO    -1.00
+ATOM A12  XAR     0.00
+ATOM A13  QdK     0.50
+ATOM A14  MSO    -1.00
+ATOM A15  XAR     0.00
+BOND -C1  A01        A01  A02        A02  A03
+! dye: phenyl ring and xanthene (as RESI A48)
+BOND A03  A04       A04  A05       A04  A06       A05  A06
+BOND A05  A07       A06  A08
+BOND A08  A09       A08  A12       A08  A15       A09  A10       A10  A11
+BOND A10  A12       A12  A13       A13  A14       A13  A15
+! RNA segments get no automatic angles/dihedrals: junction terms + the A48 linker terms
+ANGL -P   -C1  A01        -C2  -C1  A01        -C1  A01  A02        A01  A02  A03
+ANGL A02  A03  A04       A03  A04  A06
+DIHE -P   -C1  A01  A02        -C1  A01  A02  A03       A01  A02  A03  A04
+DIHE A02  A03  A04  A06       A03  A04  A06  A05
+
 
 !## Alexa Fluor 594 C5-maleimide attached to Cys (Cys part identical to RESI CYS)
 !## dye beads A01-A23 follow the numbering of the A594 mapping figure; HyRes bead types:
 !##   A01,A02 M07 imide C(=O) | A03 C3E N-CH2 | A04 A2V (CH2)3 | A05 M03 CH2-NH-C(=O)
 !##   A06,A07,A08 XAR phenyl | A09 QaD COO(-) | A10 XAN xanthene C9 (stacking) | A11,A23 XAR ring C2H
-!##   A16,A18 XAR ring C2 next to N | A17 XAR C-O-C | A15,A19 M06 N(+)-CH3 (+0.5 each)
-!##   A14,A20 A2V C(CH3)2 | A12,A21 A2Y C=CH | A13,A22 MSO CH2-SO3(-)
-!##   M07, M03, M06 and MSO are metabolome types (top_metabolome.inp)
+!##   A16,A18 XAR ring C2 next to N | A17 XAR C-O-C | A15,A19 QdK N(+)-CH3 (+0.5 each)
+!##   A14,A20 A2V C(CH3)2 | A12,A21 XAR C=CH | A13,A22 MSO CH2-SO3(-)
+!##   M07, M03 and MSO are metabolome types (top_metabolome.inp)
 RESI A59    -2.00000
 GROU
 ATOM N    NH1     0.00
@@ -123,16 +156,16 @@ ATOM A09  QaD    -1.00
 GROU
 ATOM A10  XAN     0.00
 ATOM A11  XAR     0.00
-ATOM A12  A2Y     0.00
+ATOM A12  XAR     0.00
 ATOM A13  MSO    -1.00
 ATOM A14  A2V     0.00
-ATOM A15  M06     0.50
+ATOM A15  QdK     0.50
 ATOM A16  XAR     0.00
 ATOM A17  XAR     0.00
 ATOM A18  XAR     0.00
-ATOM A19  M06     0.50
+ATOM A19  QdK     0.50
 ATOM A20  A2V     0.00
-ATOM A21  A2Y     0.00
+ATOM A21  XAR     0.00
 ATOM A22  MSO    -1.00
 ATOM A23  XAR     0.00
 GROU
@@ -144,14 +177,11 @@ BOND CA   CB
 BOND CB   A01       A01  A02       A01  A03       A02  A03       A03  A04
 BOND A04  A05       A05  A06       A06  A07       A06  A08       A07  A08
 BOND A07  A09       A08  A10
-! dye: xanthene, inner ring A10-A11-A16-A17-A18-A23, triangulated through A17
-BOND A10  A11       A11  A16       A16  A17       A17  A18       A18  A23
-BOND A23  A10       A10  A17       A11  A17       A23  A17
-! dye: left outer ring A11-A12-A14-A15-A16, right outer ring A23-A21-A20-A19-A18
-BOND A11  A12       A12  A14       A14  A15       A15  A16       A12  A16
-BOND A14  A16       A12  A13
-BOND A23  A21       A21  A20       A20  A19       A19  A18       A21  A18
-BOND A20  A18       A21  A22
+! dye: xanthene
+BOND A10  A11       A10  A17       A10  A23       A11  A12       A11  A16
+BOND A12  A13       A12  A14       A14  A15       A15  A16       A16  A17
+BOND A17  A18       A18  A19       A19  A20       A20  A21       A21  A22
+BOND A21  A23       A18  A23
 ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
@@ -189,16 +219,16 @@ ATOM A11  QaD    -1.00
 GROU
 ATOM A12  XAN     0.00
 ATOM A13  XAR     0.00
-ATOM A14  A2Y     0.00
+ATOM A14  XAR     0.00
 ATOM A15  MSO    -1.00
 ATOM A16  A2V     0.00
-ATOM A17  M06     0.50
+ATOM A17  QdK     0.50
 ATOM A18  XAR     0.00
 ATOM A19  XAR     0.00
 ATOM A20  XAR     0.00
-ATOM A21  M06     0.50
+ATOM A21  QdK     0.50
 ATOM A22  A2V     0.00
-ATOM A23  A2Y     0.00
+ATOM A23  XAR     0.00
 ATOM A24  MSO    -1.00
 ATOM A25  XAR     0.00
 BOND A01  +P        A01  A02        A02  A03
@@ -206,12 +236,10 @@ BOND A01  +P        A01  A02        A02  A03
 BOND A03  A04       A03  A05       A04  A05       A05  A06
 BOND A06  A07       A07  A08       A08  A09       A08  A10       A09  A10
 BOND A09  A11       A10  A12
-BOND A12  A13       A13  A18       A18  A19       A19  A20       A20  A25
-BOND A25  A12       A12  A19       A13  A19       A25  A19
-BOND A13  A14       A14  A16       A16  A17       A17  A18       A14  A18
-BOND A16  A18       A14  A15
-BOND A25  A23       A23  A22       A22  A21       A21  A20       A23  A20
-BOND A22  A20       A23  A24
+BOND A12  A13       A12  A19       A12  A25       A13  A14
+BOND A13  A18       A14  A15       A14  A16       A16  A17       A17  A18
+BOND A18  A19       A19  A20       A20  A21       A20  A25       A21  A22
+BOND A22  A23       A23  A24       A23  A25
 ! RNA segments get no automatic angles/dihedrals: junction terms + the A59 linker terms (CB -> A02)
 ANGL A01  +P   +C1       A02  A01  +P        A01  A02  A03       A02  A03  A04
 ANGL A04  A05  A06       A05  A06  A07       A06  A07  A08       A07  A08  A10
@@ -219,41 +247,6 @@ DIHE A01  +P   +C1  +C2       A02  A01  +P   +C1       A01  A02  A03  A04
 DIHE A02  A03  A04  A05       A03  A04  A05  A06       A03  A05  A06  A07
 DIHE A05  A06  A07  A08       A06  A07  A08  A10       A07  A08  A10  A09
 
-!## 3'-Alexa Fluor 488 on RNA: dye-C(=O)NH-CH2-CH2-O-CH2-CH(OH)-CH(-O3') on the last nucleotide.
-!## Beads A01-A15 follow the numbering of the R48 mapping figure:
-!##   A01 M05 CH(OH)-CH-O3' (O3' of the last nucleotide, as in the iConRNA P bead), bonded to -C1
-!##   A02 P1T CH2-O-CH2 | A03 M03 CH2-NH-C(=O) | A03-A15 = A05-A09, A11-A18 of RESI A48
-RESI R48    -2.00000
-GROU
-ATOM A01  M05     0.00
-ATOM A02  P1T     0.00
-ATOM A03  M03     0.00
-GROU
-ATOM A04  XAR     0.00
-ATOM A05  XAR     0.00
-ATOM A06  XAR     0.00
-ATOM A07  QaD    -1.00
-GROU
-ATOM A08  XAN     0.00
-ATOM A09  XAR     0.00
-ATOM A10  P1W     0.50
-ATOM A11  MSO    -1.00
-ATOM A12  XAR     0.00
-ATOM A13  P1W     0.50
-ATOM A14  MSO    -1.00
-ATOM A15  XAR     0.00
-BOND -C1  A01        A01  A02        A02  A03
-! dye: phenyl ring and xanthene (as RESI A48)
-BOND A03  A04       A04  A05       A04  A06       A05  A06
-BOND A05  A07       A06  A08
-BOND A08  A09       A09  A10       A10  A11       A11  A12       A08  A12
-BOND A09  A12       A10  A12
-BOND A08  A15       A15  A13       A13  A14       A14  A12       A15  A12
-BOND A13  A12
-! RNA segments get no automatic angles/dihedrals: junction terms + the A48 linker terms
-ANGL -P   -C1  A01        -C2  -C1  A01        -C1  A01  A02        A01  A02  A03
-ANGL A02  A03  A04       A03  A04  A06
-DIHE -P   -C1  A01  A02        -C1  A01  A02  A03       A01  A02  A03  A04
-DIHE A02  A03  A04  A06       A03  A04  A06  A05
+
 
 END
