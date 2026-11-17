@@ -74,13 +74,13 @@ BOND CA   CB
 BOND CB   A01       A01  A02       A01  A03       A02  A03       A03  A04
 BOND A04  A05       A05  A06       A06  A07       A06  A08       A07  A08
 BOND A07  A09       A08  A11
-! dye: xanthene (bonds only define exclusions; the phenyl + xanthene part is a rigid body)
+! dye: xanthene (bonds only define exclusions; the amide + phenyl + xanthene part is a rigid body)
 BOND A11  A12       A12  A13       A13  A14       A11  A15       A13  A15
 BOND A11  A18       A18  A16       A16  A17       A16  A15
 ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
-! dye: linker angles (fitted); none inside the rigid phenyl + xanthene
+! dye: linker angles (fitted); the amide-phenyl ones fall inside the rigid amide + phenyl + xanthene
 ANGL CB   A01  A02       A02  A03  A04       A03  A04  A05       A04  A05  A06
 ANGL A05  A06  A08
 ! dihedrals inside this residue come only from these DIHE lines (no auto generation):
@@ -185,7 +185,7 @@ BOND A21  A23       A18  A23
 ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
-! dye: linker angles (fitted); none inside the rigid phenyl + xanthene
+! dye: linker angles (fitted); the amide-phenyl ones fall inside the rigid amide + phenyl + xanthene
 ANGL CB   A01  A02       A02  A03  A04       A03  A04  A05       A04  A05  A06
 ANGL A05  A06  A08
 ! dihedrals inside this residue come only from these DIHE lines (no auto generation):

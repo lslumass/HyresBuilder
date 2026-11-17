@@ -2,7 +2,8 @@
 * (e.g. fluorescent dyes attached to Cys); companion of top_adducts.inp.
 * Load together with param_hyres_mix.inp and param_metabolome.inp; utils.load_ff('Adduct').
 * Dye linker bonded terms fitted from the AA A488-Cys trajectory (FRET/A488/amber);
-* bonds inside the rigid phenyl + xanthene are K = 0 placeholders (use createRigidBodies).
+* bonds inside the rigid amide + phenyl + xanthene are K = 0 placeholders (use rigid bodies starting at the
+* amide bead: A48/A59 A05, R48 A03, R59 A07); amide-phenyl terms (M03-XAR, M03-XAR-XAR) then act inside the body.
 *
 
 BOND
@@ -20,8 +21,8 @@ M07   M07    495.82    2.899  ! A01-A02 (succinimide)
 C3E   M07    258.97    2.300  ! A01-A03 and A02-A03 (shared); overrides param_metabolome C3E-M07
 A2V   C3E      8.78    2.959  ! A03-A04; overrides param_metabolome C3E-A2V
 A2V   M03      2.78    3.628  ! A04-A05; overrides param_metabolome M03-A2V
-M03   XAR    267.79    2.700  ! A05-A06
-!## bonds inside the rigid phenyl + xanthene body (createRigidBodies): placeholders, K = 0
+M03   XAR    267.79    2.700  ! A05-A06; inside the rigid body (amide + phenyl + xanthene)
+!## bonds inside the rigid amide + phenyl + xanthene body: placeholders, K = 0
 XAR   XAR      0.00    1.000  ! A48/A59/R48/R59 ring bonds
 XAN   XAR      0.00    1.000
 QAD   XAR      0.00    1.000  ! A07-A09 carboxylate
@@ -54,7 +55,7 @@ P1C   M07   M07     17.23     92.1  ! CB-A01-A02     (AA  91.9 +-  7.1)
 M07   C3E   A2V      4.07    128.7  ! A02-A03-A04    (AA 122.3 +- 12.3)
 C3E   A2V   M03      1.27    162.2  ! A03-A04-A05    (AA 138.0 +- 19.9)
 A2V   M03   XAR      3.19    129.1  ! A04-A05-A06    (AA 121.4 +- 13.6)
-M03   XAR   XAR      9.97    172.2  ! A05-A06-A08    (AA 170.9 +-  2.2)
+M03   XAR   XAR      9.97    172.2  ! A05-A06-A08    (AA 170.9 +-  2.2); inside the rigid body: near-linear, unstable at 8 fs if flexible
 !## R59/R48 (dyes on RNA ends) junction terms; ReB angles moment matched (300 K) to the CG-mapped
 !## rA19 HCG ensemble (FRET/rA19, 10000 models); same fitting as the A48/A59 linker
 !## R48 terms refitted from the ensemble reweighted (max. entropy) to the experimental <E> = 0.55
@@ -94,7 +95,7 @@ C3E   A2V   M03   XAR     0.159   3     0.0
 A2V   M03   XAR   XAR     1.813   1     0.0  ! A04-A05-A06-A08
 A2V   M03   XAR   XAR     0.516   2    -1.7
 A2V   M03   XAR   XAR     0.134   3    -4.1
-M03   XAR   XAR   XAR    11.916   1   177.3  ! A05-A06-A08-A07
+M03   XAR   XAR   XAR    11.916   1   177.3  ! A05-A06-A08-A07; inside the rigid body (ill-defined across the ~171 deg angle)
 M03   XAR   XAR   XAR     3.023   2   -10.0
 M03   XAR   XAR   XAR     0.231   3   132.8
 !## R59/R48 (dyes on RNA ends) junction terms; 3-term Fourier fit (300 K) to the CG-mapped
