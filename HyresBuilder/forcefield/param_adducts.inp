@@ -147,8 +147,8 @@ NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
 !atom  ignored    epsilon      Rmin/2   ignored   eps,1-4       Rmin/2,1-4
 !
 !## dye beads
-XAN      0.00     -0.0880      2.3444   0.00     -0.0810       2.3444 ! dye xanthene C9; generic LJ as A4H, stacking via NBFIX XAN pairs
-XAR      0.00     -0.0880      2.3444   0.00     -0.0810       2.3444 ! dye aromatic ring bead, LJ as A4H
+XAN      0.00     -0.1200      2.3444   0.00     -0.1200       2.3444 ! dye xanthene C9; LJ deepened from A4H (-0.088) to -0.150 for dye stickiness (ACTR/rA19 <E>), aromatic stacking via NBFIX
+XAR      0.00     -0.1200      2.3444   0.00     -0.1200       2.3444 ! dye aromatic ring bead, LJ deepened from A4H (-0.088) to -0.150
 
 NBFIX
 !                 Emin         Rmin
@@ -161,5 +161,9 @@ NBFIX
 XAN       A2W      -0.4000      4.4314
 XAN       P1Y      -0.3700      4.7968
 XAN       A1F      -0.2900      4.9858
+!# Arg: xanthene-guanidinium stacking, between the HyRes Arg-Phe (-0.50) and Arg-Trp (-0.70) cation-pi
+!# rows (xanthene >= indole in size, but its delocalised + charge weakens cation-pi); no XAN-QdK row,
+!# since QdK is also the dye's own amine/N(+) bead type.
+XAN       QdR      -0.6000      4.8807
 
 END
