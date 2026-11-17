@@ -9,10 +9,10 @@ structure is written as a PDB (no PSF is written).
 
 The whole input PDB is treated as a single segment, which must be either a
 protein or an RNA chain, selected by segment ID prefix (``P`` for protein,
-``R`` for RNA). Only the HyRes protein and iConRNA (``top_RNA_mix``)
-topologies are loaded, so mutation types must be residue names defined there
-(e.g. ``ALA``, ``GLY`` for protein; ``ADE``, ``GUA``, ``CYT``, ``URA`` for
-RNA). Multiple sites can be mutated in a single call, and a single mutation
+``R`` for RNA). The HyRes protein, iConRNA (``top_RNA_mix``), metabolite and
+adduct topologies are loaded, so mutation types must be residue names defined
+there (e.g. ``ALA``, ``GLY``, the dye-labelled cysteines ``A48``/``A59`` for
+protein; ``ADE``, ``GUA``, ``CYT``, ``URA`` for RNA). Multiple sites can be mutated in a single call, and a single mutation
 type can be broadcast across all target sites.
 
 Workflow
@@ -23,8 +23,9 @@ Workflow
 3. Register the input PDB as a ``psfbuilder`` segment with the ``mutate`` table
    applied at the ``add_segment`` step (:func:`mut`).
 4. Read the input coordinates, guess missing coordinates, place the phosphate
-   bead of phosphorylated residues (:func:`_place_phosphate`), regenerate
-   angles and dihedrals, and write the output PDB.
+   bead of phosphorylated residues (:func:`_place_phosphate`) and the dye of
+   dye-labelled cysteines (:func:`_place_adduct`), regenerate angles and
+   dihedrals, and write the output PDB.
 
 Phosphorylation
 ---------------
@@ -36,6 +37,18 @@ the free rotation about the anchor bond chosen to keep it as far as possible
 from all other beads. The mutated site must already have the anchor and
 reference beads in the input: CA and CB for SEP/TPO (e.g. from SER or THR),
 CB and CD for PTR (from TYR or PHE).
+
+Dye labels
+----------
+Mutating to ``A48`` (Alexa 488) or ``A59`` (Alexa 594) on cysteine adds 17 or
+23 dye beads. They are placed from a CG template (``ADDUCT_TEMPLATES``): one
+conformation of the dye, mapped (bead centres of mass, ``cgbuilder.ndx``) from
+the all-atom A488-Cys / A594-Cys trajectories, with the frame whose
+phenyl+xanthene part is closest to the trajectory average. The template is
+superimposed on the N, CA and CB of the site, and of 24 rotations (every 15
+deg) about the CA-CB bond the one farthest from all other beads is used. The
+phenyl+xanthene geometry is therefore a proper starting point for a rigid
+body. The site must have N, CA and CB in the input (any residue but GLY).
 
 A command-line interface is exposed via :func:`main` as the ``mutate``
 console script, taking the input and output PDB as positional arguments and
@@ -65,6 +78,62 @@ PHOSPHO_BEADS = {
     'TPO': ('CC', 'CB', 'CA', 3.20, 72.6),    # P2T-PO3, C1E-P2T-PO3
     'PTR': ('CE', 'CD', 'CB', 2.45, 145.0),   # P1Y-PO3, A1Y-P1Y-PO3
 }
+
+# CG templates of dye-labelled cysteines (A, CA at the origin): N, CA, CB and the dye beads, from
+# one frame of the all-atom A488-Cys / A594-Cys trajectories mapped with cgbuilder.ndx (bead COM)
+ADDUCT_TEMPLATES = {
+    'A48': {
+        'N': (0.510, -1.030, -0.880),
+        'CA': (0.000, 0.000, 0.000),
+        'CB': (1.479, -0.281, 1.800),
+        'A01': (3.301, -0.214, 4.162),
+        'A02': (3.058, -3.055, 4.452),
+        'A03': (4.729, -1.613, 5.285),
+        'A04': (6.156, -0.464, 7.884),
+        'A05': (5.809, 2.455, 8.471),
+        'A06': (5.206, 3.868, 6.149),
+        'A07': (6.277, 5.736, 6.152),
+        'A08': (4.948, 5.189, 4.489),
+        'A09': (7.161, 7.824, 5.682),
+        'A11': (4.977, 6.977, 3.023),
+        'A12': (7.399, 5.558, 1.704),
+        'A13': (7.508, 6.575, -0.400),
+        'A14': (6.008, 8.444, -1.572),
+        'A15': (4.590, 8.016, 1.478),
+        'A16': (1.673, 9.683, 3.089),
+        'A17': (2.308, 10.410, 0.666),
+        'A18': (2.648, 8.123, 4.624),
+    },
+    'A59': {
+        'N': (0.780, -0.540, 1.090),
+        'CA': (0.000, 0.000, 0.000),
+        'CB': (-0.718, -2.020, -0.927),
+        'A01': (-0.829, -4.812, -1.825),
+        'A02': (-3.280, -3.933, -3.082),
+        'A03': (-2.804, -5.957, -2.083),
+        'A04': (-3.812, -6.949, 0.629),
+        'A05': (-6.830, -8.398, 2.326),
+        'A06': (-8.110, -7.673, 4.566),
+        'A07': (-10.126, -8.465, 4.551),
+        'A08': (-9.353, -7.302, 6.254),
+        'A09': (-12.314, -9.049, 4.993),
+        'A10': (-11.020, -7.157, 7.847),
+        'A11': (-11.959, -4.687, 6.454),
+        'A12': (-12.609, -2.938, 4.888),
+        'A13': (-10.184, -3.134, 3.610),
+        'A14': (-13.908, -0.824, 6.896),
+        'A15': (-13.895, -2.298, 8.565),
+        'A16': (-12.897, -4.124, 8.395),
+        'A17': (-11.908, -6.687, 9.468),
+        'A18': (-11.315, -9.341, 10.724),
+        'A19': (-11.337, -10.624, 12.405),
+        'A20': (-10.583, -12.750, 12.161),
+        'A21': (-9.712, -12.314, 9.192),
+        'A22': (-7.398, -11.968, 7.806),
+        'A23': (-10.373, -9.960, 8.867),
+    },
+}
+ADDUCT_ANCHORS = ('N', 'CA', 'CB')
 
 
 def _input_atoms(pdb_in):
@@ -123,6 +192,67 @@ def _place_phosphate(gen, segid, resid, resname, input_atoms):
             best, best_d = x, d
     gen.set_position(segid, resid, bead, tuple(float(v) for v in best))
     return best_d
+
+
+def _kabsch(P, Q):
+    """Rotation matrix R minimising |P @ R - Q| for centred (n, 3) arrays P and Q."""
+    V, _, W = np.linalg.svd(P.T @ Q)
+    if np.linalg.det(V @ W) < 0:
+        V[:, -1] *= -1
+    return V @ W
+
+
+def _place_adduct(gen, segid, resid, resname, input_atoms):
+    """
+    Place the dye beads of an A48 or A59 residue built by psfbuilder.
+
+    The template of ``ADDUCT_TEMPLATES`` is oriented by superimposing its N,
+    CA and CB on those of the residue and anchored on the residue's CB; of 24 rotations (every 15 deg) of the dye about the CA-CB
+    bond, the one farthest from all other beads of the segment is used.
+
+    Args:
+        gen (PsfGen): psfbuilder session holding the mutated segment.
+        segid (str): Segment ID.
+        resid (str): Residue ID of the dye-labelled residue.
+        resname (str): ``'A48'`` or ``'A59'``.
+        input_atoms (set of str): Atom names of this residue in the input PDB.
+
+    Returns:
+        float: Distance (A) from the dye to the closest bead of another residue.
+
+    Raises:
+        ValueError: If N, CA or CB was not in the input residue.
+    """
+    missing = [a for a in ADDUCT_ANCHORS if a not in input_atoms]
+    if missing:
+        raise ValueError(f"Residue {resid} -> {resname}: bead(s) {', '.join(missing)} not in the input "
+                         f"residue, so the dye cannot be placed. Mutate from a residue that has "
+                         f"N, CA and CB (e.g. CYS; not GLY).")
+    tpl = {n: np.array(x) for n, x in ADDUCT_TEMPLATES[resname].items()}
+    xyz = dict(zip(gen.get_atom_names(segid, resid), (np.array(c) for c in gen.get_coordinates(segid, resid))))
+    P = np.array([tpl[a] for a in ADDUCT_ANCHORS])
+    Q = np.array([xyz[a] for a in ADDUCT_ANCHORS])
+    R = _kabsch(P - P.mean(0), Q - Q.mean(0))
+    dye = [n for n in tpl if n not in ADDUCT_ANCHORS]
+    D = (np.array([tpl[n] for n in dye]) - tpl['CB']) @ R + xyz['CB']   # oriented by N/CA/CB, anchored on CB
+    others = np.array([c for r in gen.get_resids(segid) if str(r) != str(resid)
+                       for c in gen.get_coordinates(segid, r)]).reshape(-1, 3)
+    own = np.array([xyz[n] for n in xyz if n not in dye])
+    e = xyz['CB'] - xyz['CA']
+    e /= np.linalg.norm(e)
+    K = np.array([[0, -e[2], e[1]], [e[2], 0, -e[0]], [-e[1], e[0], 0]])
+    best, best_d = None, -1.0
+    for phi in np.radians(np.arange(0, 360, 15)):
+        Rot = np.eye(3) + np.sin(phi) * K + (1 - np.cos(phi)) * K @ K     # Rodrigues, about CA-CB
+        X = (D - xyz['CB']) @ Rot.T + xyz['CB']
+        d_other = np.min(np.linalg.norm(others[:, None] - X[None], axis=-1)) if len(others) else np.inf
+        d_own = np.min(np.linalg.norm(own[:, None] - X[None], axis=-1))
+        d = min(d_other, d_own + 1.0)                                     # own N/C/O/H may sit closer
+        if d > best_d:
+            best, best_d, best_other = X, d, d_other
+    for n, x in zip(dye, best):
+        gen.set_position(segid, resid, n, tuple(float(v) for v in x))
+    return best_other
 
 
 def mutate(pdb_in, sites, mutations, pdb_out=None, segid='P001'):
@@ -199,7 +329,8 @@ def mut(pdb_in, pdb_out, sites, mutations, segid):
     with the mutation table (protein: ``auto_angles=False``; RNA:
     ``auto_angles=False, auto_dihedrals=False``), reads its coordinates,
     guesses missing coordinates, places the phosphate bead of any SEP, TPO
-    or PTR mutation (:func:`_place_phosphate`), regenerates angles and
+    or PTR mutation (:func:`_place_phosphate`) and the dye of any A48 or A59
+    mutation (:func:`_place_adduct`), regenerates angles and
     dihedrals and writes ``pdb_out``. Progress is printed to stdout.
 
     Args:
@@ -213,8 +344,8 @@ def mut(pdb_in, pdb_out, sites, mutations, segid):
     Raises:
         FileNotFoundError: If ``pdb_in`` does not exist.
         ValueError: If ``sites`` and ``mutations`` differ in length,
-            ``segid`` does not start with 'P' or 'R', or a SEP/TPO/PTR site
-            lacks the beads needed to place its phosphate.
+            ``segid`` does not start with 'P' or 'R', or a SEP/TPO/PTR/A48/A59
+            site lacks the beads needed to place its phosphate or dye.
     """
     # Validate inputs
     if not Path(pdb_in).exists():
@@ -227,11 +358,15 @@ def mut(pdb_in, pdb_out, sites, mutations, segid):
     print(f"Loading topology files...")
     RNA_topology, _ = utils.load_ff('RNA')
     protein_topology, _ = utils.load_ff('Protein')
-    
+    metabolite_topology, _ = utils.load_ff('Metabolite')
+    adduct_topology, _ = utils.load_ff('Adduct')
+
     # Initialize the PSF builder
     gen = PsfGen()
     gen.read_topology(RNA_topology)
     gen.read_topology(protein_topology)
+    gen.read_topology(metabolite_topology)   # bead types used by the adducts
+    gen.read_topology(adduct_topology)
     
     # Build mutation table
     site_mut = []
@@ -263,6 +398,9 @@ def mut(pdb_in, pdb_out, sites, mutations, segid):
         if mut_type in PHOSPHO_BEADS:
             d = _place_phosphate(gen, segid, site, mut_type, input_atoms.get(site, set()))
             print(f"  Placed {PHOSPHO_BEADS[mut_type][0]} of {mut_type} {site} ({d:.2f} A from the closest bead)")
+        elif mut_type in ADDUCT_TEMPLATES:
+            d = _place_adduct(gen, segid, site, mut_type, input_atoms.get(site, set()))
+            print(f"  Placed the dye of {mut_type} {site} ({d:.2f} A from the closest bead of another residue)")
 
     # Regenerate geometry
     print("Regenerating angles and dihedrals...")
@@ -307,6 +445,9 @@ Examples:
   
   # Phosphorylation (SER/THR/TYR sites; the phosphate bead is placed automatically)
   mutate input.pdb output.pdb -s 23 45 67 -m SEP TPO PTR
+
+  # Dye labels on cysteines (Alexa 488 / Alexa 594; the dye is placed from a template)
+  mutate input.pdb output.pdb -s 5 120 -m A48 A59
   
   # RNA mutations
   mutate rna.pdb rna_mut.pdb -s 10 20 -m GUA CYT -d R001
