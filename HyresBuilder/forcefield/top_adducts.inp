@@ -74,15 +74,16 @@ BOND A16  A15
 ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
-! dye
-ANGL CA   CB   A01       CB   A01  A02       CB   A01  A03
-ANGL A01  A03  A04       A02  A03  A04       A03  A04  A05       A04  A05  A06
-ANGL A05  A06  A07       A05  A06  A08       A06  A07  A09       A08  A07  A09
-ANGL A06  A08  A11       A07  A08  A11       A08  A11  A12       A08  A11  A18
+! dye: linker angles (fitted); none inside the rigid phenyl + xanthene
+ANGL CB   A01  A02       A02  A03  A04       A03  A04  A05       A04  A05  A06
+ANGL A05  A06  A08
+! dihedrals inside this residue come only from these DIHE lines (no auto generation):
+! Cys part, as generated for CYS
+DIHE H    N    CA   C         N    CA   C    O         CB   CA   C    O
+! dye: linker dihedrals (fitted)
+DIHE CB   A01  A02  A03       A01  A02  A03  A04       A01  A03  A04  A05
+DIHE A03  A04  A05  A06       A04  A05  A06  A08       A05  A06  A08  A07
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
-! dye: keep the xanthene planar
-IMPH A15  A11  A12  A13       A15  A12  A13  A14
-IMPH A15  A11  A18  A16       A15  A18  A16  A17
 CMAP -C   N    CA   C         N    CA   C    +N
 
 
@@ -146,16 +147,16 @@ BOND A20  A18       A21  A22
 ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
-! dye
-ANGL CA   CB   A01       CB   A01  A02       CB   A01  A03
-ANGL A01  A03  A04       A02  A03  A04       A03  A04  A05       A04  A05  A06
-ANGL A05  A06  A07       A05  A06  A08       A06  A07  A09       A08  A07  A09
-ANGL A06  A08  A10       A07  A08  A10       A08  A10  A11       A08  A10  A23
-ANGL A11  A12  A13       A14  A12  A13       A23  A21  A22       A20  A21  A22
+! dye: linker angles (fitted); none inside the rigid phenyl + xanthene
+ANGL CB   A01  A02       A02  A03  A04       A03  A04  A05       A04  A05  A06
+ANGL A05  A06  A08
+! dihedrals inside this residue come only from these DIHE lines (no auto generation):
+! Cys part, as generated for CYS
+DIHE H    N    CA   C         N    CA   C    O         CB   CA   C    O
+! dye: linker dihedrals (fitted)
+DIHE CB   A01  A02  A03       A01  A02  A03  A04       A01  A03  A04  A05
+DIHE A03  A04  A05  A06       A04  A05  A06  A08       A05  A06  A08  A07
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
-! dye: keep the xanthene and the outer rings planar
-IMPH A17  A10  A11  A16       A17  A10  A23  A18
-IMPH A16  A11  A12  A14       A18  A23  A21  A20
 CMAP -C   N    CA   C         N    CA   C    +N
 
 END

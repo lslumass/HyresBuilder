@@ -83,6 +83,7 @@ class _Segment:
         self.acceptors = []
         self.order = {}          # attr -> (residue position, topology position) of each topology term
         self.generated = set()   # attrs generated from the bond graph instead of the topology
+        self.explicit_dihedrals = []   # (residue position, atoms) of topology DIHE lines kept with auto dihedrals
 
     def residue(self, resid):
         for res in self.residues:
@@ -224,7 +225,10 @@ class PsfBuilder:
                 of the topology ``ANGL`` entries.
             auto_dihedrals (bool): Generate dihedrals from pairs of angles
                 (topology or generated ones) instead of the topology ``DIHE``
-                entries.
+                entries. A residue that lists ``DIHE`` entries still gets
+                exactly those for dihedrals with all four atoms inside it
+                (generated ones inside it are dropped); dihedrals spanning
+                residues are generated as usual.
             residues (list of (resid, resname)): Used when ``pdbfile`` is None.
             mutate (list of (resid, resname)): Residues to rename before building.
         """
@@ -267,12 +271,17 @@ class PsfBuilder:
             seg.residues.append(res)
 
         # resolve the topology terms residue by residue
+        explicit_dihedrals = []      # (residue position, atoms) of DIHE lines when auto_dihedrals
         for i, res in enumerate(seg.residues):
             rdef = self.residue_defs[res.resname]
             for attr in ('bonds', 'angles', 'dihedrals', 'impropers', 'cmaps', 'donors', 'acceptors'):
                 if attr == 'angles' and auto_angles:
                     continue
                 if attr == 'dihedrals' and auto_dihedrals:
+                    for names in rdef.dihedrals:
+                        atoms = [self._resolve(seg, i, n) for n in names]
+                        if all(a is not None for a in atoms):
+                            explicit_dihedrals.append((i, tuple(atoms)))
                     continue
                 out = getattr(seg, attr)
                 order = seg.order.setdefault(attr, [])
@@ -287,8 +296,35 @@ class PsfBuilder:
             seg.angles = self._gen_angles(seg)
             seg.generated.add('angles')
         if auto_dihedrals:
-            seg.dihedrals = self._gen_dihedrals(seg.angles)
+            seg.explicit_dihedrals = explicit_dihedrals
+            seg.dihedrals = self._merge_explicit_dihedrals(
+                seg, self._gen_dihedrals(seg.angles), explicit_dihedrals)
             seg.generated.add('dihedrals')
+
+    @staticmethod
+    def _merge_explicit_dihedrals(seg, generated, explicit):
+        """Combine generated dihedrals with the topology DIHE lines of a segment.
+
+        A residue whose topology lists DIHE entries owns its internal
+        dihedrals: generated dihedrals with all four atoms in that residue are
+        dropped, and its DIHE entries are used instead. Generated dihedrals
+        that span residues are kept. Residues without DIHE lines (all standard
+        HyRes amino acids) are unaffected.
+        """
+        if not explicit:
+            return generated
+        owned = {i for i, _ in explicit}
+        members = [{id(a) for a in seg.residues[i].atoms.values()} for i in owned]
+        out = [t for t in generated
+               if not any(all(id(a) in m for a in t) for m in members)]
+        seen = {tuple(id(a) for a in t) for t in out}
+        for _, t in explicit:
+            key = tuple(id(a) for a in t)
+            if key in seen or key[::-1] in seen:
+                continue
+            seen.add(key)
+            out.append(t)
+        return out
 
     @staticmethod
     def _resolve(seg, i, name):
@@ -400,9 +436,14 @@ class PsfBuilder:
             seg.generated.add('angles')
 
     def regenerate_dihedrals(self):
-        """Replace the dihedrals of every segment by those spanned by its angles."""
+        """Replace the dihedrals of every segment by those spanned by its angles.
+
+        Residues with topology DIHE lines keep owning their internal dihedrals
+        (see :meth:`_merge_explicit_dihedrals`).
+        """
         for seg in self.segments:
-            seg.dihedrals = self._gen_dihedrals(seg.angles)
+            seg.dihedrals = self._merge_explicit_dihedrals(
+                seg, self._gen_dihedrals(seg.angles), seg.explicit_dihedrals)
             seg.generated.add('dihedrals')
 
     # ------------------------------------------------------------------
