@@ -169,91 +169,91 @@ CMAP -C   N    CA   C         N    CA   C    +N
 
 !## 5'-Alexa Fluor 594 on RNA: dye-NH-(CH2)5-succinimide-S-(CH2)6-O-P(5') of the first nucleotide.
 !## The 5' phosphate (P, O-(CH2)6 oxygen included) is the P bead of the next (first RNA) residue.
-!## A01-A23 are the beads of RESI A59 (same types, charges and dye bonds); the Cys CB is replaced by
-!##   L2 A5M S-(CH2)3 | L1 A2V (CH2)3, bonded to +P
+!## Beads A01-A25 follow the numbering of the R59 mapping figure: A01 A2V (CH2)3, bonded to +P |
+!##   A02 A5M S-(CH2)3 | A03-A25 = A01-A23 of RESI A59 (same types, charges and dye bonds)
 RESI R59    -2.00000
 GROU
-ATOM L1   A2V     0.00
-ATOM L2   A5M     0.00
+ATOM A01  A2V     0.00
+ATOM A02  A5M     0.00
 GROU
-ATOM A01  M07     0.00
-ATOM A02  M07     0.00
-ATOM A03  C3E     0.00
-ATOM A04  A2V     0.00
-ATOM A05  M03     0.00
+ATOM A03  M07     0.00
+ATOM A04  M07     0.00
+ATOM A05  C3E     0.00
+ATOM A06  A2V     0.00
+ATOM A07  M03     0.00
 GROU
-ATOM A06  XAR     0.00
-ATOM A07  XAR     0.00
 ATOM A08  XAR     0.00
-ATOM A09  QaD    -1.00
+ATOM A09  XAR     0.00
+ATOM A10  XAR     0.00
+ATOM A11  QaD    -1.00
 GROU
-ATOM A10  XAN     0.00
-ATOM A11  XAR     0.00
-ATOM A12  A2Y     0.00
-ATOM A13  MSO    -1.00
-ATOM A14  A2V     0.00
-ATOM A15  M06     0.50
-ATOM A16  XAR     0.00
-ATOM A17  XAR     0.00
+ATOM A12  XAN     0.00
+ATOM A13  XAR     0.00
+ATOM A14  A2Y     0.00
+ATOM A15  MSO    -1.00
+ATOM A16  A2V     0.00
+ATOM A17  M06     0.50
 ATOM A18  XAR     0.00
-ATOM A19  M06     0.50
-ATOM A20  A2V     0.00
-ATOM A21  A2Y     0.00
-ATOM A22  MSO    -1.00
-ATOM A23  XAR     0.00
-BOND L1   +P        L1   L2        L2   A01
+ATOM A19  XAR     0.00
+ATOM A20  XAR     0.00
+ATOM A21  M06     0.50
+ATOM A22  A2V     0.00
+ATOM A23  A2Y     0.00
+ATOM A24  MSO    -1.00
+ATOM A25  XAR     0.00
+BOND A01  +P        A01  A02        A02  A03
 ! dye: succinimide ring, linker, phenyl ring (as RESI A59)
-BOND A01  A02       A01  A03       A02  A03       A03  A04
-BOND A04  A05       A05  A06       A06  A07       A06  A08       A07  A08
-BOND A07  A09       A08  A10
-BOND A10  A11       A11  A16       A16  A17       A17  A18       A18  A23
-BOND A23  A10       A10  A17       A11  A17       A23  A17
-BOND A11  A12       A12  A14       A14  A15       A15  A16       A12  A16
-BOND A14  A16       A12  A13
-BOND A23  A21       A21  A20       A20  A19       A19  A18       A21  A18
-BOND A20  A18       A21  A22
-! RNA segments get no automatic angles/dihedrals: junction terms + the A59 linker terms (CB -> L2)
-ANGL L1   +P   +C1       L2   L1   +P        L1   L2   A01       L2   A01  A02
-ANGL A02  A03  A04       A03  A04  A05       A04  A05  A06       A05  A06  A08
-DIHE L1   +P   +C1  +C2       L2   L1   +P   +C1       L1   L2   A01  A02
-DIHE L2   A01  A02  A03       A01  A02  A03  A04       A01  A03  A04  A05
-DIHE A03  A04  A05  A06       A04  A05  A06  A08       A05  A06  A08  A07
+BOND A03  A04       A03  A05       A04  A05       A05  A06
+BOND A06  A07       A07  A08       A08  A09       A08  A10       A09  A10
+BOND A09  A11       A10  A12
+BOND A12  A13       A13  A18       A18  A19       A19  A20       A20  A25
+BOND A25  A12       A12  A19       A13  A19       A25  A19
+BOND A13  A14       A14  A16       A16  A17       A17  A18       A14  A18
+BOND A16  A18       A14  A15
+BOND A25  A23       A23  A22       A22  A21       A21  A20       A23  A20
+BOND A22  A20       A23  A24
+! RNA segments get no automatic angles/dihedrals: junction terms + the A59 linker terms (CB -> A02)
+ANGL A01  +P   +C1       A02  A01  +P        A01  A02  A03       A02  A03  A04
+ANGL A04  A05  A06       A05  A06  A07       A06  A07  A08       A07  A08  A10
+DIHE A01  +P   +C1  +C2       A02  A01  +P   +C1       A01  A02  A03  A04
+DIHE A02  A03  A04  A05       A03  A04  A05  A06       A03  A05  A06  A07
+DIHE A05  A06  A07  A08       A06  A07  A08  A10       A07  A08  A10  A09
 
 !## 3'-Alexa Fluor 488 on RNA: dye-C(=O)NH-CH2-CH2-O-CH2-CH(OH)-CH(-O3') on the last nucleotide.
-!## A05-A18 are the beads of RESI A48 (same types, charges and dye bonds); the linker is
-!##   L1 M05 CH(OH)-CH-O3' (O3' of the last nucleotide, as in the iConRNA P bead), bonded to -C1
-!##   L2 P1T CH2-O-CH2 | A05 M03 CH2-NH-C(=O)
+!## Beads A01-A15 follow the numbering of the R48 mapping figure:
+!##   A01 M05 CH(OH)-CH-O3' (O3' of the last nucleotide, as in the iConRNA P bead), bonded to -C1
+!##   A02 P1T CH2-O-CH2 | A03 M03 CH2-NH-C(=O) | A03-A15 = A05-A09, A11-A18 of RESI A48
 RESI R48    -2.00000
 GROU
-ATOM L1   M05     0.00
-ATOM L2   P1T     0.00
-ATOM A05  M03     0.00
+ATOM A01  M05     0.00
+ATOM A02  P1T     0.00
+ATOM A03  M03     0.00
 GROU
+ATOM A04  XAR     0.00
+ATOM A05  XAR     0.00
 ATOM A06  XAR     0.00
-ATOM A07  XAR     0.00
-ATOM A08  XAR     0.00
-ATOM A09  QaD    -1.00
+ATOM A07  QaD    -1.00
 GROU
-ATOM A11  XAN     0.00
+ATOM A08  XAN     0.00
+ATOM A09  XAR     0.00
+ATOM A10  P1W     0.50
+ATOM A11  MSO    -1.00
 ATOM A12  XAR     0.00
 ATOM A13  P1W     0.50
 ATOM A14  MSO    -1.00
 ATOM A15  XAR     0.00
-ATOM A16  P1W     0.50
-ATOM A17  MSO    -1.00
-ATOM A18  XAR     0.00
-BOND -C1  L1        L1   L2        L2   A05
+BOND -C1  A01        A01  A02        A02  A03
 ! dye: phenyl ring and xanthene (as RESI A48)
-BOND A05  A06       A06  A07       A06  A08       A07  A08
-BOND A07  A09       A08  A11
-BOND A11  A12       A12  A13       A13  A14       A14  A15       A11  A15
-BOND A12  A15       A13  A15
-BOND A11  A18       A18  A16       A16  A17       A17  A15       A18  A15
-BOND A16  A15
+BOND A03  A04       A04  A05       A04  A06       A05  A06
+BOND A05  A07       A06  A08
+BOND A08  A09       A09  A10       A10  A11       A11  A12       A08  A12
+BOND A09  A12       A10  A12
+BOND A08  A15       A15  A13       A13  A14       A14  A12       A15  A12
+BOND A13  A12
 ! RNA segments get no automatic angles/dihedrals: junction terms + the A48 linker terms
-ANGL -P   -C1  L1        -C2  -C1  L1        -C1  L1   L2        L1   L2   A05
-ANGL L2   A05  A06       A05  A06  A08
-DIHE -P   -C1  L1   L2        -C1  L1   L2   A05       L1   L2   A05  A06
-DIHE L2   A05  A06  A08       A05  A06  A08  A07
+ANGL -P   -C1  A01        -C2  -C1  A01        -C1  A01  A02        A01  A02  A03
+ANGL A02  A03  A04       A03  A04  A06
+DIHE -P   -C1  A01  A02        -C1  A01  A02  A03       A01  A02  A03  A04
+DIHE A02  A03  A04  A06       A03  A04  A06  A05
 
 END
