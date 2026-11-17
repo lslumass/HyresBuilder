@@ -34,7 +34,7 @@ A2Y   MSO      0.00    1.000  ! A59
 A2Y   XAR      0.00    1.000  ! A59
 M06   XAR      0.00    1.000  ! A59
 !## R59/R48 (dyes on RNA ends) junction terms, Boltzmann inversion (300 K) of the CG-mapped
-!## rA19 HCG ensemble (HCG_models/rA19, 10000 models); same fitting as the A48/A59 linker
+!## rA19 HCG ensemble (FRET/rA19, 10000 models); same fitting as the A48/A59 linker
 A2V   RP      12.22    3.577  ! R59 A01-+P
 A2V   A5M      2.31    4.479  ! R59 A01-A02
 A5M   M07      2.70    3.432  ! R59 A02-A03
@@ -58,7 +58,7 @@ C3E   A2V   M03      1.27    162.2  ! A03-A04-A05    (AA 138.0 +- 19.9)
 A2V   M03   XAR      3.19    129.1  ! A04-A05-A06    (AA 121.4 +- 13.6)
 M03   XAR   XAR      9.97    172.2  ! A05-A06-A08    (AA 170.9 +-  2.2)
 !## R59/R48 (dyes on RNA ends) junction terms; ReB angles moment matched (300 K) to the CG-mapped
-!## rA19 HCG ensemble (HCG_models/rA19, 10000 models); same fitting as the A48/A59 linker
+!## rA19 HCG ensemble (FRET/rA19, 10000 models); same fitting as the A48/A59 linker
 A2V   RP    RS1      3.85    104.5  ! R59 A01-+P-+C1   (AA 101.8 +- 13.2)
 A5M   A2V   RP       0.94    150.4  ! R59 A02-A01-+P   (AA 126.4 +- 21.3)
 A2V   A5M   M07      1.45    163.7  ! R59 A01-A02-A03   (AA 141.1 +- 19.1)
@@ -98,7 +98,7 @@ M03   XAR   XAR   XAR    11.916   1   177.3  ! A05-A06-A08-A07
 M03   XAR   XAR   XAR     3.023   2   -10.0
 M03   XAR   XAR   XAR     0.231   3   132.8
 !## R59/R48 (dyes on RNA ends) junction terms; 3-term Fourier fit (300 K) to the CG-mapped
-!## rA19 HCG ensemble (HCG_models/rA19, 10000 models); same fitting as the A48/A59 linker
+!## rA19 HCG ensemble (FRET/rA19, 10000 models); same fitting as the A48/A59 linker
 A2V   RP    RS1   RS2     1.107  1    172.5  ! R59 A01-+P-+C1-+C2
 A2V   RP    RS1   RS2     0.380  2   -109.5
 A2V   RP    RS1   RS2     0.412  3    -26.7
