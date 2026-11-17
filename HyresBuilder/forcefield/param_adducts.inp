@@ -147,5 +147,13 @@ XAR      0.00     -0.0880      2.3444   0.00     -0.0810       2.3444 ! dye arom
 NBFIX
 !                 Emin         Rmin
 !                 (kcal/mol)   (A)
+!# dye xanthene centre (XAN, A488 and A594) - aromatic stacking, set like the cation-pi rows of
+!# param_hyres_mix.inp: Emin = 0.148 * PMF well depth, Rmin = sum of Rmin/2.
+!# Trp: experimental dye-Trp Kd (A488 59 mM, A594 33 mM; Best et al., Biophys J 2015, Table 1)
+!# -> dG0 -1.7/-2.0 kcal/mol -> well depth ~ -2.5/-2.9 (bound volume 0.3-0.5 nm^3) -> Emin ~ -0.40.
+!# Tyr/Phe: no data; scaled from Trp by the Arg preferences (QdR-A2W -0.70, -P1Y -0.65, -A1F -0.50).
+XAN       A2W      -0.4000      4.4314
+XAN       P1Y      -0.3700      4.7968
+XAN       A1F      -0.2900      4.9858
 
 END
