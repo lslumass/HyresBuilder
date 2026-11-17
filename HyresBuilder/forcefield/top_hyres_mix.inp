@@ -52,6 +52,7 @@ MASS   242 P3T   94.970   ! legacy pThr phosphate, kept only for PSFs built befo
 MASS   243 PO3   94.970   ! phosphate bead (-O-PO3 2-), shared by pSer, pThr (CC) and pTyr (CE)
 !## dye xanthene centre (A48 A11, A59 A10); own type so stacking can be set by NBFIX
 MASS   244 XAN   36.033   ! xanthene C9 + C8a + C9a (C3)
+MASS   245 XAR   26.038   ! dye aromatic ring bead (phenyl and uncharged xanthene beads), as A4H
 
 
 DECL -C
@@ -513,8 +514,8 @@ IMPH C    CA   +N   O         CA   N    C    CB         N    -C   CA   CB
 !## Alexa Fluor 488 C5-maleimide attached to Cys (Cys part identical to RESI CYS)
 !## dye beads A01-A18 follow the numbering of the A488 mapping figure (there is no A10); HyRes bead types:
 !##   A01,A02 M07 imide C(=O) | A03 C3E N-CH2 | A04 A2V (CH2)3 | A05 M03 CH2-NH-C(=O)
-!##   A06,A07,A08 A4H phenyl | A09 QaD COO(-) | A11 XAN xanthene C9 (stacking) | A12,A18 A4H CH=CH
-!##   A13,A16 P1W C-NH2 (+0.5 each) | A14,A17 MSO C-SO3(-) | A15 A4H C-O-C
+!##   A06,A07,A08 XAR phenyl | A09 QaD COO(-) | A11 XAN xanthene C9 (stacking) | A12,A18 XAR CH=CH
+!##   A13,A16 P1W C-NH2 (+0.5 each) | A14,A17 MSO C-SO3(-) | A15 XAR C-O-C
 !##   M07, M03 and MSO are metabolome types (top_metabolome.inp)
 RESI A48    -2.00000
 GROU
@@ -530,19 +531,19 @@ ATOM A03  C3E     0.00
 ATOM A04  A2V     0.00
 ATOM A05  M03     0.00
 GROU
-ATOM A06  A4H     0.00
-ATOM A07  A4H     0.00
-ATOM A08  A4H     0.00
+ATOM A06  XAR     0.00
+ATOM A07  XAR     0.00
+ATOM A08  XAR     0.00
 ATOM A09  QaD    -1.00
 GROU
 ATOM A11  XAN     0.00
-ATOM A12  A4H     0.00
+ATOM A12  XAR     0.00
 ATOM A13  P1W     0.50
 ATOM A14  MSO    -1.00
-ATOM A15  A4H     0.00
+ATOM A15  XAR     0.00
 ATOM A16  P1W     0.50
 ATOM A17  MSO    -1.00
-ATOM A18  A4H     0.00
+ATOM A18  XAR     0.00
 GROU
 ATOM C    C       0.00
 ATOM O    O       0.00
@@ -575,8 +576,8 @@ CMAP -C   N    CA   C         N    CA   C    +N
 !## Alexa Fluor 594 C5-maleimide attached to Cys (Cys part identical to RESI CYS)
 !## dye beads A01-A23 follow the numbering of the A594 mapping figure; HyRes bead types:
 !##   A01,A02 M07 imide C(=O) | A03 C3E N-CH2 | A04 A2V (CH2)3 | A05 M03 CH2-NH-C(=O)
-!##   A06,A07,A08 A4H phenyl | A09 QaD COO(-) | A10 XAN xanthene C9 (stacking) | A11,A23 A4H ring C2H
-!##   A16,A18 A4H ring C2 next to N | A17 A4H C-O-C | A15,A19 M06 N(+)-CH3 (+0.5 each)
+!##   A06,A07,A08 XAR phenyl | A09 QaD COO(-) | A10 XAN xanthene C9 (stacking) | A11,A23 XAR ring C2H
+!##   A16,A18 XAR ring C2 next to N | A17 XAR C-O-C | A15,A19 M06 N(+)-CH3 (+0.5 each)
 !##   A14,A20 A2V C(CH3)2 | A12,A21 A2Y C=CH | A13,A22 MSO CH2-SO3(-)
 !##   M07, M03, M06 and MSO are metabolome types (top_metabolome.inp)
 RESI A59    -2.00000
@@ -593,25 +594,25 @@ ATOM A03  C3E     0.00
 ATOM A04  A2V     0.00
 ATOM A05  M03     0.00
 GROU
-ATOM A06  A4H     0.00
-ATOM A07  A4H     0.00
-ATOM A08  A4H     0.00
+ATOM A06  XAR     0.00
+ATOM A07  XAR     0.00
+ATOM A08  XAR     0.00
 ATOM A09  QaD    -1.00
 GROU
 ATOM A10  XAN     0.00
-ATOM A11  A4H     0.00
+ATOM A11  XAR     0.00
 ATOM A12  A2Y     0.00
 ATOM A13  MSO    -1.00
 ATOM A14  A2V     0.00
 ATOM A15  M06     0.50
-ATOM A16  A4H     0.00
-ATOM A17  A4H     0.00
-ATOM A18  A4H     0.00
+ATOM A16  XAR     0.00
+ATOM A17  XAR     0.00
+ATOM A18  XAR     0.00
 ATOM A19  M06     0.50
 ATOM A20  A2V     0.00
 ATOM A21  A2Y     0.00
 ATOM A22  MSO    -1.00
-ATOM A23  A4H     0.00
+ATOM A23  XAR     0.00
 GROU
 ATOM C    C       0.00
 ATOM O    O       0.00
