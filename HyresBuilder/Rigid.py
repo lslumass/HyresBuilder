@@ -779,7 +779,7 @@ def _parseSegmentRange(spec):
     return ordered
 
 
-def RigidSmallMols(system, psf, pdb, atoms=None, segments=None):
+def RigidSmallMols(system, psf, pdb, atoms=None, segments=None, removeInternal=False):
     """Build rigid bodies for many small-molecule copies at once, using PSF
     segment names -- the typical setup for systems with hundreds or thousands
     of identical small-molecule segments (e.g. 'M001', 'M002', ... 'M999').
@@ -810,6 +810,13 @@ def RigidSmallMols(system, psf, pdb, atoms=None, segments=None):
         through M010, and M020 through M030) or an explicit list like
         "M001,M005,M010". Numeric ranges keep the zero-padding width of the
         range's start ID.
+    removeInternal : bool, optional
+        If True, also remove every interaction acting only between atoms of the
+        same body (see :func:`removeIntraBodyInteractions`). Their energy is
+        constant in a rigid body, but their forces still reach the real
+        particles and must be cancelled by the constraints every step; a large
+        one (e.g. a compressed 1-4 pair over placeholder bonds) can destabilise
+        the integration. Default False.
 
     Returns
     -------
@@ -891,7 +898,126 @@ def RigidSmallMols(system, psf, pdb, atoms=None, segments=None):
     print(f"[Rigid] Applying rigid-body definition to {len(bodies)} segment(s) "
           f"matching '{segments}'.")
     createRigidBodies(system, positions, bodies)
+    if removeInternal:
+        removeIntraBodyInteractions(system, bodies)
     return len(bodies)
+
+
+def removeIntraBodyInteractions(system, bodies):
+    """Remove the interactions that act only between atoms of the same rigid body.
+
+    Inside a rigid body these terms have constant energy, but their forces are
+    still computed and passed to the body's real particles, where the
+    constraints must cancel them every step. Large internal forces (e.g. a 1-4
+    pair held compressed by the body's fixed geometry) can make the
+    integration unstable. Call after :func:`createRigidBodies`, before the
+    ``Context`` is created.
+
+    * ``HarmonicBondForce``, ``HarmonicAngleForce``, ``PeriodicTorsionForce``:
+      terms with all atoms in one body get force constant 0.
+    * ``CustomBondForce``, ``CustomAngleForce``, ``CustomTorsionForce``: the
+      force is rebuilt without those terms (same expression, parameters,
+      tabulated functions, name and force group).
+    * ``CustomNonbondedForce``: intra-body pairs are added as exclusions.
+    * ``NonbondedForce``: intra-body pairs become zero exceptions.
+
+    Other forces (e.g. ``CMAPTorsionForce``, ``CustomHbondForce``) are left as they are.
+
+    Parameters
+    ----------
+    system : openmm.System
+        The System to modify.
+    bodies : list of list of int
+        Atom indices of each rigid body, as passed to :func:`createRigidBodies`.
+
+    Returns
+    -------
+    removed : dict
+        Number of terms removed or excluded, per force name.
+    """
+    import copy
+    body_of = {}
+    for b, body in enumerate(bodies):
+        for i in body:
+            body_of[i] = b
+
+    def inside(*idx):
+        b = body_of.get(idx[0])
+        return b is not None and all(body_of.get(i) == b for i in idx)
+
+    pairs = [(i, j) for body in bodies for k, i in enumerate(sorted(body)) for j in sorted(body)[k+1:]]
+    removed, replace = {}, []
+
+    def rebuild(f, cls, n_terms, get_term, add_term):
+        new = cls(f.getEnergyFunction())
+        for k in range(f.getNumGlobalParameters()):
+            new.addGlobalParameter(f.getGlobalParameterName(k), f.getGlobalParameterDefaultValue(k))
+        for k in range(f.getNumPerBondParameters() if hasattr(f, 'getNumPerBondParameters') else
+                       f.getNumPerAngleParameters() if hasattr(f, 'getNumPerAngleParameters') else
+                       f.getNumPerTorsionParameters()):
+            name = (f.getPerBondParameterName(k) if hasattr(f, 'getPerBondParameterName') else
+                    f.getPerAngleParameterName(k) if hasattr(f, 'getPerAngleParameterName') else
+                    f.getPerTorsionParameterName(k))
+            (new.addPerBondParameter if hasattr(new, 'addPerBondParameter') else
+             new.addPerAngleParameter if hasattr(new, 'addPerAngleParameter') else
+             new.addPerTorsionParameter)(name)
+        for k in range(f.getNumEnergyParameterDerivatives()):
+            new.addEnergyParameterDerivative(f.getEnergyParameterDerivativeName(k))
+        if hasattr(f, 'getNumTabulatedFunctions'):
+            for k in range(f.getNumTabulatedFunctions()):
+                new.addTabulatedFunction(f.getTabulatedFunctionName(k), copy.deepcopy(f.getTabulatedFunction(k)))
+        new.setUsesPeriodicBoundaryConditions(f.usesPeriodicBoundaryConditions())
+        new.setName(f.getName()); new.setForceGroup(f.getForceGroup())
+        n = 0
+        for k in range(n_terms):
+            term = get_term(k)
+            if inside(*term[:-1]):
+                n += 1
+            else:
+                add_term(new, term)
+        return new, n
+
+    for fi in range(system.getNumForces()):
+        f = system.getForce(fi); n = 0
+        if isinstance(f, mm.HarmonicBondForce):
+            for k in range(f.getNumBonds()):
+                i, j, r0, kb = f.getBondParameters(k)
+                if inside(i, j): f.setBondParameters(k, i, j, r0, 0.0); n += 1
+        elif isinstance(f, mm.HarmonicAngleForce):
+            for k in range(f.getNumAngles()):
+                i, j, l, t0, ka = f.getAngleParameters(k)
+                if inside(i, j, l): f.setAngleParameters(k, i, j, l, t0, 0.0); n += 1
+        elif isinstance(f, mm.PeriodicTorsionForce):
+            for k in range(f.getNumTorsions()):
+                i, j, l, m, per, ph, kt = f.getTorsionParameters(k)
+                if inside(i, j, l, m): f.setTorsionParameters(k, i, j, l, m, per, ph, 0.0); n += 1
+        elif isinstance(f, mm.CustomBondForce):
+            new, n = rebuild(f, mm.CustomBondForce, f.getNumBonds(), f.getBondParameters,
+                             lambda g, t: g.addBond(t[0], t[1], t[2]))
+            replace.append((fi, new))
+        elif isinstance(f, mm.CustomAngleForce):
+            new, n = rebuild(f, mm.CustomAngleForce, f.getNumAngles(), f.getAngleParameters,
+                             lambda g, t: g.addAngle(t[0], t[1], t[2], t[3]))
+            replace.append((fi, new))
+        elif isinstance(f, mm.CustomTorsionForce):
+            new, n = rebuild(f, mm.CustomTorsionForce, f.getNumTorsions(), f.getTorsionParameters,
+                             lambda g, t: g.addTorsion(t[0], t[1], t[2], t[3], t[4]))
+            replace.append((fi, new))
+        elif isinstance(f, mm.CustomNonbondedForce):
+            have = {tuple(sorted(f.getExclusionParticles(k))) for k in range(f.getNumExclusions())}
+            for i, j in pairs:
+                if (i, j) not in have: f.addExclusion(i, j); n += 1
+        elif isinstance(f, mm.NonbondedForce):
+            for i, j in pairs:
+                f.addException(i, j, 0.0, 1.0, 0.0, True); n += 1
+        if n:
+            removed[f.getName()] = removed.get(f.getName(), 0) + n
+    for fi, new in sorted(replace, reverse=True):
+        system.removeForce(fi)
+    for fi, new in sorted(replace):
+        system.addForce(new)
+    print('[Rigid] removed intra-body terms: ' + ', '.join(f'{k} {v}' for k, v in removed.items()))
+    return removed
 
 # --- selection of the real particles -------------------------------------------------
 # A tetrahedron is scored by its flatness, height/longest edge (min over faces;

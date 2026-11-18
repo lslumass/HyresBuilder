@@ -148,8 +148,8 @@ NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
 !atom  ignored    epsilon      Rmin/2   ignored   eps,1-4       Rmin/2,1-4
 !
 !## dye beads
-XAN      0.00     -0.1200      2.3444   0.00     -0.1200       2.3444 ! dye xanthene C9; LJ deepened from A4H (-0.088) to -0.150 for dye stickiness (ACTR/rA19 <E>), aromatic stacking via NBFIX
-XAR      0.00     -0.1200      2.3444   0.00     -0.1200       2.3444 ! dye aromatic ring bead, LJ deepened from A4H (-0.088) to -0.150
+XAN      0.00     -0.1500      2.3444   0.00     -0.1500       2.3444 ! dye xanthene C9;
+XAR      0.00     -0.1500      2.3444   0.00     -0.1500       2.3444 ! dye aromatic ring bead
 
 NBFIX
 !                 Emin         Rmin
