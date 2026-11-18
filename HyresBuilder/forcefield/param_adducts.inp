@@ -79,53 +79,35 @@ PHI
 !delta: degrees
 !
 !atom types             Kchi    n   delta
-!## A48/A59 dye linker; Boltzmann inversion of dihed_0-5.xvg (300 K), 3-term Fourier fit
-P1C   M07   M07   C3E     1.501   1   -35.4  ! CB-A01-A02-A03
-P1C   M07   M07   C3E     1.337   2   112.8
-P1C   M07   M07   C3E     1.072   3   -89.3
-M07   M07   C3E   A2V     1.782   1     3.1  ! A01-A02-A03-A04
-M07   M07   C3E   A2V     1.012   2     0.5
-M07   M07   C3E   A2V     0.466   3  -175.2
-M07   C3E   A2V   M03     0.138   1   158.1  ! A01-A03-A04-A05
-M07   C3E   A2V   M03     0.055   2    33.3
-M07   C3E   A2V   M03     0.109   3  -168.7
-C3E   A2V   M03   XAR     0.136   1  -168.7  ! A03-A04-A05-A06
-C3E   A2V   M03   XAR     0.209   2   171.6
-C3E   A2V   M03   XAR     0.159   3     0.0
-A2V   M03   XAR   XAR     1.813   1     0.0  ! A04-A05-A06-A08
-A2V   M03   XAR   XAR     0.516   2    -1.7
-A2V   M03   XAR   XAR     0.134   3    -4.1
+!## A48/A59 dye linker; fewest-term fit to dihed_0-4.xvg (300 K): one term (best n of 1-3) first, a second
+!## only if it raises the overlap with the AA distribution by >= 0.03; parameters by minimum KL divergence
+!## (overlap: 0.96, 0.81, 0.90, 0.89, 0.93)
+P1C   M07   M07   C3E    15.548   1   -31.8  ! CB-A01-A02-A03 (succinimide ring, narrow: AA sd ~11 deg)
+M07   M07   C3E   A2V     0.909   1     7.7  ! A01-A02-A03-A04
+M07   M07   C3E   A2V     1.160   3   184.4
+M07   C3E   A2V   M03     0.127   1  -202.7  ! A01-A03-A04-A05
+C3E   A2V   M03   XAR     0.204   2  -187.5  ! A03-A04-A05-A06
+A2V   M03   XAR   XAR     1.181   1     0.6  ! A04-A05-A06-A08
 M03   XAR   XAR   XAR    11.916   1   177.3  ! A05-A06-A08-A07; inside the rigid body (ill-defined across the ~171 deg angle)
 M03   XAR   XAR   XAR     3.023   2   -10.0
 M03   XAR   XAR   XAR     0.231   3   132.8
-!## R59/R48 (dyes on RNA ends) junction terms; 3-term Fourier fit (300 K) to the CG-mapped
-!## rA19 HCG ensemble (FRET/rA19, 10000 models); same fitting as the A48/A59 linker
-!## R48 terms refitted from the ensemble reweighted (max. entropy) to the experimental <E> = 0.55
+!## R59/R48 (dyes on RNA ends) junction terms; fewest-term fit (300 K) to the CG-mapped rA19 HCG ensemble
+!## (FRET/rA19, 10000 models), same rule as the A48/A59 linker: one term first, another only if the overlap
+!## is < 0.85 and the extra term raises it by >= 0.03; parameters by minimum KL divergence
+!## R48 terms from the ensemble reweighted (max. entropy) to the experimental <E> = 0.55
 !## (Nuesch et al., Nat Commun 2024); R59 terms from the unweighted ensemble
-A2V   RP    RS1   RS2     1.107  1    172.5  ! R59 A01-+P-+C1-+C2
-A2V   RP    RS1   RS2     0.380  2   -109.5
-A2V   RP    RS1   RS2     0.412  3    -26.7
-A5M   A2V   RP    RS1     0.489  1   -162.5  ! R59 A02-A01-+P-+C1
-A5M   A2V   RP    RS1     0.364  2    132.4
-A5M   A2V   RP    RS1     0.180  3   -172.4
-A2V   A5M   M07   M07     0.572  1    -17.8  ! R59 A01-A02-A03-A04
-A2V   A5M   M07   M07     0.066  2    -88.6
-A2V   A5M   M07   M07     0.070  3    -84.7
-A5M   M07   M07   C3E     1.566  1    -48.5  ! R59 A02-A03-A04-A05
-A5M   M07   M07   C3E     1.073  2     99.0
-A5M   M07   M07   C3E     0.761  3    -20.7
-RP    RS1   M05   P1T     0.908  1      5.1  ! R48 -P--C1-A01-A02
-RP    RS1   M05   P1T     0.516  2     13.0
-RP    RS1   M05   P1T     0.119  3    -55.9
-RS1   M05   P1T   M03     1.010  1    177.8  ! R48 -C1-A01-A02-A03
-RS1   M05   P1T   M03     0.471  2   -172.5
-RS1   M05   P1T   M03     0.058  3    -18.5
-M05   P1T   M03   XAR     0.405  1   -121.8  ! R48 A01-A02-A03-A04
-M05   P1T   M03   XAR     0.643  2    -92.2
-M05   P1T   M03   XAR     0.454  3     19.2
-P1T   M03   XAR   XAR     0.803  1     26.8  ! R48 A02-A03-A04-A06
-P1T   M03   XAR   XAR     0.169  2   -155.1
-P1T   M03   XAR   XAR     0.106  3   -119.7
+A2V   RP    RS1   RS2     1.226  1   -173.5  ! R59 A01-+P-+C1-+C2 (overlap 0.93)
+A2V   RP    RS1   RS2     0.474  3    -48.4
+A5M   A2V   RP    RS1     0.550  1    203.9  ! R59 A02-A01-+P-+C1 (overlap 0.89)
+A5M   A2V   RP    RS1     0.437  2   -222.2
+A2V   A5M   M07   M07     0.568  1    -15.8  ! R59 A01-A02-A03-A04 (overlap 0.92)
+A5M   M07   M07   C3E     7.482  1    -27.3  ! R59 A02-A03-A04-A05 (overlap 0.90)
+RP    RS1   M05   P1T     0.909  1      8.8  ! R48 -P--C1-A01-A02 (overlap 0.94)
+RP    RS1   M05   P1T     0.508  2     22.3
+RS1   M05   P1T   M03     1.455  1   -178.1  ! R48 -C1-A01-A02-A03 (overlap 0.85; one term kept on purpose, two give 0.89)
+M05   P1T   M03   XAR     2.651  1   -126.7  ! R48 A01-A02-A03-A04: one term for the main peak only (AA -60..150 deg, 79%,
+!                                             mean 52 +- 30 deg); the minor peak near +-180 deg is dropped (overlap 0.73)
+P1T   M03   XAR   XAR     0.894  1     23.8  ! R48 A02-A03-A04-A06 (overlap 0.94)
 
 IMPHI
 !
@@ -148,8 +130,8 @@ NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
 !atom  ignored    epsilon      Rmin/2   ignored   eps,1-4       Rmin/2,1-4
 !
 !## dye beads
-XAN      0.00     -0.2000      2.3444   0.00     -0.2000       2.3444 ! dye xanthene C9;
-XAR      0.00     -0.2000      2.3444   0.00     -0.2000       2.3444 ! dye aromatic ring bead
+XAN      0.00     -0.1500      2.3444   0.00     -0.1500       2.3444 ! dye xanthene C9;
+XAR      0.00     -0.1500      2.3444   0.00     -0.1500       2.3444 ! dye aromatic ring bead
 
 NBFIX
 !                 Emin         Rmin
@@ -166,5 +148,13 @@ XAN       A1F      -0.2900      4.9858
 !# rows (xanthene >= indole in size, but its delocalised + charge weakens cation-pi); no XAN-QdK row,
 !# since QdK is also the dye's own amine/N(+) bead type.
 XAN       QdR      -0.6000      4.8807
+!# RNA bases (iConRNA): xanthene-base stacking on base bead 1, as the aromatic-base rows of param_RNA_mix.inp
+!# (Rmin 4.5). G: xanthene-dGMP ~ 0.85-0.9 x xanthene-Trp association (TMR-dGMP 52 M^-1 vs rhodamine-Trp
+!# 61 M^-1) -> 0.9 x XAN-A2W; A/C from the iCon Trp-base pattern (A2W-RA1/RG1/RC1 -0.86/-0.96/-0.65);
+!# U set weaker than that pattern (-0.33) by choice.
+XAN       RA1      -0.3300      4.5000
+XAN       RG1      -0.3700      4.5000
+XAN       RC1      -0.2500      4.5000
+XAN       RU1      -0.2000      4.5000
 
 END
