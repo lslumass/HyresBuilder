@@ -903,6 +903,58 @@ def RigidSmallMols(system, psf, pdb, atoms=None, segments=None, removeInternal=F
     return len(bodies)
 
 
+
+# Dye residues: beads that form one rigid body per dye (the amide/aryl/heteroaromatic core; ring bonds of
+# these residues are K = 0 placeholders in param_adducts.inp, so the core must be rigid).
+DYE_RIGID = {
+    'A48': [f'A{i:02d}' for i in range(5, 19) if i != 10],      # amide + phenyl + xanthene (no A10 in A48)
+    'A59': [f'A{i:02d}' for i in range(5, 24)],                 # amide + phenyl + xanthene
+    'R48': [f'A{i:02d}' for i in range(3, 16)],                 # A48 core on the RNA 3' end
+    'R59': [f'A{i:02d}' for i in range(7, 26)],                 # A59 core on the RNA 5' end
+    'C3B': [f'A{i:02d}' for i in range(5, 20)],                 # Cy3B: CH2-aryl + polymethine core
+    'C66': ['A06', 'A07', 'A08'] + [f'A{i:02d}' for i in range(11, 25)],   # CF660R: imidazolium + xanthene (propyl-sulfonate A09/A10 flexible)
+}
+
+
+def addDyeRigidBodies(system, psf, pdb, verbose=True):
+    """Make the core of every dye residue (``DYE_RIGID``) one rigid body.
+
+    One :func:`RigidSmallMols` call per dye residue with ``removeInternal=True``,
+    so constant intra-body terms (e.g. the compressed 1-4 pairs across the
+    xanthene) are dropped. Atom indices are 1-based within the dye's segment,
+    as :func:`RigidSmallMols` expects.
+
+    Parameters
+    ----------
+    system : openmm.System
+    psf, pdb : str or loaded CharmmPsfFile / PDBFile
+    verbose : bool
+        Print one line per dye.
+
+    Returns
+    -------
+    int
+        Number of dye bodies created.
+    """
+    psf_obj, pdb_obj = _loadPsfPdb(psf=psf, pdb=pdb)
+    n = 0
+    for chain in psf_obj.topology.chains():
+        local = {a.index: k + 1 for k, a in enumerate(chain.atoms())}
+        for res in chain.residues():
+            names = DYE_RIGID.get(res.name)
+            if not names:
+                continue
+            idx = sorted(local[a.index] for a in res.atoms() if a.name in names)
+            if len(idx) != len(names):
+                raise ValueError(f'{res.name} {res.id} ({chain.id}): found {len(idx)} of {len(names)} rigid dye beads')
+            RigidSmallMols(system, psf_obj, pdb_obj, atoms=','.join(map(str, idx)), segments=chain.id,
+                           removeInternal=True)
+            n += 1
+            if verbose:
+                print(f'    rigid dye {res.name} {res.id} ({chain.id}): {len(idx)} beads {names[0]}..{names[-1]}')
+    return n
+
+
 def removeIntraBodyInteractions(system, bodies):
     """Remove the interactions that act only between atoms of the same rigid body.
 

@@ -474,7 +474,8 @@ def prepare_custom_metabolites(metabolite_names, verbose=True):
 aas = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
        "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL",
        "SEP", "TPO", "PTR",           # phosphoserine, phosphothreonine, phosphotyrosine
-       "A48", "A59"]                  # Alexa Fluor 488 / 594 on Cys
+       "A48", "A59",                  # Alexa Fluor 488 / 594 on Cys
+       "C3B", "C66"]                  # Cy3B / CF660R on Cys (C2R maleimide)
 rnas = ["ADE", "GUA", "CYT", "URA", "A", "G", "C", "U", "R59", "R48"]
 dnas = ["DAD", "DCY", "DTH", "DGU", "DA", "DG", "DC", "DT"]
 ions = ["MG+", "SMG", "CA+"]

@@ -3,7 +3,7 @@
 * Load together with param_hyres_mix.inp and param_metabolome.inp; utils.load_ff('Adduct').
 * Dye linker bonded terms fitted from the AA A488-Cys trajectory (FRET/A488/amber);
 * bonds inside the rigid amide + phenyl + xanthene are K = 0 placeholders (use rigid bodies starting at the
-* amide bead: A48/A59 A05, R48 A03, R59 A07); amide-phenyl terms (M03-XAR, M03-XAR-XAR) then act inside the body.
+* amide bead: A48/A59 A05, R48 A03, R59 A07, C3B A05; C66 imidazolium A06-A08 + A11-A24); amide-phenyl terms (M03-XAR, M03-XAR-XAR) then act inside the body.
 *
 
 BOND
@@ -40,6 +40,22 @@ A5M   M07      2.70    3.432  ! R59 A02-A03
 RS1   M05      1.61    3.608  ! R48 -C1-A01
 M05   P1T      8.43    2.902  ! R48 A01-A02
 P1T   M03      2.95    3.444  ! R48 A02-A03; overrides param_metabolome P1T-M03
+!## C3B (Cy3B) / C66 (CF660R) on Cys, C2R linker. Both dyes carry the same C2R types (A04 = M3L), so C3B CB..A04 use the
+!## C66 C2R terms below (succinimide CB-A01 ... A02-A03 as A48). The C3B junction to the core (A05, type A1F) and the C66 linker and propyl-sulfonate (A09/A10) by
+!## Boltzmann inversion (moment matched, 300 K) of the CG-mapped all-atom MD of Ivanovic, Schuler & Best (Zenodo 13381447:
+!## 16 IDPs labelled with Cy3B/CF660R, 3 x 2 us each, Amber ff99SBws; 480k frames pooled); C66 CB-A01 ... A02-A03
+!## (succinimide) as A48. FRET/dye_mapping/zenodo/zenodo_fit.py
+M3L   A1F     16.46    3.101  ! C3B A04-A05   (AA 3.11 +- 0.13)
+C3E   M3L      3.16    2.972  ! C66/C3B A03-A04   (AA 3.04 +- 0.30)
+M3L   A5L      3.31    3.545  ! C66 A04-A05   (AA 3.60 +- 0.30)
+A5L   QdK      5.54    3.578  ! C66 A05-A06   (AA 3.61 +- 0.23)
+QdK   A3S      6.78    2.853  ! C66 A08-A09   (AA 2.88 +- 0.21) propyl-sulfonate, flexible
+A3S   MSO     46.76    3.049  ! C66 A09-A10   (AA 3.05 +- 0.08)
+!## C3B/C66 rigid cores (C3B A05-A19, C66 A06-A08 + A11-A24; in the AA MD the C66 imidazolium rocks on the xanthene,
+!## up to 1.0 A sd at A06 = N1 + CH2, frozen here): placeholders, K = 0
+QDK   XAN      0.00    1.000  ! C3B indolenine N - polymethine centre
+A1F   XAR      0.00    1.000  ! C3B CH2-aryl bead
+QDK   QDK      0.00    1.000  ! C66 imidazolium N - N
 
 THETAS
 !
@@ -69,6 +85,16 @@ RS2   RS1   M05      2.50    100.6  ! R48 -C2--C1-A01   (AA  98.0 +- 15.4)
 RS1   M05   P1T      2.77    110.4  ! R48 -C1-A01-A02   (AA 105.7 +- 14.8)
 M05   P1T   M03      2.75    122.8  ! R48 A01-A02-A03   (AA 115.4 +- 14.6)
 P1T   M03   XAR      1.55    134.3  ! R48 A02-A03-A04   (AA 120.6 +- 17.9)
+!## C66 (CF660R) linker and propyl-sulfonate, C3B junction to the core; ReB angles moment matched (300 K) to the
+!## CG-mapped all-atom MD (Zenodo 13381447; C3B A02-A03-A04 is the C66 term; CB-A01-A02 as A48)
+C3E   M3L   A1F      1.77    141.5  ! C3B A03-A04-A05   (AA 127.1 +- 17.0)
+M3L   A1F   XAR      4.49    116.0  ! C3B A04-A05-A06   (AA 111.8 +- 12.2)
+M07   C3E   M3L      1.80    118.9  ! C66/C3B A02-A03-A04   (AA 110.4 +- 17.1)
+C3E   M3L   A5L      1.20    150.1  ! C66 A03-A04-A05   (AA 129.2 +- 19.7)
+M3L   A5L   QdK      1.35    160.4  ! C66 A04-A05-A06   (AA 137.8 +- 19.4)
+A5L   QdK   XAR      3.90    129.8  ! C66 A05-A06-A07   (AA 123.1 +- 12.5)
+XAR   QdK   A3S     23.59    105.1  ! C66 A07-A08-A09   (AA 104.4 +-  6.0)
+QdK   A3S   MSO      5.75    148.9  ! C66 A08-A09-A10   (AA 143.1 +-  8.9)
 
 PHI
 !
@@ -108,6 +134,17 @@ RS1   M05   P1T   M03     1.455  1   -178.1  ! R48 -C1-A01-A02-A03 (overlap 0.85
 M05   P1T   M03   XAR     2.651  1   -126.7  ! R48 A01-A02-A03-A04: one term for the main peak only (AA -60..150 deg, 79%,
 !                                             mean 52 +- 30 deg); the minor peak near +-180 deg is dropped (overlap 0.73)
 P1T   M03   XAR   XAR     0.894  1     23.8  ! R48 A02-A03-A04-A06 (overlap 0.94)
+!## C66 (CF660R) linker and propyl-sulfonate, C3B junction to the core; one term per dihedral (best n of 1-3, minimum KL,
+!## 300 K) fitted to the CG-mapped all-atom MD (Zenodo 13381447; C3B A01-A02-A03-A04 is the C66 term; CB-A01-A02-A03 as A48)
+M07   C3E   M3L   A1F     0.428  1    170.5  ! C3B A01-A03-A04-A05 (overlap 0.75)
+C3E   M3L   A1F   XAR     0.130  1    174.5  ! C3B A03-A04-A05-A06 (overlap 0.94)
+M3L   A1F   XAR   XAR     1.103  1     -4.0  ! C3B A04-A05-A06-A07 (overlap 0.43: AA is bimodal at +-135 deg, one term cannot fit it)
+M07   M07   C3E   M3L     1.011  2      0.6  ! C66/C3B A01-A02-A03-A04 (overlap 0.66)
+M07   C3E   M3L   A5L     0.185  1   -174.0  ! C66 A01-A03-A04-A05 (overlap 0.91)
+C3E   M3L   A5L   QdK     0.105  1   -161.3  ! C66 A03-A04-A05-A06 (overlap 0.97)
+QdK   XAR   QdK   A5L     0.945  1     -1.5  ! C66 A08-A07-A06-A05 (overlap 0.67)
+QdK   XAR   QdK   A3S     3.567  1     -0.7  ! C66 A06-A07-A08-A09 (overlap 0.67)
+XAR   QdK   A3S   MSO     0.937  2      1.4  ! C66 A07-A08-A09-A10 (overlap 0.69)
 
 IMPHI
 !
@@ -132,6 +169,10 @@ NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
 !## dye beads
 XAN      0.00     -0.1500      2.3444   0.00     -0.1500       2.3444 ! dye xanthene C9;
 XAR      0.00     -0.1500      2.3444   0.00     -0.1500       2.3444 ! dye aromatic ring bead
+!## C66 (CF660R) types, copied from the analogue in brackets (NBFIX rows of the analogue copied below)
+M3L      0.00     -0.0720      2.2759   0.00     -0.0720       2.2759 ! C2R linker CH2-NH-C(=O) (M03)
+A5L      0.00     -0.2552      2.9555   0.00     -0.4500       3.1555 ! butyl -(CH2)4- (A1L)
+A3S      0.00     -0.2001      2.7541   0.00     -0.4000       2.7541 ! propyl on the imidazolium (A2V)
 
 NBFIX
 !                 Emin         Rmin
@@ -156,5 +197,14 @@ XAN       RA1      -0.3300      4.5000
 XAN       RG1      -0.3700      4.5000
 XAN       RC1      -0.2500      4.5000
 XAN       RU1      -0.2000      4.5000
+!# C66 (CF660R) types: NBFIX rows of their analogues (param_hyres_mix, param_metabolome), with the new type
+!# in place of the analogue (self rows also to the analogue itself). N(+) beads of C3B/C66 are QdK and the C3B
+!# CH2-aryl bead A05 is A1F, so those carry the existing QdK / A1F rows.
+M3L       M3L      -0.0720      4.5518
+M3L       M03      -0.0720      4.5518
+A5L       A5L      -0.2552      5.9110       -0.4500      6.3110
+A5L       A1L      -0.2552      5.9110       -0.4500      6.3110
+A3S       A3S      -0.2001      5.5082       -0.4000      5.5082
+A3S       A2V      -0.2001      5.5082       -0.4000      5.5082
 
 END

@@ -11,7 +11,7 @@ The whole input PDB is treated as a single segment, which must be either a
 protein or an RNA chain, selected by segment ID prefix (``P`` for protein,
 ``R`` for RNA). The HyRes protein, iConRNA (``top_RNA_mix``), metabolite and
 adduct topologies are loaded, so mutation types must be residue names defined
-there (e.g. ``ALA``, ``GLY``, the dye-labelled cysteines ``A48``/``A59`` for
+there (e.g. ``ALA``, ``GLY``, the dye-labelled cysteines ``A48``/``A59``/``C3B``/``C66`` for
 protein; ``ADE``, ``GUA``, ``CYT``, ``URA`` for RNA). Multiple sites can be mutated in a single call, and a single mutation
 type can be broadcast across all target sites.
 
@@ -40,11 +40,12 @@ CB and CD for PTR (from TYR or PHE).
 
 Dye labels
 ----------
-Mutating to ``A48`` (Alexa 488) or ``A59`` (Alexa 594) on cysteine adds 17 or
-23 dye beads. They are placed from a CG template (``ADDUCT_TEMPLATES``): one
+Mutating to ``A48`` (Alexa 488), ``A59`` (Alexa 594), ``C3B`` (Cy3B) or ``C66``
+(CF660R) on cysteine adds 17, 23, 19 or 24 dye beads. They are placed from a CG template (``ADDUCT_TEMPLATES``): one
 conformation of the dye, mapped (bead centres of mass, ``cgbuilder.ndx``) from
 the all-atom A488-Cys / A594-Cys trajectories, with the frame whose
-phenyl+xanthene part is closest to the trajectory average. The template is
+phenyl+xanthene part is closest to the trajectory average (C3B: RDKit Cy3B-Cys
+ensemble; C66: FRETpredict CF660R_C2R library; frame closest to the mean linker geometry). The template is
 superimposed on the N, CA and CB of the site, and of 24 rotations (every 15
 deg) about the CA-CB bond the one farthest from all other beads is used. The
 phenyl+xanthene geometry is therefore a proper starting point for a rigid
@@ -132,6 +133,61 @@ ADDUCT_TEMPLATES = {
         'A22': (-7.398, -11.968, 7.806),
         'A23': (-10.373, -9.960, 8.867),
     },
+    # Cy3B / CF660R C2R-maleimide (FRET/dye_mapping/new_dyes.py): C3B from the RDKit Cy3B ensemble,
+    # C66 from the FRETpredict CF660R_C2R library; frame closest to the mean linker geometry
+    'C3B': {
+        'N': (0.979, 1.068, -0.162),
+        'CA': (0.000, 0.000, 0.000),
+        'CB': (0.189, -0.814, -2.215),
+        'A01': (-1.987, 0.624, -2.712),
+        'A02': (-3.384, -1.876, -1.948),
+        'A03': (-3.911, 0.375, -1.385),
+        'A04': (-5.163, 0.969, 1.335),
+        'A05': (-7.941, 2.145, 1.982),
+        'A06': (-8.431, 3.933, 0.367),
+        'A07': (-10.149, 2.659, 0.358),
+        'A08': (-11.689, 0.811, 0.816),
+        'A09': (-11.695, 2.863, -0.668),
+        'A10': (-12.254, 4.533, -1.913),
+        'A11': (-14.361, 1.418, -1.279),
+        'A12': (-14.892, 2.983, -2.400),
+        'A13': (-17.827, 2.018, -2.650),
+        'A14': (-17.159, 0.142, -1.798),
+        'A15': (-15.940, -1.573, -0.438),
+        'A16': (-18.144, -1.441, -1.452),
+        'A17': (-20.143, -1.841, -2.120),
+        'A18': (-18.906, -3.292, -0.928),
+        'A19': (-20.453, -5.154, -0.750),
+    },
+    'C66': {
+        'N': (1.472, 0.000, 0.000),
+        'CA': (0.000, 0.000, 0.000),
+        'CB': (-1.851, -0.397, 1.306),
+        'A01': (-3.503, -2.355, 1.834),
+        'A02': (-4.877, -1.240, 4.221),
+        'A03': (-5.608, -2.924, 2.721),
+        'A04': (-8.468, -2.585, 1.495),
+        'A05': (-10.274, -5.191, 0.892),
+        'A06': (-8.691, -7.779, 1.732),
+        'A07': (-9.423, -8.824, 3.795),
+        'A08': (-8.940, -10.051, 2.499),
+        'A09': (-10.143, -12.718, 3.060),
+        'A10': (-10.389, -14.655, 4.994),
+        'A11': (-8.178, -10.440, 0.205),
+        'A12': (-11.016, -9.966, -0.878),
+        'A13': (-13.377, -9.541, -1.258),
+        'A14': (-13.286, -7.287, 0.505),
+        'A15': (-13.507, -9.969, -4.414),
+        'A16': (-11.391, -11.594, -4.693),
+        'A17': (-10.236, -10.812, -2.804),
+        'A18': (-7.615, -11.182, -1.485),
+        'A19': (-4.850, -11.740, -0.603),
+        'A20': (-3.057, -13.103, -1.235),
+        'A21': (-1.322, -12.166, 0.572),
+        'A22': (-3.432, -11.062, 2.734),
+        'A23': (-2.724, -10.575, 5.198),
+        'A24': (-5.378, -10.890, 1.403),
+    },
 }
 ADDUCT_ANCHORS = ('N', 'CA', 'CB')
 
@@ -204,7 +260,7 @@ def _kabsch(P, Q):
 
 def _place_adduct(gen, segid, resid, resname, input_atoms):
     """
-    Place the dye beads of an A48 or A59 residue built by psfbuilder.
+    Place the dye beads of a dye residue (A48, A59, C3B, C66) built by psfbuilder.
 
     The template of ``ADDUCT_TEMPLATES`` is oriented by superimposing its N,
     CA and CB on those of the residue and anchored on the residue's CB; of 24 rotations (every 15 deg) of the dye about the CA-CB
@@ -214,7 +270,7 @@ def _place_adduct(gen, segid, resid, resname, input_atoms):
         gen (PsfGen): psfbuilder session holding the mutated segment.
         segid (str): Segment ID.
         resid (str): Residue ID of the dye-labelled residue.
-        resname (str): ``'A48'`` or ``'A59'``.
+        resname (str): a key of ``ADDUCT_TEMPLATES`` (``'A48'``, ``'A59'``, ``'C3B'``, ``'C66'``).
         input_atoms (set of str): Atom names of this residue in the input PDB.
 
     Returns:
@@ -329,7 +385,7 @@ def mut(pdb_in, pdb_out, sites, mutations, segid):
     with the mutation table (protein: ``auto_angles=False``; RNA:
     ``auto_angles=False, auto_dihedrals=False``), reads its coordinates,
     guesses missing coordinates, places the phosphate bead of any SEP, TPO
-    or PTR mutation (:func:`_place_phosphate`) and the dye of any A48 or A59
+    or PTR mutation (:func:`_place_phosphate`) and the dye of any dye residue (``ADDUCT_TEMPLATES``)
     mutation (:func:`_place_adduct`), regenerates angles and
     dihedrals and writes ``pdb_out``. Progress is printed to stdout.
 
@@ -344,7 +400,7 @@ def mut(pdb_in, pdb_out, sites, mutations, segid):
     Raises:
         FileNotFoundError: If ``pdb_in`` does not exist.
         ValueError: If ``sites`` and ``mutations`` differ in length,
-            ``segid`` does not start with 'P' or 'R', or a SEP/TPO/PTR/A48/A59
+            ``segid`` does not start with 'P' or 'R', or a SEP/TPO/PTR or dye
             site lacks the beads needed to place its phosphate or dye.
     """
     # Validate inputs
