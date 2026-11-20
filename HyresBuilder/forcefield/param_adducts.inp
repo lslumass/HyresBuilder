@@ -55,12 +55,18 @@ A3R   MSO     46.76    3.049  ! C66 A09-A10   (AA 3.05 +- 0.08)
 !## up to 1.0 A sd at A06 = N1 + CH2, frozen here): placeholders, K = 0
 QDK   XAN      0.00    1.000  ! C66 imidazolium N3 (A08) - xanthene centre (A11)
 P1T   XAC      0.00    1.000  ! C3B CH-O-CH (A12) - polymethine centre (A11), inside the rigid body
-!## XAC (Cy3B/CF660R aromatic) ring and core bonds: placeholders, K = 0 (all inside the C3B/C66 rigid bodies)
+!## XAC (Cy3B aromatic) ring and core bonds: placeholders, K = 0 (inside the C3B rigid body)
 XAC   XAC      0.00    1.000
 XAC   XAN      0.00    1.000
 QDK   XAC      0.00    1.000
 A2V   XAC      0.00    1.000
 MSO   XAC      0.00    1.000
+!## XAF (CF660R aromatic) ring and core bonds: placeholders, K = 0 (inside the C66 rigid body)
+XAF   XAF      0.00    1.000
+XAF   XAN      0.00    1.000
+QDK   XAF      0.00    1.000
+XAF   XAR      0.00    1.000  ! C66 A13-A15, A21-A22
+MSO   XAF      0.00    1.000
 QDK   QDK      0.00    1.000  ! C66 imidazolium N - N
 
 THETAS
@@ -173,7 +179,8 @@ NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
 !## dye beads
 XAN      0.00     -0.1500      2.3444   0.00     -0.1500       2.3444 ! dye xanthene C9;
 XAR      0.00     -0.1500      2.3444   0.00     -0.1500       2.3444 ! dye aromatic ring bead
-XAC      0.00     -0.1200      2.3444   0.00     -0.1200       2.3444 ! Cy3B/CF660R aromatic ring bead (XAR size, own eps)
+XAC      0.00     -0.1200      2.3444   0.00     -0.1200       2.3444 ! Cy3B aromatic ring bead (XAR size, own eps)
+XAF      0.00     -0.1000      2.3444   0.00     -0.1000       2.3444 ! CF660R aromatic ring bead (XAR size; weaker than XAC: C66 over-contacts the protein ~1.5x vs all-atom)
 !## C66 (CF660R) types, nonbonded copied from the analogue in brackets. A5L/A3S are separate names only so that
 !## their fitted bonded terms do not clash with A2V-QdK of param_metabolome; nonbonded they are A2V (rows below).
 M3L      0.00     -0.0720      2.2759   0.00     -0.0720       2.2759 ! C2R linker CH2-NH-C(=O) (M03)
@@ -190,7 +197,7 @@ NBFIX
 !# Tyr/Phe: no data; scaled from Trp by the Arg preferences (QdR-A2W -0.70, -P1Y -0.65, -A1F -0.50).
 XAN       A2W      -0.4000      4.4314
 XAN       P1Y      -0.3700      4.7968
-XAN       A1F      -0.2900      4.9858
+XAN       A1F      -0.2000      4.9858
 !# Arg: xanthene-guanidinium stacking, between the HyRes Arg-Phe (-0.50) and Arg-Trp (-0.70) cation-pi
 !# rows (xanthene >= indole in size, but its delocalised + charge weakens cation-pi); no XAN-QdK row,
 !# since QdK is also the dye's own amine/N(+) bead type.

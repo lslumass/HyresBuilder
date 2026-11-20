@@ -13,7 +13,8 @@
 !## dye xanthene centre (A48 A11, A59 A10); own type so stacking can be set by NBFIX
 MASS   244 XAN   36.033   ! xanthene C9 + C8a + C9a (C3)
 MASS   245 XAR   26.038   ! dye aromatic ring bead (phenyl and uncharged xanthene beads), as A4H
-MASS   246 XAC   26.038   ! Cy3B / CF660R aromatic ring bead (own type, tuned apart from XAR)
+MASS   246 XAC   26.038   ! Cy3B aromatic ring bead (own type, tuned apart from XAR)
+MASS   247 XAF   26.038   ! CF660R aromatic ring bead (as XAC, weaker eps)
 !## C2R-linker dye types (C3B Cy3B, C66 CF660R); own types so the flexible linker terms do not collide with
 !## existing pairs (e.g. metabolome M03-C3E); nonbonded parameters copied from the analogue in brackets
 !## (N(+) beads of C3B/C66 use QdK; the C3B CH2-aryl bead A05 uses XAC)
@@ -332,9 +333,9 @@ CMAP -C   N    CA   C         N    CA   C    +N
 !## Dye beads A01-A24 follow the numbering of the CF660R mapping figure; HyRes bead types:
 !##   A01,A02 M07 imide C(=O) | A03 C3E N-CH2 | A04 M3L CH2-NH-C(=O) | A05 A5L -(CH2)4- (A2V-like)
 !##   A06 QdK imidazolium N1 + its CH2, A08 QdK N3 + C2 (+0.5 each, as every N(+) bead) | A07 A4H imidazolium CH=CH (as His)
-!##   A09 A3R -(CH2)3- (Arg CB type) | A10,A14,A23 MSO SO3(-) | A11 XAN xanthene C9 (stacking) | A12,A24 XAC ring C2H
-!##   A13,A22 XAC C=CH-CH2 | A15,A21 A2V C(CH3)2 | A16,A20 QdK N(+)-ethyl (+0.5 each) | A17,A19 XAC ring C2
-!##   next to N | A18 XAR C-O-C. The core is the A59 xanthene (A10-A23 there = A11-A24 here).
+!##   A09 A3R -(CH2)3- (Arg CB type) | A10,A14,A23 MSO SO3(-) | A11 XAN xanthene C9 (stacking) | A12,A24 XAF ring C2H
+!##   A13,A22 XAF C=CH-CH2 | A15,A21 XAR C(CH3)2 (ring-fused) | A16,A20 QdK N(+)-ethyl (+0.5 each) | A17,A19 XAF ring C2
+!##   next to N | A18 XAF C-O-C. The core is the A59 xanthene (A10-A23 there = A11-A24 here).
 !## Rigid body: imidazolium + xanthene (A06-A08 + A11-A24); the C2R linker, butyl (A01-A05) and the propyl-sulfonate
 !## (A09/A10) are flexible, fitted from the all-atom MD of Zenodo 13381447 (FRET/dye_mapping/zenodo/zenodo_fit.py).
 RESI C66    -1.00000
@@ -358,19 +359,19 @@ ATOM A09  A3R     0.00
 ATOM A10  MSO    -1.00
 GROU
 ATOM A11  XAN     0.00
-ATOM A12  XAC     0.00
-ATOM A13  XAC     0.00
+ATOM A12  XAF     0.00
+ATOM A13  XAF     0.00
 ATOM A14  MSO    -1.00
-ATOM A15  A2V     0.00
+ATOM A15  XAR     0.00
 ATOM A16  QdK     0.50
-ATOM A17  XAC     0.00
-ATOM A18  XAC     0.00
-ATOM A19  XAC     0.00
+ATOM A17  XAF     0.00
+ATOM A18  XAF     0.00
+ATOM A19  XAF     0.00
 ATOM A20  QdK     0.50
-ATOM A21  A2V     0.00
-ATOM A22  XAC     0.00
+ATOM A21  XAR     0.00
+ATOM A22  XAF     0.00
 ATOM A23  MSO    -1.00
-ATOM A24  XAC     0.00
+ATOM A24  XAF     0.00
 GROU
 ATOM C    C       0.00
 ATOM O    O       0.00
