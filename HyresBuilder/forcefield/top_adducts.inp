@@ -1,26 +1,18 @@
-* topology file for HyRes amino acid adducts and modified residues
-* (e.g. fluorescent dyes attached to Cys or to an RNA end). Protein residues
-* keep backbone N, H, CA, C, O as in top_hyres_mix.inp; RNA end residues bond
-* to the P / C1 beads of top_RNA_mix.inp.
-* Load together with top_hyres_mix.inp (backbone and side-chain types),
-* top_RNA_mix.inp (RP, RS1, RS2) and top_metabolome.inp (M03, M05, M07,
-* MSO); utils.load_ff('Adduct').
-* New residue names must also be added to GenPsf.aas (protein) or GenPsf.rnas (RNA).
+* HyRes topology for adducts and modified residues (dyes on Cys / RNA ends)
+* use with top_hyres_mix.inp, top_RNA_mix.inp and top_metabolome.inp; utils.load_ff('Adduct')
+* new residue names must also be added to GenPsf.aas (protein) or GenPsf.rnas (RNA)
 *
    20    1
 
 !## dye bead types
-!## dye xanthene centre (A48 A11, A59 A10); own type so stacking can be set by NBFIX
-MASS   244 XAN   36.033   ! xanthene C9 + C8a + C9a (C3)
-MASS   245 XAR   26.038   ! dye aromatic ring bead (phenyl and uncharged xanthene beads), as A4H
-MASS   246 XAC   26.038   ! Cy3B aromatic ring bead (own type, tuned apart from XAR)
-MASS   247 XAF   26.038   ! CF660R aromatic ring bead (as XAC, weaker eps)
-!## C2R-linker dye types (C3B Cy3B, C66 CF660R); own types so the flexible linker terms do not collide with
-!## existing pairs (e.g. metabolome M03-C3E); nonbonded parameters copied from the analogue in brackets
-!## (N(+) beads of C3B/C66 use QdK; the C3B CH2-aryl bead A05 uses XAC)
-MASS   610 M3L   50.00    ! C2R linker -CH2-NH-C(=O)- (M03)
-MASS   612 A5L   56.108   ! CF660R linker -(CH2)4-; nonbonded as A2V
-MASS   614 A3S   43.089   ! legacy (CF660R propyl, now typed A3R)
+MASS   244 XAN   36.033   ! xanthene centre
+MASS   245 XAR   26.038   ! dye aromatic ring
+MASS   246 XAC   26.038   ! Cy3B aromatic ring
+MASS   247 XAF   26.038   ! CF660R aromatic ring
+MASS   248 XQN   43.069   ! CF660R N(+)-ethyl (QdK, larger, no cation-pi)
+MASS   610 M3L   50.00    ! C2R linker amide
+MASS   612 A5L   56.108   ! CF660R butyl
+MASS   614 A3S   43.089   ! legacy, unused
 
 
 DECL -C
@@ -40,12 +32,7 @@ DECL -C2
 AUTOGENERATE DIHE
 DEFA FIRS NTER LAST CTER
 
-!## Alexa Fluor 488 C5-maleimide attached to Cys (Cys part identical to RESI CYS)
-!## dye beads A01-A18 follow the numbering of the A488 mapping figure (there is no A10); HyRes bead types:
-!##   A01,A02 M07 imide C(=O) | A03 C3E N-CH2 | A04 A2V (CH2)3 | A05 M03 CH2-NH-C(=O)
-!##   A06,A07,A08 XAR phenyl | A09 QaD COO(-) | A11 XAN xanthene C9 (stacking) | A12,A18 XAR CH=CH
-!##   A13,A16 QdK C-NH2 (+0.5 each) | A14,A17 MSO C-SO3(-) | A15 XAR C-O-C
-!##   M07, M03 and MSO are metabolome types (top_metabolome.inp)
+!## Alexa Fluor 488 maleimide on Cys
 RESI A48    -2.00000
 GROU
 ATOM N    NH1     0.00
@@ -78,34 +65,23 @@ ATOM C    C       0.00
 ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
-! dye: succinimide ring, linker, phenyl ring
 BOND CB   A01       A01  A02       A01  A03       A02  A03       A03  A04
 BOND A04  A05       A05  A06       A06  A07       A06  A08       A07  A08
 BOND A07  A09       A08  A11
-! dye: xanthene (bonds only define exclusions; the amide + phenyl + xanthene part is a rigid body)
 BOND A11  A12       A12  A13       A13  A14       A11  A15       A13  A15
 BOND A11  A18       A18  A16       A16  A17       A16  A15
 ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
-! dye: linker angles (fitted); the amide-phenyl ones fall inside the rigid amide + phenyl + xanthene
 ANGL CB   A01  A02       A02  A03  A04       A03  A04  A05       A04  A05  A06
 ANGL A05  A06  A08
-! dihedrals inside this residue come only from these DIHE lines (no auto generation):
-! Cys part, as generated for CYS
 DIHE H    N    CA   C         N    CA   C    O         CB   CA   C    O
-! dye: linker dihedrals (fitted)
-! (A01-A03-A04-A05 and A03-A04-A05-A06 removed: soft fits, k 0.13/0.20, of a 3-peak all-atom distribution;
-!  A01-A03-A04-A05 also spans the unrestrained angle A01-A03-A04, which reaches ~180 deg)
 DIHE CB   A01  A02  A03       A01  A02  A03  A04
 DIHE A04  A05  A06  A08       A05  A06  A08  A07
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
 
-!## 3'-Alexa Fluor 488 on RNA: dye-C(=O)NH-CH2-CH2-O-CH2-CH(OH)-CH(-O3') on the last nucleotide.
-!## Beads A01-A15 follow the numbering of the R48 mapping figure:
-!##   A01 M05 CH(OH)-CH-O3' (O3' of the last nucleotide, as in the iConRNA P bead), bonded to -C1
-!##   A02 P1T CH2-O-CH2 | A03 M03 CH2-NH-C(=O) | A03-A15 = A05-A09, A11-A18 of RESI A48
+!## Alexa Fluor 488 on the RNA 3' end
 RESI R48    -2.00000
 GROU
 ATOM A01  M05     0.00
@@ -126,25 +102,17 @@ ATOM A13  QdK     0.50
 ATOM A14  MSO    -1.00
 ATOM A15  XAR     0.00
 BOND -C1  A01        A01  A02        A02  A03
-! dye: phenyl ring and xanthene (as RESI A48)
 BOND A03  A04       A04  A05       A04  A06       A05  A06
 BOND A05  A07       A06  A08
 BOND A08  A09       A08  A12       A08  A15       A09  A10       A10  A11
 BOND A10  A12       A12  A13       A13  A14       A13  A15
-! RNA segments get no automatic angles/dihedrals: junction terms + the A48 linker terms
 ANGL -P   -C1  A01        -C2  -C1  A01        -C1  A01  A02        A01  A02  A03
 ANGL A02  A03  A04       A03  A04  A06
 DIHE -P   -C1  A01  A02        -C1  A01  A02  A03       A01  A02  A03  A04
 DIHE A02  A03  A04  A06       A03  A04  A06  A05
 
 
-!## Alexa Fluor 594 C5-maleimide attached to Cys (Cys part identical to RESI CYS)
-!## dye beads A01-A23 follow the numbering of the A594 mapping figure; HyRes bead types:
-!##   A01,A02 M07 imide C(=O) | A03 C3E N-CH2 | A04 A2V (CH2)3 | A05 M03 CH2-NH-C(=O)
-!##   A06,A07,A08 XAR phenyl | A09 QaD COO(-) | A10 XAN xanthene C9 (stacking) | A11,A23 XAR ring C2H
-!##   A16,A18 XAR ring C2 next to N | A17 XAR C-O-C | A15,A19 QdK N(+)-CH3 (+0.5 each)
-!##   A14,A20 A2V C(CH3)2 | A12,A21 XAR C=CH | A13,A22 MSO CH2-SO3(-)
-!##   M07, M03 and MSO are metabolome types (top_metabolome.inp)
+!## Alexa Fluor 594 maleimide on Cys
 RESI A59    -2.00000
 GROU
 ATOM N    NH1     0.00
@@ -183,11 +151,9 @@ ATOM C    C       0.00
 ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
-! dye: succinimide ring, linker, phenyl ring
 BOND CB   A01       A01  A02       A01  A03       A02  A03       A03  A04
 BOND A04  A05       A05  A06       A06  A07       A06  A08       A07  A08
 BOND A07  A09       A08  A10
-! dye: xanthene
 BOND A10  A11       A10  A17       A10  A23       A11  A12       A11  A16
 BOND A12  A13       A12  A14       A14  A15       A15  A16       A16  A17
 BOND A17  A18       A18  A19       A19  A20       A20  A21       A21  A22
@@ -195,24 +161,15 @@ BOND A21  A23       A18  A23
 ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
-! dye: linker angles (fitted); the amide-phenyl ones fall inside the rigid amide + phenyl + xanthene
 ANGL CB   A01  A02       A02  A03  A04       A03  A04  A05       A04  A05  A06
 ANGL A05  A06  A08
-! dihedrals inside this residue come only from these DIHE lines (no auto generation):
-! Cys part, as generated for CYS
 DIHE H    N    CA   C         N    CA   C    O         CB   CA   C    O
-! dye: linker dihedrals (fitted)
-! (A01-A03-A04-A05 and A03-A04-A05-A06 removed: soft fits, k 0.13/0.20, of a 3-peak all-atom distribution;
-!  A01-A03-A04-A05 also spans the unrestrained angle A01-A03-A04, which reaches ~180 deg)
 DIHE CB   A01  A02  A03       A01  A02  A03  A04
 DIHE A04  A05  A06  A08       A05  A06  A08  A07
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
 
-!## 5'-Alexa Fluor 594 on RNA: dye-NH-(CH2)5-succinimide-S-(CH2)6-O-P(5') of the first nucleotide.
-!## The 5' phosphate (P, O-(CH2)6 oxygen included) is the P bead of the next (first RNA) residue.
-!## Beads A01-A25 follow the numbering of the R59 mapping figure: A01 A2V (CH2)3, bonded to +P |
-!##   A02 A5M S-(CH2)3 | A03-A25 = A01-A23 of RESI A59 (same types, charges and dye bonds)
+!## Alexa Fluor 594 on the RNA 5' end
 RESI R59    -2.00000
 GROU
 ATOM A01  A2V     0.00
@@ -244,7 +201,6 @@ ATOM A23  XAR     0.00
 ATOM A24  MSO    -1.00
 ATOM A25  XAR     0.00
 BOND A01  +P        A01  A02        A02  A03
-! dye: succinimide ring, linker, phenyl ring (as RESI A59)
 BOND A03  A04       A03  A05       A04  A05       A05  A06
 BOND A06  A07       A07  A08       A08  A09       A08  A10       A09  A10
 BOND A09  A11       A10  A12
@@ -252,26 +208,15 @@ BOND A12  A13       A12  A19       A12  A25       A13  A14
 BOND A13  A18       A14  A15       A14  A16       A16  A17       A17  A18
 BOND A18  A19       A19  A20       A20  A21       A20  A25       A21  A22
 BOND A22  A23       A23  A24       A23  A25
-! RNA segments get no automatic angles/dihedrals: junction terms + the A59 linker terms (CB -> A02)
 ANGL A01  +P   +C1       A02  A01  +P        A01  A02  A03       A02  A03  A04
 ANGL A04  A05  A06       A05  A06  A07       A06  A07  A08       A07  A08  A10
 DIHE A01  +P   +C1  +C2       A02  A01  +P   +C1       A01  A02  A03  A04
-! (A03-A05-A06-A07 and A05-A06-A07-A08 removed, the A48/A59 A01-A03-A04-A05 / A03-A04-A05-A06 terms:
-!  soft fits of a 3-peak all-atom distribution; the first spans the unrestrained angle A03-A05-A06)
 DIHE A02  A03  A04  A05       A03  A04  A05  A06
 DIHE A06  A07  A08  A10       A07  A08  A10  A09
 
 
 
-!## Cy3B (Lumiprobe, sulfo) C2R-maleimide attached to Cys (Cys part identical to RESI CYS); donor of the Cy3B/CF660R pair.
-!## Dye beads A01-A19 follow the numbering of the Cy3B mapping figure; HyRes bead types:
-!##   A01,A02 M07 imide C(=O) | A03 C3E N-CH2 | A04 M3L CH2-NH-C(=O) | A05 XAC CH2 + aryl C2 (linker to core)
-!##   A06,A07,A16,A17,A18 XAC benzo rings | A08,A15 A2V C(CH3)2 | A09,A14 QdK indolenine N (+0.5 each)
-!##   A10,A13 C3E N-CH2-CH2 bridges (aliphatic) | A11 XAC polymethine centre (no stacking centre) | A12 P1T CH-O-CH ether
-!##   (Thr side-chain type; HyRes has no ether type) | A19 MSO SO3(-)
-!## Linker CB..A04 has the CF660R C2R types (A04 = M3L), so it uses the C2R terms fitted for C66; the junction
-!## to the core (A05, type XAC) is fitted from the all-atom MD of Zenodo 13381447 (param_adducts.inp).
-!## Core A05-A19 is one rigid body (RigidSmallMols in the run script); mapping: FRET/dye_mapping/new_dyes.py
+!## Cy3B C2R-maleimide on Cys
 RESI C3B     0.00000
 GROU
 ATOM N    NH1     0.00
@@ -289,12 +234,12 @@ ATOM A05  XAC     0.00
 ATOM A06  XAC     0.00
 ATOM A07  XAC     0.00
 ATOM A08  A2V     0.00
-ATOM A09  QdK     0.50
+ATOM A09  P1H     0.50
 ATOM A10  C3E     0.00
 ATOM A11  XAC     0.00
 ATOM A12  P1T     0.00
 ATOM A13  C3E     0.00
-ATOM A14  QdK     0.50
+ATOM A14  P1H     0.50
 ATOM A15  A2V     0.00
 ATOM A16  XAC     0.00
 ATOM A17  XAC     0.00
@@ -305,10 +250,8 @@ ATOM C    C       0.00
 ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
-! dye: succinimide ring, C2R linker
 BOND CB   A01       A01  A02       A01  A03       A02  A03       A03  A04
 BOND A04  A05
-! dye: Cy3B core (bonds only define exclusions; A05-A19 is a rigid body)
 BOND A05  A06       A05  A07       A06  A07       A07  A08       A07  A09
 BOND A08  A09       A09  A10       A09  A11       A10  A12       A11  A12
 BOND A11  A14       A12  A13       A13  A14       A14  A15       A14  A16
@@ -316,28 +259,14 @@ BOND A15  A16       A16  A17       A16  A18       A17  A18       A18  A19
 ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
-! dye: linker angles (CB-A01-A02 A48, A02-A03-A04 C66 C2R term; A03-A04-A05, A04-A05-A06 fitted)
 ANGL CB   A01  A02       A02  A03  A04       A03  A04  A05       A04  A05  A06
-! dihedrals inside this residue come only from these DIHE lines (no auto generation):
-! Cys part, as generated for CYS
 DIHE H    N    CA   C         N    CA   C    O         CB   CA   C    O
-! dye: linker dihedrals (CB-A01-A02-A03 A48, A01-A02-A03-A04 C66 C2R term; the rest fitted)
-! (A01-A03-A04-A05 and A03-A04-A05-A06 removed: soft n=1 fits, k 0.10-0.43, of a 3-peak all-atom distribution;
-!  A01-A03-A04-A05 also spans the unrestrained angle A01-A03-A04, which reaches ~180 deg and makes the torsion singular)
 DIHE CB   A01  A02  A03       A01  A02  A03  A04
 DIHE A04  A05  A06  A07
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
 
-!## CF660R C2R-maleimide attached to Cys (Cys part identical to RESI CYS); acceptor of the Cy3B/CF660R pair.
-!## Dye beads A01-A24 follow the numbering of the CF660R mapping figure; HyRes bead types:
-!##   A01,A02 M07 imide C(=O) | A03 C3E N-CH2 | A04 M3L CH2-NH-C(=O) | A05 A5L -(CH2)4- (A2V-like)
-!##   A06 QdK imidazolium N1 + its CH2, A08 QdK N3 + C2 (+0.5 each, as every N(+) bead) | A07 A4H imidazolium CH=CH (as His)
-!##   A09 A3R -(CH2)3- (Arg CB type) | A10,A14,A23 MSO SO3(-) | A11 XAN xanthene C9 (stacking) | A12,A24 XAF ring C2H
-!##   A13,A22 XAF C=CH-CH2 | A15,A21 XAR C(CH3)2 (ring-fused) | A16,A20 QdK N(+)-ethyl (+0.5 each) | A17,A19 XAF ring C2
-!##   next to N | A18 XAF C-O-C. The core is the A59 xanthene (A10-A23 there = A11-A24 here).
-!## Rigid body: imidazolium + xanthene (A06-A08 + A11-A24); the C2R linker, butyl (A01-A05) and the propyl-sulfonate
-!## (A09/A10) are flexible, fitted from the all-atom MD of Zenodo 13381447 (FRET/dye_mapping/zenodo/zenodo_fit.py).
+!## CF660R C2R-maleimide on Cys
 RESI C66    -1.00000
 GROU
 ATOM N    NH1     0.00
@@ -352,9 +281,9 @@ ATOM A03  C3E     0.00
 ATOM A04  M3L     0.00
 ATOM A05  A5L     0.00
 GROU
-ATOM A06  QdK     0.50
+ATOM A06  P1H     0.50
 ATOM A07  A4H     0.00
-ATOM A08  QdK     0.50
+ATOM A08  P1H     0.50
 ATOM A09  A3R     0.00
 ATOM A10  MSO    -1.00
 GROU
@@ -363,11 +292,11 @@ ATOM A12  XAF     0.00
 ATOM A13  XAF     0.00
 ATOM A14  MSO    -1.00
 ATOM A15  XAR     0.00
-ATOM A16  QdK     0.50
+ATOM A16  XQN     0.50
 ATOM A17  XAF     0.00
 ATOM A18  XAF     0.00
 ATOM A19  XAF     0.00
-ATOM A20  QdK     0.50
+ATOM A20  XQN     0.50
 ATOM A21  XAR     0.00
 ATOM A22  XAF     0.00
 ATOM A23  MSO    -1.00
@@ -377,11 +306,9 @@ ATOM C    C       0.00
 ATOM O    O       0.00
 BOND N    CA        CA   C         C    +N        C    O         N    H
 BOND CA   CB
-! dye: succinimide ring, C2R linker, butyl, imidazolium, propyl-sulfonate
 BOND CB   A01       A01  A02       A01  A03       A02  A03       A03  A04
 BOND A04  A05       A05  A06       A06  A07       A06  A08       A07  A08
 BOND A08  A11       A08  A09       A09  A10
-! dye: xanthene (bonds only define exclusions; part of the rigid body)
 BOND A11  A12       A11  A18       A11  A24       A12  A13       A12  A17
 BOND A13  A14       A13  A15       A15  A16       A16  A17       A17  A18
 BOND A18  A19       A19  A20       A19  A24       A20  A21       A21  A22
@@ -389,15 +316,9 @@ BOND A22  A23       A22  A24
 ANGL -C   N    H         -C   N    CA         H    N    CA
 ANGL N    CA   C          C    CA   CB
 ANGL CA   C    O         CA   C    +N         O    C    +N
-! dye: linker and propyl-sulfonate angles (fitted from the all-atom MD; CB-A01-A02 as A48)
 ANGL CB   A01  A02       A02  A03  A04       A03  A04  A05       A04  A05  A06
 ANGL A05  A06  A07       A07  A08  A09       A08  A09  A10
-! dihedrals inside this residue come only from these DIHE lines (no auto generation):
-! Cys part, as generated for CYS
 DIHE H    N    CA   C         N    CA   C    O         CB   CA   C    O
-! dye: linker and propyl-sulfonate dihedrals (fitted from the all-atom MD; CB-A01-A02-A03 as A48)
-! (A01-A03-A04-A05 and A03-A04-A05-A06 removed: soft n=1 fits, k 0.10-0.43, of a 3-peak all-atom distribution;
-!  A01-A03-A04-A05 also spans the unrestrained angle A01-A03-A04, which reaches ~180 deg and makes the torsion singular)
 DIHE CB   A01  A02  A03       A01  A02  A03  A04
 DIHE A05  A06  A07  A08
 DIHE A06  A07  A08  A09       A07  A08  A09  A10
