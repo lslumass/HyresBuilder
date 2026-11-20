@@ -263,7 +263,7 @@ DIHE A05  A06  A07  A08       A06  A07  A08  A10       A07  A08  A10  A09
 !##   (Thr side-chain type; HyRes has no ether type) | A19 MSO SO3(-)
 !## Linker CB..A04 has the CF660R C2R types (A04 = M3L), so it uses the C2R terms fitted for C66; the junction
 !## to the core (A05, type XAR) is fitted from the all-atom MD of Zenodo 13381447 (param_adducts.inp).
-!## Core A05-A19 is one rigid body (DYE_RIGID in Rigid.py); mapping: FRET/dye_mapping/new_dyes.py
+!## Core A05-A19 is one rigid body (RigidSmallMols in the run script); mapping: FRET/dye_mapping/new_dyes.py
 RESI C3B     0.00000
 GROU
 ATOM N    NH1     0.00
