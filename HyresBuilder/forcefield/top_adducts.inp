@@ -93,8 +93,10 @@ ANGL A05  A06  A08
 ! Cys part, as generated for CYS
 DIHE H    N    CA   C         N    CA   C    O         CB   CA   C    O
 ! dye: linker dihedrals (fitted)
-DIHE CB   A01  A02  A03       A01  A02  A03  A04       A01  A03  A04  A05
-DIHE A03  A04  A05  A06       A04  A05  A06  A08       A05  A06  A08  A07
+! (A01-A03-A04-A05 and A03-A04-A05-A06 removed: soft fits, k 0.13/0.20, of a 3-peak all-atom distribution;
+!  A01-A03-A04-A05 also spans the unrestrained angle A01-A03-A04, which reaches ~180 deg)
+DIHE CB   A01  A02  A03       A01  A02  A03  A04
+DIHE A04  A05  A06  A08       A05  A06  A08  A07
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
 
@@ -198,8 +200,10 @@ ANGL A05  A06  A08
 ! Cys part, as generated for CYS
 DIHE H    N    CA   C         N    CA   C    O         CB   CA   C    O
 ! dye: linker dihedrals (fitted)
-DIHE CB   A01  A02  A03       A01  A02  A03  A04       A01  A03  A04  A05
-DIHE A03  A04  A05  A06       A04  A05  A06  A08       A05  A06  A08  A07
+! (A01-A03-A04-A05 and A03-A04-A05-A06 removed: soft fits, k 0.13/0.20, of a 3-peak all-atom distribution;
+!  A01-A03-A04-A05 also spans the unrestrained angle A01-A03-A04, which reaches ~180 deg)
+DIHE CB   A01  A02  A03       A01  A02  A03  A04
+DIHE A04  A05  A06  A08       A05  A06  A08  A07
 IMPH N    -C   CA   H         C    CA   +N   O         CA   N    C    CB
 CMAP -C   N    CA   C         N    CA   C    +N
 
@@ -250,8 +254,10 @@ BOND A22  A23       A23  A24       A23  A25
 ANGL A01  +P   +C1       A02  A01  +P        A01  A02  A03       A02  A03  A04
 ANGL A04  A05  A06       A05  A06  A07       A06  A07  A08       A07  A08  A10
 DIHE A01  +P   +C1  +C2       A02  A01  +P   +C1       A01  A02  A03  A04
-DIHE A02  A03  A04  A05       A03  A04  A05  A06       A03  A05  A06  A07
-DIHE A05  A06  A07  A08       A06  A07  A08  A10       A07  A08  A10  A09
+! (A03-A05-A06-A07 and A05-A06-A07-A08 removed, the A48/A59 A01-A03-A04-A05 / A03-A04-A05-A06 terms:
+!  soft fits of a 3-peak all-atom distribution; the first spans the unrestrained angle A03-A05-A06)
+DIHE A02  A03  A04  A05       A03  A04  A05  A06
+DIHE A06  A07  A08  A10       A07  A08  A10  A09
 
 
 

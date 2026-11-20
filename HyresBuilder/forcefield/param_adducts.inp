@@ -111,8 +111,8 @@ PHI
 P1C   M07   M07   C3E    15.548   1   -31.8  ! CB-A01-A02-A03 (succinimide ring, narrow: AA sd ~11 deg)
 M07   M07   C3E   A2V     0.909   1     7.7  ! A01-A02-A03-A04
 M07   M07   C3E   A2V     1.160   3   184.4
-M07   C3E   A2V   M03     0.127   1  -202.7  ! A01-A03-A04-A05
-C3E   A2V   M03   XAR     0.204   2  -187.5  ! A03-A04-A05-A06
+!## A01-A03-A04-A05 (0.127, n 1) and A03-A04-A05-A06 (0.204, n 2) removed for A48/A59/R59 (soft fits of a 3-peak
+!## all-atom distribution; A01-A03-A04-A05 spans the unrestrained angle A01-A03-A04)
 A2V   M03   XAR   XAR     1.181   1     0.6  ! A04-A05-A06-A08
 M03   XAR   XAR   XAR    11.916   1   177.3  ! A05-A06-A08-A07; inside the rigid body (ill-defined across the ~171 deg angle)
 M03   XAR   XAR   XAR     3.023   2   -10.0
