@@ -15,10 +15,10 @@ MASS   244 XAN   36.033   ! xanthene C9 + C8a + C9a (C3)
 MASS   245 XAR   26.038   ! dye aromatic ring bead (phenyl and uncharged xanthene beads), as A4H
 !## C2R-linker dye types (C3B Cy3B, C66 CF660R); own types so the flexible linker terms do not collide with
 !## existing pairs (e.g. metabolome M03-C3E); nonbonded parameters copied from the analogue in brackets
-!## (N(+) beads of C3B/C66 use QdK; the C3B CH2-aryl bead A05 uses A1F)
+!## (N(+) beads of C3B/C66 use QdK; the C3B CH2-aryl bead A05 uses XAR)
 MASS   610 M3L   50.00    ! C2R linker -CH2-NH-C(=O)- (M03)
-MASS   612 A5L   56.108   ! CF660R linker -(CH2)4- (A1L)
-MASS   614 A3S   43.089   ! CF660R propyl -(CH2)3- on the imidazolium (A2V)
+MASS   612 A5L   56.108   ! CF660R linker -(CH2)4-; nonbonded as A2V
+MASS   614 A3S   43.089   ! CF660R propyl -(CH2)3- on the imidazolium; nonbonded as A2V
 
 
 DECL -C
@@ -257,11 +257,11 @@ DIHE A05  A06  A07  A08       A06  A07  A08  A10       A07  A08  A10  A09
 
 !## Cy3B (Lumiprobe, sulfo) C2R-maleimide attached to Cys (Cys part identical to RESI CYS); donor of the Cy3B/CF660R pair.
 !## Dye beads A01-A19 follow the numbering of the Cy3B mapping figure; HyRes bead types:
-!##   A01,A02 M07 imide C(=O) | A03 C3E N-CH2 | A04 M3L CH2-NH-C(=O) | A05 A1F CH2 + aryl C2 (linker to core; Phe CB type)
+!##   A01,A02 M07 imide C(=O) | A03 C3E N-CH2 | A04 M3L CH2-NH-C(=O) | A05 XAR CH2 + aryl C2 (linker to core)
 !##   A06,A07,A16,A17,A18 XAR benzo rings | A08,A15 A2V C(CH3)2 | A09,A14 QdK indolenine N (+0.5 each)
 !##   A10,A13 XAR N-CH2-CH2 bridges | A11 XAN polymethine centre (stacking) | A12 XAR CH-O-CH | A19 MSO SO3(-)
 !## Linker CB..A04 has the CF660R C2R types (A04 = M3L), so it uses the C2R terms fitted for C66; the junction
-!## to the core (A05, type A1F) is fitted from the all-atom MD of Zenodo 13381447 (param_adducts.inp).
+!## to the core (A05, type XAR) is fitted from the all-atom MD of Zenodo 13381447 (param_adducts.inp).
 !## Core A05-A19 is one rigid body (DYE_RIGID in Rigid.py); mapping: FRET/dye_mapping/new_dyes.py
 RESI C3B     0.00000
 GROU
@@ -276,7 +276,7 @@ ATOM A02  M07     0.00
 ATOM A03  C3E     0.00
 ATOM A04  M3L     0.00
 GROU
-ATOM A05  A1F     0.00
+ATOM A05  XAR     0.00
 ATOM A06  XAR     0.00
 ATOM A07  XAR     0.00
 ATOM A08  A2V     0.00
@@ -320,9 +320,9 @@ CMAP -C   N    CA   C         N    CA   C    +N
 
 !## CF660R C2R-maleimide attached to Cys (Cys part identical to RESI CYS); acceptor of the Cy3B/CF660R pair.
 !## Dye beads A01-A24 follow the numbering of the CF660R mapping figure; HyRes bead types:
-!##   A01,A02 M07 imide C(=O) | A03 C3E N-CH2 | A04 M3L CH2-NH-C(=O) | A05 A5L -(CH2)4-
-!##   A06 QdK imidazolium N1 + its CH2, A08 QdK N3 + C2 (+0.5 each, as every N(+) bead) | A07 XAR imidazolium CH=CH
-!##   A09 A3S -(CH2)3- | A10,A14,A23 MSO SO3(-) | A11 XAN xanthene C9 (stacking) | A12,A24 XAR ring C2H
+!##   A01,A02 M07 imide C(=O) | A03 C3E N-CH2 | A04 M3L CH2-NH-C(=O) | A05 A5L -(CH2)4- (A2V-like)
+!##   A06 QdK imidazolium N1 + its CH2, A08 QdK N3 + C2 (+0.5 each, as every N(+) bead) | A07 A4H imidazolium CH=CH (as His)
+!##   A09 A3S -(CH2)3- (A2V-like) | A10,A14,A23 MSO SO3(-) | A11 XAN xanthene C9 (stacking) | A12,A24 XAR ring C2H
 !##   A13,A22 XAR C=CH-CH2 | A15,A21 A2V C(CH3)2 | A16,A20 QdK N(+)-ethyl (+0.5 each) | A17,A19 XAR ring C2
 !##   next to N | A18 XAR C-O-C. The core is the A59 xanthene (A10-A23 there = A11-A24 here).
 !## Rigid body: imidazolium + xanthene (A06-A08 + A11-A24); the C2R linker, butyl (A01-A05) and the propyl-sulfonate
@@ -342,7 +342,7 @@ ATOM A04  M3L     0.00
 ATOM A05  A5L     0.00
 GROU
 ATOM A06  QdK     0.50
-ATOM A07  XAR     0.00
+ATOM A07  A4H     0.00
 ATOM A08  QdK     0.50
 ATOM A09  A3S     0.00
 ATOM A10  MSO    -1.00
