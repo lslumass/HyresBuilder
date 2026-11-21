@@ -149,7 +149,7 @@ NONBONDED  NBXMOD 5  ATOM CDIEL SWITCH VATOM VDISTANCE VSWITCH -
 !
 XAN      0.00     -0.1500      2.3444   0.00     -0.1500       2.3444 ! xanthene centre
 XAR      0.00     -0.1500      2.3444   0.00     -0.1500       2.3444 ! dye aromatic ring
-XAC      0.00     -0.1200      2.3444   0.00     -0.1200       2.3444 ! Cy3B aromatic ring
+XAC      0.00     -0.1000      2.3444   0.00     -0.1200       2.3444 ! Cy3B aromatic ring
 XAF      0.00     -0.1000      2.3444   0.00     -0.1000       2.3444 ! CF660R aromatic ring
 XQN      0.00     -0.0150      2.7541   0.00     -0.0500       2.7541 ! CF660R N(+)-ethyl (QdK eps, A2V size, no cation-pi)
 M3L      0.00     -0.0720      2.2759   0.00     -0.0720       2.2759 ! C2R linker amide (as M03)
